@@ -23,8 +23,6 @@ buildscript {
 				'io.spring.gradle:spring-io-plugin:0.0.4.RELEASE',
 				'com.github.jengelman.gradle.plugins:shadow:1.2.0',
 				'org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.8'
-		classpath 'net.sf.docbook:docbook-xsl:1.78.1:resources@zip'
-		classpath 'io.spring.gradle:docbook-reference-plugin:0.3.0'
 	}
 }
 
@@ -179,7 +177,7 @@ configure(subprojects) { project ->
 project('reactor-net') {
 	description = 'Reactor TCP components'
 
-	apply plugin: 'osgi'
+	//apply plugin: 'osgi'
 	apply plugin: 'groovy'
 
 	ext.bundleImportPackages = [
@@ -214,7 +212,7 @@ project('reactor-net') {
 
 	jar {
 		manifest {
-			instruction 'Import-Package', bundleImportPackages.join(',')
+			//instruction 'Import-Package', bundleImportPackages.join(',')
 		}
 	}
 }
