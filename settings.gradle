@@ -17,4 +17,5 @@ rootProject.name = 'reactor-io'
 
 include 'reactor-codec',
 		'reactor-net',
-		'reactor-aeron'
+		'reactor-aeron',
+		'docs'
