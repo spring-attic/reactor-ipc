@@ -14,20 +14,6 @@
  * limitations under the License.
  */
 
-buildscript {
-	repositories {
-		maven { url "http://repo.spring.io/plugins-snapshot" }
-		jcenter()
-	}
-	dependencies {
-		classpath 'net.sf.docbook:docbook-xsl:1.78.1:resources@zip'
-		classpath 'io.spring.gradle:docbook-reference-plugin:0.3.0'
-		classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.2'
-		//classpath 'org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.6' // asciidoctor pdf still has issues with callouts, etc. Still relying on docbook+pdf for now
-	}
-}
-
-
 configure(rootProject) {
 	task api(type: Javadoc) {
 		group = "Reactor IO Javadoc"
@@ -67,14 +53,12 @@ configure(rootProject) {
 		}
 	}
 
-	apply plugin: org.asciidoctor.gradle.AsciidoctorPlugin
-
 	asciidoctor {
 		sources {
 			include "index.asciidoc"
 		}
 		outputDir file("$buildDir/html")
-		backends = ['html5', 'docbook']
+		backends = ['html5', 'docbook', 'pdf']
 		logDocuments = true
 		options = [
 				doctype: 'book'
@@ -82,24 +66,12 @@ configure(rootProject) {
 		attributes docinfo: '',
 				toc2: '',
 				'compat-mode': '',
-				imagesdir: '',
 				stylesdir: "stylesheets/",
 				stylesheet: 'golo.css',
 				appversion: "$version",
 				'source-highlighter': 'coderay'
 
 	}
-
-	apply plugin: DocbookReferencePlugin
-
-	reference {
-		sourceFileName = 'index.xml'
-		sourceDir = file("$buildDir/html/docbook")
-		pdfFilename = 'reactor-io-reference.pdf'
-		expandPlaceholders = ''
-	}
-
-	reference.dependsOn asciidoctor
 
 }
 
