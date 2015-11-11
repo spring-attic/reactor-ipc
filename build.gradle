@@ -15,11 +15,13 @@
  */
 
 
-description = 'Reactive fast data framework for the JVM'
+description = 'Reactive IO facilities for encoding/decoding, client/server and unicast/multicast'
 
 ext {
 	gradleVersion = '2.8'
 	gradleScriptDir = "${rootProject.projectDir}/gradle"
+
+	reactorVersion = version
 
 	// Languages
 	groovyVersion = '2.4.1'
@@ -29,17 +31,12 @@ ext {
 	logbackVersion = '1.1.2'
 
 	// Libraries
-	gsCollectionsVersion = '5.1.0'
 	nettyVersion = '4.0.31.Final'
 	jacksonDatabindVersion = '2.5.1'
-	jsonPathVersion = '2.0.0'
-	kryoVersion = '3.0.3'
 	protobufVersion = '2.6.1'
+	kryoVersion = '3.0.3'
 	snappyVersion = '1.1.1.6'
-	hadoopVersion = '1.1.2'
-	openHftChronicleVersion = '3.4.2'
 	aeronVersion = '0.1.5'
-  	rxJavaVersion = '1.0.14'
 
 	// Testing
 	mockitoVersion = '1.10.19'
@@ -49,7 +46,6 @@ ext {
 			"http://docs.oracle.com/javase/7/docs/api/",
 			"http://docs.oracle.com/javaee/6/api/",
 			"http://fasterxml.github.io/jackson-databind/javadoc/2.5/",
-			"http://www.goldmansachs.com/gs-collections/javadoc/5.1.0/",
 			"http://www.reactive-streams.org/reactive-streams-tck-1.0.0-javadoc/"
 	] as String[]
 }
@@ -60,8 +56,7 @@ buildscript {
 	}
 	dependencies {
 		classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.7',
-				'io.spring.gradle:spring-io-plugin:0.0.4.RELEASE',
-				'com.github.jengelman.gradle.plugins:shadow:1.2.0'
+				'io.spring.gradle:spring-io-plugin:0.0.4.RELEASE'
 	}
 }
 apply from: "$gradleScriptDir/setup.gradle"
@@ -173,139 +168,6 @@ configure(subprojects) { project ->
 	}
 }
 
-project('reactor-core') {
-	description = 'Core Reactor components'
-
-	apply plugin: 'osgi'
-	apply plugin: 'groovy'
-
-
-	ext.bundleImportPackages = [
-			  'org.slf4j;version="[1.5.4,2)"',
-			  '*'
-	  ]
-
-	configurations {
-	  jsr166backport
-	  testCompile.extendsFrom jsr166backport
-	  compile.extendsFrom jsr166backport
-	}
-
-	  /*task testNG(type: Test) {
-		useTestNG()
-	}*/
-
-	dependencies {
-		// Reactive Streams
-		compile "org.reactivestreams:reactive-streams:1.0.0"
-		testCompile "org.reactivestreams:reactive-streams-tck:1.0.0"
-
-	  	//Optional RxJava 1 Support
-	  	optional "io.reactivex:rxjava:$rxJavaVersion"
-	  	//Optional JDK 9 Support
-	  	jsr166backport "io.projectreactor:jsr166:1.0.0.BUILD-SNAPSHOT"
-	}
-
-	jar {
-		manifest {
-			instruction 'Import-Package', bundleImportPackages.join(',')
-		}
-	}
-
-	test {
-	  jvmArgs = ["-Xbootclasspath/p:" + configurations.jsr166backport.asPath]
-	}
-
-}
-
-project('reactor-stream') {
-	description = 'Reactor Stream components'
-
-	apply plugin: 'osgi'
-	apply plugin: 'groovy'
-
-	task testNG(type: Test) {
-		useTestNG()
-	}
-
-	dependencies {
-		compile project(':reactor-core')
-		optional project(':reactor-net')
-		optional project(':reactor-codec')
-
-		testCompile "org.reactivestreams:reactive-streams-tck:1.0.0"
-		testCompile project(':reactor-bus')
-		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
-	}
-}
-
-project('reactor-bus') {
-	description = 'Reactor Event Bus components'
-
-	apply plugin: 'osgi'
-	apply plugin: 'groovy'
-
-	ext.bundleImportPackages = [
-			'com.jayway.jsonpath;resolution:=optional',
-			'com.jayway.jsonpath.internal;resolution:=optional',
-			'com.jayway.jsonpath.spi;resolution:=optional',
-			'com.fasterxml.jackson.core;resolution:=optional',
-			'com.fasterxml.jackson.databind;resolution:=optional',
-			'com.fasterxml.jackson.databind.node;resolution:=optional',
-			'com.fasterxml.jackson.databind.type;resolution:=optional',
-			'*'
-	]
-
-	configurations {
-		jsr166e
-		jarjar
-	}
-
-	task jsr166eRepackJar(type: Jar) { repackJar ->
-		repackJar.baseName = "reactor-jsr166e-repack"
-		repackJar.version = '1.0'
-
-		doLast() {
-			project.ant {
-				taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask",
-						classpath: configurations.jarjar.asPath
-				jarjar(destfile: repackJar.archivePath) {
-					configurations.jsr166e.each { originalJar ->
-						zipfileset(src: originalJar)
-					}
-					rule(pattern: "jsr166e.**", result: "reactor.jarjar.jsr166e.@1")
-				}
-			}
-		}
-	}
-
-	dependencies {
-		jarjar("com.googlecode.jarjar:jarjar:1.3")
-
-		compile project(':reactor-core')
-
-		jsr166e "io.gatling:jsr166e:1.0@jar"
-		compile(files(jsr166eRepackJar))
-
-		// Rich Collections
-		compile "com.goldmansachs:gs-collections:$gsCollectionsVersion"
-
-		optional "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
-		optional "com.jayway.jsonpath:json-path:$jsonPathVersion"
-	}
-
-	jar {
-		manifest {
-			instruction 'Import-Package', bundleImportPackages.join(',')
-		}
-
-		dependsOn jsr166eRepackJar
-		from(zipTree(jsr166eRepackJar.archivePath)) {
-			include "reactor/jarjar/jsr166e/**"
-		}
-	}
-}
-
 project('reactor-net') {
 	description = 'Reactor TCP components'
 
@@ -320,10 +182,10 @@ project('reactor-net') {
 	]
 
 	dependencies {
-		compile project(':reactor-core')
+		compile "io.projectreactor:reactor-core:$reactorVersion"
 
 		//Improved Http routing
-		optional(project(':reactor-bus')) {
+		optional("io.projectreactor:reactor-bus:$reactorVersion") {
 			transitive = false
 		}
 
@@ -334,11 +196,11 @@ project('reactor-net') {
 		optional "io.netty:netty-all:$nettyVersion"
 
 		// Testing
-		testCompile project(':reactor-stream')
+		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
 		testCompile "org.apache.httpcomponents:fluent-hc:4.3.6"
 		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
 
-		testRuntime project(':reactor-logback'),
+		testRuntime "io.projectreactor:reactor-logback:$reactorVersion"
 				"org.slf4j:jcl-over-slf4j:$slf4jVersion"
 	}
 
@@ -349,21 +211,11 @@ project('reactor-net') {
 	}
 }
 
-project('reactor-alloc') {
-	description = 'Pooling utilities'
-
-	dependencies {
-		compile project(':reactor-core')
-
-		optional project(':reactor-bus')
-	}
-}
-
 project('reactor-codec') {
 	description = 'Codec families'
 
 	dependencies {
-		compile project(':reactor-core')
+		compile "io.projectreactor:reactor-core:$reactorVersion"
 
 		// JSON handling
 		optional "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
@@ -375,42 +227,16 @@ project('reactor-codec') {
 	}
 }
 
-project('reactor-logback') {
-	description = 'Async Logback appender implementation'
-
-	apply plugin: 'application'
-	apply plugin: 'com.github.johnrengelman.shadow'
-
-	mainClassName = "reactor.logback.DurableLogUtility"
-	ext.baseName = "${archivesBaseName}-${version}"
-
-	dependencies {
-		compile project(':reactor-core')
-
-		compile "ch.qos.logback:logback-classic:$logbackVersion",
-				"net.openhft:chronicle:$openHftChronicleVersion",
-				"commons-cli:commons-cli:1.2"
-	}
-
-	shadowJar {
-		dependencies {
-			include(dependency("net.openhft:chronicle:$openHftChronicleVersion"))
-			include(dependency("commons-cli:commons-cli:1.2"))
-			//include(project(":reactor-core"))
-		}
-	}
-}
-
 project('reactor-aeron') {
 	description = 'Integration of Aeron library with reactor'
 
 	dependencies {
-		compile project(':reactor-core')
+		compile "io.projectreactor:reactor-core:$reactorVersion"
 
 		compile "uk.co.real-logic:aeron-driver:$aeronVersion",
 				"uk.co.real-logic:aeron-client:$aeronVersion"
 
-		testCompile project(':reactor-stream')
+		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
 		testCompile project(':reactor-net')
 		testCompile "org.reactivestreams:reactive-streams-tck:1.0.0"
     }
