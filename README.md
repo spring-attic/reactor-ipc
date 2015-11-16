@@ -1,6 +1,5 @@
 # reactor-io
 
-[![Build Status](https://drone.io/github.com/reactor/reactor-io/status.png)](https://drone.io/github.com/reactor/reactor-io/latest)
 
 ## Reference
 http://next.projectreactor.io/io/docs/reference/
