@@ -1,6 +1,8 @@
 # reactor-io
 
-[![Build Status](https://drone.io/github.com/reactor/reactor-io/status.png)](https://drone.io/github.com/reactor/reactor-io/latest)
+[![Join the chat at https://gitter.im/reactor/reactor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/reactor/reactor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+
 
 Backpressure-ready components to encode, decode, send (unicast, multicast or request/response) and serve connections. Currently living under https://github.com/reactor/reactor :
 - reactor-aeron : Efficient Unicast/Multicast reactive-streams transport for Aeron
