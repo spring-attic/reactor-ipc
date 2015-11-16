@@ -212,7 +212,7 @@ project('reactor-net') {
 
 	jar {
 		manifest {
-			//instruction 'Import-Package', bundleImportPackages.join(',')
+			instruction 'Import-Package', bundleImportPackages.join(',')
 		}
 	}
 }
