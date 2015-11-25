@@ -25,6 +25,7 @@ import org.reactivestreams.Subscription;
 import reactor.Publishers;
 import reactor.core.support.Bounded;
 import reactor.fn.Function;
+import reactor.io.buffer.Buffer;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
 
@@ -221,6 +222,43 @@ public abstract class BaseHttpChannel<IN, OUT> implements Bounded, HttpChannel<I
 	protected abstract void doSubscribeHeaders(Subscriber<? super Void> s);
 
 	protected abstract Publisher<Void> writeWithAfterHeaders(Publisher<? extends OUT> s);
+
+	protected abstract Publisher<Void> writeWithBufferAfterHeaders(Publisher<? extends Buffer> s);
+
+	@Override
+	public Publisher<Void> writeBufferWith(final Publisher<? extends Buffer> dataStream) {
+		return new Publisher<Void>() {
+			@Override
+			public void subscribe(final Subscriber<? super Void> s) {
+				if(markHeadersAsFlushed()){
+					doSubscribeHeaders(new Subscriber<Void>() {
+						@Override
+						public void onSubscribe(Subscription sub) {
+							sub.request(Long.MAX_VALUE);
+						}
+
+						@Override
+						public void onNext(Void aVoid) {
+							//Ignore
+						}
+
+						@Override
+						public void onError(Throwable t) {
+							s.onError(t);
+						}
+
+						@Override
+						public void onComplete() {
+							writeWithBufferAfterHeaders(dataStream).subscribe(s);
+						}
+					});
+				}
+				else{
+					writeWithBufferAfterHeaders(dataStream).subscribe(s);
+				}
+			}
+		};
+	}
 
 	@Override
 	public Publisher<Void> writeWith(final Publisher<? extends OUT> source) {

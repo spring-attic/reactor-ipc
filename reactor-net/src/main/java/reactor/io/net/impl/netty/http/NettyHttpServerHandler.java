@@ -94,7 +94,6 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
 				@Override
 				public void onError(Throwable t) {
-					super.onError(t);
 					log.error("Error processing connection. Closing the channel.", t);
 					if (request.markHeadersAsFlushed()) {
 						request.delegate()

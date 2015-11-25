@@ -65,11 +65,6 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	}
 
 	@Override
-	public Publisher<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
-		return tcpStream.writeWith(dataStream);
-	}
-
-	@Override
 	public Publisher<Buffer> input() {
 		return this;
 	}
@@ -114,6 +109,11 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	@Override
 	protected Publisher<Void> writeWithAfterHeaders(Publisher<? extends Buffer> writer) {
 		return tcpStream.writeWith(writer);
+	}
+
+	@Override
+	protected Publisher<Void> writeWithBufferAfterHeaders(Publisher<? extends Buffer> s) {
+		return tcpStream.writeBufferWith(s);
 	}
 
 	@Override

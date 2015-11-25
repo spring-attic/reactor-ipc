@@ -16,6 +16,7 @@
 
 package reactor.io.net.http;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,6 +26,8 @@ import org.reactivestreams.Publisher;
 import reactor.Publishers;
 import reactor.fn.Predicate;
 import reactor.fn.timer.Timer;
+import reactor.io.IO;
+import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.http.model.HttpHeaders;
@@ -130,7 +133,6 @@ public abstract class HttpServer<IN, OUT>
 		return this;
 	}
 
-
 	/**
 	 * Listen for HTTP PUT on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry
@@ -169,6 +171,7 @@ public abstract class HttpServer<IN, OUT>
 		return this;
 	}
 
+
 	protected void enableWebsocket(){
 		hasWebsocketEndpoints = true;
 	}
@@ -188,6 +191,66 @@ public abstract class HttpServer<IN, OUT>
 	public final HttpServer<IN, OUT> delete(String path,
 	                                        final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.delete(path), handler);
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry
+	 * to invoke the matching handlers.
+	 * <p>
+	 * Additional regex matching is available when reactor-bus is on the classpath.
+	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 *
+	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * @param file the File to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer<IN, OUT> file(String path,
+			final File file) {
+		file(ChannelMappings.get(path), file.getAbsolutePath());
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry
+	 * to invoke the matching handlers.
+	 * <p>
+	 * Additional regex matching is available when reactor-bus is on the classpath.
+	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 *
+	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * @param filepath the Path to the file to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer<IN, OUT> file(String path,
+			final String filepath) {
+		file(ChannelMappings.get(path), filepath);
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry
+	 * to invoke the matching handlers.
+	 * <p>
+	 * Additional regex matching is available when reactor-bus is on the classpath.
+	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 *
+	 * @param condition       a {@link Predicate} to match the incoming connection with registered handler
+	 * @param filepath the Path to the file to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> condition,
+			final String filepath) {
+		final Publisher<Buffer> file = IO.readFile(filepath);
+		route(condition, new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+			@Override
+			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
+				return channel.writeBufferWith(file);
+			}
+		});
 		return this;
 	}
 
