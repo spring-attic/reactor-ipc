@@ -16,6 +16,7 @@
 package reactor.io.net.http
 
 import reactor.io.net.ReactiveNet
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -23,6 +24,7 @@ import java.util.concurrent.CountDownLatch
 /**
  * @author Stephane Maldini
  */
+@Ignore
 class ConsoleSpec extends Specification {
 
 	def "http responds to requests from clients"() {
