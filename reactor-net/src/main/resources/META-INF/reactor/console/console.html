@@ -1,0 +1,224 @@
+<!doctype html>
+<!--
+  ~ Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html>
+<head>
+    <title>Network | Hierarchical layout</title>
+
+    <style type="text/css">
+        body {
+            font: 10pt sans;
+        }
+
+        #mynetwork {
+            border: 1px solid lightgray;
+            height: 300px;
+        }
+    </style>
+
+    <script type="text/javascript" src="console/vis.min.js"></script>
+    <script type="text/javascript" src="console/console.js"></script>
+    <link href="console/console.css" rel="stylesheet" type="text/css"/>
+    <link href="console/vis.min.css" rel="stylesheet" type="text/css"/>
+
+
+    <script type="text/javascript">
+        var network = null;
+
+        var nodes = new vis.DataSet();
+        var edges = new vis.DataSet();
+
+        function destroy() {
+            resetAllNodes();
+            if (network !== null) {
+                network.destroy();
+                network = null;
+            }
+        }
+
+        var checkTest = false;
+
+        function test(){
+            checkTest = !checkTest;
+            for(var edge in edges.getIds()){
+                console.log(edge);
+                edges.update({id:edge, arrows:"to", color:checkTest ? "red" : "green"});
+            }
+        }
+
+        function resetAllNodes() {
+            nodes.clear();
+            edges.clear();
+        }
+
+        function resetAllNodesStabilize() {
+            resetAllNodes();
+            network.stabilize();
+        }
+
+        function draw() {
+            destroy();
+            var container = document.getElementById('mynetwork');
+            var options = {
+                layout: {
+                    hierarchical: {
+                        direction: "LR",
+                        sortMethod: "directed"
+                    },
+                    randomSeed:2
+                },
+                interaction: {
+                    dragNodes: false
+                }
+            };
+            network = new vis.Network(container, {}, options);
+
+            var task =  function(){ test();setTimeout(task, 200); };
+
+            setTimeout(task, 200);
+
+            // add event listeners
+            network.on('select', function (params) {
+                document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+            });
+
+            // randomly create some nodes and edges
+            loadJSON("/api/stream", function(json){
+                //var data = getScaleFreeNetwork(nodeCount)
+                nodes.add(json.streams);
+                edges.add(json.stream_edges);
+                network.setData({nodes: nodes, edges: edges});
+
+                //font: {size:15, color:'red', face:'courier', strokeWidth:3, strokeColor:'#ffffff'}
+                // create a network
+
+            }, function(error){
+                console.log(error);
+            });
+
+        }
+
+    </script>
+</head>
+
+<body onload="draw();">
+<h2>Stream Monitor <a href="#" onclick="draw();return false;">Reset</a></h2>
+
+<div id="mynetwork"></div>
+
+<h2><a href="#" onclick="test();return false;">Update</a></h2>
+<p id="selection"></p>
+
+<p>
+    <label for="strategy">Strategy:</label>
+    <select id="strategy">
+        <option value="continuous" selected>Continuous (CPU intensive)</option>
+        <option value="discrete">Discrete</option>
+        <option value="static">Static</option>
+    </select>
+</p>
+
+
+<div id="visualization"></div>
+
+<script type="text/javascript">
+    var DELAY = 1000; // delay in ms to add new data points
+
+    var strategy = document.getElementById('strategy');
+
+    // create a graph2d with an (currently empty) dataset
+    var container = document.getElementById('visualization');
+    var dataset = new vis.DataSet();
+
+    var options = {
+        start: vis.moment().add(-30, 'seconds'), // changed so its faster
+        end: vis.moment(),
+        dataAxis: {
+            left: {
+                range: {
+                    min:-10, max: 10
+                }
+            }
+        },
+        drawPoints: {
+            style: 'circle' // square, circle
+        },
+        shaded: {
+            orientation: 'bottom' // top, bottom
+        }
+    };
+    var graph2d = new vis.Graph2d(container, dataset, options);
+
+    // a function to generate data points
+    function y(x) {
+        return (Math.sin(x / 2) + Math.cos(x / 4)) * 5;
+    }
+
+    function renderStep() {
+        // move the window (you can think of different strategies).
+        var now = vis.moment();
+        var range = graph2d.getWindow();
+        var interval = range.end - range.start;
+        switch (strategy.value) {
+            case 'continuous':
+                // continuously move the window
+                graph2d.setWindow(now - interval, now, {animation: false});
+                requestAnimationFrame(renderStep);
+                break;
+
+            case 'discrete':
+                graph2d.setWindow(now - interval, now, {animation: false});
+                setTimeout(renderStep, DELAY);
+                break;
+
+            default: // 'static'
+                // move the window 90% to the left when now is larger than the end of the window
+                if (now > range.end) {
+                    graph2d.setWindow(now - 0.1 * interval, now + 0.9 * interval);
+                }
+                setTimeout(renderStep, DELAY);
+                break;
+        }
+    }
+    renderStep();
+
+    /**
+     * Add a new datapoint to the graph
+     */
+    function addDataPoint() {
+        // add a new data point to the dataset
+        var now = vis.moment();
+        dataset.add({
+            x: now,
+            y: y(now / 1000)
+        });
+
+        // remove all data points which are no longer visible
+        var range = graph2d.getWindow();
+        var interval = range.end - range.start;
+        var oldIds = dataset.getIds({
+            filter: function (item) {
+                return item.x < range.start - interval;
+            }
+        });
+        dataset.remove(oldIds);
+
+        setTimeout(addDataPoint, DELAY);
+    }
+    addDataPoint();
+</script>
+</body>
+</html>

@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package reactor.io.net;
 
 import reactor.Timers;
-import reactor.core.publisher.convert.DependencyUtils;
 import reactor.core.support.Assert;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
+import reactor.io.net.console.Console;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.HttpServer;
 import reactor.io.net.impl.netty.http.NettyHttpClient;
@@ -32,8 +33,7 @@ import reactor.io.net.tcp.TcpServer;
 import reactor.io.net.udp.DatagramServer;
 
 /**
- * Reactive Client/Server Network facilities
- * <p>
+ * Reactive Client/Server Network facilities <p>
  * <pre>
  * {@code
  * //echo server
@@ -57,15 +57,16 @@ import reactor.io.net.udp.DatagramServer;
  *      return input.writeWith(Publishers.period(1l));
  * });
  *
- * //Assigning the same codec to a client and a server greatly improve readability and provide for extended type safety.
- * ReactiveNet.tcpServer(spec -> spec.preprocessor(CodecPreprocessor.from(kryoCodec)).connect("localhost", 1235)).start( input -> {
+ * //Assigning the same codec to a client and a server greatly improve readability and provide for extended type
+ * safety.
+ * ReactiveNet.tcpServer(spec -> spec.preprocessor(CodecPreprocessor.from(kryoCodec)).connect("localhost", 1235)).start(
+ * input -> {
  *      input.subscribe(Subscribers.unbounded(log::info));
  *   return input.writeWith(Publishers.just("hello"));
  * });
  *
  * }
  * </pre>
- *
  * @author Stephane Maldini
  */
 public class ReactiveNet {
@@ -84,46 +85,43 @@ public class ReactiveNet {
 	// Marker interfaces to avoid complicated generic dance for Java < 8 Users.
 
 	public interface TcpServerFactory<IN, OUT>
-	  extends Function<Spec.TcpServerSpec<IN, OUT>, Spec.TcpServerSpec<IN, OUT>> {
+			extends Function<Spec.TcpServerSpec<IN, OUT>, Spec.TcpServerSpec<IN, OUT>> {
+
 	}
 
 	public interface TcpClientFactory<IN, OUT>
-	  extends Function<Spec.TcpClientSpec<IN, OUT>, Spec.TcpClientSpec<IN, OUT>> {
+			extends Function<Spec.TcpClientSpec<IN, OUT>, Spec.TcpClientSpec<IN, OUT>> {
+
 	}
 
 	public interface HttpServerFactory<IN, OUT>
-	  extends Function<Spec.HttpServerSpec<IN, OUT>, Spec.HttpServerSpec<IN, OUT>> {
+			extends Function<Spec.HttpServerSpec<IN, OUT>, Spec.HttpServerSpec<IN, OUT>> {
+
 	}
 
 	public interface HttpClientFactory<IN, OUT>
-	  extends Function<Spec.HttpClientSpec<IN, OUT>, Spec.HttpClientSpec<IN, OUT>> {
+			extends Function<Spec.HttpClientSpec<IN, OUT>, Spec.HttpClientSpec<IN, OUT>> {
+
 	}
 
 	public interface UdpServerFactory<IN, OUT>
-	  extends Function<Spec.DatagramServerSpec<IN, OUT>, Spec.DatagramServerSpec<IN, OUT>> {
+			extends Function<Spec.DatagramServerSpec<IN, OUT>, Spec.DatagramServerSpec<IN, OUT>> {
+
 	}
 
-	// TCP
+	// Console
 
 	/**
 	 * Bind a new TCP server to "loopback" on port {@literal 12012}. By default the default server implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
+	 * scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the
+	 * relevant library dependencies are on the classpath. <p> To reply data on the active connection, {@link
+	 * ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
+	 * {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
+	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
 	public static TcpServer<Buffer, Buffer> tcpServer() {
@@ -133,29 +131,18 @@ public class ReactiveNet {
 	/**
 	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when server is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on loopback
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
@@ -165,31 +152,19 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
-	 * implementation is scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when server is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * implementation is scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from -
+	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
@@ -198,33 +173,21 @@ public class ReactiveNet {
 	}
 
 	/**
-	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is
-	 * scanned
+	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when server is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
-	 * @param port        the port to listen on the passed bind address
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
@@ -240,110 +203,68 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new TCP server to the specified bind address and port. By default the default server implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when server is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the
+	 * relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> TcpServer<IN, OUT> tcpServer(
-	  Function<? super Spec.TcpServerSpec<IN, OUT>, ? extends Spec.TcpServerSpec<IN, OUT>> configuringFunction
-	) {
+	public static <IN, OUT> TcpServer<IN, OUT> tcpServer(Function<? super Spec.TcpServerSpec<IN, OUT>, ? extends Spec.TcpServerSpec<IN, OUT>> configuringFunction) {
 		return tcpServer(DEFAULT_TCP_SERVER_TYPE, configuringFunction);
 	}
 
 	/**
-	 * Bind a new TCP server to the specified bind address and port.
-	 * <p>
-	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when server is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * Bind a new TCP server to the specified bind address and port. <p> A {@link TcpServer} is a specific kind of
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from -
+	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
-	 * @param serverFactory       the given implementation class for this peer
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param serverFactory the given implementation class for this peer
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> TcpServer<IN, OUT> tcpServer(
-	  Class<? extends TcpServer> serverFactory,
-	  Function<? super Spec.TcpServerSpec<IN, OUT>, ? extends Spec.TcpServerSpec<IN, OUT>> configuringFunction
-	) {
-		return configuringFunction.apply(new Spec.TcpServerSpec<IN, OUT>(serverFactory)).get();
+	public static <IN, OUT> TcpServer<IN, OUT> tcpServer(Class<? extends TcpServer> serverFactory,
+			Function<? super Spec.TcpServerSpec<IN, OUT>, ? extends Spec.TcpServerSpec<IN, OUT>> configuringFunction) {
+		return configuringFunction.apply(new Spec.TcpServerSpec<IN, OUT>(serverFactory))
+		                          .get();
 	}
-
 
 	/**
 	 * Bind a new TCP client to the localhost on port 12012. By default the default client implementation is scanned
 	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
 	public static TcpClient<Buffer, Buffer> tcpClient() {
@@ -352,31 +273,19 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new TCP client to the specified connect address and port 12012. By default the default client
-	 * implementation is scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * implementation is scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from -
+	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress the address to connect to on port 12012
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
@@ -386,31 +295,19 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new TCP client to "loopback" on the the specified port. By default the default client implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the
+	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to connect to on "loopback"
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
@@ -420,33 +317,21 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the
+	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress the address to connect to
-	 * @param port        the port to connect to
+	 * @param port the port to connect to
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
 	public static TcpClient<Buffer, Buffer> tcpClient(final String bindAddress, final int port) {
@@ -461,88 +346,57 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the
+	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> TcpClient<IN, OUT> tcpClient(
-	  Function<? super Spec.TcpClientSpec<IN, OUT>, ? extends Spec.TcpClientSpec<IN, OUT>> configuringFunction
-	) {
+	public static <IN, OUT> TcpClient<IN, OUT> tcpClient(Function<? super Spec.TcpClientSpec<IN, OUT>, ? extends Spec.TcpClientSpec<IN, OUT>> configuringFunction) {
 		return tcpClient(DEFAULT_TCP_CLIENT_TYPE, configuringFunction);
 	}
 
 	/**
-	 * Bind a new TCP client to the specified connect address and port.
-	 * <p>
-	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * Bind a new TCP client to the specified connect address and port. <p> A {@link TcpClient} is a specific kind of
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from -
+	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
-	 * @param clientFactory       the given implementation class for this peer
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param clientFactory the given implementation class for this peer
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> TcpClient<IN, OUT> tcpClient(
-	  Class<? extends TcpClient> clientFactory,
-	  Function<? super Spec.TcpClientSpec<IN, OUT>, ? extends Spec.TcpClientSpec<IN, OUT>> configuringFunction
-	) {
-		return configuringFunction.apply(new Spec.TcpClientSpec<IN, OUT>(clientFactory)).get();
+	public static <IN, OUT> TcpClient<IN, OUT> tcpClient(Class<? extends TcpClient> clientFactory,
+			Function<? super Spec.TcpClientSpec<IN, OUT>, ? extends Spec.TcpClientSpec<IN, OUT>> configuringFunction) {
+		return configuringFunction.apply(new Spec.TcpClientSpec<IN, OUT>(clientFactory))
+		                          .get();
 	}
 
 	// HTTP
 
 	/**
 	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
-	 *
 	 * @return a simple HTTP Server
 	 */
 	public static HttpServer<Buffer, Buffer> httpServer() {
@@ -551,7 +405,6 @@ public class ReactiveNet {
 
 	/**
 	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
-	 *
 	 * @param bindAddress address to listen for (e.g. 0.0.0.0 or 127.0.0.1)
 	 * @return a simple HTTP server
 	 */
@@ -561,7 +414,6 @@ public class ReactiveNet {
 
 	/**
 	 * Build a simple Netty HTTP server listening on 127.0.0.1 and the passed port
-	 *
 	 * @param port the port to listen to
 	 * @return a simple HTTP server
 	 */
@@ -571,9 +423,8 @@ public class ReactiveNet {
 
 	/**
 	 * Build a simple Netty HTTP server listening othe passed bind address and port
-	 *
 	 * @param bindAddress address to listen for (e.g. 0.0.0.0 or 127.0.0.1)
-	 * @param port        the port to listen to
+	 * @param port the port to listen to
 	 * @return a simple HTTP server
 	 */
 	public static HttpServer<Buffer, Buffer> httpServer(final String bindAddress, final int port) {
@@ -588,32 +439,27 @@ public class ReactiveNet {
 
 	/**
 	 * Build a Netty HTTP Server with the passed factory
-	 *
 	 * @param configuringFunction a factory to build server configuration (see also {@link HttpServerFactory}
-	 * @param <IN>                incoming data type
-	 * @param <OUT>               outgoing data type
+	 * @param <IN> incoming data type
+	 * @param <OUT> outgoing data type
 	 * @return a Netty HTTP server with the passed factory
 	 */
-	public static <IN, OUT> HttpServer<IN, OUT> httpServer(
-	  Function<? super Spec.HttpServerSpec<IN, OUT>, ? extends Spec.HttpServerSpec<IN, OUT>> configuringFunction
-	) {
+	public static <IN, OUT> HttpServer<IN, OUT> httpServer(Function<? super Spec.HttpServerSpec<IN, OUT>, ? extends Spec.HttpServerSpec<IN, OUT>> configuringFunction) {
 		return httpServer(DEFAULT_HTTP_SERVER_TYPE, configuringFunction);
 	}
 
 	/**
-	 * @param serverFactory       a target implementation server class
+	 * @param serverFactory a target implementation server class
 	 * @param configuringFunction a factory to build server configuration (see also {@link HttpServerFactory}
-	 * @param <IN>                incoming data type
-	 * @param <OUT>               outgoing data type
+	 * @param <IN> incoming data type
+	 * @param <OUT> outgoing data type
 	 * @return a simple HTTP server
 	 */
-	public static <IN, OUT> HttpServer<IN, OUT> httpServer(
-	  Class<? extends HttpServer> serverFactory,
-	  Function<? super Spec.HttpServerSpec<IN, OUT>, ? extends Spec.HttpServerSpec<IN, OUT>> configuringFunction
-	) {
-		return configuringFunction.apply(new Spec.HttpServerSpec<IN, OUT>(serverFactory)).get();
+	public static <IN, OUT> HttpServer<IN, OUT> httpServer(Class<? extends HttpServer> serverFactory,
+			Function<? super Spec.HttpServerSpec<IN, OUT>, ? extends Spec.HttpServerSpec<IN, OUT>> configuringFunction) {
+		return configuringFunction.apply(new Spec.HttpServerSpec<IN, OUT>(serverFactory))
+		                          .get();
 	}
-
 
 	/**
 	 * @return a simple HTTP client
@@ -629,113 +475,70 @@ public class ReactiveNet {
 	}
 
 	/**
-	 * Bind a new HTTP client to the specified connect address and port. By default the default server
-	 * implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link HttpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * Bind a new HTTP client to the specified connect address and port. By default the default server implementation is
+	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
+	 * dependencies are on the classpath. <p> A {@link HttpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> HttpClient<IN, OUT> httpClient(
-	  Function<? super Spec.HttpClientSpec<IN, OUT>, ? extends Spec.HttpClientSpec<IN, OUT>> configuringFunction
-	) {
+	public static <IN, OUT> HttpClient<IN, OUT> httpClient(Function<? super Spec.HttpClientSpec<IN, OUT>, ? extends Spec.HttpClientSpec<IN, OUT>> configuringFunction) {
 		return httpClient(DEFAULT_HTTP_CLIENT_TYPE, configuringFunction);
 	}
 
 	/**
-	 * Bind a new HTTP client to the specified connect address and port. By default the default server
-	 * implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * A {@link HttpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
-	 * emit:
-	 * - onNext {@link ReactiveChannel} to consume data from
-	 * - onComplete when client is shutdown
-	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * Bind a new HTTP client to the specified connect address and port. By default the default server implementation is
+	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
+	 * dependencies are on the classpath. <p> A {@link HttpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
 	 *
-	 * @param clientFactory       the given implementation class for this peer
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param clientFactory the given implementation class for this peer
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> HttpClient<IN, OUT> httpClient(
-	  Class<? extends HttpClient> clientFactory,
-	  Function<? super Spec.HttpClientSpec<IN, OUT>, ? extends Spec.HttpClientSpec<IN, OUT>> configuringFunction
-	) {
-		return configuringFunction.apply(new Spec.HttpClientSpec<IN, OUT>(clientFactory)).get();
+	public static <IN, OUT> HttpClient<IN, OUT> httpClient(Class<? extends HttpClient> clientFactory,
+			Function<? super Spec.HttpClientSpec<IN, OUT>, ? extends Spec.HttpClientSpec<IN, OUT>> configuringFunction) {
+		return configuringFunction.apply(new Spec.HttpClientSpec<IN, OUT>(clientFactory))
+		                          .get();
 	}
 
 	// UDP
 
 	/**
-	 * Bind a new UDP server to the "loopback" address. By default the default server implementation is scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * <p>
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * Bind a new UDP server to the "loopback" address. By default the default server implementation is scanned from the
+	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
+	 * classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read
+	 * any incoming data. <p> To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to
+	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity}
+	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
+	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
+	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
+	 * they have beem receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
 	public static DatagramServer<Buffer, Buffer> udpServer() {
@@ -743,27 +546,17 @@ public class ReactiveNet {
 	}
 
 	/**
-	 * Bind a new UDP server to the given bind address. By default the default server implementation is scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * <p>
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * Bind a new UDP server to the given bind address. By default the default server implementation is scanned from the
+	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
+	 * classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read
+	 * any incoming data. <p> To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to
+	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity}
+	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
+	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
+	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
+	 * they have beem receiving IO events.
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
@@ -773,27 +566,16 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new UDP server to the "loopback" address and specified port. By default the default server implementation
-	 * is scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * <p>
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
+	 * is scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
+	 * dependencies are on the classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add
+	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
+	 * ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
+	 * {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
+	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on the passed bind address
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
@@ -802,35 +584,23 @@ public class ReactiveNet {
 	}
 
 	/**
-	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * <p>
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
+	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
+	 * on the classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to
+	 * read any incoming data. <p> To reply data on the active connection, {@link ReactiveChannel#writeWith} can
+	 * subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link
+	 * reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
+	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
+	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
+	 * channels will run on the same thread they have beem receiving IO events.
 	 *
-	 * @param port        the port to listen on the passed bind address
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
 	public static DatagramServer<Buffer, Buffer> udpServer(final String bindAddress, final int port) {
-		return udpServer(new Function<Spec.DatagramServerSpec<Buffer, Buffer>, Spec.DatagramServerSpec<Buffer,
-		  Buffer>>() {
+		return udpServer(new Function<Spec.DatagramServerSpec<Buffer, Buffer>, Spec.DatagramServerSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.DatagramServerSpec<Buffer, Buffer> apply(Spec.DatagramServerSpec<Buffer, Buffer> serverSpec) {
 				serverSpec.timer(Timers.globalOrNull());
@@ -841,76 +611,184 @@ public class ReactiveNet {
 
 	/**
 	 * Bind a new UDP server to the specified bind address and port. By default the default server implementation is
-	 * scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
-	 * library dependencies are on the classpath.
-	 * <p>
-	 * <p>
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
+	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
+	 * dependencies are on the classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add
+	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
+	 * ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
+	 * {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
+	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> DatagramServer<IN, OUT> udpServer(
-	  Function<? super Spec.DatagramServerSpec<IN, OUT>, ? extends Spec.DatagramServerSpec<IN, OUT>>
-		configuringFunction
-	) {
+	public static <IN, OUT> DatagramServer<IN, OUT> udpServer(Function<? super Spec.DatagramServerSpec<IN, OUT>, ? extends Spec.DatagramServerSpec<IN, OUT>> configuringFunction) {
 		return udpServer(DEFAULT_UDP_SERVER_TYPE, configuringFunction);
 	}
 
 	/**
-	 * Bind a new UDP server to the specified bind address and port.
-	 * <p>
-	 * <p>
-	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
-	 * data.
-	 * <p>
-	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p>
-	 * Note that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode.
-	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every
-	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
-	 * <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * <p>
-	 * By default the type of emitted data or received data is {@link Buffer}
-	 *
-	 * @param serverFactory       the given implementation class for this peer
+	 * Bind a new UDP server to the specified bind address and port. <p> <p> From the emitted {@link ReactiveChannel},
+	 * one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the active connection,
+	 * {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
+	 * that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read /
+	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
+	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
+	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events. <p> By default
+	 * the type of emitted data or received data is {@link Buffer}
+	 * @param serverFactory the given implementation class for this peer
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @param <IN>                the given input type received by this peer. Any configured codec decoder must match
-	 *                            this type.
-	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
-	 *                            this type.
+	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
+	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static <IN, OUT> DatagramServer<IN, OUT> udpServer(
-	  Class<? extends DatagramServer> serverFactory,
-	  Function<? super Spec.DatagramServerSpec<IN, OUT>, ? extends Spec.DatagramServerSpec<IN, OUT>>
-		configuringFunction
-	) {
-		return configuringFunction.apply(new Spec.DatagramServerSpec<IN, OUT>(serverFactory)).get();
+	public static <IN, OUT> DatagramServer<IN, OUT> udpServer(Class<? extends DatagramServer> serverFactory,
+			Function<? super Spec.DatagramServerSpec<IN, OUT>, ? extends Spec.DatagramServerSpec<IN, OUT>> configuringFunction) {
+		return configuringFunction.apply(new Spec.DatagramServerSpec<IN, OUT>(serverFactory))
+		                          .get();
 	}
 
+	/**
+	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
+	 * implementation is scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
+	 * {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
+	 * that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read /
+	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
+	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
+	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
+	 */
+	public static Console console() {
+		return console(DEFAULT_BIND_ADDRESS);
+	}
+
+	/**
+	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on loopback
+	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
+	 */
+	public static TcpServer<Buffer, Buffer> console(int port) {
+		return tcpServer(DEFAULT_BIND_ADDRESS, port);
+	}
+
+	/**
+	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
+	 * implementation is scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from -
+	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
+	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
+	 */
+	public static Console console(String bindAddress) {
+		return console(bindAddress, DEFAULT_PORT);
+	}
+
+
+	/**
+	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on the passed bind address
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
+	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
+	 */
+	public static Console console(final String bindAddress, final int port) {
+		return console(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
+			@Override
+			public Spec.HttpServerSpec<Buffer, Buffer> apply(Spec.HttpServerSpec<Buffer, Buffer> serverSpec) {
+				serverSpec.timer(Timers.globalOrNull());
+				return serverSpec.listen(bindAddress, port);
+			}
+		});
+	}
+	// TCP
+
+	/**
+	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
+	 * scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the
+	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
+	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
+	 */
+	public static Console console(
+			Function<? super Spec.HttpServerSpec<Buffer, Buffer>, ? extends Spec.HttpServerSpec<Buffer, Buffer>>
+					configuringFunction) {
+		return console(DEFAULT_HTTP_SERVER_TYPE, configuringFunction);
+	}
+
+	/**
+	 * Bind a new TCP client to the specified connect address and port. <p> A {@link TcpClient} is a specific kind of
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ReactiveChannel} to consume data from -
+	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param consoleFactory the given implementation class for this peer
+	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
+	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
+	 */
+	public static Console console(Class<? extends HttpServer> consoleFactory,
+			Function<? super Spec.HttpServerSpec<Buffer, Buffer>, ? extends Spec.HttpServerSpec<Buffer, Buffer>>
+					configuringFunction) {
+		return Console.create(configuringFunction.apply(new Spec.HttpServerSpec<Buffer, Buffer>(consoleFactory)).get());
+	}
 
 	/**
 	 * Utils to read the ReactiveChannel underlying channel
@@ -923,10 +801,9 @@ public class ReactiveNet {
 
 	@SuppressWarnings("unchecked")
 	public static <E, IN, OUT> E delegate(ReactiveChannel<IN, OUT> channelStream, Class<E> clazz) {
-		Assert.isTrue(
-		  clazz.isAssignableFrom(channelStream.delegate().getClass()),
-		  "Underlying channel is not of the given type: " + clazz.getName()
-		);
+		Assert.isTrue(clazz.isAssignableFrom(channelStream.delegate()
+		                                                  .getClass()),
+				"Underlying channel is not of the given type: " + clazz.getName());
 
 		return (E) channelStream.delegate();
 	}
@@ -948,7 +825,8 @@ public class ReactiveNet {
 		try {
 			Class.forName("io.netty.channel.Channel");
 			hasNetty = true;
-		} catch (ClassNotFoundException cnfe) {
+		}
+		catch (ClassNotFoundException cnfe) {
 			//IGNORE
 		}
 		if (hasNetty) {
@@ -957,7 +835,8 @@ public class ReactiveNet {
 			DEFAULT_UDP_SERVER_TYPE = NettyDatagramServer.class;
 			DEFAULT_HTTP_SERVER_TYPE = NettyHttpServer.class;
 			DEFAULT_HTTP_CLIENT_TYPE = NettyHttpClient.class;
-		} else {
+		}
+		else {
 			DEFAULT_UDP_SERVER_TYPE = null;
 			DEFAULT_HTTP_SERVER_TYPE = null;
 			DEFAULT_HTTP_CLIENT_TYPE = null;
@@ -967,7 +846,8 @@ public class ReactiveNet {
 			try {
 				zmqServer = zmqServerClazz();
 				zmqClient = zmqClientClazz();
-			} catch (ClassNotFoundException cnfe) {
+			}
+			catch (ClassNotFoundException cnfe) {
 				//IGNORE
 			}
 
@@ -978,14 +858,12 @@ public class ReactiveNet {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Class<? extends TcpServer> zmqServerClazz() throws ClassNotFoundException{
-		return (Class<? extends TcpServer>)
-				Class.forName("reactor.io.net.impl.zmq.tcp.ZeroMQTcpServer");
+	private static Class<? extends TcpServer> zmqServerClazz() throws ClassNotFoundException {
+		return (Class<? extends TcpServer>) Class.forName("reactor.io.net.impl.zmq.tcp.ZeroMQTcpServer");
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Class<? extends TcpClient> zmqClientClazz() throws ClassNotFoundException{
-		return (Class<? extends TcpClient>)
-				Class.forName("reactor.io.net.impl.zmq.tcp.ZeroMQTcpClient");
+	private static Class<? extends TcpClient> zmqClientClazz() throws ClassNotFoundException {
+		return (Class<? extends TcpClient>) Class.forName("reactor.io.net.impl.zmq.tcp.ZeroMQTcpClient");
 	}
 }
