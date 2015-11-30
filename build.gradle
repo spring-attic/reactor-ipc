@@ -52,6 +52,7 @@ ext {
 	kryoVersion = '3.0.3'
 	snappyVersion = '1.1.1.6'
 	aeronVersion = '0.1.5'
+  	rxJavaVersion = '1.0.14'
 
 	// Testing
 	mockitoVersion = '1.10.19'
@@ -205,6 +206,7 @@ project('reactor-net') {
 		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
 		testCompile "org.apache.httpcomponents:fluent-hc:4.3.6"
 		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
+	  	testCompile "io.reactivex:rxjava:$rxJavaVersion"
 
 		testRuntime "io.projectreactor:reactor-logback:$reactorVersion"
 				"org.slf4j:jcl-over-slf4j:$slf4jVersion"

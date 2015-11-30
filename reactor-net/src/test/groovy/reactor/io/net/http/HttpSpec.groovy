@@ -18,6 +18,7 @@ package reactor.io.net.http
 import reactor.io.net.NetStreams
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.Streams
+import rx.Observable
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -111,9 +112,9 @@ class HttpSpec extends Specification {
 	server.get('/test') { HttpChannelStream<String, String> req ->
 	  throw new Exception()
 	}.get('/test2') { HttpChannelStream<String, String> req ->
-	  req.writeWith(Streams.fail(new Exception()))
+	  req.writeWith(Streams.convert(Observable.error(new Exception())))
 	}.get('/test3') { HttpChannelStream<String, String> req ->
-	  return Streams.fail(new Exception())
+	  return Streams.convert(Observable.error(new Exception()))
 	}
 
 	then: "the server was started"
@@ -131,7 +132,7 @@ class HttpSpec extends Specification {
 			.get('/test')
 			.flatMap { replies ->
 	  			Streams.just(replies.responseStatus().code)
-						.log("received-status")
+						.log("received-status-1")
 			}
 			.next()
 			.await(5, TimeUnit.SECONDS)
@@ -148,7 +149,7 @@ class HttpSpec extends Specification {
 			.get('/test2')
 			.flatMap { replies ->
 	   		replies
-			  .log("received-status")
+			  .log("received-status-2")
 	}
 	.next()
 			.poll(5, TimeUnit.SECONDS)
@@ -163,7 +164,7 @@ class HttpSpec extends Specification {
 			.get('/test3')
 			.flatMap { replies ->
 	  Streams.just(replies.responseStatus().code)
-			  .log("received-status")
+			  .log("received-status-3")
 	}
 	.next()
 			.poll(5, TimeUnit.SECONDS)
