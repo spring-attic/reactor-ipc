@@ -21,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.convert.DependencyUtils;
+import reactor.core.support.Assert;
 import reactor.fn.Function;
 import reactor.fn.Predicate;
 import reactor.io.net.ReactiveChannelHandler;
@@ -152,6 +153,46 @@ public abstract class ChannelMappings<IN, OUT>
 	 */
 	public static Predicate<HttpChannel> ws(String uri) {
 		return http(uri, null, Method.WS);
+	}
+
+	/**
+	 * An alias for {@link ChannelMappings#get} prefix ([prefix]/**), useful for file system mapping.
+	 * <p>
+	 * Creates a {@link Predicate} based on a URI template filtering .
+	 * <p>
+	 * This will listen for WebSocket Method.
+	 *
+	 * @return The new {@link Predicate}.
+	 * @see reactor.bus.selector.UriPathTemplate
+	 * @see Predicate
+	 */
+	public static Predicate<HttpChannel> prefix(String prefix) {
+		Assert.notNull(prefix, "Prefix must be provided");
+		return prefix(prefix, Method.GET);
+	}
+
+	/**
+	 * An alias for {@link ChannelMappings#get} prefix (/**), useful for file system mapping.
+	 * <p>
+	 * Creates a {@link Predicate} based on a URI template filtering .
+	 * <p>
+	 * This will listen for WebSocket Method.
+	 *
+	 * @return The new {@link Predicate}.
+	 * @see reactor.bus.selector.UriPathTemplate
+	 * @see Predicate
+	 */
+	public static Predicate<HttpChannel> prefix(String prefix, Method method) {
+		Assert.notNull(prefix, "Prefix must be provided");
+
+		String target = prefix.startsWith("/") ? prefix : "/".concat(prefix);
+		target = target.endsWith("/") ? target :  prefix.concat("/");
+		if(DependencyUtils.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS) {
+			return new RegistryChannelMappings.HttpSelector(target+"**", null, method);
+		}
+		else{
+			return new HttpPrefixPredicate(target, method);
+		}
 	}
 
 	/**
@@ -294,6 +335,23 @@ public abstract class ChannelMappings<IN, OUT>
 			return (protocol == null || protocol.equals(key.protocol()))
 					&& (method == null || method.equals(key.method()))
 					&& (uri == null || uri.equals(key.uri()));
+		}
+	}
+
+	private static class HttpPrefixPredicate implements Predicate<HttpChannel> {
+
+		final protected Method method;
+		final protected String prefix;
+
+		public HttpPrefixPredicate(String prefix, Method method) {
+			this.prefix = prefix;
+			this.method = method;
+		}
+
+		@Override
+		public boolean test(HttpChannel key) {
+			return (method == null || method.equals(key.method())) && key.uri()
+			                                                             .startsWith(prefix);
 		}
 	}
 }

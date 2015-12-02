@@ -24,7 +24,7 @@ import java.util.concurrent.CountDownLatch
 /**
  * @author Stephane Maldini
  */
-@Ignore
+//@Ignore
 class NexusSpec extends Specification {
 
 	def "http responds to requests from clients"() {

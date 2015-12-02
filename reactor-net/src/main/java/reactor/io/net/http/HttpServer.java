@@ -255,6 +255,47 @@ public abstract class HttpServer<IN, OUT>
 	}
 
 	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry
+	 * to invoke the matching handlers.
+	 * <p>
+	 * Additional regex matching is available when reactor-bus is on the classpath.
+	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 *
+	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * @param directory the File to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer<IN, OUT> directory(String path,
+			final File directory) {
+		directory(path, directory.getAbsolutePath());
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry
+	 * to invoke the matching handlers.
+	 * <p>
+	 * Additional regex matching is available when reactor-bus is on the classpath.
+	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 *
+	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * @param directory the Path to the file to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer<IN, OUT> directory(String path,
+			final String directory) {
+		route(ChannelMappings.prefix(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+			@Override
+			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
+				return channel.writeBufferWith(IO.readFile(directory+File.separator+channel.uri()));
+			}
+		});
+		return this;
+	}
+
+	/**
 	 *
 	 * @param preprocessor
 	 * @param <NEWIN>

@@ -56,9 +56,14 @@ public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
 	public ChannelMappings<IN, OUT> add(Predicate<? super HttpChannel<IN, OUT>> condition,
 			ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 
-		Selector<HttpChannel<IN, OUT>> selector = Selector.class.isAssignableFrom(condition.getClass()) ?
-				(Selector<HttpChannel<IN,OUT>>)condition :
-				Selectors.predicate(condition);
+		Selector<HttpChannel<IN, OUT>> selector;
+
+		if(Selector.class.isAssignableFrom(condition.getClass())) {
+			selector = (Selector<HttpChannel<IN, OUT>>) condition;
+		}
+		else{
+			selector = Selectors.predicate(condition);
+		}
 
 		routedWriters.register(selector, new HttpHandlerMapping<>(condition, handler, selector.getHeaderResolver()));
 
