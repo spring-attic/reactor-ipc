@@ -64,7 +64,7 @@ a:active, a:hover {
 /** Address variable `h1` font-size and margin within `section` and `article` contexts in Firefox 4+, Safari 5, and Chrome. */
 h1 {
     font-size: 2em;
-    margin: 0.67em 0;
+    margin: 1.2em 0;
 }
 
 /** Address styling not present in IE 8/9, Safari 5, and Chrome. */
@@ -393,8 +393,8 @@ h1, h2, h3, #toctitle, .sidebarblock > .content > .title, h4, h5, h6 {
     font-style: normal;
     color: #34302d;
     text-rendering: optimizeLegibility;
-    margin-top: 0.8em;
-    margin-bottom: 0.5em;
+    margin-top: 1.6em;
+    margin-bottom: 0.6em;
 }
 
 h1 small, h2 small, h3 small, #toctitle small, .sidebarblock > .content > .title small, h4 small, h5 small, h6 small {
@@ -905,10 +905,10 @@ p a > code:hover {
 
     #reactor-header {
         position: fixed;
-        top: -64px;
+        top: -75px;
         left: 0;
         right: 0;
-        height: 64px;
+        height: 75px;
 
 
         -moz-transition-property: top;
@@ -922,7 +922,7 @@ p a > code:hover {
     }
 
     body.head-show #toc.toc2 {
-        top: 64px;
+        top: 75px;
     }
     body.head-show #reactor-header {
         top: 0;
@@ -1980,7 +1980,7 @@ body {
     border-top: 4px solid #6db33f;
     z-index: 2000;
     font-family: 'Montserrat';
-    height: 64px;
+    height: 75px;
 }
 
 #reactor-header h1#logo {
@@ -1992,9 +1992,9 @@ body {
 #reactor-header h1#logo a {
     display: block;
     background: url(images/logo-2x.png) no-repeat 0 0;
-    height: 30px;
-    width: 190px;
-    background-size: 190px 60px;
+    background-size: 253px 80px;
+    height: 40px;
+    width: 253px;
     text-indent: -6000em;
     margin: 8px 0;
 }
@@ -2045,7 +2045,7 @@ body {
     display: block;
     text-transform: uppercase;
     font-size: 13.5px;
-    line-height: 60px;
+    line-height: 71px;
     margin: 0;
     padding: 0 12px;
     -moz-transition-property: background-color;
