@@ -114,7 +114,7 @@ public class ReactiveNet {
 	 * scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> To reply data on the active connection, {@link
 	 * ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
-	 * {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
@@ -134,7 +134,7 @@ public class ReactiveNet {
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -156,7 +156,7 @@ public class ReactiveNet {
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -178,7 +178,7 @@ public class ReactiveNet {
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -207,7 +207,7 @@ public class ReactiveNet {
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -229,7 +229,7 @@ public class ReactiveNet {
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -256,7 +256,7 @@ public class ReactiveNet {
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -277,7 +277,7 @@ public class ReactiveNet {
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -299,7 +299,7 @@ public class ReactiveNet {
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -321,7 +321,7 @@ public class ReactiveNet {
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -350,7 +350,7 @@ public class ReactiveNet {
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -372,7 +372,7 @@ public class ReactiveNet {
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -480,7 +480,7 @@ public class ReactiveNet {
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -504,7 +504,7 @@ public class ReactiveNet {
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -530,7 +530,7 @@ public class ReactiveNet {
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read
 	 * any incoming data. <p> To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to
-	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity}
+	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity}
 	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
 	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
 	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
@@ -548,7 +548,7 @@ public class ReactiveNet {
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read
 	 * any incoming data. <p> To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to
-	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity}
+	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity}
 	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
 	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
 	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
@@ -568,7 +568,7 @@ public class ReactiveNet {
 	 * dependencies are on the classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add
 	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
 	 * ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
-	 * {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
@@ -587,7 +587,7 @@ public class ReactiveNet {
 	 * on the classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to
 	 * read any incoming data. <p> To reply data on the active connection, {@link ReactiveChannel#writeWith} can
 	 * subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link
-	 * reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
+	 * reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
 	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
 	 * channels will run on the same thread they have beem receiving IO events.
@@ -613,7 +613,7 @@ public class ReactiveNet {
 	 * dependencies are on the classpath. <p> <p> From the emitted {@link ReactiveChannel}, one can decide to add
 	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
 	 * ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
-	 * {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
@@ -632,7 +632,7 @@ public class ReactiveNet {
 	 * Bind a new UDP server to the specified bind address and port. <p> <p> From the emitted {@link ReactiveChannel},
 	 * one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the active connection,
 	 * {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
-	 * that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read /
+	 * that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to switch on/off a channel in auto-read /
 	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
 	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
 	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events. <p> By default
@@ -656,7 +656,7 @@ public class ReactiveNet {
 	 * implementation is scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
 	 * {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
-	 * that {@link reactor.core.support.Bounded#getCapacity} will be used to switch on/off a channel in auto-read /
+	 * that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to switch on/off a channel in auto-read /
 	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
 	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
 	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
@@ -676,7 +676,7 @@ public class ReactiveNet {
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -698,7 +698,7 @@ public class ReactiveNet {
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -721,7 +721,7 @@ public class ReactiveNet {
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -751,7 +751,7 @@ public class ReactiveNet {
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
@@ -773,7 +773,7 @@ public class ReactiveNet {
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.Bounded#getCapacity} will be used to
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.support.ReactiveState.Bounded#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem

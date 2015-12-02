@@ -23,7 +23,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Publishers;
-import reactor.core.support.Bounded;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.model.Status;
@@ -36,7 +36,7 @@ import reactor.io.net.http.model.Transfer;
  * @author Sebastien Deleuze
  * @author Stephane maldini
  */
-public abstract class BaseHttpChannel<IN, OUT> implements Bounded, HttpChannel<IN,OUT> {
+public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded, HttpChannel<IN,OUT> {
 
 	private volatile int statusAndHeadersSent = 0;
 	private Function<? super String, Map<String, Object>> paramsResolver;
@@ -293,11 +293,6 @@ public abstract class BaseHttpChannel<IN, OUT> implements Bounded, HttpChannel<I
 				}
 			}
 		};
-	}
-
-	@Override
-	public boolean isExposedToOverflow(Bounded parentPublisher) {
-		return false;
 	}
 
 	@Override

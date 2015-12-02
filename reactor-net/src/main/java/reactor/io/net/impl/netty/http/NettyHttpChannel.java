@@ -16,22 +16,32 @@
 
 package reactor.io.net.impl.netty.http;
 
+import java.net.InetSocketAddress;
+
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.support.Assert;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.BaseHttpChannel;
 import reactor.io.net.http.HttpChannel;
-import reactor.io.net.http.model.*;
 import reactor.io.net.http.model.HttpHeaders;
+import reactor.io.net.http.model.Method;
+import reactor.io.net.http.model.Protocol;
+import reactor.io.net.http.model.ResponseHeaders;
+import reactor.io.net.http.model.Status;
+import reactor.io.net.http.model.Transfer;
 import reactor.io.net.impl.netty.NettyChannel;
-
-import java.net.InetSocketAddress;
 
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 
