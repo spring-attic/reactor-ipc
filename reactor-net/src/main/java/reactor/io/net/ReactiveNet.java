@@ -20,7 +20,7 @@ import reactor.Timers;
 import reactor.core.support.Assert;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.console.Console;
+import reactor.io.net.nexus.Nexus;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.HttpServer;
 import reactor.io.net.impl.netty.http.NettyHttpClient;
@@ -108,8 +108,6 @@ public class ReactiveNet {
 			extends Function<Spec.DatagramServerSpec<IN, OUT>, Spec.DatagramServerSpec<IN, OUT>> {
 
 	}
-
-	// Console
 
 	/**
 	 * Bind a new TCP server to "loopback" on port {@literal 12012}. By default the default server implementation is
@@ -651,6 +649,8 @@ public class ReactiveNet {
 		                          .get();
 	}
 
+	//MONITORING FEED SERVER
+
 	/**
 	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty first and ZeroMQ then is provided
@@ -664,8 +664,8 @@ public class ReactiveNet {
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static Console console() {
-		return console(DEFAULT_BIND_ADDRESS);
+	public static Nexus nexus() {
+		return nexus(DEFAULT_BIND_ADDRESS);
 	}
 
 	/**
@@ -686,7 +686,7 @@ public class ReactiveNet {
 	 * @param port the port to listen on loopback
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static TcpServer<Buffer, Buffer> console(int port) {
+	public static TcpServer<Buffer, Buffer> nexus(int port) {
 		return tcpServer(DEFAULT_BIND_ADDRESS, port);
 	}
 
@@ -708,8 +708,8 @@ public class ReactiveNet {
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static Console console(String bindAddress) {
-		return console(bindAddress, DEFAULT_PORT);
+	public static Nexus nexus(String bindAddress) {
+		return nexus(bindAddress, DEFAULT_PORT);
 	}
 
 
@@ -732,8 +732,8 @@ public class ReactiveNet {
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static Console console(final String bindAddress, final int port) {
-		return console(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
+	public static Nexus nexus(final String bindAddress, final int port) {
+		return nexus(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.HttpServerSpec<Buffer, Buffer> apply(Spec.HttpServerSpec<Buffer, Buffer> serverSpec) {
 				serverSpec.timer(Timers.globalOrNull());
@@ -761,10 +761,10 @@ public class ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static Console console(
+	public static Nexus nexus(
 			Function<? super Spec.HttpServerSpec<Buffer, Buffer>, ? extends Spec.HttpServerSpec<Buffer, Buffer>>
 					configuringFunction) {
-		return console(DEFAULT_HTTP_SERVER_TYPE, configuringFunction);
+		return nexus(DEFAULT_HTTP_SERVER_TYPE, configuringFunction);
 	}
 
 	/**
@@ -784,10 +784,10 @@ public class ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static Console console(Class<? extends HttpServer> consoleFactory,
+	public static Nexus nexus(Class<? extends HttpServer> consoleFactory,
 			Function<? super Spec.HttpServerSpec<Buffer, Buffer>, ? extends Spec.HttpServerSpec<Buffer, Buffer>>
 					configuringFunction) {
-		return Console.create(configuringFunction.apply(new Spec.HttpServerSpec<Buffer, Buffer>(consoleFactory)).get());
+		return Nexus.create(configuringFunction.apply(new Spec.HttpServerSpec<Buffer, Buffer>(consoleFactory)).get());
 	}
 
 	/**

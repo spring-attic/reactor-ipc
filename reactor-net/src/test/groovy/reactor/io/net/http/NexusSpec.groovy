@@ -25,31 +25,31 @@ import java.util.concurrent.CountDownLatch
  * @author Stephane Maldini
  */
 @Ignore
-class ConsoleSpec extends Specification {
+class NexusSpec extends Specification {
 
 	def "http responds to requests from clients"() {
 		given: "a simple Console"
 
 			//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
-			def console = ReactiveNet.console()
+		def nexus = ReactiveNet.nexus()
 
 		def latch = new CountDownLatch(1)
 
 		when: "the server is prepared"
 
 			//prepare post request consumer on /test/* and capture the URL parameter "param"
-			console.server.get('/exit') { req ->
+		nexus.server.get('/exit') { req ->
 				latch.countDown()
 			}
 
 		then: "the server was started"
-			console?.startAndAwait()
+		nexus?.startAndAwait()
 			latch.await()
 
 
 		cleanup: "the client/server where stopped"
 			//note how we order first the client then the server shutdown
-            console?.shutdown()
+		nexus?.shutdown()
 	}
 
 }
