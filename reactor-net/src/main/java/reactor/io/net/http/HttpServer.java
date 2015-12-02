@@ -284,12 +284,13 @@ public abstract class HttpServer<IN, OUT>
 	 * @param directory the Path to the file to serve
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> directory(String path,
+	public final HttpServer<IN, OUT> directory(
+			final String path,
 			final String directory) {
 		route(ChannelMappings.prefix(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
-				return channel.writeBufferWith(IO.readFile(directory+File.separator+channel.uri()));
+				return channel.writeBufferWith(IO.readFile(directory+File.separator+channel.uri().replaceFirst(path,"")));
 			}
 		});
 		return this;
