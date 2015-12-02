@@ -70,12 +70,9 @@ public class ProtobufCodec<IN, OUT> extends SerializationCodec<Map<Class<?>, Mes
 		return new Function<OUT, byte[]>() {
 			@Override
 			public byte[] apply(Object o) {
-				Assert.isInstanceOf(Message.class,
-				                    o,
-				                    "Can only serialize Protobuf messages. " +
-						                    o.getClass().getName() +
-						                    " is not an instance of " +
-						                    Message.class.getName());
+				if (!Message.class.isInstance(o)) {
+					throw new IllegalArgumentException("Can only serialize Protobuf messages. ");
+				}
 				return ((Message)o).toByteArray();
 			}
 		};
