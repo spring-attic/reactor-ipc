@@ -187,18 +187,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 	@Override
 	public Publisher<Void> writeHeaders() {
 		if (statusAndHeadersSent == 0) {
-			return new Publisher<Void>() {
-				@Override
-				public void subscribe(Subscriber<? super Void> s) {
-					if (markHeadersAsFlushed()) {
-						doSubscribeHeaders(s);
-					}
-					else {
-						Publishers.<Void>error(new IllegalStateException("Status and headers already sent"))
-						          .subscribe(s);
-					}
-				}
-			};
+			return new PostHeaderWritePublisher();
 		}
 		else {
 			return Publishers.empty();
@@ -227,76 +216,134 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 
 	@Override
 	public Publisher<Void> writeBufferWith(final Publisher<? extends Buffer> dataStream) {
-		return new Publisher<Void>() {
-			@Override
-			public void subscribe(final Subscriber<? super Void> s) {
-				if(markHeadersAsFlushed()){
-					doSubscribeHeaders(new Subscriber<Void>() {
-						@Override
-						public void onSubscribe(Subscription sub) {
-							sub.request(Long.MAX_VALUE);
-						}
-
-						@Override
-						public void onNext(Void aVoid) {
-							//Ignore
-						}
-
-						@Override
-						public void onError(Throwable t) {
-							s.onError(t);
-						}
-
-						@Override
-						public void onComplete() {
-							writeWithBufferAfterHeaders(dataStream).subscribe(s);
-						}
-					});
-				}
-				else{
-					writeWithBufferAfterHeaders(dataStream).subscribe(s);
-				}
-			}
-		};
+		return new PostBufferWritePublisher(dataStream);
 	}
 
 	@Override
 	public Publisher<Void> writeWith(final Publisher<? extends OUT> source) {
-		return new Publisher<Void>() {
-			@Override
-			public void subscribe(final Subscriber<? super Void> s) {
-				if(markHeadersAsFlushed()){
-					doSubscribeHeaders(new Subscriber<Void>() {
-						@Override
-						public void onSubscribe(Subscription sub) {
-							sub.request(Long.MAX_VALUE);
-						}
-
-						@Override
-						public void onNext(Void aVoid) {
-							//Ignore
-						}
-
-						@Override
-						public void onError(Throwable t) {
-							s.onError(t);
-						}
-
-						@Override
-						public void onComplete() {
-							writeWithAfterHeaders(source).subscribe(s);
-						}
-					});
-				}
-				else{
-					writeWithAfterHeaders(source).subscribe(s);
-				}
-			}
-		};
+		return new PostWritePublisher(source);
 	}
 
 	@Override
 	public long getCapacity() {
 		return prefetch;
+	}
+
+	private class PostWritePublisher implements Publisher<Void>,
+	                                            ReactiveState.Trace,
+	                                            ReactiveState.Upstream {
+
+		private final Publisher<? extends OUT> source;
+
+		public PostWritePublisher(Publisher<? extends OUT> source) {
+			this.source = source;
+		}
+
+		@Override
+		public void subscribe(final Subscriber<? super Void> s) {
+			if(markHeadersAsFlushed()){
+				doSubscribeHeaders(new Subscriber<Void>() {
+					@Override
+					public void onSubscribe(Subscription sub) {
+						sub.request(Long.MAX_VALUE);
+					}
+
+					@Override
+					public void onNext(Void aVoid) {
+						//Ignore
+					}
+
+					@Override
+					public void onError(Throwable t) {
+						s.onError(t);
+					}
+
+					@Override
+					public void onComplete() {
+						writeWithAfterHeaders(source).subscribe(s);
+					}
+				});
+			}
+			else{
+				writeWithAfterHeaders(source).subscribe(s);
+			}
+		}
+
+		@Override
+		public Object upstream() {
+			return source;
+		}
+	}
+
+	private class PostHeaderWritePublisher implements Publisher<Void> {
+
+		@Override
+		public void subscribe(Subscriber<? super Void> s) {
+			if (markHeadersAsFlushed()) {
+				doSubscribeHeaders(s);
+			}
+			else {
+				Publishers.<Void>error(new IllegalStateException("Status and headers already sent"))
+				          .subscribe(s);
+			}
+		}
+	}
+
+	private class PostBufferWritePublisher implements Publisher<Void>, ReactiveState.Trace, ReactiveState.Upstream {
+
+		private final Publisher<? extends Buffer> dataStream;
+
+		public PostBufferWritePublisher(Publisher<? extends Buffer> dataStream) {
+			this.dataStream = dataStream;
+		}
+
+		@Override
+		public void subscribe(final Subscriber<? super Void> s) {
+			if(markHeadersAsFlushed()){
+				doSubscribeHeaders(new PostHeaderSubscriber(s));
+			}
+			else{
+				writeWithBufferAfterHeaders(dataStream).subscribe(s);
+			}
+		}
+
+		@Override
+		public Object upstream() {
+			return dataStream;
+		}
+
+		private class PostHeaderSubscriber implements Subscriber<Void>, Downstream {
+
+			private final Subscriber<? super Void> s;
+
+			public PostHeaderSubscriber(Subscriber<? super Void> s) {
+				this.s = s;
+			}
+
+			@Override
+			public void onSubscribe(Subscription sub) {
+				sub.request(Long.MAX_VALUE);
+			}
+
+			@Override
+			public void onNext(Void aVoid) {
+				//Ignore
+			}
+
+			@Override
+			public Subscriber downstream() {
+				return s;
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				s.onError(t);
+			}
+
+			@Override
+			public void onComplete() {
+				writeWithBufferAfterHeaders(dataStream).subscribe(s);
+			}
+		}
 	}
 }

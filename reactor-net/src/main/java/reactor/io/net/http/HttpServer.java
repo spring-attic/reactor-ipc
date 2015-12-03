@@ -247,9 +247,12 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
 				String strippedPrefix = channel.uri()
 				                               .replaceFirst(path, "");
+				int paramIndex = strippedPrefix.lastIndexOf("?");
+				if(paramIndex != -1){
+					strippedPrefix = strippedPrefix.substring(0, paramIndex);
+				}
 
-				return channel.writeBufferWith(IO.readFile(directory + strippedPrefix.substring(0,
-						strippedPrefix.lastIndexOf("?"))));
+				return channel.writeBufferWith(IO.readFile(directory + strippedPrefix));
 			}
 		});
 		return this;
