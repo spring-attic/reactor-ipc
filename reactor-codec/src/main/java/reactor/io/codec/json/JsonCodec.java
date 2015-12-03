@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import reactor.core.support.Assert;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.BufferCodec;
@@ -75,6 +76,7 @@ public class JsonCodec<IN, OUT> extends BufferCodec<IN, OUT> {
 		this.inputType = inputType;
 
 		this.mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 		if (null != customModule) {
 			this.mapper.registerModule(customModule);
 		}

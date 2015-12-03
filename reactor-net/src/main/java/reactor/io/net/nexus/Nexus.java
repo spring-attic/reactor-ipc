@@ -36,8 +36,6 @@ import reactor.io.net.ReactiveNet;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpServer;
-import reactor.io.net.http.model.Headers;
-import reactor.io.net.http.model.HttpHeaders;
 
 /**
  * @author Stephane Maldini
