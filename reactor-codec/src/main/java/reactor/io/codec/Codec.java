@@ -90,13 +90,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 	 * @since 2.0.4
 	 */
 	public Publisher<IN> decode(final Publisher<SRC> publisherToDecode) {
-		return PublisherFactory.lift(publisherToDecode,
-		  new Function<Subscriber<? super IN>, Subscriber<? super SRC>>() {
-			  @Override
-			  public Subscriber<? super SRC> apply(final Subscriber<? super IN> subscriber) {
-				  return new DecoderBarrier(subscriber);
-			  }
-		  });
+		return PublisherFactory.lift(publisherToDecode, new DecoderOperator());
 	}
 
 	/**
@@ -133,13 +127,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 	 */
 	@SuppressWarnings("unchecked")
 	public Publisher<SRC> encode(Publisher<? extends OUT> publisherToEncode) {
-		return PublisherFactory.lift((Publisher<OUT>)publisherToEncode,
-		  new Function<Subscriber<? super SRC>, Subscriber<? super OUT>>() {
-			  @Override
-			  public Subscriber<? super OUT> apply(final Subscriber<? super SRC> subscriber) {
-				  return new EncoderBarrier(subscriber);
-			  }
-		  });
+		return PublisherFactory.lift((Publisher<OUT>)publisherToEncode, new EncoderOperator());
 	}
 
 	/**
@@ -242,6 +230,22 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		@Override
 		public IN apply(SRC buffer) {
 			return invokeCallbackOrReturn(consumer, decodeNext(buffer, context));
+		}
+	}
+
+	private class DecoderOperator implements Function<Subscriber<? super IN>, Subscriber<? super SRC>>{
+
+		@Override
+		public Subscriber<? super SRC> apply(final Subscriber<? super IN> subscriber) {
+			return new DecoderBarrier(subscriber);
+		}
+	}
+
+	private class EncoderOperator implements Function<Subscriber<? super SRC>, Subscriber<? super OUT>> {
+
+		@Override
+		public Subscriber<? super OUT> apply(final Subscriber<? super SRC> subscriber) {
+			return new EncoderBarrier(subscriber);
 		}
 	}
 }
