@@ -175,6 +175,11 @@ configure(subprojects) { project ->
 	}
 }
 
+configurations.all {
+  // check for updates every build
+  resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
 project('reactor-net') {
 	description = 'Reactor TCP components'
 
