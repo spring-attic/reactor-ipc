@@ -80,6 +80,10 @@ public class JsonCodec<IN, OUT> extends BufferCodec<IN, OUT> {
 		}
 	}
 
+	public ObjectMapper getMapper() {
+		return mapper;
+	}
+
 	@Override
 	@SuppressWarnings("unchecked")
 	protected IN decodeNext(Buffer buffer, Object context) {
