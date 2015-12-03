@@ -40,7 +40,7 @@ import reactor.core.processor.rb.disruptor.Sequence;
 import reactor.core.processor.rb.disruptor.Sequencer;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.support.BackpressureUtils;
-import reactor.core.support.ReactiveState;
+import reactor.core.support.ReactiveState.Bounded;
 import reactor.core.support.SignalType;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -232,7 +232,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler {
 			CHANNEL_REF.incrementAndGet(this);
 
 			@SuppressWarnings("unchecked") Publisher<?> data = (Publisher<?>) msg;
-			final long capacity = msg instanceof ReactiveState.Bounded ? ((ReactiveState.Bounded) data).getCapacity() : Long.MAX_VALUE;
+			final long capacity = msg instanceof Bounded ? ((Bounded) data).getCapacity() : Long.MAX_VALUE;
 
 			if (capacity == Long.MAX_VALUE) {
 				data.subscribe(new FlushOnTerminateSubscriber(ctx, promise));
