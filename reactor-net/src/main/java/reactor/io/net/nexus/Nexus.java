@@ -17,16 +17,13 @@
 package reactor.io.net.nexus;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.Publishers;
+import reactor.core.support.ReactiveStateUtils;
 import reactor.fn.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.json.JsonCodec;
@@ -49,9 +46,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private static final String API_STREAM_URL = "/nexus/stream";
 	private static final String EXIT_URL       = "/exit";
 
-	private final HttpServer<Buffer, Buffer> server;
-	private final JsonCodec<Map, Map>        jsonCodec;
-	private final Map<String, Object> metrics = new HashMap<>();
+	private final HttpServer<Buffer, Buffer>                                    server;
+	private final JsonCodec<ReactiveStateUtils.Graph, ReactiveStateUtils.Graph> jsonCodec;
 
 	public static void main(String... args) throws Exception {
 		log.info("Deploying Nexus... ");
@@ -96,49 +92,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private Nexus(Timer defaultTimer, HttpServer<Buffer, Buffer> server) {
 		super(defaultTimer);
 		this.server = server;
-		this.jsonCodec = new JsonCodec<>(Map.class);
-
-		//Mock
-		List<Map<String, String>> nodes = new ArrayList<>();
-		List<Map<String, String>> edges = new ArrayList<>();
-		metrics.put("streams", nodes);
-		metrics.put("stream_edges", edges);
-
-		String[] op = new String[]{"map", "filter", "scan"};
-
-		Map<String, String> object;
-		int n = 10;
-		for (int i = 0; i < n; i++) {
-			object = new HashMap<>();
-			object.put("id", "" + i);
-			object.put("label", "" + (i == 0 ? "Iterable" : (i == n - 1 ? "Consumer" : op[i % 3])));
-			nodes.add(object);
-
-			if (i < n - 1) {
-				object = new HashMap<>();
-				object.put("id", "" + i);
-				object.put("from", "" + i);
-				object.put("to", "" + (i + 1));
-				edges.add(object);
-
-				if (i % 3 == 0) {
-					object = new HashMap<>();
-					object.put("id", "" + (i + 100));
-					object.put("label", "Consumer");
-					nodes.add(object);
-
-					object = new HashMap<>();
-					object.put("id", "" + (i + 100));
-					object.put("from", "" + i);
-					object.put("to", "" + (i + 100));
-					edges.add(object);
-				}
-			}
-
-
-		}
-
-
+		this.jsonCodec = new JsonCodec<>(ReactiveStateUtils.Graph.class);
 	}
 
 	/**
@@ -168,8 +122,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	@Override
 	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
+		//MOCK
 		return channel.responseHeader("Access-Control-Allow-Origin", "*")
-		              .writeWith(jsonCodec.encode(Publishers.just(metrics)));
+		              .writeWith(jsonCodec.encode(Publishers.just(ReactiveStateUtils.scan(channel))));
 	}
 
 	public HttpServer<Buffer, Buffer> getServer() {

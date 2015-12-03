@@ -16,6 +16,7 @@
 package reactor.io.net.http
 
 import reactor.io.net.ReactiveNet
+import reactor.io.net.nexus.Nexus
 import spock.lang.Ignore
 import spock.lang.Specification
 

@@ -35,13 +35,11 @@ import reactor.io.net.http.routing.ChannelMappings;
 
 /**
  * Base functionality needed by all servers that communicate with clients over HTTP.
- *
- * @param <IN>  The type that will be received by this server
+ * @param <IN> The type that will be received by this server
  * @param <OUT> The type that will be sent by this server
  * @author Stephane Maldini
  */
-public abstract class HttpServer<IN, OUT>
-		extends ReactivePeer<IN, OUT, HttpChannel<IN, OUT>> {
+public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChannel<IN, OUT>> {
 
 	protected ChannelMappings<IN, OUT> channelMappings;
 
@@ -51,9 +49,9 @@ public abstract class HttpServer<IN, OUT>
 		super(timer);
 	}
 
-	/*** Additional regex matching is available when reactor-bus is on the classpath.
-	 * Start the server without any global handler, only the specific routed methods (get, post...) will apply.
-	 *
+	/***
+	 * Additional regex matching is available when reactor-bus is on the classpath. Start the server without any global
+	 * handler, only the specific routed methods (get, post...) will apply.
 	 * @return a Promise fulfilled when server is started
 	 */
 	public final Publisher<Void> start() {
@@ -62,34 +60,30 @@ public abstract class HttpServer<IN, OUT>
 
 	/**
 	 * @see this#start()
-	 * @throws InterruptedException
 	 */
-	public final void startAndAwait()
-			throws InterruptedException {
-		Publishers.toReadQueue(start()).take();
+	public final void startAndAwait() throws InterruptedException {
+		Publishers.toReadQueue(start())
+		          .take();
 	}
 
 	/**
 	 * Get the address to which this server is bound. If port 0 was used on configuration, try resolving the port.
-	 *
 	 * @return the bind address
 	 */
 	public abstract InetSocketAddress getListenAddress();
 
 	/**
-	 * Register an handler for the given Selector condition, incoming connections will query the internal registry
-	 * to invoke the matching handlers. Implementation may choose to reply 404 if no route matches.
-	 *
-	 * @param condition       a {@link Predicate} to match the incoming connection with registered handler
+	 * Register an handler for the given Selector condition, incoming connections will query the internal registry to
+	 * invoke the matching handlers. Implementation may choose to reply 404 if no route matches.
+	 * @param condition a {@link Predicate} to match the incoming connection with registered handler
 	 * @param serviceFunction an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
 	@SuppressWarnings("unchecked")
-	public HttpServer<IN, OUT> route(
-	  final Predicate<HttpChannel> condition,
-	  final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> serviceFunction) {
+	public HttpServer<IN, OUT> route(final Predicate<HttpChannel> condition,
+			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> serviceFunction) {
 
-		if(this.channelMappings == null) {
+		if (this.channelMappings == null) {
 			this.channelMappings = ChannelMappings.newMappings();
 		}
 
@@ -99,151 +93,121 @@ public abstract class HttpServer<IN, OUT>
 
 	/**
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> get(String path,
-	                                     final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.get(path), handler);
 		return this;
 	}
 
 	/**
 	 * Listen for HTTP POST on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> post(String path,
-	                                      final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.post(path), handler);
 		return this;
 	}
 
 	/**
 	 * Listen for HTTP PUT on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> put(String path,
-	                                     final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.put(path), handler);
 		return this;
 	}
 
-
 	/**
 	 * Listen for WebSocket on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> ws(String path,
-	                                    final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.get(path), handler);
 		enableWebsocket();
 		return this;
 	}
 
-
-	protected void enableWebsocket(){
+	protected void enableWebsocket() {
 		hasWebsocketEndpoints = true;
 	}
 
 	/**
-	 * Listen for HTTP DELETE on the passed path to be used as a routing condition. Incoming connections will query
-	 * the internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * Listen for HTTP DELETE on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> delete(String path,
-	                                        final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.delete(path), handler);
 		return this;
 	}
 
 	/**
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param file the File to serve
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> file(String path,
-			final File file) {
+	public final HttpServer<IN, OUT> file(String path, final File file) {
 		file(ChannelMappings.get(path), file.getAbsolutePath());
 		return this;
 	}
 
 	/**
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param filepath the Path to the file to serve
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> file(String path,
-			final String filepath) {
+	public final HttpServer<IN, OUT> file(String path, final String filepath) {
 		file(ChannelMappings.get(path), filepath);
 		return this;
 	}
 
 	/**
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param condition       a {@link Predicate} to match the incoming connection with registered handler
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param condition a {@link Predicate} to match the incoming connection with registered handler
 	 * @param filepath the Path to the file to serve
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> condition,
-			final String filepath) {
+	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> condition, final String filepath) {
 		final Publisher<Buffer> file = IO.readFile(filepath);
 		route(condition, new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
@@ -256,41 +220,36 @@ public abstract class HttpServer<IN, OUT>
 
 	/**
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param directory the File to serve
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> directory(String path,
-			final File directory) {
+	public final HttpServer<IN, OUT> directory(String path, final File directory) {
 		directory(path, directory.getAbsolutePath());
 		return this;
 	}
 
 	/**
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry
-	 * to invoke the matching handlers.
-	 * <p>
-	 * Additional regex matching is available when reactor-bus is on the classpath.
-	 * e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 *
-	 * @param path    The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture are supported
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param directory the Path to the file to serve
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> directory(
-			final String path,
-			final String directory) {
+	public final HttpServer<IN, OUT> directory(final String path, final String directory) {
 		route(ChannelMappings.prefix(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
-				return channel.writeBufferWith(IO.readFile(directory+channel.uri().replaceFirst(path,"")));
+				String strippedPrefix = channel.uri()
+				                               .replaceFirst(path, "");
+
+				return channel.writeBufferWith(IO.readFile(directory + strippedPrefix.substring(0,
+						strippedPrefix.lastIndexOf("?"))));
 			}
 		});
 		return this;
@@ -304,9 +263,7 @@ public abstract class HttpServer<IN, OUT>
 	 * @param <NEWCONN>
 	 * @return
 	 */
-	public <NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>> HttpServer<NEWIN, NEWOUT> httpProcessor(
-			final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor
-	){
+	public <NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>> HttpServer<NEWIN, NEWOUT> httpProcessor(final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor) {
 		return new PreprocessedHttpServer<>(preprocessor);
 	}
 
@@ -314,17 +271,21 @@ public abstract class HttpServer<IN, OUT>
 
 	protected Publisher<Void> routeChannel(final HttpChannel<IN, OUT> ch) {
 
-		if(channelMappings == null) return null;
+		if (channelMappings == null) {
+			return null;
+		}
 
-		final Iterator<? extends ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>>
-		  selected = channelMappings.apply(ch).iterator();
+		final Iterator<? extends ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>> selected =
+				channelMappings.apply(ch)
+				               .iterator();
 
-		if(!selected.hasNext()){
+		if (!selected.hasNext()) {
 			return null;
 		}
 
 		if (hasWebsocketEndpoints) {
-			String connection = ch.headers().get(HttpHeaders.CONNECTION);
+			String connection = ch.headers()
+			                      .get(HttpHeaders.CONNECTION);
 			if (connection != null && connection.equals(HttpHeaders.UPGRADE)) {
 				onWebsocket(ch);
 			}
@@ -332,7 +293,7 @@ public abstract class HttpServer<IN, OUT>
 
 		ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> channelHandler = selected.next();
 
-		if (!selected.hasNext()){
+		if (!selected.hasNext()) {
 			return channelHandler.apply(ch);
 		}
 
@@ -353,11 +314,9 @@ public abstract class HttpServer<IN, OUT>
 	private final class PreprocessedHttpServer<NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>>
 			extends HttpServer<NEWIN, NEWOUT> {
 
-		private final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN>
-				preprocessor;
+		private final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor;
 
-		public PreprocessedHttpServer(
-				HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor) {
+		public PreprocessedHttpServer(HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor) {
 			super(HttpServer.this.getDefaultTimer());
 			this.preprocessor = preprocessor;
 		}
@@ -365,7 +324,7 @@ public abstract class HttpServer<IN, OUT>
 		@Override
 		public HttpServer<NEWIN, NEWOUT> route(Predicate<HttpChannel> condition,
 				final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> serviceFunction) {
-			HttpServer.this.route(condition,  new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+			HttpServer.this.route(condition, new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 				@Override
 				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
 					return serviceFunction.apply(preprocessor.transform(conn));
@@ -390,8 +349,7 @@ public abstract class HttpServer<IN, OUT>
 		}
 
 		@Override
-		protected Publisher<Void> doStart(
-				final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
+		protected Publisher<Void> doStart(final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
 			return HttpServer.this.start(null != handler ? new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 				@Override
 				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
