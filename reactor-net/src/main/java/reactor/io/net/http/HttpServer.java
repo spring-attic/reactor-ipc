@@ -290,7 +290,7 @@ public abstract class HttpServer<IN, OUT>
 		route(ChannelMappings.prefix(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
-				return channel.writeBufferWith(IO.readFile(directory+File.separator+channel.uri().replaceFirst(path,"")));
+				return channel.writeBufferWith(IO.readFile(directory+channel.uri().replaceFirst(path,"")));
 			}
 		});
 		return this;
