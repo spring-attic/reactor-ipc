@@ -40,6 +40,7 @@ import reactor.core.processor.rb.disruptor.Sequence;
 import reactor.core.processor.rb.disruptor.Sequencer;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveState.Bounded;
 import reactor.core.support.SignalType;
 import reactor.io.buffer.Buffer;
@@ -54,7 +55,7 @@ import reactor.io.net.impl.netty.NettyChannel;
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
-public class NettyChannelHandlerBridge extends ChannelDuplexHandler {
+public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements ReactiveState.Downstream {
 
 	protected static final Logger log = LoggerFactory.getLogger(NettyChannelHandlerBridge.class);
 
@@ -71,10 +72,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler {
 			NettyChannel reactorNettyChannel) {
 		this.handler = handler;
 		this.reactorNettyChannel = reactorNettyChannel;
-	}
-
-	public ChannelInputSubscriber subscription() {
-		return channelSubscriber;
 	}
 
 	@Override
@@ -119,30 +116,15 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler {
 	}
 
 	@Override
+	public Subscriber downstream() {
+		return channelSubscriber;
+	}
+
+	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 		super.channelActive(ctx);
 		handler.apply(reactorNettyChannel)
-		       .subscribe(new BaseSubscriber<Void>() {
-			       @Override
-			       public void onSubscribe(Subscription s) {
-				       super.onSubscribe(s);
-				       s.request(Long.MAX_VALUE);
-			       }
-
-			       @Override
-			       public void onError(Throwable t) {
-				       log.error("Error processing connection. Closing the channel.", t);
-
-				       ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-				          .addListener(ChannelFutureListener.CLOSE);
-			       }
-
-			       @Override
-			       public void onComplete() {
-				       ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-				          .addListener(ChannelFutureListener.CLOSE);
-			       }
-		       });
+		       .subscribe(new CloseSubscriber(ctx));
 	}
 
 	@Override
@@ -520,6 +502,35 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler {
 					"terminated=" + terminated +
 					", requested=" + requested +
 					'}';
+		}
+	}
+
+	private static class CloseSubscriber extends BaseSubscriber<Void> {
+
+		private final ChannelHandlerContext ctx;
+
+		public CloseSubscriber(ChannelHandlerContext ctx) {
+			this.ctx = ctx;
+		}
+
+		@Override
+		public void onSubscribe(Subscription s) {
+			super.onSubscribe(s);
+			s.request(Long.MAX_VALUE);
+		}
+
+		@Override
+		public void onError(Throwable t) {
+			log.error("Error processing connection. Closing the channel.", t);
+
+			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+			   .addListener(ChannelFutureListener.CLOSE);
+		}
+
+		@Override
+		public void onComplete() {
+			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+			   .addListener(ChannelFutureListener.CLOSE);
 		}
 	}
 

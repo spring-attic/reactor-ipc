@@ -230,8 +230,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 	}
 
 	private class PostWritePublisher implements Publisher<Void>,
-	                                            ReactiveState.Trace,
-	                                            ReactiveState.Upstream {
+	                                            Upstream, FeedbackLoop {
 
 		private final Publisher<? extends OUT> source;
 
@@ -254,9 +253,20 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 			return source;
 		}
 
-		private class PostHeaderWriteSubscriber implements Subscriber<Void> {
+		@Override
+		public Object delegateInput() {
+			return BaseHttpChannel.this;
+		}
+
+		@Override
+		public Object delegateOutput() {
+			return BaseHttpChannel.this;
+		}
+
+		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Upstream, Downstream {
 
 			private final Subscriber<? super Void> s;
+			private Subscription subscription;
 
 			public PostHeaderWriteSubscriber(Subscriber<? super Void> s) {
 				this.s = s;
@@ -264,6 +274,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 
 			@Override
 			public void onSubscribe(Subscription sub) {
+				this.subscription = sub;
 				sub.request(Long.MAX_VALUE);
 			}
 
@@ -274,17 +285,29 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 
 			@Override
 			public void onError(Throwable t) {
+				this.subscription = null;
 				s.onError(t);
 			}
 
 			@Override
 			public void onComplete() {
+				this.subscription = null;
 				writeWithAfterHeaders(source).subscribe(s);
+			}
+
+			@Override
+			public Subscriber downstream() {
+				return s;
+			}
+
+			@Override
+			public Object upstream() {
+				return subscription;
 			}
 		}
 	}
 
-	private class PostHeaderWritePublisher implements Publisher<Void> {
+	private class PostHeaderWritePublisher implements Publisher<Void>, FeedbackLoop{
 
 		@Override
 		public void subscribe(Subscriber<? super Void> s) {
@@ -296,9 +319,19 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 				          .subscribe(s);
 			}
 		}
+
+		@Override
+		public Object delegateInput() {
+			return BaseHttpChannel.this;
+		}
+
+		@Override
+		public Object delegateOutput() {
+			return BaseHttpChannel.this;
+		}
 	}
 
-	private class PostBufferWritePublisher implements Publisher<Void>, ReactiveState.Trace, ReactiveState.Upstream {
+	private class PostBufferWritePublisher implements Publisher<Void>, Upstream, FeedbackLoop {
 
 		private final Publisher<? extends Buffer> dataStream;
 
@@ -317,13 +350,24 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 		}
 
 		@Override
+		public Object delegateInput() {
+			return BaseHttpChannel.this;
+		}
+
+		@Override
+		public Object delegateOutput() {
+			return BaseHttpChannel.this;
+		}
+
+		@Override
 		public Object upstream() {
 			return dataStream;
 		}
 
-		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Downstream {
+		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Downstream, Upstream {
 
 			private final Subscriber<? super Void> s;
+			private Subscription subscription;
 
 			public PostHeaderWriteBufferSubscriber(Subscriber<? super Void> s) {
 				this.s = s;
@@ -331,6 +375,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 
 			@Override
 			public void onSubscribe(Subscription sub) {
+				this.subscription = sub;
 				sub.request(Long.MAX_VALUE);
 			}
 
@@ -345,12 +390,19 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 			}
 
 			@Override
+			public Object upstream() {
+				return subscription;
+			}
+
+			@Override
 			public void onError(Throwable t) {
+				this.subscription = null;
 				s.onError(t);
 			}
 
 			@Override
 			public void onComplete() {
+				this.subscription = null;
 				writeWithBufferAfterHeaders(dataStream).subscribe(s);
 			}
 		}

@@ -186,7 +186,7 @@ public abstract class ChannelMappings<IN, OUT>
 		Assert.notNull(prefix, "Prefix must be provided");
 
 		String target = prefix.startsWith("/") ? prefix : "/".concat(prefix);
-		target = target.endsWith("/") ? target :  prefix.concat("/");
+		//target = target.endsWith("/") ? target :  prefix.concat("/");
 		if(DependencyUtils.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS) {
 			return new RegistryChannelMappings.HttpSelector(target+"**", null, method);
 		}

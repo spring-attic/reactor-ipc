@@ -32,6 +32,7 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.support.Assert;
+import reactor.core.support.ReactiveState;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.BaseHttpChannel;
 import reactor.io.net.http.HttpChannel;
@@ -50,7 +51,7 @@ import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
  * @author Stephane Maldini
  */
 public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
-		implements Publisher<Buffer> {
+		implements Publisher<Buffer>, ReactiveState.FeedbackLoop {
 
 	private static final FullHttpResponse CONTINUE =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
@@ -77,6 +78,16 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	@Override
 	public Publisher<Buffer> input() {
 		return this;
+	}
+
+	@Override
+	public final Object delegateInput() {
+		return tcpStream;
+	}
+
+	@Override
+	public final Object delegateOutput() {
+		return tcpStream;
 	}
 
 	@Override

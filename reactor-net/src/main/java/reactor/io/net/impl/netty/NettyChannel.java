@@ -47,7 +47,8 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  * @since 2.1
  */
 public class NettyChannel
-		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>, ReactiveState.Bounded {
+		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,
+		           ReactiveState.Bounded, ReactiveState.FeedbackLoop {
 
 	private final Channel ioChannel;
 	private final long    prefetch;
@@ -70,6 +71,16 @@ public class NettyChannel
 	@Override
 	public Publisher<Buffer> input() {
 		return this;
+	}
+
+	@Override
+	public Object delegateInput() {
+		return ioChannel.pipeline().get(NettyChannelHandlerBridge.class);
+	}
+
+	@Override
+	public Object delegateOutput() {
+		return ioChannel.pipeline().get(NettyChannelHandlerBridge.class).downstream();
 	}
 
 	@Override
@@ -272,7 +283,7 @@ public class NettyChannel
 		}
 	}
 
-	private class PostWritePublisher implements Publisher<Void>, Upstream {
+	private class PostWritePublisher implements Publisher<Void>, Upstream, FeedbackLoop {
 
 		private final Publisher<? extends Buffer> dataStream;
 
@@ -293,6 +304,16 @@ public class NettyChannel
 		@Override
 		public Object upstream() {
 			return dataStream;
+		}
+
+		@Override
+		public Object delegateInput() {
+			return NettyChannel.this;
+		}
+
+		@Override
+		public Object delegateOutput() {
+			return NettyChannel.this;
 		}
 	}
 }

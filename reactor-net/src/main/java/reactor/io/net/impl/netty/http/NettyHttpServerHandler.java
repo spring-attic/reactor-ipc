@@ -66,12 +66,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 	public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();
 		if (request == null && io.netty.handler.codec.http.HttpRequest.class.isAssignableFrom(messageClass)) {
-			request = new NettyHttpChannel(tcpStream, (io.netty.handler.codec.http.HttpRequest) msg){
-				@Override
-				protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-					tcpStream.emitWriter(Publishers.just(getNettyResponse()), s);
-				}
-			};
+			request = new AutoHeaderNettyHttpChannel(msg);
 
 
 			if (request.isWebsocket()) {
@@ -82,47 +77,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 			}
 
 			final Publisher<Void> closePublisher = handler.apply(request);
-			final Subscriber<Void> closeSub = new BaseSubscriber<Void>() {
-
-				Subscription subscription;
-
-				@Override
-				public void onSubscribe(Subscription s) {
-					subscription = s;
-					s.request(Long.MAX_VALUE);
-				}
-
-				@Override
-				public void onError(Throwable t) {
-					log.error("Error processing connection. Closing the channel.", t);
-					if (request.markHeadersAsFlushed()) {
-						request.delegate()
-						       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR))
-								.addListener(ChannelFutureListener.CLOSE);
-					}
-				}
-
-				@Override
-				public void onComplete() {
-					if (ctx.channel().isOpen()) {
-						if (log.isDebugEnabled()) {
-							log.debug("Close Http Response ");
-						}
-						writeLast(ctx);
-						//ctx.channel().close();
-						/*
-						ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(new ChannelFutureListener() {
-							@Override
-							public void operationComplete(ChannelFuture future) throws Exception {
-								if(ctx.channel().isOpen()){
-									ctx.channel().close();
-								}
-							}
-						});
-						 */
-					}
-				}
-			};
+			final Subscriber<Void> closeSub = new CloseSubscriber(ctx);
 
 			closePublisher.subscribe(closeSub);
 
@@ -164,5 +119,64 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 			return this;
 		}
 		return new NettyHttpWSServerHandler(url, protocols, this);
+	}
+
+	private class AutoHeaderNettyHttpChannel extends NettyHttpChannel implements Trace {
+
+		public AutoHeaderNettyHttpChannel(Object msg) {
+			super(NettyHttpServerHandler.this.tcpStream, (io.netty.handler.codec.http.HttpRequest) msg);
+		}
+
+		@Override
+		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
+			tcpStream.emitWriter(Publishers.just(getNettyResponse()), s);
+		}
+	}
+
+	private class CloseSubscriber extends BaseSubscriber<Void>  {
+
+		private final ChannelHandlerContext ctx;
+		Subscription subscription;
+
+		public CloseSubscriber(ChannelHandlerContext ctx) {
+			this.ctx = ctx;
+		}
+
+		@Override
+		public void onSubscribe(Subscription s) {
+			subscription = s;
+			s.request(Long.MAX_VALUE);
+		}
+
+		@Override
+		public void onError(Throwable t) {
+			log.error("Error processing connection. Closing the channel.", t);
+			if (request.markHeadersAsFlushed()) {
+				request.delegate()
+				       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR))
+						.addListener(ChannelFutureListener.CLOSE);
+			}
+		}
+
+		@Override
+		public void onComplete() {
+			if (ctx.channel().isOpen()) {
+				if (log.isDebugEnabled()) {
+					log.debug("Close Http Response ");
+				}
+				writeLast(ctx);
+				//ctx.channel().close();
+				/*
+				ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(new ChannelFutureListener() {
+					@Override
+					public void operationComplete(ChannelFuture future) throws Exception {
+						if(ctx.channel().isOpen()){
+							ctx.channel().close();
+						}
+					}
+				});
+				 */
+			}
+		}
 	}
 }
