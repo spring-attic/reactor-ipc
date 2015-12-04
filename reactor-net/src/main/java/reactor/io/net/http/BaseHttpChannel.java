@@ -242,27 +242,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 		@Override
 		public void subscribe(final Subscriber<? super Void> s) {
 			if(markHeadersAsFlushed()){
-				doSubscribeHeaders(new Subscriber<Void>() {
-					@Override
-					public void onSubscribe(Subscription sub) {
-						sub.request(Long.MAX_VALUE);
-					}
-
-					@Override
-					public void onNext(Void aVoid) {
-						//Ignore
-					}
-
-					@Override
-					public void onError(Throwable t) {
-						s.onError(t);
-					}
-
-					@Override
-					public void onComplete() {
-						writeWithAfterHeaders(source).subscribe(s);
-					}
-				});
+				doSubscribeHeaders(new PostHeaderWriteSubscriber(s));
 			}
 			else{
 				writeWithAfterHeaders(source).subscribe(s);
@@ -272,6 +252,35 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 		@Override
 		public Object upstream() {
 			return source;
+		}
+
+		private class PostHeaderWriteSubscriber implements Subscriber<Void> {
+
+			private final Subscriber<? super Void> s;
+
+			public PostHeaderWriteSubscriber(Subscriber<? super Void> s) {
+				this.s = s;
+			}
+
+			@Override
+			public void onSubscribe(Subscription sub) {
+				sub.request(Long.MAX_VALUE);
+			}
+
+			@Override
+			public void onNext(Void aVoid) {
+				//Ignore
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				s.onError(t);
+			}
+
+			@Override
+			public void onComplete() {
+				writeWithAfterHeaders(source).subscribe(s);
+			}
 		}
 	}
 
@@ -300,7 +309,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 		@Override
 		public void subscribe(final Subscriber<? super Void> s) {
 			if(markHeadersAsFlushed()){
-				doSubscribeHeaders(new PostHeaderSubscriber(s));
+				doSubscribeHeaders(new PostHeaderWriteBufferSubscriber(s));
 			}
 			else{
 				writeWithBufferAfterHeaders(dataStream).subscribe(s);
@@ -312,11 +321,11 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 			return dataStream;
 		}
 
-		private class PostHeaderSubscriber implements Subscriber<Void>, Downstream {
+		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Downstream {
 
 			private final Subscriber<? super Void> s;
 
-			public PostHeaderSubscriber(Subscriber<? super Void> s) {
+			public PostHeaderWriteBufferSubscriber(Subscriber<? super Void> s) {
 				this.s = s;
 			}
 

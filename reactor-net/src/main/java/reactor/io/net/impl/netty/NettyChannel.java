@@ -59,17 +59,7 @@ public class NettyChannel
 
 	@Override
 	public Publisher<Void> writeWith(final Publisher<? extends Buffer> dataStream) {
-		return new Publisher<Void>() {
-			@Override
-			public void subscribe(Subscriber<? super Void> s) {
-				try {
-					emitWriter(dataStream, s);
-				}
-				catch (Throwable throwable) {
-					Publishers.<Void>error(throwable).subscribe(s);
-				}
-			}
-		};
+		return new PostWritePublisher(dataStream);
 	}
 
 	@Override
@@ -279,6 +269,30 @@ public class NettyChannel
 					doComplete((C)future, s);
 				}
 			}
+		}
+	}
+
+	private class PostWritePublisher implements Publisher<Void>, Upstream {
+
+		private final Publisher<? extends Buffer> dataStream;
+
+		public PostWritePublisher(Publisher<? extends Buffer> dataStream) {
+			this.dataStream = dataStream;
+		}
+
+		@Override
+		public void subscribe(Subscriber<? super Void> s) {
+			try {
+				emitWriter(dataStream, s);
+			}
+			catch (Throwable throwable) {
+				Publishers.<Void>error(throwable).subscribe(s);
+			}
+		}
+
+		@Override
+		public Object upstream() {
+			return dataStream;
 		}
 	}
 }
