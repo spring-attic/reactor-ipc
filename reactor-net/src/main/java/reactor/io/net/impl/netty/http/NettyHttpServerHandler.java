@@ -121,7 +121,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		return new NettyHttpWSServerHandler(url, protocols, this);
 	}
 
-	private class AutoHeaderNettyHttpChannel extends NettyHttpChannel implements Trace {
+	private class AutoHeaderNettyHttpChannel extends NettyHttpChannel {
 
 		public AutoHeaderNettyHttpChannel(Object msg) {
 			super(NettyHttpServerHandler.this.tcpStream, (io.netty.handler.codec.http.HttpRequest) msg);
