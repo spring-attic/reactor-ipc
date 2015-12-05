@@ -295,7 +295,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandlerBridge}
 	 */
 	public static final class ChannelInputSubscriber implements Subscription, Subscriber<Buffer>
-	, Downstream {
+	, Bounded, DownstreamDemand, Buffering, Downstream {
 
 		private final Subscriber<? super Buffer> inputSubscriber;
 
@@ -349,6 +349,11 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 		}
 
 		@Override
+		public long getCapacity() {
+			return bufferSize;
+		}
+
+		@Override
 		public void cancel() {
 			Subscription subscription = this.subscription;
 			if (subscription != null) {
@@ -357,6 +362,16 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 					subscription.cancel();
 				}
 			}
+		}
+
+		@Override
+		public long requestedFromDownstream() {
+			return requested;
+		}
+
+		@Override
+		public long pending() {
+			return readBackpressureBuffer == null ? 0 : readBackpressureBuffer.pending();
 		}
 
 		@Override
@@ -430,7 +445,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 
 		boolean shouldReadMore() {
 			return requested > 0 ||
-					(readBackpressureBuffer != null && readBackpressureBuffer.pending() == 0);
+					(readBackpressureBuffer != null && readBackpressureBuffer.pending() < bufferSize / 2);
 		}
 
 		void drain(){
