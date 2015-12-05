@@ -17,7 +17,6 @@
 package reactor.io.codec.json;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import reactor.core.support.Assert;
 import reactor.io.buffer.Buffer;
-import reactor.io.buffer.StringBuffer;
 import reactor.io.codec.BufferCodec;
 import reactor.io.codec.Codec;
 
@@ -142,7 +140,7 @@ public class JsonCodec<IN, OUT> extends BufferCodec<IN, OUT> {
 	@Override
 	public Buffer apply(OUT out) {
 		try {
-			return StringBuffer.wrap(mapper.writeValueAsBytes(out));
+			return Buffer.wrap(mapper.writeValueAsBytes(out));
 		}
 		catch (JsonProcessingException e) {
 			throw new IllegalStateException(e);
