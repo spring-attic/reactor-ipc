@@ -36,18 +36,15 @@ import reactor.io.net.http.model.Transfer;
  * @author Sebastien Deleuze
  * @author Stephane maldini
  */
-public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded, HttpChannel<IN,OUT> {
+public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, HttpChannel<IN,OUT> {
 
 	private volatile int statusAndHeadersSent = 0;
 	private Function<? super String, Map<String, Object>> paramsResolver;
 
-	private final long prefetch;
-
 	protected final static AtomicIntegerFieldUpdater<BaseHttpChannel> HEADERS_SENT =
 			AtomicIntegerFieldUpdater.newUpdater(BaseHttpChannel.class, "statusAndHeadersSent");
 
-	public BaseHttpChannel(long prefetch) {
-		this.prefetch = prefetch;
+	public BaseHttpChannel() {
 	}
 
 	// REQUEST contract
@@ -202,6 +199,11 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 		return transfer(Transfer.EVENT_STREAM);
 	}
 
+	@Override
+	public String getName() {
+		return uri();
+	}
+
 	protected abstract void doAddResponseHeader(String name, String value);
 
 	protected boolean markHeadersAsFlushed() {
@@ -222,11 +224,6 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Bounded,
 	@Override
 	public Publisher<Void> writeWith(final Publisher<? extends OUT> source) {
 		return new PostWritePublisher(source);
-	}
-
-	@Override
-	public long getCapacity() {
-		return prefetch;
 	}
 
 	private class PostWritePublisher implements Publisher<Void>,

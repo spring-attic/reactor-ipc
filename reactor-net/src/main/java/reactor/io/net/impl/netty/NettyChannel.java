@@ -48,7 +48,7 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  */
 public class NettyChannel
 		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,
-		           ReactiveState.Bounded, ReactiveState.FeedbackLoop {
+		           ReactiveState.Named, ReactiveState.FeedbackLoop {
 
 	private final Channel ioChannel;
 	private final long    prefetch;
@@ -129,6 +129,11 @@ public class NettyChannel
 	}
 
 	@Override
+	public String getName() {
+		return ioChannel.toString();
+	}
+
+	@Override
 	public InetSocketAddress remoteAddress() {
 		return (InetSocketAddress) ioChannel.remoteAddress();
 	}
@@ -199,11 +204,6 @@ public class NettyChannel
 			         });
 			return this;
 		}
-	}
-
-	@Override
-	public long getCapacity() {
-		return prefetch;
 	}
 
 	public static class FuturePublisher<C extends Future> implements Publisher<Void> {
