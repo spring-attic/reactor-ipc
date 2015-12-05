@@ -295,7 +295,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandlerBridge}
 	 */
 	public static final class ChannelInputSubscriber implements Subscription, Subscriber<Buffer>
-	, Upstream, Downstream {
+	, Downstream {
 
 		private final Subscriber<? super Buffer> inputSubscriber;
 
@@ -362,11 +362,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 		@Override
 		public Subscriber downstream() {
 			return inputSubscriber;
-		}
-
-		@Override
-		public Object upstream() {
-			return subscription;
 		}
 
 		@Override
