@@ -20,6 +20,7 @@ import java.util.Map;
 import org.reactivestreams.Publisher;
 import reactor.fn.Function;
 import reactor.io.net.ReactiveChannel;
+import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.model.HttpHeaders;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Protocol;

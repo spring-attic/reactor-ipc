@@ -43,8 +43,6 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 
 	protected ChannelMappings<IN, OUT> channelMappings;
 
-	private boolean hasWebsocketEndpoints = false;
-
 	protected HttpServer(Timer timer) {
 		super(timer);
 	}
@@ -147,13 +145,18 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 */
 	public final HttpServer<IN, OUT> ws(String path,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		route(ChannelMappings.get(path), handler);
-		enableWebsocket();
+		route(ChannelMappings.get(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+			@Override
+			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
+				String connection = channel.headers()
+				                      .get(HttpHeaders.CONNECTION);
+				if (connection != null && connection.equals(HttpHeaders.UPGRADE)) {
+					onWebsocket(channel);
+				}
+				return handler.apply(channel);
+			}
+		});
 		return this;
-	}
-
-	protected void enableWebsocket() {
-		hasWebsocketEndpoints = true;
 	}
 
 	/**
@@ -286,14 +289,6 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 			return null;
 		}
 
-		if (hasWebsocketEndpoints) {
-			String connection = ch.headers()
-			                      .get(HttpHeaders.CONNECTION);
-			if (connection != null && connection.equals(HttpHeaders.UPGRADE)) {
-				onWebsocket(ch);
-			}
-		}
-
 		ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> channelHandler = selected.next();
 
 		if (!selected.hasNext()) {
@@ -344,11 +339,6 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		@Override
 		protected void onWebsocket(HttpChannel<?, ?> next) {
 			HttpServer.this.onWebsocket(next);
-		}
-
-		@Override
-		protected void enableWebsocket() {
-			HttpServer.this.enableWebsocket();
 		}
 
 		@Override

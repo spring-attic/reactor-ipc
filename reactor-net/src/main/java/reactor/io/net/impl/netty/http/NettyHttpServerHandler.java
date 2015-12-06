@@ -112,11 +112,11 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 	}
 
-	NettyHttpServerHandler withWebsocketSupport(String url, String protocols){
+	NettyHttpWSServerHandler withWebsocketSupport(String url, String protocols){
 		//prevent further header to be sent for handshaking
 		if(!request.markHeadersAsFlushed()){
 			log.error("Cannot enable websocket if headers have already been sent");
-			return this;
+			return null;
 		}
 		return new NettyHttpWSServerHandler(url, protocols, this);
 	}

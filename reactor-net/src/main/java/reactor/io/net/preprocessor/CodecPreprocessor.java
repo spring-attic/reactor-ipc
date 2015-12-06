@@ -31,6 +31,7 @@ import reactor.io.codec.compress.GzipCodec;
 import reactor.io.codec.json.JsonCodec;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
+import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpProcessor;
 import reactor.io.net.http.model.HttpHeaders;

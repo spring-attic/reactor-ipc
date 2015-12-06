@@ -29,8 +29,10 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
+import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.impl.netty.NettyBuffer;
+import reactor.io.net.impl.netty.NettyChannel;
 
 /**
  * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link Buffer}).
@@ -41,8 +43,12 @@ public class NettyHttpWSServerHandler extends NettyHttpServerHandler {
 
 	private final WebSocketServerHandshaker handshaker;
 
+	final ChannelFuture handshakerResult;
 
-	public NettyHttpWSServerHandler(String wsUrl, String protocols, NettyHttpServerHandler originalHandler) {
+	public NettyHttpWSServerHandler(String wsUrl,
+			String protocols,
+			NettyHttpServerHandler originalHandler
+	) {
 		super(originalHandler.getHandler(), originalHandler.getReactorNettyChannel());
 		this.request = originalHandler.request;
 
@@ -51,8 +57,10 @@ public class NettyHttpWSServerHandler extends NettyHttpServerHandler {
 		handshaker = wsFactory.newHandshaker(request.getNettyRequest());
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(reactorNettyChannel.delegate());
-		} else {
-			handshaker.handshake(reactorNettyChannel.delegate(), request.getNettyRequest());
+			handshakerResult = null;
+		}
+		else {
+			handshakerResult = handshaker.handshake(reactorNettyChannel.delegate(), request.getNettyRequest());
 		}
 	}
 

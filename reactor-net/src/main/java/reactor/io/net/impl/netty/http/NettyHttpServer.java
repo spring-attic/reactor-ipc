@@ -109,12 +109,28 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> {
 		});
 	}
 
+	/**
+	 *
+	 * @param c
+	 * @return
+	 */
+	public static Publisher<Void> upgradeToWebsocket(HttpChannel<?, ?> c){
+		ChannelPipeline pipeline = ((SocketChannel) c.delegate()).pipeline();
+		NettyHttpWSServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
+		                                           .withWebsocketSupport(c.uri(), null);
+
+		if(handler != null) {
+			pipeline.addLast(handler);
+			return new NettyChannel.FuturePublisher<>(handler.handshakerResult);
+		}
+		return Publishers.error(new IllegalStateException("Failed to upgrade to websocket"));
+	}
+
 	@Override
-	protected void onWebsocket(HttpChannel<?, ?> next) {
+	protected final void onWebsocket(HttpChannel<?, ?> next) {
 		ChannelPipeline pipeline = ((SocketChannel) next.delegate()).pipeline();
 		pipeline.addLast(pipeline.remove(NettyHttpServerHandler.class)
 		                         .withWebsocketSupport(next.uri(), null));
-
 	}
 
 	@Override
