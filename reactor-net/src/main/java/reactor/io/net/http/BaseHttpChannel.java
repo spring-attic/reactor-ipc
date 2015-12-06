@@ -201,7 +201,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 
 	@Override
 	public String getName() {
-		return uri();
+		return (getClass().getSimpleName().isEmpty() ? "HttpChannel" : getClass().getSimpleName())+":"+uri();
 	}
 
 	protected abstract void doAddResponseHeader(String name, String value);
