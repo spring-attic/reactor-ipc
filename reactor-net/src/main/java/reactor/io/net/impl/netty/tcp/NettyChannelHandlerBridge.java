@@ -560,7 +560,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 		public void onError(Throwable t) {
 			if(t instanceof IOException && t.getMessage().contains("Broken pipe")){
 				if (log.isDebugEnabled()) {
-					log.debug("Error processing connection. Closing the channel.", t);
+					log.debug("Connection closed remotely", t);
 				}
 				return;
 			}
