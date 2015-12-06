@@ -60,7 +60,12 @@ public class NettyHttpWSServerHandler extends NettyHttpServerHandler {
 			handshakerResult = null;
 		}
 		else {
-			handshakerResult = handshaker.handshake(reactorNettyChannel.delegate(), request.getNettyRequest());
+			request.responseHeaders().removeTransferEncodingChunked();
+			handshakerResult = handshaker.handshake(
+					reactorNettyChannel.delegate(),
+					request.getNettyRequest(),
+					request.responseHeaders().delegate(),
+					reactorNettyChannel.delegate().newPromise());
 		}
 	}
 

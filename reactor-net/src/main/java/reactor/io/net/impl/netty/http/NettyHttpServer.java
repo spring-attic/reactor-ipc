@@ -115,9 +115,19 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> {
 	 * @return
 	 */
 	public static Publisher<Void> upgradeToWebsocket(HttpChannel<?, ?> c){
+		return upgradeToWebsocket(c, null);
+	}
+
+	/**
+	 *
+	 * @param c
+	 * @param protocols
+	 * @return
+	 */
+	public static Publisher<Void> upgradeToWebsocket(HttpChannel<?, ?> c, String protocols){
 		ChannelPipeline pipeline = ((SocketChannel) c.delegate()).pipeline();
 		NettyHttpWSServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
-		                                           .withWebsocketSupport(c.uri(), null);
+		                                           .withWebsocketSupport(c.uri(), protocols);
 
 		if(handler != null) {
 			pipeline.addLast(handler);
@@ -127,10 +137,10 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> {
 	}
 
 	@Override
-	protected final void onWebsocket(HttpChannel<?, ?> next) {
+	protected final void onWebsocket(HttpChannel<?, ?> next, String protocols) {
 		ChannelPipeline pipeline = ((SocketChannel) next.delegate()).pipeline();
 		pipeline.addLast(pipeline.remove(NettyHttpServerHandler.class)
-		                         .withWebsocketSupport(next.uri(), null));
+		                         .withWebsocketSupport(next.uri(), protocols));
 	}
 
 	@Override

@@ -145,18 +145,33 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 */
 	public final HttpServer<IN, OUT> ws(String path,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		route(ChannelMappings.get(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+		return ws(path, handler, null);
+	}
+
+	/**
+	 * Listen for WebSocket on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param handler an handler to invoke for the given condition
+	 * @param protocols
+	 * @return {@code this}
+	 */
+	public final HttpServer<IN, OUT> ws(String path,
+			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler,
+			final String protocols) {
+		return route(ChannelMappings.get(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
 				String connection = channel.headers()
-				                      .get(HttpHeaders.CONNECTION);
+				                           .get(HttpHeaders.CONNECTION);
 				if (connection != null && connection.equals(HttpHeaders.UPGRADE)) {
-					onWebsocket(channel);
+					onWebsocket(channel, protocols);
 				}
 				return handler.apply(channel);
 			}
 		});
-		return this;
 	}
 
 	/**
@@ -273,7 +288,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		return new PreprocessedHttpServer<>(preprocessor);
 	}
 
-	protected abstract void onWebsocket(HttpChannel<?, ?> next);
+	protected abstract void onWebsocket(HttpChannel<?, ?> next, String protocols);
 
 	protected Publisher<Void> routeChannel(final HttpChannel<IN, OUT> ch) {
 
@@ -337,8 +352,8 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		}
 
 		@Override
-		protected void onWebsocket(HttpChannel<?, ?> next) {
-			HttpServer.this.onWebsocket(next);
+		protected void onWebsocket(HttpChannel<?, ?> next, String protocols) {
+			HttpServer.this.onWebsocket(next, protocols);
 		}
 
 		@Override
