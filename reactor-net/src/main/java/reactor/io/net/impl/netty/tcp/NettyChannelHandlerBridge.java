@@ -386,7 +386,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 
 		@Override
 		public long pending() {
-			return readBackpressureBuffer == null ? 0 : readBackpressureBuffer.pending();
+			return readBackpressureBuffer == null ? -1 : readBackpressureBuffer.pending();
 		}
 
 		@Override
