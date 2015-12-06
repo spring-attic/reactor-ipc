@@ -16,6 +16,7 @@
 
 package reactor.io.net.impl.netty.tcp;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
@@ -557,6 +558,13 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 
 		@Override
 		public void onError(Throwable t) {
+			if(t instanceof IOException && t.getMessage().contains("Broken pipe")){
+				if (log.isDebugEnabled()) {
+					log.debug("Error processing connection. Closing the channel.", t);
+				}
+				return;
+			}
+
 			log.error("Error processing connection. Closing the channel.", t);
 
 			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
