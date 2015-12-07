@@ -58,12 +58,13 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final JsonCodec<Event, Event>    jsonCodec;
 	private final BaseProcessor<Event, Event> eventStream = Processors.emitter(false);
 	private final GraphEvent lastState;
-	private final ProcessorGroup         group          = Processors.asyncGroup("nexus", 1024, 4);
+	private final ProcessorGroup         group          = Processors.asyncGroup("nexus", 1024, 1, null, null, false);
 	private final Function<Event, Event> lastStateMerge = new Function<Event, Event>() {
 		@Override
 		public Event apply(Event event) {
 			if (GraphEvent.class.equals(event.getClass())) {
 				lastState.graph.mergeWith(((GraphEvent) event).graph);
+				return lastState;
 			}
 			return event;
 		}
@@ -218,16 +219,18 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
 		channel.responseHeader("Access-Control-Allow-Origin", "*");
 
+		Publisher<Event> eventStream =
+				Publishers.capacity(Publishers.map(this.eventStream.dispatchOn(group), lastStateMerge), 1L);
+
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
-			p = Publishers.concat(NettyHttpServer.upgradeToWebsocket(channel),
-					channel.writeBufferWith(jsonCodec.encode(Publishers.capacity(Publishers.map(eventStream.dispatchOn(
-							group), lastStateMerge), 1L))));
+			p = Publishers.concat(
+					NettyHttpServer.upgradeToWebsocket(channel),
+					channel.writeBufferWith(jsonCodec.encode(eventStream))
+			);
 		}
 		else {
-			p =
-					channel.writeBufferWith(jsonCodec.encode(Publishers.capacity(Publishers.map(eventStream.dispatchOn(
-							group), lastStateMerge), 1L)));
+			p = channel.writeBufferWith(jsonCodec.encode(eventStream));
 		}
 
 		return p;
