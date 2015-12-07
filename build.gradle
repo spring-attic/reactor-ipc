@@ -51,7 +51,7 @@ ext {
 	protobufVersion = '2.6.1'
 	kryoVersion = '3.0.3'
 	snappyVersion = '1.1.1.6'
-	aeronVersion = '0.1.5'
+	aeronVersion = '0.2.2'
   	rxJavaVersion = '1.0.14'
 
 	// Testing
@@ -252,5 +252,6 @@ project('reactor-aeron') {
 		testCompile project(':reactor-net')
 		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
 		testCompile "org.reactivestreams:reactive-streams-tck:1.0.0"
+		testCompile "org.mockito:mockito-core:1.10.19"
     }
 }

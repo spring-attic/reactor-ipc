@@ -21,16 +21,13 @@ import reactor.io.net.tcp.support.SocketUtils;
 /**
  * @author Anatoly Kadyshev
  */
-public class AeronProcessorMulticastTest extends CommonAeronProcessorTest {
-
-	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
+public class AeronProcessorUnicastTest extends CommonAeronProcessorTest {
 
 	@Override
 	protected Context createContext() {
 		return super.createContext()
-				.name("multicast")
-				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL);
+				.name("unicast")
+				.receiverPort(SocketUtils.findAvailableUdpPort());
 	}
 
 }

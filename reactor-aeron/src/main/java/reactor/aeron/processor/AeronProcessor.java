@@ -20,11 +20,15 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.processor.ExecutorProcessor;
-import reactor.fn.Function;
+import reactor.aeron.Context;
+import reactor.aeron.publisher.AeronPublisher;
+import reactor.aeron.subscriber.AeronSubscriber;
+import reactor.aeron.support.ServiceMessageType;
+import reactor.core.processor.BaseProcessor;
+import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A processor which publishes into and subscribes to data from Aeron.<br>
@@ -49,11 +53,8 @@ import java.util.concurrent.TimeUnit;
  *     <li>{@link Context#streamId} - used for sending Next and Complete signals from
  *     the signals sender to the signals receiver</li>
  *     <li>{@link Context#errorStreamId} - for Error signals</li>
- *     <li>{@link Context#commandRequestStreamId} - for {@link CommandType#Request},
- *     {@link CommandType#Cancel} and {@link CommandType#IsAliveRequest}</li>
+ *     <li>{@link Context#serviceRequestStreamId} - for service requests of {@link ServiceMessageType}
  *     from the signals receiver to the signals sender
- *     <li>{@link Context#commandReplyStreamId} - for command execution results from
- *     the signals sender to the signals receiver</li>
  * </ul>
  *
  * <p>
@@ -107,10 +108,10 @@ import java.util.concurrent.TimeUnit;
  * When the Aeron buffer for published messages becomes completely full
  * the processor starts to throttle and as a result method
  * {@link #onNext(Buffer)} blocks until messages are consumed or
- * {@link Context#publicationTimeoutMillis} timeout elapses.<br>
+ * {@link Context#publicationRetryMillis} timeout elapses.<br>
  *
  * If a message cannot be published into Aeron within
- * {@link Context#publicationTimeoutMillis} then it is discarded.
+ * {@link Context#publicationRetryMillis} then it is discarded.
  * In the next version of the processor this behaviour is likely to change.<br>
  *
  * For configuration of Aeron buffers refer to
@@ -152,14 +153,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Anatoly Kadyshev
  */
-public class AeronProcessor extends ExecutorProcessor<Buffer, Buffer> {
+public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AeronProcessor.class);
-
-	/**
-	 * Exception serializer to serialize Error messages sent into Aeron
-	 */
-	private final Serializer<Throwable> exceptionSerializer;
 
 	/**
 	 * Reactive Publisher part of the processor - signals sender
@@ -171,7 +167,7 @@ public class AeronProcessor extends ExecutorProcessor<Buffer, Buffer> {
 	 */
 	private final AeronSubscriber subscriber;
 
-	private final AeronHelper aeronHelper;
+	private final AtomicBoolean alive = new AtomicBoolean(true);
 
 	/**
 	 * Creates a new processor using the context
@@ -179,80 +175,31 @@ public class AeronProcessor extends ExecutorProcessor<Buffer, Buffer> {
 	 * @param context configuration of the processor
 	 */
 	AeronProcessor(Context context, boolean multiPublishers) {
-		super(context.name, context.executorService, context.autoCancel);
-		this.exceptionSerializer = new BasicExceptionSerializer();
-		this.aeronHelper = context.createAeronHelper();
+		super(context.autoCancel());
 		this.subscriber = createAeronSubscriber(context, multiPublishers);
 		this.publisher = createAeronPublisher(context);
 	}
 
 	private AeronPublisher createAeronPublisher(Context context) {
-		return new AeronPublisher(context,
-				aeronHelper,
-				exceptionSerializer,
-				logger,
-				executor,
-				new Runnable() {
-					@Override
-					public void run() {
-						SUBSCRIBER_COUNT.decrementAndGet(AeronProcessor.this);
-
-						if (checkNoSubscribersAttached()) {
-							if (alive()) {
-								onComplete();
-							} else {
-								shutdownInternals();
-							}
-						}
-					}
-				},
-				new Function<Void, Boolean>() {
-					@Override
-					public Boolean apply(Void aVoid) {
-						return alive();
-					}
-				},
-				new Runnable() {
-					@Override
-					public void run() {
-						incrementSubscribers();
-					}
-				});
+		return new AeronPublisher(context, logger, new Consumer<Void>() {
+			@Override
+			public void accept(Void aVoid) {
+				shutdown();
+			}
+		});
 	}
 
 	private AeronSubscriber createAeronSubscriber(Context context, boolean multiPublishers) {
 		return new AeronSubscriber(
 				context,
-				aeronHelper,
-				executor,
-				exceptionSerializer,
 				logger,
 				multiPublishers,
-				new Runnable() {
+				new Consumer<Void>() {
 					@Override
-					public void run() {
-						shutdownInternals();
+					public void accept(Void value) {
+						shutdown();
 					}
 				});
-	}
-
-	/**
-	 * Creates a new processor which supports publishing into itself
-	 * from a <b>single</b> thread.
-	 *
-	 * @param name processor's name used as a base name of subscriber threads
-	 * @param autoCancel when set to true the processor will auto-cancel
-	 * @param channel Aeron channel used by the signals sender and the receiver
-	 * @return a new processor
-	 */
-	public static AeronProcessor create(String name, boolean autoCancel, String channel) {
-		Context context = new Context()
-				.name(name)
-				.autoCancel(autoCancel)
-				.launchEmbeddedMediaDriver(true)
-				.channel(channel);
-
-		return create(context);
 	}
 
 	public static AeronProcessor create(Context context) {
@@ -260,24 +207,6 @@ public class AeronProcessor extends ExecutorProcessor<Buffer, Buffer> {
 		return new AeronProcessor(context, false);
 	}
 
-	/**
-	 * Creates a new processor which supports publishing into itself
-	 * from multiple threads.
-	 *
-	 * @param name processor's name used as a base name of subscriber threads
-	 * @param autoCancel when set to true the processor will auto-cancel
-	 * @param channel Aeron channel used by the signals sender and the receiver
-	 * @return a new processor
-	 */
-	public static AeronProcessor share(String name, boolean autoCancel, String channel) {
-		Context context = new Context()
-				.name(name)
-				.autoCancel(autoCancel)
-				.launchEmbeddedMediaDriver(true)
-				.channel(channel);
-
-		return share(context);
-	}
 
 	public static AeronProcessor share(Context context) {
 		context.validate();
@@ -302,39 +231,9 @@ public class AeronProcessor extends ExecutorProcessor<Buffer, Buffer> {
 		subscriber.onSubscribe(upstreamSubscription);
 	}
 
-	protected boolean checkNoSubscribersAttached() {
-		return SUBSCRIBER_COUNT.get(AeronProcessor.this) == 0;
-	}
-
 	@Override
 	public void subscribe(Subscriber<? super Buffer> subscriber) {
 		publisher.subscribe(subscriber);
-	}
-
-	@Override
-	public boolean isWork() {
-		return false;
-	}
-
-	@Override
-	public boolean awaitAndShutdown() {
-		return awaitAndShutdown(-1, TimeUnit.SECONDS);
-	}
-
-	@Override
-	public boolean awaitAndShutdown(long timeout, TimeUnit timeUnit) {
-		try {
-			shutdown();
-			return executor.awaitTermination(timeout, timeUnit);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			return false;
-		}
-	}
-
-	@Override
-	public void forceShutdown() {
-		shutdown();
 	}
 
 	/**
@@ -348,24 +247,29 @@ public class AeronProcessor extends ExecutorProcessor<Buffer, Buffer> {
 	}
 
 	@Override
-	protected void doError(Throwable t) {
+	public void onError(Throwable t) {
 		subscriber.onError(t);
 	}
 
 	@Override
-	protected void doComplete() {
+	public void onComplete() {
 		subscriber.onComplete();
 	}
 
-	void shutdownInternals() {
-		subscriber.shutdown();
-
-		if (checkNoSubscribersAttached()) {
-			boolean isPublisherShutdown = publisher.shutdown();
-			if (isPublisherShutdown) {
-				aeronHelper.shutdown();
-			}
+	public void shutdown() {
+		if (alive.compareAndSet(true, false)) {
+			subscriber.shutdown();
+			publisher.shutdown();
+			logger.info("processor shutdown");
 		}
+	}
+
+	public boolean alive() {
+		return alive.get();
+	}
+
+	public boolean isTerminated() {
+		return subscriber.isTerminated() && publisher.isTerminated();
 	}
 
 }

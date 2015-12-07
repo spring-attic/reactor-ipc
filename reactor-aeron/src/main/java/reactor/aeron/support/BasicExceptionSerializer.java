@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.processor;
+package reactor.aeron.support;
 
-import reactor.aeron.Context;
-import reactor.io.net.tcp.support.SocketUtils;
+import static reactor.aeron.support.AeronUtils.UTF_8_CHARSET;
 
 /**
  * @author Anatoly Kadyshev
  */
-public class AeronProcessorMulticastTest extends CommonAeronProcessorTest {
-
-	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
+public class BasicExceptionSerializer implements Serializer<Throwable> {
 
 	@Override
-	protected Context createContext() {
-		return super.createContext()
-				.name("multicast")
-				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL);
+	public byte[] serialize(Throwable t) {
+		String errorMessage = t.getMessage();
+		if (errorMessage == null) {
+			errorMessage = "";
+		}
+		return errorMessage.getBytes(UTF_8_CHARSET);
+	}
+
+	@Override
+	public Throwable deserialize(byte[] data) {
+		String errorMessage = new String(data, UTF_8_CHARSET);
+		return new Exception(errorMessage);
 	}
 
 }

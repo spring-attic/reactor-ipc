@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.processor;
-
-import reactor.aeron.Context;
-import reactor.io.net.tcp.support.SocketUtils;
+package reactor.aeron.support;
 
 /**
  * @author Anatoly Kadyshev
  */
-public class AeronProcessorMulticastTest extends CommonAeronProcessorTest {
+public enum SignalType {
 
-	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
+	Next((byte) 0),
+	Error((byte) 1),
+	Complete((byte) 2);
 
-	@Override
-	protected Context createContext() {
-		return super.createContext()
-				.name("multicast")
-				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL);
+	private final byte code;
+
+	SignalType(byte code) {
+		this.code = code;
+	}
+
+	public byte getCode() {
+		return code;
 	}
 
 }
