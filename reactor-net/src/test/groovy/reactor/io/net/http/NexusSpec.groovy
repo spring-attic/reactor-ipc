@@ -33,6 +33,8 @@ class NexusSpec extends Specification {
 
 			//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
 		def nexus = ReactiveNet.nexus()
+		def c = nexus.logCannon()
+		c.emit("test")
 
 		def latch = new CountDownLatch(1)
 

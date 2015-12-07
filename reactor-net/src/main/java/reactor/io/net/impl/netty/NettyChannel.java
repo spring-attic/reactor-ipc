@@ -48,7 +48,7 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  */
 public class NettyChannel
 		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,
-		           ReactiveState.Named, ReactiveState.FeedbackLoop, ReactiveState.ActiveDownstream {
+		           ReactiveState.Named, ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
 
 	private final Channel ioChannel;
 	private final long    prefetch;
@@ -95,7 +95,12 @@ public class NettyChannel
 	}
 
 	@Override
-	public boolean isCancelled() {
+	public boolean isStarted() {
+		return ioChannel.isActive();
+	}
+
+	@Override
+	public boolean isTerminated() {
 		return !ioChannel.isOpen();
 	}
 
