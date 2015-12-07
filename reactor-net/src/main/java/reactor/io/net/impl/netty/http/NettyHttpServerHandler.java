@@ -16,6 +16,8 @@
 
 package reactor.io.net.impl.netty.http;
 
+import java.io.IOException;
+
 import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -150,6 +152,12 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
 		@Override
 		public void onError(Throwable t) {
+			if(t instanceof IOException && t.getMessage().contains("Broken pipe")){
+				if (log.isDebugEnabled()) {
+					log.debug("Connection closed remotely", t);
+				}
+				return;
+			}
 			log.error("Error processing connection. Closing the channel.", t);
 			if (request.markHeadersAsFlushed()) {
 				request.delegate()

@@ -42,7 +42,6 @@ import reactor.core.processor.rb.disruptor.Sequencer;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.support.BackpressureUtils;
 import reactor.core.support.ReactiveState;
-import reactor.core.support.ReactiveState.Bounded;
 import reactor.core.support.SignalType;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -56,7 +55,8 @@ import reactor.io.net.impl.netty.NettyChannel;
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
-public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements ReactiveState.Downstream {
+public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements ReactiveState.Downstream,
+                                                                               ReactiveState.ActiveUpstream {
 
 	protected static final Logger log = LoggerFactory.getLogger(NettyChannelHandlerBridge.class);
 
@@ -126,6 +126,16 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 		super.channelActive(ctx);
 		handler.apply(reactorNettyChannel)
 		       .subscribe(new CloseSubscriber(ctx));
+	}
+
+	@Override
+	public boolean isStarted() {
+		return reactorNettyChannel.delegate().isActive();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return !reactorNettyChannel.delegate().isOpen();
 	}
 
 	@Override
@@ -578,7 +588,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 		}
 	}
 
-	private class FlushOnTerminateSubscriber extends BaseSubscriber<Object> implements ChannelFutureListener {
+	private class FlushOnTerminateSubscriber extends BaseSubscriber<Object>
+			implements ChannelFutureListener, ReactiveState.FeedbackLoop {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -599,6 +610,16 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 				subscription.cancel();
 			}
 			subscription = null;
+		}
+
+		@Override
+		public Object delegateInput() {
+			return NettyChannelHandlerBridge.this;
+		}
+
+		@Override
+		public Object delegateOutput() {
+			return null;
 		}
 
 		@Override
@@ -670,7 +691,9 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 	}
 
 	private class FlushOnCapacitySubscriber extends BaseSubscriber<Object>
-			implements Runnable, ChannelFutureListener {
+			implements Runnable,
+			           ChannelFutureListener, FeedbackLoop, Buffering, ActiveUpstream,
+			           ActiveDownstream{
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -684,7 +707,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
 				if (!future.isSuccess() && future.cause() != null) {
-					log.error("error during write");
 					promise.tryFailure(future.cause());
 					return;
 				}
@@ -700,6 +722,41 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 			this.ctx = ctx;
 			this.promise = promise;
 			this.capacity = capacity;
+		}
+
+		@Override
+		public long pending() {
+			return ctx.channel().isWritable() ? written : capacity;
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return !ctx.channel().isOpen();
+		}
+
+		@Override
+		public boolean isStarted() {
+			return subscription != null;
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return !ctx.channel().isOpen();
+		}
+
+		@Override
+		public long getCapacity() {
+			return capacity;
+		}
+
+		@Override
+		public Object delegateInput() {
+			return NettyChannelHandlerBridge.this;
+		}
+
+		@Override
+		public Object delegateOutput() {
+			return null;
 		}
 
 		@Override
