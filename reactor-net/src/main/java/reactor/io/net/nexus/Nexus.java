@@ -17,7 +17,6 @@
 package reactor.io.net.nexus;
 
 import java.net.InetSocketAddress;
-import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 
 import org.reactivestreams.Publisher;
@@ -71,21 +70,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		final CountDownLatch stopped = new CountDownLatch(1);
 
-		nexus.server.get(EXIT_URL, new ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>() {
-			@Override
-			public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
-				stopped.countDown();
-				return Publishers.empty();
-			}
-		});
-
 		nexus.startAndAwait();
 
-		InetSocketAddress addr = nexus.getServer()
-		                              .getListenAddress();
-		log.info("Nexus Warped, Void Energy available under http://" + addr.getHostName() + ":" + addr.getPort() +
-				API_STREAM_URL);
-
+		log.info("CTRL-C to return...");
 		stopped.await();
 	}
 
@@ -126,6 +113,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public final void startAndAwait() throws InterruptedException {
 		Publishers.toReadQueue(start(null))
 		          .take();
+		InetSocketAddress addr = server.getListenAddress();
+		log.info("Nexus Warped, Void Energy available under http://" + addr.getHostName() + ":" + addr.getPort() +
+				API_STREAM_URL);
 	}
 
 	/**
