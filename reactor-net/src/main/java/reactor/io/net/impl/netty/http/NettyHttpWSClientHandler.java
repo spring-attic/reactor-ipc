@@ -74,6 +74,11 @@ public class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 	}
 
 	@Override
+	public String getName() {
+		return "Websocket Connection";
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();

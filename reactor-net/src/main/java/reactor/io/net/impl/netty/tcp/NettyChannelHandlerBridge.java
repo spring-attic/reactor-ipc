@@ -55,8 +55,9 @@ import reactor.io.net.impl.netty.NettyChannel;
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
-public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements ReactiveState.Downstream,
-                                                                               ReactiveState.ActiveUpstream {
+public class NettyChannelHandlerBridge extends ChannelDuplexHandler
+		implements ReactiveState.Named, ReactiveState.FeedbackLoop, ReactiveState.Downstream, ReactiveState
+		.ActiveUpstream {
 
 	protected static final Logger log = LoggerFactory.getLogger(NettyChannelHandlerBridge.class);
 
@@ -183,6 +184,16 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 	}
 
 	@Override
+	public Object delegateInput() {
+		return reactorNettyChannel;
+	}
+
+	@Override
+	public Object delegateOutput() {
+		return null;
+	}
+
+	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		doRead(ctx, msg);
 	}
@@ -217,6 +228,11 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler implements R
 				throw err;
 			}
 		}
+	}
+
+	@Override
+	public String getName() {
+		return "TCP Connection";
 	}
 
 	@Override

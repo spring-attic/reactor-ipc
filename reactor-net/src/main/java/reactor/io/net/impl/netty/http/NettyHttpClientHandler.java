@@ -174,6 +174,11 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 
 	}
 
+	@Override
+	public String getName() {
+		return "HTTP Client Connection";
+	}
+
 	protected void writeLast(final ChannelHandlerContext ctx){
 		ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}

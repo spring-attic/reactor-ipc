@@ -276,6 +276,11 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 							super.channelRead(ctx, msg);
 						}
 					}
+
+					@Override
+					public String getName() {
+						return "UDP Connection";
+					}
 				},
 				new ChannelOutboundHandlerAdapter() {
 					@Override

@@ -48,7 +48,7 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  */
 public class NettyChannel
 		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,
-		           ReactiveState.Named, ReactiveState.FeedbackLoop {
+		           ReactiveState.Named, ReactiveState.FeedbackLoop, ReactiveState.ActiveDownstream {
 
 	private final Channel ioChannel;
 	private final long    prefetch;
@@ -92,6 +92,11 @@ public class NettyChannel
 		catch (Throwable throwable) {
 			Publishers.<Buffer>error(throwable).subscribe(subscriber);
 		}
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return !ioChannel.isOpen();
 	}
 
 	public void emitWriter(final Publisher<?> encodedWriter,

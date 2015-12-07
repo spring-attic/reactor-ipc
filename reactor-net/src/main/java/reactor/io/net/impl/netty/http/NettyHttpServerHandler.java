@@ -123,6 +123,11 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		return new NettyHttpWSServerHandler(url, protocols, this);
 	}
 
+	@Override
+	public String getName() {
+		return "HTTP Connection";
+	}
+
 	private class AutoHeaderNettyHttpChannel extends NettyHttpChannel {
 
 		public AutoHeaderNettyHttpChannel(Object msg) {
