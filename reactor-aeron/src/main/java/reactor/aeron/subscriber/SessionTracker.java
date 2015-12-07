@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.processor;
+package reactor.aeron.subscriber;
 
-import reactor.aeron.Context;
-import reactor.io.net.tcp.support.SocketUtils;
+import java.util.Collection;
 
 /**
  * @author Anatoly Kadyshev
  */
-public class AeronProcessorMulticastTest extends CommonAeronProcessorTest {
+interface SessionTracker<T extends Session> {
 
-	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
+	T remove(String sessionId);
 
-	@Override
-	protected Context createContext() {
-		return super.createContext()
-				.name("multicast")
-				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL);
-	}
+	T get(String sessionId);
+
+	void put(String sessionId, T sessionData);
+
+	Collection<T> getSessions();
+
+	/**
+	 * @return number of established sessions
+	 */
+	int getSessionCounter();
+
+	boolean hasNonTerminalSession();
 
 }

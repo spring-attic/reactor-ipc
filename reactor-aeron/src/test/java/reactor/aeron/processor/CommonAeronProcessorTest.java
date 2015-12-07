@@ -1,0 +1,249 @@
+/*
+ * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package reactor.aeron.processor;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.Processors;
+import reactor.aeron.Context;
+import reactor.aeron.support.AeronTestUtils;
+import reactor.aeron.support.ThreadSnapshot;
+import reactor.core.processor.BaseProcessor;
+import reactor.core.subscriber.test.DataTestSubscriber;
+import reactor.fn.Consumer;
+import reactor.io.buffer.Buffer;
+import reactor.rx.Stream;
+import reactor.rx.Streams;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * @author Anatoly Kadyshev
+ */
+public abstract class CommonAeronProcessorTest {
+
+	protected static final int TIMEOUT_SECS = 5;
+
+	private ThreadSnapshot threadSnapshot;
+
+	@Before
+	public void doSetup() {
+		threadSnapshot = new ThreadSnapshot().take();
+
+		AeronTestUtils.setAeronEnvProps();
+	}
+
+	@After
+	public void doTeardown() throws InterruptedException {
+		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
+
+		assertTrue(threadSnapshot.takeAndCompare(new String[] {"hash", "global"},
+				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
+	}
+
+	protected Context createContext() {
+		return new Context()
+				.autoCancel(false)
+				.publicationLingerMillis(1000)
+				.publicationRetryMillis(1000)
+				.errorConsumer(new Consumer<Throwable>() {
+					@Override
+					public void accept(Throwable throwable) {
+						throwable.printStackTrace();
+					}
+				});
+	}
+
+	protected DataTestSubscriber createTestSubscriber() {
+		return DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+	}
+
+
+	@Test
+	public void testNextSignalIsReceived() throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+		DataTestSubscriber subscriber = createTestSubscriber();
+		processor.subscribe(subscriber);
+		subscriber.request(4);
+
+		Streams.just(Buffer.wrap("Live"),
+				Buffer.wrap("Hard"),
+				Buffer.wrap("Die"),
+				Buffer.wrap("Harder"),
+				Buffer.wrap("Extra")).subscribe(processor);
+
+		subscriber.assertNextSignals("Live", "Hard", "Die", "Harder");
+
+		subscriber.request(1);
+
+		subscriber.assertNextSignals("Extra");
+
+		//FIXME: Remove this work-around for bounded Streams.just not sending Complete signal
+		subscriber.request(1);
+	}
+
+	@Test
+	public void testCompleteSignalIsReceived() throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+		Streams.just(
+				Buffer.wrap("One"),
+				Buffer.wrap("Two"),
+				Buffer.wrap("Three"))
+				.subscribe(processor);
+
+		DataTestSubscriber subscriber = createTestSubscriber();
+		processor.subscribe(subscriber);
+
+		subscriber.request(1);
+		subscriber.assertNextSignals("One");
+
+		subscriber.request(1);
+		subscriber.assertNextSignals("Two");
+
+		subscriber.request(1);
+		subscriber.assertNextSignals("Three");
+
+		//FIXME: Remove this work-around for bounded Streams.just not sending Complete signal
+		subscriber.request(1);
+
+		subscriber.assertCompleteReceived();
+	}
+
+	@Test
+	@Ignore
+	public void testCompleteShutdownsProcessorWithNoSubscribers() {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+
+		Publisher<Buffer> publisher = Subscriber::onComplete;
+
+		publisher.subscribe(processor);
+	}
+
+	@Test
+	public void testWorksWithTwoSubscribersViaEmitter() throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+		Streams.just(Buffer.wrap("Live"),
+				Buffer.wrap("Hard"),
+				Buffer.wrap("Die"),
+				Buffer.wrap("Harder")).subscribe(processor);
+
+		BaseProcessor<Buffer, Buffer> emitter = Processors.emitter();
+		processor.subscribe(emitter);
+
+		DataTestSubscriber subscriber1 = createTestSubscriber();
+		emitter.subscribe(subscriber1);
+
+		DataTestSubscriber subscriber2 = createTestSubscriber();
+		emitter.subscribe(subscriber2);
+
+		subscriber1.requestUnboundedWithTimeout();
+		subscriber2.requestUnboundedWithTimeout();
+
+
+		subscriber1.assertNextSignals("Live", "Hard", "Die", "Harder");
+		subscriber2.assertNextSignals("Live", "Hard", "Die", "Harder");
+		subscriber1.assertCompleteReceived();
+		subscriber2.assertCompleteReceived();
+	}
+
+	@Test
+	public void testClientReceivesException() throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+
+		// as error is delivered on a different channelId compared to signal
+		// its delivery could shutdown the processor before the processor subscriber
+		// receives signal
+		Streams.concat(Streams.just(Buffer.wrap("Item")),
+				Streams.fail(new RuntimeException("Something went wrong")))
+				.subscribe(processor);
+
+		DataTestSubscriber subscriber = createTestSubscriber();
+		processor.subscribe(subscriber);
+		subscriber.requestUnboundedWithTimeout();
+
+		subscriber.assertErrorReceived();
+
+		Throwable throwable = subscriber.getLastErrorSignal();
+		assertThat(throwable.getMessage(), is("Something went wrong"));
+	}
+
+	@Test
+	public void testExceptionWithNullMessageIsHandled() throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+
+		DataTestSubscriber subscriber = createTestSubscriber();
+		processor.subscribe(subscriber);
+		subscriber.requestUnboundedWithTimeout();
+
+		Stream<Buffer> sourceStream = Streams.fail(new RuntimeException());
+		sourceStream.subscribe(processor);
+
+		subscriber.assertErrorReceived();
+
+		Throwable throwable = subscriber.getLastErrorSignal();
+		assertThat(throwable.getMessage(), is(""));
+	}
+
+	@Test
+	public void testCancelsUpstreamSubscriptionWhenLastSubscriptionIsCancelledAndAutoCancel()
+			throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext().autoCancel(true));
+
+		final CountDownLatch subscriptionCancelledLatch = new CountDownLatch(1);
+		Publisher<Buffer> dataPublisher = new Publisher<Buffer>() {
+			@Override
+			public void subscribe(Subscriber<? super Buffer> subscriber) {
+				subscriber.onSubscribe(new Subscription() {
+					@Override
+					public void request(long n) {
+						System.out.println("Requested: " + n);
+					}
+
+					@Override
+					public void cancel() {
+						System.out.println("Upstream subscription cancelled");
+						subscriptionCancelledLatch.countDown();
+					}
+				});
+			}
+		};
+		dataPublisher.subscribe(processor);
+
+		DataTestSubscriber client = createTestSubscriber();
+
+		processor.subscribe(client);
+		client.requestUnboundedWithTimeout();
+
+		processor.onNext(Buffer.wrap("Hello"));
+
+		client.assertNextSignals("Hello");
+		client.cancelSubscription();
+
+		assertTrue("Subscription wasn't cancelled",
+				subscriptionCancelledLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
+	}
+
+}
