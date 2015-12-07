@@ -20,6 +20,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.PublisherFactory;
 import reactor.core.subscriber.SubscriberBarrier;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.fn.Supplier;
@@ -182,7 +183,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private final class DecoderBarrier extends SubscriberBarrier<SRC, IN> {
+	private final class DecoderBarrier extends SubscriberBarrier<SRC, IN> implements ReactiveState.Named {
 		final Function<SRC, IN> decoder;
 
 		public DecoderBarrier(final Subscriber<? super IN> subscriber) {
@@ -199,9 +200,14 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		protected void doNext(SRC src) {
 			decoder.apply(src);
 		}
+
+		@Override
+		public String getName() {
+			return Codec.this.getClass().getSimpleName().replaceAll("Codec","Decoder");
+		}
 	}
 
-	private class EncoderBarrier extends SubscriberBarrier<OUT, SRC> {
+	private class EncoderBarrier extends SubscriberBarrier<OUT, SRC> implements ReactiveState.Named {
 		final private Function<OUT, SRC> encoder;
 
 		public EncoderBarrier(final Subscriber<? super SRC> subscriber) {
@@ -212,6 +218,11 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		@Override
 		protected void doNext(OUT src) {
 			subscriber.onNext(encoder.apply(src));
+		}
+
+		@Override
+		public String getName() {
+			return Codec.this.getClass().getSimpleName().replaceAll("Codec","Encoder");
 		}
 	}
 

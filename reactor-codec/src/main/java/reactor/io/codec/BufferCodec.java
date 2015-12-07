@@ -26,6 +26,7 @@ import org.reactivestreams.Subscriber;
 import reactor.Publishers;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.ReactiveState;
 import reactor.core.support.internal.PlatformDependent;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
@@ -85,7 +86,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 	}
 
 	private static final class AggregatingDecoderBarrier<IN>
-			extends SubscriberBarrier<Buffer, IN> {
+			extends SubscriberBarrier<Buffer, IN> implements ReactiveState.Named {
 
 		private final static AtomicReferenceFieldUpdater<AggregatingDecoderBarrier, Buffer>
 				AGGREGATE =
@@ -201,6 +202,11 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 					super.doComplete();
 				}
 			}
+		}
+
+		@Override
+		public String getName() {
+			return codec.getClass().getSimpleName().replaceAll("Codec","Decoder");
 		}
 
 		private boolean tryEmit(Buffer buffer) {

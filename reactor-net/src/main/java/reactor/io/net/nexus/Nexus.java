@@ -28,6 +28,7 @@ import reactor.Publishers;
 import reactor.core.processor.BaseProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.subscription.ReactiveSession;
+import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.fn.Function;
 import reactor.fn.timer.Timer;
@@ -59,16 +60,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final BaseProcessor<Event, Event> eventStream = Processors.emitter(false);
 	private final GraphEvent lastState;
 	private final ProcessorGroup         group          = Processors.asyncGroup("nexus", 1024, 1, null, null, false);
-	private final Function<Event, Event> lastStateMerge = new Function<Event, Event>() {
-		@Override
-		public Event apply(Event event) {
-			if (GraphEvent.class.equals(event.getClass())) {
-				lastState.graph.mergeWith(((GraphEvent) event).graph);
-				return lastState;
-			}
-			return event;
-		}
-	};
+	private final Function<Event, Event> lastStateMerge = new LastGraphStateMap();
 
 	private final ReactiveSession<Publisher<Event>> cannons;
 
@@ -150,24 +142,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public final ReactiveSession<Object> logCannon() {
 		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		this.cannons.submit(Publishers.map(p, new Function<Object, Event>() {
-			@Override
-			@SuppressWarnings("unchecked")
-			public Event apply(Object o) {
-				String level;
-				String message;
-				if (Tuple2.class.equals(o.getClass())) {
-					level = ((Tuple2<String, String>) o).getT1();
-					message = ((Tuple2<String, String>) o).getT2();
-				}
-				else {
-					level = null;
-					message = o.toString();
-				}
-				return new LogEvent(server.getListenAddress()
-				                          .getHostName(), message, level);
-			}
-		}));
+		this.cannons.submit(Publishers.map(p, new LogMapper()));
 		return p.startSession();
 	}
 
@@ -178,13 +153,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public final ReactiveSession<Object> metricCannon() {
 		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		this.cannons.submit(Publishers.map(p, new Function<Object, Event>() {
-			@Override
-			public Event apply(Object o) {
-				return new MetricEvent(server.getListenAddress()
-				                             .getHostName());
-			}
-		}));
+		this.cannons.submit(Publishers.map(p, new MetricMapper()));
 		return p.startSession();
 	}
 
@@ -195,13 +164,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public final ReactiveSession<Object> streamCannon() {
 		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		this.cannons.submit(Publishers.map(p, new Function<Object, Event>() {
-			@Override
-			public Event apply(Object o) {
-				return new GraphEvent(server.getListenAddress()
-				                            .getHostName(), ReactiveStateUtils.scan(o));
-			}
-		}));
+		this.cannons.submit(Publishers.map(p, new GraphMapper()));
 		return p.startSession();
 	}
 
@@ -331,6 +294,61 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		public int getActiveThreads() {
 			return Thread.activeCount();
+		}
+	}
+
+	private class LastGraphStateMap implements Function<Event, Event>, ReactiveState.Named {
+
+		@Override
+		public Event apply(Event event) {
+			if (GraphEvent.class.equals(event.getClass())) {
+				lastState.graph.mergeWith(((GraphEvent) event).graph);
+				return lastState;
+			}
+			return event;
+		}
+
+		@Override
+		public String getName() {
+			return "ScanIfGraphEvent";
+		}
+	}
+
+	private class LogMapper implements Function<Object, Event> {
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public Event apply(Object o) {
+			String level;
+			String message;
+			if (Tuple2.class.equals(o.getClass())) {
+				level = ((Tuple2<String, String>) o).getT1();
+				message = ((Tuple2<String, String>) o).getT2();
+			}
+			else {
+				level = null;
+				message = o.toString();
+			}
+			return new LogEvent(server.getListenAddress()
+			                          .getHostName(), message, level);
+		}
+	}
+
+	private class MetricMapper implements Function<Object, Event> {
+
+		@Override
+		public Event apply(Object o) {
+			return new MetricEvent(server.getListenAddress()
+			                             .getHostName());
+		}
+	}
+
+	private class GraphMapper implements Function<Object, Event> {
+
+		@Override
+		public Event apply(Object o) {
+			return new GraphEvent(server.getListenAddress()
+			                            .getHostName(), ReactiveStateUtils.scan(o));
 		}
 	}
 }
