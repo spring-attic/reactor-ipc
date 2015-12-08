@@ -22,6 +22,7 @@ import org.reactivestreams.Publisher;
 import reactor.Publishers;
 import reactor.Timers;
 import reactor.core.support.Assert;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
 import reactor.fn.timer.Timer;
 
@@ -32,7 +33,8 @@ import reactor.fn.timer.Timer;
  * ReactiveChannel}, regardless of being a server or a client.
  * @author Stephane Maldini
  */
-public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT>> {
+public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT>>
+		implements ReactiveState.ActiveUpstream {
 
 	private final   Timer         defaultTimer;
 	private final   long          defaultPrefetch;
@@ -161,6 +163,16 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 
 	protected boolean shouldFailOnStarted() {
 		return true;
+	}
+
+	@Override
+	public boolean isStarted() {
+		return started.get();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return !started.get();
 	}
 
 	private final class PreprocessedReactivePeer<NEWIN, NEWOUT, NEWCONN extends ReactiveChannel<NEWIN, NEWOUT>>

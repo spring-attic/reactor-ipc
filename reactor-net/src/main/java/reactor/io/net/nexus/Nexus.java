@@ -339,7 +339,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		@Override
 		public Event apply(Object o) {
 			return new GraphEvent(server.getListenAddress()
-			                            .getHostName(), ReactiveStateUtils.scan(o));
+			                            .getHostName(), ReactiveStateUtils.Graph.class.equals(o.getClass()) ?
+					((ReactiveStateUtils.Graph)o) : ReactiveStateUtils.scan(o));
 		}
 	}
 }

@@ -125,7 +125,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
 	@Override
 	public String getName() {
-		return "HTTP Connection";
+		return request != null ? request.getName() : "HTTP Client Connection";
 	}
 
 	private class AutoHeaderNettyHttpChannel extends NettyHttpChannel {

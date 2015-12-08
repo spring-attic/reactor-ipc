@@ -27,6 +27,10 @@ import reactor.io.buffer.Buffer;
 @SuppressWarnings("unchecked")
 public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super SO>> {
 
+	public static final boolean DEFAULT_MANAGED_PEER = Boolean.parseBoolean(System.getProperty("reactor.io.net" +
+			".managed.default",
+			"true"));
+
 	private int     timeout    = 30000;
 	private boolean keepAlive  = true;
 	private int     linger     = 5;
@@ -35,6 +39,7 @@ public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super
 	private int     sndbuf     = Buffer.SMALL_BUFFER_SIZE;
 	private long    prefetch   = Long.MAX_VALUE;
 	private boolean israw      = false;
+	private boolean managed      = DEFAULT_MANAGED_PEER;
 
 	/**
 	 * Gets the {@code SO_TIMEOUT} value
@@ -67,6 +72,23 @@ public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super
 	 */
 	public SO isRaw(boolean israw) {
 		this.israw = israw;
+		return (SO) this;
+	}
+
+	/**
+	 * @return false if not managed
+	 */
+	public boolean isManaged() {
+		return managed;
+	}
+
+	/**
+	 * Set the is managed value.
+	 * @param managed Should the peer be traced
+	 * @return {@code this}
+	 */
+	public SO managed(boolean managed) {
+		this.managed = managed;
 		return (SO) this;
 	}
 

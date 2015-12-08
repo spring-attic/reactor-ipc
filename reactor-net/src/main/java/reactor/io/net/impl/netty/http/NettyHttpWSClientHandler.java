@@ -74,11 +74,6 @@ public class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 	}
 
 	@Override
-	public String getName() {
-		return "Websocket Connection";
-	}
-
-	@Override
 	@SuppressWarnings("unchecked")
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();
@@ -99,7 +94,10 @@ public class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 		if (TextWebSocketFrame.class.isAssignableFrom(messageClass)) {
 			try {
 				//don't inflate the String bytes now
-				channelSubscriber.onNext(new StringBuffer(((TextWebSocketFrame) msg).content().nioBuffer()));
+				if(channelSubscriber != null) {
+					channelSubscriber.onNext(new StringBuffer(((TextWebSocketFrame) msg).content()
+					                                                                    .nioBuffer()));
+				}
 			} finally {
 				ReferenceCountUtil.release(msg);
 			}

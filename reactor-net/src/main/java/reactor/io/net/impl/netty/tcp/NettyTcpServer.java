@@ -18,15 +18,19 @@ package reactor.io.net.impl.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Iterator;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.SocketChannelConfig;
 import io.netty.handler.logging.LoggingHandler;
@@ -38,10 +42,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.Publishers;
 import reactor.core.support.NamedDaemonThreadFactory;
+import reactor.core.support.ReactiveState;
 import reactor.fn.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
+import reactor.io.net.config.CommonSocketOptions;
 import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.config.SslOptions;
 import reactor.io.net.impl.netty.NettyChannel;
@@ -56,7 +62,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyTcpServer extends TcpServer<Buffer, Buffer> {
+public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements ReactiveState.LinkedDownstreams {
 
 	private final static Logger log = LoggerFactory.getLogger(NettyTcpServer.class);
 
@@ -64,6 +70,8 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> {
 	private final ServerBootstrap          bootstrap;
 	private final EventLoopGroup           selectorGroup;
 	private final EventLoopGroup           ioGroup;
+
+	private final ChannelGroup channelGroup;
 
 	private ChannelFuture bindFuture;
 
@@ -107,8 +115,42 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> {
 			  .option(ChannelOption.SO_REUSEADDR, options.reuseAddr());
 		}
 
+		if(options != null && options.isManaged() || CommonSocketOptions.DEFAULT_MANAGED_PEER){
+			log.debug("Server is managed.");
+			this.channelGroup = new DefaultChannelGroup(null);
+		}
+		else{
+			log.debug("Server is not managed (Not directly introspectable)");
+			this.channelGroup = null;
+		}
+
 		this.bootstrap = _serverBootstrap;
 
+	}
+
+	@Override
+	public Iterator<?> downstreams() {
+		if(channelGroup == null){
+			return null;
+		}
+		return new Iterator<Object>() {
+			final Iterator<Channel> channelIterator = channelGroup.iterator();
+
+			@Override
+			public boolean hasNext() {
+				return channelIterator.hasNext();
+			}
+
+			@Override
+			public Object next() {
+				return channelIterator.next().pipeline().get(NettyChannelHandlerBridge.class);
+			}
+		};
+	}
+
+	@Override
+	public long downstreamsCount() {
+		return channelGroup == null ? -1 : channelGroup.size();
 	}
 
 	@Override
@@ -129,6 +171,10 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> {
 
 				if (log.isDebugEnabled()) {
 					log.debug("CONNECT {}", ch);
+				}
+
+				if(channelGroup != null){
+					channelGroup.add(ch);
 				}
 
 				if (null != getSslOptions()) {

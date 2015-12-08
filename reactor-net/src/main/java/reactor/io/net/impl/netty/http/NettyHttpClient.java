@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import reactor.Publishers;
 import reactor.Subscribers;
 import reactor.core.support.Assert;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.timer.Timer;
 import reactor.fn.tuple.Tuple2;
@@ -56,7 +57,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpClient;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyHttpClient extends HttpClient<Buffer, Buffer> {
+public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements ReactiveState.FeedbackLoop {
 
 	private final static Logger log = LoggerFactory.getLogger(NettyHttpClient.class);
 
@@ -83,64 +84,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> {
 			final ClientSocketOptions options, final SslOptions sslOptions) {
 		super(timer, options);
 
-		this.client =
-				new NettyTcpClient(timer, connectAddress, options, sslOptions) {
-					@Override
-					protected void bindChannel(
-							ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
-							SocketChannel nativeChannel) {
-
-						URI currentURI = lastURI;
-						try {
-							if (currentURI.getScheme() != null && (currentURI.getScheme()
-							                                                 .toLowerCase()
-							                                                 .equals(HttpChannel.HTTPS_SCHEME) || currentURI.getScheme()
-							                                                                                                .toLowerCase()
-							                                                                                                .equals(HttpChannel.WSS_SCHEME))) {
-								addSecureHandler(nativeChannel);
-							} else {
-								nativeChannel.config()
-								  .setAutoRead(false);
-							}
-						}
-						catch (Exception e) {
-							nativeChannel.pipeline()
-							             .fireExceptionCaught(e);
-						}
-
-						NettyHttpClient.this.bindChannel(handler, nativeChannel);
-					}
-
-					@Override
-					public InetSocketAddress getConnectAddress() {
-						if (connectAddress != null) {
-							return connectAddress;
-						}
-						try {
-							URI url = lastURI;
-							String host =
-									url != null && url.getHost() != null ? url.getHost() :
-											"localhost";
-							int port = url != null ? url.getPort() : -1;
-							if (port == -1) {
-								if (url != null && url.getScheme() != null && (url.getScheme()
-								                                                  .toLowerCase()
-								                                                  .equals(HttpChannel.HTTPS_SCHEME) || url.getScheme()
-								                                                                                          .toLowerCase()
-								                                                                                          .equals(HttpChannel.WSS_SCHEME))) {
-									port = 443;
-								}
-								else {
-									port = 80;
-								}
-							}
-							return new InetSocketAddress(host, port);
-						}
-						catch (Exception e) {
-							throw new IllegalArgumentException(e);
-						}
-					}
-				};
+		this.client = new TcpBridgeClient(timer, connectAddress, options, sslOptions);
 	}
 
 	@Override
@@ -184,52 +128,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> {
 			return Publishers.error(e);
 		}
 
-		return new Publisher<HttpChannel<Buffer, Buffer>>() {
-
-			@Override
-			public void subscribe(final Subscriber<? super HttpChannel<Buffer, Buffer>> subscriber) {
-				doStart(new ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>() {
-					@Override
-					public Publisher<Void> apply(HttpChannel<Buffer, Buffer> c) {
-						try {
-							URI uri = currentURI;
-							NettyHttpChannel ch = (NettyHttpChannel) c;
-							ch.getNettyRequest()
-							  .setUri(uri.getPath() + (
-									  uri.getQuery() == null ? "" :
-											  "?" + uri.getQuery()))
-							  .setMethod(new HttpMethod(method.getName()))
-							  .headers()
-							  .add(HttpHeaders.Names.HOST, uri.getHost())
-							  .add(HttpHeaders.Names.ACCEPT, "*/*");
-
-							ch.delegate()
-							  .pipeline()
-							  .fireUserEventTriggered(new NettyHttpClientHandler.ChannelInputSubscriberEvent(subscriber));
-
-							if (handler != null) {
-								return handler.apply(ch);
-							}
-							else {
-								ch.headers()
-								  .removeTransferEncodingChunked();
-								return ch.writeHeaders();
-							}
-						}
-						catch (Throwable t) {
-							return Publishers.error(t);
-						}
-					}
-
-				}).subscribe(Subscribers.unbounded(null, new Consumer<Throwable>() {
-					@Override
-					public void accept(Throwable reason) {
-						Publishers.<HttpChannel<Buffer, Buffer>>error(reason)
-								.subscribe(subscriber);
-					}
-				}));
-			}
-		};
+		return new PostRequestPublisher(currentURI, method, handler);
 	}
 
 	private URI parseURL(Method method, String url) throws Exception {
@@ -247,6 +146,16 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> {
 		else {
 			return new URI(url);
 		}
+	}
+
+	@Override
+	public Object delegateInput() {
+		return client;
+	}
+
+	@Override
+	public Object delegateOutput() {
+		return client;
 	}
 
 	@Override
@@ -284,5 +193,143 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> {
 	@Override
 	protected boolean shouldFailOnStarted() {
 		return false;
+	}
+
+	private class PostRequestPublisher implements Publisher<HttpChannel<Buffer, Buffer>> {
+
+		private final URI currentURI;
+		private final Method                                                              method;
+		private final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler;
+
+		public PostRequestPublisher(URI currentURI,
+				Method method,
+				ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
+			this.currentURI = currentURI;
+			this.method = method;
+			this.handler = handler;
+		}
+
+		@Override
+		public void subscribe(final Subscriber<? super HttpChannel<Buffer, Buffer>> subscriber) {
+			doStart(new ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>() {
+				@Override
+				public Publisher<Void> apply(HttpChannel<Buffer, Buffer> c) {
+					try {
+						URI uri = currentURI;
+						NettyHttpChannel ch = (NettyHttpChannel) c;
+						ch.getNettyRequest()
+						  .setUri(uri.getPath() + (
+								  uri.getQuery() == null ? "" :
+										  "?" + uri.getQuery()))
+						  .setMethod(new HttpMethod(method.getName()))
+						  .headers()
+						  .add(HttpHeaders.Names.HOST, uri.getHost())
+						  .add(HttpHeaders.Names.ACCEPT, "*/*");
+
+						ch.delegate()
+						  .pipeline()
+						  .fireUserEventTriggered(new NettyHttpClientHandler.ChannelInputSubscriberEvent(subscriber));
+
+						if (handler != null) {
+							return handler.apply(ch);
+						}
+						else {
+							ch.headers()
+							  .removeTransferEncodingChunked();
+							return ch.writeHeaders();
+						}
+					}
+					catch (Throwable t) {
+						return Publishers.error(t);
+					}
+				}
+
+			}).subscribe(Subscribers.unbounded(null, new Consumer<Throwable>() {
+				@Override
+				public void accept(Throwable reason) {
+					Publishers.<HttpChannel<Buffer, Buffer>>error(reason)
+							.subscribe(subscriber);
+				}
+			}));
+		}
+	}
+
+	@Override
+	public boolean isStarted() {
+		return client.isStarted();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return client.isTerminated();
+	}
+
+	private class TcpBridgeClient extends NettyTcpClient {
+
+		private final InetSocketAddress connectAddress;
+
+		public TcpBridgeClient(Timer timer,
+				InetSocketAddress connectAddress,
+				ClientSocketOptions options,
+				SslOptions sslOptions) {
+			super(timer, connectAddress, options, sslOptions);
+			this.connectAddress = connectAddress;
+		}
+
+		@Override
+		protected void bindChannel(
+				ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+				SocketChannel nativeChannel) {
+
+			URI currentURI = lastURI;
+			try {
+				if (currentURI.getScheme() != null && (currentURI.getScheme()
+				                                                 .toLowerCase()
+				                                                 .equals(HttpChannel.HTTPS_SCHEME) || currentURI.getScheme()
+				                                                                                                .toLowerCase()
+				                                                                                                .equals(HttpChannel.WSS_SCHEME))) {
+					addSecureHandler(nativeChannel);
+				} else {
+					nativeChannel.config()
+					  .setAutoRead(false);
+				}
+			}
+			catch (Exception e) {
+				nativeChannel.pipeline()
+				             .fireExceptionCaught(e);
+			}
+
+			NettyHttpClient.this.bindChannel(handler, nativeChannel);
+		}
+
+		@Override
+		public InetSocketAddress getConnectAddress() {
+			if (connectAddress != null) {
+				return connectAddress;
+			}
+			try {
+				URI url = lastURI;
+				String host =
+						url != null && url.getHost() != null ? url.getHost() :
+								"localhost";
+				int port = url != null ? url.getPort() : -1;
+				if (port == -1) {
+					if (url != null && url.getScheme() != null && (url.getScheme()
+					                                                  .toLowerCase()
+					                                                  .equals(HttpChannel.HTTPS_SCHEME) || url.getScheme()
+					                                                                                          .toLowerCase()
+					                                                                                          .equals(HttpChannel.WSS_SCHEME))) {
+						port = 443;
+					}
+					else {
+						port = 80;
+					}
+				}
+				return new InetSocketAddress(host, port);
+			}
+			catch (Exception e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
 	}
 }

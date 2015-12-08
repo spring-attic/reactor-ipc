@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.Publishers;
 import reactor.core.error.Exceptions;
+import reactor.core.support.ReactiveState;
 import reactor.fn.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -46,7 +47,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpServer;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyHttpServer extends HttpServer<Buffer, Buffer> {
+public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements ReactiveState.FeedbackLoop{
 
 	private static final Logger log = LoggerFactory.getLogger(NettyHttpServer.class);
 
@@ -57,15 +58,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> {
 
 		super(timer);
 
-		this.server = new NettyTcpServer(timer, listenAddress, options, sslOptions) {
-
-			@Override
-			protected void bindChannel(
-					ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
-					SocketChannel nativeChannel) {
-				NettyHttpServer.this.bindChannel(handler, nativeChannel);
-			}
-		};
+		this.server = new TcpBridgeServer(timer, listenAddress, options, sslOptions);
 	}
 
 	@Override
@@ -144,6 +137,26 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> {
 	}
 
 	@Override
+	public boolean isStarted() {
+		return server.isStarted();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return server.isTerminated();
+	}
+
+	@Override
+	public Object delegateInput() {
+		return server;
+	}
+
+	@Override
+	public Object delegateOutput() {
+		return server;
+	}
+
+	@Override
 	protected final Publisher<Void> doShutdown() {
 		return server.shutdown();
 	}
@@ -165,5 +178,22 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> {
 
 		pipeline.addLast(NettyHttpServerHandler.class.getSimpleName(), new NettyHttpServerHandler(handler, netChannel));
 
+	}
+
+	private class TcpBridgeServer extends NettyTcpServer {
+
+		public TcpBridgeServer(Timer timer,
+				InetSocketAddress listenAddress,
+				ServerSocketOptions options,
+				SslOptions sslOptions) {
+			super(timer, listenAddress, options, sslOptions);
+		}
+
+		@Override
+		protected void bindChannel(
+				ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+				SocketChannel nativeChannel) {
+			NettyHttpServer.this.bindChannel(handler, nativeChannel);
+		}
 	}
 }

@@ -27,6 +27,7 @@ import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannelHandler;
+import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
 
@@ -202,7 +203,11 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 
 	@Override
 	public String getName() {
-		return (getClass().getSimpleName().isEmpty() ? "HttpChannel" : getClass().getSimpleName())+":"+uri();
+		if(isWebsocket()){
+			return Method.WS.getName()+":"+uri();
+		}
+
+		return  method().getName()+":"+uri();
 	}
 
 	protected abstract void doAddResponseHeader(String name, String value);

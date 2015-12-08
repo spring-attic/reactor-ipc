@@ -94,11 +94,6 @@ public class NettyHttpWSServerHandler extends NettyHttpServerHandler {
 	}
 
 	@Override
-	public String getName() {
-		return "Websocket Connection";
-	}
-
-	@Override
 	protected ChannelFuture doOnWrite(final Object data, final ChannelHandlerContext ctx) {
 		return writeWS(data, ctx);
 	}

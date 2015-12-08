@@ -67,12 +67,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 		ctx.fireChannelActive();
 
 		if(httpChannel == null) {
-			httpChannel = new NettyHttpChannel(tcpStream, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/")) {
-				@Override
-				protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-					tcpStream.emitWriter(Publishers.just(getNettyRequest()), s);
-				}
-			};
+			httpChannel = new PostHeaderPublisher();
 			httpChannel.keepAlive(true);
 			httpChannel.headers().transferEncodingChunked();
 		}
@@ -176,7 +171,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 
 	@Override
 	public String getName() {
-		return "HTTP Client Connection";
+		return httpChannel != null ? httpChannel.getName() : "HTTP Client Connection";
 	}
 
 	protected void writeLast(final ChannelHandlerContext ctx){
@@ -200,6 +195,19 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 				throw new IllegalArgumentException("HTTP input subscriber must not be null.");
 			}
 			this.clientReplySubscriber = inputSubscriber;
+		}
+	}
+
+	private class PostHeaderPublisher extends NettyHttpChannel {
+
+		public PostHeaderPublisher() {
+			super(NettyHttpClientHandler.this.tcpStream,
+					new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+		}
+
+		@Override
+		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
+			tcpStream.emitWriter(Publishers.just(getNettyRequest()), s);
 		}
 	}
 }

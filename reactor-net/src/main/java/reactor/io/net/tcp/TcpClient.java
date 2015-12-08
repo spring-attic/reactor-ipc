@@ -19,6 +19,7 @@ package reactor.io.net.tcp;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
 import reactor.fn.timer.Timer;
 import reactor.fn.tuple.Tuple2;
@@ -40,7 +41,8 @@ import reactor.io.net.config.SslOptions;
  * @author Stephane Maldini
  */
 public abstract class TcpClient<IN, OUT>
-		extends ReactiveClient<IN, OUT, ReactiveChannel<IN, OUT>> {
+		extends ReactiveClient<IN, OUT, ReactiveChannel<IN, OUT>>
+		implements ReactiveState.Named {
 
 	private final InetSocketAddress   connectAddress;
 	private final ClientSocketOptions options;
@@ -81,6 +83,11 @@ public abstract class TcpClient<IN, OUT>
 	 */
 	protected SslOptions getSslOptions() {
 		return sslOptions;
+	}
+
+	@Override
+	public String getName() {
+		return "TcpClient:"+getConnectAddress().toString();
 	}
 
 	@Override

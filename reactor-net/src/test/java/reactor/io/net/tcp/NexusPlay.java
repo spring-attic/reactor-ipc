@@ -18,10 +18,15 @@ package reactor.io.net.tcp;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.subscription.ReactiveSession;
+import reactor.core.support.ReactiveState;
+import reactor.core.support.ReactiveStateUtils;
+import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
+import reactor.io.net.http.HttpClient;
 import reactor.io.net.nexus.Nexus;
 
 /**
@@ -33,11 +38,22 @@ public class NexusPlay {
 		Nexus nexus = ReactiveNet.nexus();
 		nexus.startAndAwait();
 
+		HttpClient<Buffer, Buffer> client = ReactiveNet.httpClient();
+
+		client
+		           .ws("ws://localhost:12012/nexus/stream")
+				   .subscribe(Subscribers.consumer( ch -> {
+						ch.input().subscribe(Subscribers.consumer(b -> {
+							System.out.println(b);
+						}));
+					}));
+
 		final ReactiveSession<Object> s = nexus.streamCannon();
 		Timers.create()
 		      .schedule(aLong -> {
 			      if (!s.isCancelled()) {
-				      s.submit(s);
+				      s.submit(nexus.getServer());
+				      s.submit(client);
 			      }
 			      else {
 				      throw CancelException.get();

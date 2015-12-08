@@ -17,6 +17,7 @@
 package reactor.io.net.impl.netty.tcp;
 
 import java.net.InetSocketAddress;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLEngine;
@@ -32,6 +33,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
@@ -44,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import reactor.Publishers;
 import reactor.core.support.BackpressureUtils;
 import reactor.core.support.NamedDaemonThreadFactory;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
 import reactor.fn.timer.Timer;
@@ -54,6 +58,7 @@ import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.Reconnect;
 import reactor.io.net.config.ClientSocketOptions;
+import reactor.io.net.config.CommonSocketOptions;
 import reactor.io.net.config.SslOptions;
 import reactor.io.net.impl.netty.NettyChannel;
 import reactor.io.net.impl.netty.NettyClientSocketOptions;
@@ -67,7 +72,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyTcpClient extends TcpClient<Buffer, Buffer> {
+public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements ReactiveState.LinkedDownstreams {
 
 	private static final Logger log = LoggerFactory.getLogger(NettyTcpClient.class);
 
@@ -75,6 +80,8 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> {
 	private final Bootstrap                bootstrap;
 	private final EventLoopGroup           ioGroup;
 	private final Supplier<ChannelFuture>  connectionSupplier;
+
+	private final ChannelGroup channelGroup;
 
 	private volatile InetSocketAddress connectAddress;
 
@@ -130,6 +137,14 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> {
 		}
 
 		this.bootstrap = _bootstrap;
+		if(options != null && options.isManaged() || CommonSocketOptions.DEFAULT_MANAGED_PEER){
+			log.debug("Client is managed.");
+			this.channelGroup = new DefaultChannelGroup(null);
+		}
+		else{
+			log.debug("Client is not managed (Not directly introspectable)");
+			this.channelGroup = null;
+		}
 
 		this.connectionSupplier = new Supplier<ChannelFuture>() {
 			@Override
@@ -144,6 +159,32 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> {
 		};
 	}
 
+
+	@Override
+	public Iterator<?> downstreams() {
+		if(channelGroup == null){
+			return null;
+		}
+		return new Iterator<Object>() {
+			final Iterator<Channel> channelIterator = channelGroup.iterator();
+
+			@Override
+			public boolean hasNext() {
+				return channelIterator.hasNext();
+			}
+
+			@Override
+			public Object next() {
+				return channelIterator.next().pipeline().get(NettyChannelHandlerBridge.class);
+			}
+		};
+	}
+
+	@Override
+	public long downstreamsCount() {
+		return channelGroup == null ? -1 : channelGroup.size();
+	}
+
 	@Override
 	@SuppressWarnings("unchecked")
 	protected Publisher<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
@@ -155,6 +196,9 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> {
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 			@Override
 			public void initChannel(final SocketChannel ch) throws Exception {
+				if(channelGroup != null){
+					channelGroup.add(ch);
+				}
 				bindChannel(targetHandler, ch);
 			}
 		});
@@ -180,6 +224,9 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> {
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 			@Override
 			public void initChannel(final SocketChannel ch) throws Exception {
+				if(channelGroup != null){
+					channelGroup.add(ch);
+				}
 				bindChannel(handler, ch);
 			}
 		});
