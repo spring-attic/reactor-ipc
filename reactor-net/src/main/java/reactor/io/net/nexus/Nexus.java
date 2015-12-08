@@ -18,6 +18,9 @@ package reactor.io.net.nexus;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -121,7 +124,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		lastState = new GraphEvent(server.getListenAddress()
 		                                 .toString(), ReactiveStateUtils.newGraph());
 
-		lastSystemState = new SystemEvent(server.getListenAddress().toString());
+		lastSystemState = new SystemEvent(server.getListenAddress()
+		                                        .toString());
 	}
 
 	/**
@@ -376,31 +380,100 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	private final static class SystemEvent extends Event {
 
-		private final Runtime runtime = Runtime.getRuntime();
+		private static final Runtime  runtime  = Runtime.getRuntime();
+		private static final JvmStats jvmStats = new JvmStats();
+
+		private final Map<Thread, ThreadState> threads = new WeakHashMap<>();
 
 		public SystemEvent(String hostname) {
 			super(hostname);
 		}
 
-		public long getFreeMemory() {
-			return runtime.freeMemory(); //bytes
+		public Collection<ThreadState> getThreads() {
+			return threads.values();
 		}
 
-		public long getMaxMemory() {
-			return runtime.maxMemory(); //bytes
+		public JvmStats getJvmStats(){
+			return jvmStats;
 		}
 
-		public long getUsedMemory() {
-			return runtime.totalMemory(); //bytes
-		}
+		private SystemEvent scan() {
+			int active = Thread.activeCount();
+			Thread[] currentThreads = new Thread[active];
+			int n = Thread.enumerate(currentThreads);
 
-		public int getActiveThreads() {
-			return Thread.activeCount();
-		}
-
-		private SystemEvent scan(){
-
+			for (int i = 0; i < n; i++) {
+				if (!threads.containsKey(currentThreads[i])) {
+					threads.put(currentThreads[i], new ThreadState(currentThreads[i]));
+				}
+			}
 			return this;
+		}
+
+		final static class JvmStats {
+
+			public long getFreeMemory() {
+				return runtime.freeMemory(); //bytes
+			}
+
+			public long getMaxMemory() {
+				return runtime.maxMemory(); //bytes
+			}
+
+			public long getUsedMemory() {
+				return runtime.totalMemory(); //bytes
+			}
+
+			public int getActiveThreads() {
+				return Thread.activeCount();
+			}
+		}
+
+		final static class ThreadState {
+
+			private transient final Thread thread;
+
+			public ThreadState(Thread thread) {
+				this.thread = thread;
+			}
+
+			public String getName() {
+				return thread.getName();
+			}
+
+			public boolean isAlive() {
+				return thread.isAlive();
+			}
+
+			public boolean isInterrupted() {
+				return thread.isInterrupted();
+			}
+
+			public long getContextHash() {
+				return thread.getContextClassLoader()
+				             .hashCode();
+			}
+
+			public long getId() {
+				return thread.getId();
+			}
+
+			public Thread.State getState() {
+				return thread.getState();
+			}
+
+			public String getThreadGroup() {
+				return thread.getThreadGroup()
+				             .getName();
+			}
+
+			public boolean isDaemon() {
+				return thread.isDaemon();
+			}
+
+			public int getPriority() {
+				return thread.getPriority();
+			}
 		}
 	}
 
