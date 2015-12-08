@@ -114,7 +114,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		Publishers.toReadQueue(start(null))
 		          .take();
 		InetSocketAddress addr = server.getListenAddress();
-		log.info("Nexus Warped, Void Energy available under http://" + addr.getHostName() + ":" + addr.getPort() +
+		log.info("Nexus Warped. Transmitting signal to troops under http://" + addr.getHostName() + ":" + addr
+				.getPort() +
 				API_STREAM_URL);
 	}
 
