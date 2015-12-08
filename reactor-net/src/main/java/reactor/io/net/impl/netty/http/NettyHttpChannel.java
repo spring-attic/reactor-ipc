@@ -51,7 +51,7 @@ import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
  * @author Stephane Maldini
  */
 public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
-		implements Publisher<Buffer>, ReactiveState.FeedbackLoop {
+		implements Publisher<Buffer>, ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
 
 	private static final FullHttpResponse CONTINUE =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
@@ -87,6 +87,16 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	@Override
 	public final Object delegateOutput() {
 		return tcpStream;
+	}
+
+	@Override
+	public boolean isStarted() {
+		return tcpStream.isStarted();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return tcpStream.isTerminated();
 	}
 
 	@Override
