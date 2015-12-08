@@ -35,25 +35,32 @@ import reactor.io.net.nexus.Nexus;
 public class NexusPlay {
 
 	public static void main(String... args) throws Exception{
+
+		//Nexus nexus2 = ReactiveNet.nexus(12014);
+		//nexus2.startAndAwait();
+
 		Nexus nexus = ReactiveNet.nexus();
-		nexus.startAndAwait();
+		nexus//.federate("ws://localhost:12014/nexus/stream")
+		     .startAndAwait();
 
-		HttpClient<Buffer, Buffer> client = ReactiveNet.httpClient();
-
-		client
-		           .ws("ws://localhost:12012/nexus/stream")
-				   .subscribe(Subscribers.consumer( ch -> {
-						ch.input().subscribe(Subscribers.consumer(b -> {
-							System.out.println(b);
-						}));
-					}));
+//		HttpClient<Buffer, Buffer> client = ReactiveNet.httpClient();
+//
+//		client
+//		           .ws("ws://localhost:12012/nexus/stream")
+//				   .subscribe(Subscribers.consumer( ch -> {
+//						ch.input().subscribe(Subscribers.consumer(b -> {
+//							System.out.println(b);
+//						}));
+//					}));
+//
+//		final ReactiveSession<Object> s2 = nexus2.streamCannon();
 
 		final ReactiveSession<Object> s = nexus.streamCannon();
 		Timers.create()
 		      .schedule(aLong -> {
 			      if (!s.isCancelled()) {
-				      s.submit(nexus.getServer());
-				      s.submit(client);
+				      s.submit(nexus);
+				     // s2.submit(nexus2);
 			      }
 			      else {
 				      throw CancelException.get();

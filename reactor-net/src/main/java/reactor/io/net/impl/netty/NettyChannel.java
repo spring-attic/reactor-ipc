@@ -76,7 +76,11 @@ public class NettyChannel
 
 	@Override
 	public Object delegateInput() {
-		return ioChannel.pipeline().get(NettyChannelHandlerBridge.class).downstream();
+		NettyChannelHandlerBridge bridge = ioChannel.pipeline().get(NettyChannelHandlerBridge.class);
+		if(bridge != null){
+			return bridge.downstream();
+		}
+		return null;
 	}
 
 	@Override

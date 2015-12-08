@@ -686,8 +686,8 @@ public class ReactiveNet {
 	 * @param port the port to listen on loopback
 	 * @return a new Stream of ReactiveChannel, typically a peer of connections.
 	 */
-	public static TcpServer<Buffer, Buffer> nexus(int port) {
-		return tcpServer(DEFAULT_BIND_ADDRESS, port);
+	public static Nexus nexus(int port) {
+		return nexus(DEFAULT_BIND_ADDRESS, port);
 	}
 
 	/**
