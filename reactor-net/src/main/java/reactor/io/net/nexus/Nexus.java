@@ -18,8 +18,8 @@ package reactor.io.net.nexus;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Publisher;
@@ -27,12 +27,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.Processors;
 import reactor.Publishers;
+import reactor.Timers;
 import reactor.core.processor.BaseProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.core.support.internal.PlatformDependent;
+import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.fn.timer.Timer;
 import reactor.fn.tuple.Tuple2;
@@ -52,8 +54,7 @@ import reactor.io.net.impl.netty.http.NettyHttpServer;
  * @since 2.1
  */
 public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>
-		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>,
-		           ReactiveState.FeedbackLoop {
+		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, ReactiveState.FeedbackLoop {
 
 	private static final Logger log = LoggerFactory.getLogger(Nexus.class);
 
@@ -61,9 +62,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final HttpServer<Buffer, Buffer> server;
 	private final JsonCodec<Event, Event>    jsonCodec;
 	private final BaseProcessor<Event, Event> eventStream = Processors.emitter(false);
-	private final GraphEvent lastState;
+	private final GraphEvent  lastState;
+	private final SystemEvent lastSystemState;
 	private final ProcessorGroup         group          = Processors.asyncGroup("nexus", 1024, 1, null, null, false);
-
 	private final Function<Event, Event> lastStateMerge = new LastGraphStateMap();
 
 	@SuppressWarnings("unused")
@@ -73,6 +74,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
 
 	private final ReactiveSession<Publisher<Event>> cannons;
+
+	private boolean systemStats;
+	private long    systemStatsPeriod;
 
 	public static void main(String... args) throws Exception {
 		log.info("Deploying Nexus... ");
@@ -114,7 +118,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		this.cannons = cannons.startSession();
 
-		lastState = new GraphEvent(server.getListenAddress().toString(), ReactiveStateUtils.newGraph());
+		lastState = new GraphEvent(server.getListenAddress()
+		                                 .toString(), ReactiveStateUtils.newGraph());
+
+		lastSystemState = new SystemEvent(server.getListenAddress().toString());
 	}
 
 	/**
@@ -133,6 +140,26 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 */
 	public final void start() throws InterruptedException {
 		start(null);
+	}
+
+	public final Nexus disableSystemStats() {
+		this.systemStats = false;
+		this.systemStatsPeriod = -1;
+		return this;
+	}
+
+	public final Nexus withSystemStats() {
+		return withSystemStats(true, 1);
+	}
+
+	public final Nexus withSystemStats(boolean enabled, long period) {
+		return withSystemStats(enabled, period, TimeUnit.SECONDS);
+	}
+
+	public final Nexus withSystemStats(boolean enabled, long period, TimeUnit unit) {
+		this.systemStatsPeriod = unit == null || period < 1L ? 1000 : TimeUnit.MILLISECONDS.convert(period, unit);
+		this.systemStats = enabled;
+		return this;
 	}
 
 	/**
@@ -235,6 +262,19 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	@Override
 	protected Publisher<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
+		if (systemStats) {
+			BaseProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
+			this.cannons.submit(p);
+			final ReactiveSession<Event> session = p.startSession();
+			Timer timer = Timers.create();
+
+			timer.schedule(new Consumer<Long>() {
+				@Override
+				public void accept(Long aLong) {
+					session.submit(lastSystemState.scan());
+				}
+			}, systemStatsPeriod, TimeUnit.MILLISECONDS);
+		}
 		return server.start();
 	}
 
@@ -255,16 +295,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	private Publisher<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Publisher<Event> stream) {
 		FederatedClient[] clients = federatedClients;
-		if(clients == null || clients.length == 0){
+		if (clients == null || clients.length == 0) {
 			return Publishers.capacity(jsonCodec.encode(stream), 1L);
 		}
 
-		Publisher<Buffer> mergedUpstreams = Publishers.merge(
-				Publishers.map(
-							Publishers.from(Arrays.asList(clients)),
-							new FederatedMerger(c)
-						)
-		);
+		Publisher<Buffer> mergedUpstreams =
+				Publishers.merge(Publishers.map(Publishers.from(Arrays.asList(clients)), new FederatedMerger(c)));
 
 		return Publishers.capacity(Publishers.merge(jsonCodec.encode(stream), mergedUpstreams), 1L);
 	}
@@ -361,6 +397,11 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public int getActiveThreads() {
 			return Thread.activeCount();
 		}
+
+		private SystemEvent scan(){
+
+			return this;
+		}
 	}
 
 	private class LastGraphStateMap implements Function<Event, Event>, ReactiveState.Named {
@@ -412,11 +453,11 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public Publisher<Buffer> apply(FederatedClient o) {
 			return Publishers.flatMap(o.client.ws(o.targetAPI),
 					new Function<HttpChannel<Buffer, Buffer>, Publisher<Buffer>>() {
-				@Override
-				public Publisher<Buffer> apply(HttpChannel<Buffer, Buffer> channel) {
-					return channel.input();
-				}
-			});
+						@Override
+						public Publisher<Buffer> apply(HttpChannel<Buffer, Buffer> channel) {
+							return channel.input();
+						}
+					});
 		}
 	}
 
