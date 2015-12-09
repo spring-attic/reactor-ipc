@@ -42,7 +42,6 @@ public class NexusFederatePlay {
 		nexus.monitor(nexus);
 
 		HttpClient<Buffer, Buffer> client = ReactiveNet.httpClient();
-
 		client
 		           .ws("ws://localhost:12012/nexus/stream")
 				   .subscribe(Subscribers.consumer( ch -> {

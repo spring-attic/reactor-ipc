@@ -22,6 +22,8 @@ import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.subscription.ReactiveSession;
+import reactor.core.support.ReactiveState;
+import reactor.core.support.ReactiveStateUtils;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.http.HttpClient;
@@ -39,6 +41,7 @@ public class NexusPlay {
 		nexus.withSystemStats()
 		     .startAndAwait();
 
+		//ReactiveStateUtils.scan(o).toString()
 
 		nexus.monitor(nexus);
 
