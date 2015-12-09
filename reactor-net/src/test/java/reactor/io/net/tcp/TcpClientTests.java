@@ -46,6 +46,7 @@ import reactor.Processors;
 import reactor.Publishers;
 import reactor.Subscribers;
 import reactor.Timers;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple;
 import reactor.io.buffer.Buffer;
@@ -406,7 +407,7 @@ public class TcpClientTests {
 				while (true) {
 					SocketChannel ch = server.accept();
 
-					ByteBuffer buffer = ByteBuffer.allocate(Buffer.SMALL_BUFFER_SIZE);
+					ByteBuffer buffer = ByteBuffer.allocate(ReactiveState.SMALL_IO_BUFFER_SIZE);
 					while (true) {
 						int read = ch.read(buffer);
 						if (read > 0) {

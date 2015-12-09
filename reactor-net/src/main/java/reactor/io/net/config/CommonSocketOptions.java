@@ -16,6 +16,7 @@
 
 package reactor.io.net.config;
 
+import reactor.core.support.ReactiveState;
 import reactor.io.buffer.Buffer;
 
 /**
@@ -35,8 +36,8 @@ public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super
 	private boolean keepAlive  = true;
 	private int     linger     = 5;
 	private boolean tcpNoDelay = true;
-	private int     rcvbuf     = Buffer.SMALL_BUFFER_SIZE;
-	private int     sndbuf     = Buffer.SMALL_BUFFER_SIZE;
+	private int     rcvbuf     = ReactiveState.SMALL_IO_BUFFER_SIZE;
+	private int     sndbuf     = ReactiveState.SMALL_IO_BUFFER_SIZE;
 	private long    prefetch   = Long.MAX_VALUE;
 	private boolean israw      = false;
 	private boolean managed      = DEFAULT_MANAGED_PEER;

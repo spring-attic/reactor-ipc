@@ -19,6 +19,7 @@ package reactor.io.codec.kryo;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
 import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
@@ -53,7 +54,7 @@ public class KryoCodec<IN, OUT> extends SerializationCodec<Kryo, IN, OUT> {
 		return new Function<OUT, byte[]>() {
 			@Override
 			public byte[] apply(OUT o) {
-				UnsafeMemoryOutput out = new UnsafeMemoryOutput(Buffer.SMALL_BUFFER_SIZE, Buffer.MAX_BUFFER_SIZE);
+				UnsafeMemoryOutput out = new UnsafeMemoryOutput(ReactiveState.SMALL_IO_BUFFER_SIZE, ReactiveState.SMALL_IO_BUFFER_SIZE);
 				engine.writeObject(out, o);
 				out.flush();
 				return out.toBytes();
