@@ -17,6 +17,7 @@
 package reactor.io.net.impl.netty;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.channel.Channel;
@@ -91,13 +92,18 @@ public class NettyChannel
 	@Override
 	public String getId() {
 		Channel parent = ioChannel.parent();
-
-		if (parent == null) {
-			return ioChannel.localAddress().toString()+":"+ioChannel.remoteAddress().toString().replaceFirst
-					("localhost", "");
+		SocketAddress remote = ioChannel.remoteAddress();
+		SocketAddress local = ioChannel.localAddress();
+		String src = local != null ? local.toString() : "";
+		String dst = remote != null ? remote.toString() : "";
+		if (parent != null) {
 		} else {
-			return ioChannel.remoteAddress().toString()+":"+ioChannel.localAddress().toString();
+			String _src = src;
+			src = dst;
+			dst = _src;
 		}
+
+		return src.replaceFirst("localhost", "") +":"+dst.replaceFirst("localhost", "");
 	}
 
 	@Override

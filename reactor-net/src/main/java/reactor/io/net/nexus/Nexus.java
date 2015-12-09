@@ -69,6 +69,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final SystemEvent lastSystemState;
 	private final ProcessorGroup         group          = Processors.asyncGroup("nexus", 1024, 1, null, null, false);
 	private final Function<Event, Event> lastStateMerge = new LastGraphStateMap();
+	private final Timer                  timer          = Timers.create("nexus-poller");
 
 	@SuppressWarnings("unused")
 	private volatile FederatedClient[] federatedClients;
@@ -201,6 +202,54 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	/**
 	 *
+	 * @param o
+	 * @param <E>
+	 * @return
+	 */
+	public final <E> E monitor(E o) {
+		return monitor(o, -1L);
+	}
+
+	/**
+	 *
+	 * @param o
+	 * @param period
+	 * @param <E>
+	 * @return
+	 */
+	public final <E> E monitor(E o, long period) {
+		return monitor(o, period, null);
+	}
+
+	/**
+	 *
+	 * @param o
+	 * @param period
+	 * @param unit
+	 * @param <E>
+	 * @return
+	 */
+	public final <E> E monitor(final E o, long period, TimeUnit unit) {
+
+		final long _period = period > 0 ? (unit != null ? TimeUnit.MILLISECONDS.convert(period, unit) : period) : 400L;
+
+		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
+		                                                .dispatchOn();
+		final ReactiveSession<Object> session = p.startSession();
+		timer.schedule(new Consumer<Long>() {
+			@Override
+			public void accept(Long aLong) {
+				session.submit(ReactiveStateUtils.scan(o));
+			}
+		}, _period, TimeUnit.MILLISECONDS);
+
+		this.cannons.submit(Publishers.map(p, new GraphMapper()));
+
+		return o;
+	}
+
+	/**
+	 *
 	 * @param urls
 	 * @return
 	 */
@@ -270,7 +319,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			BaseProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
 			this.cannons.submit(p);
 			final ReactiveSession<Event> session = p.startSession();
-			Timer timer = Timers.create();
 
 			timer.schedule(new Consumer<Long>() {
 				@Override
@@ -284,6 +332,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	@Override
 	protected Publisher<Void> doShutdown() {
+		timer.cancel();
 		return server.shutdown();
 	}
 
@@ -393,7 +442,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			return threads.values();
 		}
 
-		public JvmStats getJvmStats(){
+		public JvmStats getJvmStats() {
 			return jvmStats;
 		}
 
