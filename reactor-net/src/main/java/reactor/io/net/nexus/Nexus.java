@@ -516,8 +516,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 
 			public String getThreadGroup() {
-				return thread.getThreadGroup()
-				             .getName();
+				ThreadGroup group = thread.getThreadGroup();
+				return group != null ? thread.getThreadGroup()
+				             .getName() : null;
 			}
 
 			public boolean isDaemon() {
