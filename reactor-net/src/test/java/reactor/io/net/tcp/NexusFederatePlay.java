@@ -16,12 +16,8 @@
 package reactor.io.net.tcp;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import reactor.Subscribers;
-import reactor.Timers;
-import reactor.core.error.CancelException;
-import reactor.core.subscription.ReactiveSession;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.http.HttpClient;
@@ -30,21 +26,35 @@ import reactor.io.net.nexus.Nexus;
 /**
  * @author Stephane Maldini
  */
-public class NexusPlay {
+public class NexusFederatePlay {
 
 	public static void main(String... args) throws Exception{
 
+		Nexus nexus2 = ReactiveNet.nexus(12014);
+		nexus2.startAndAwait();
 
 		Nexus nexus = ReactiveNet.nexus();
 		nexus.withSystemStats()
+		     .federate("ws://localhost:12014/nexus/stream")
 		     .startAndAwait();
 
 
 		nexus.monitor(nexus);
 
+		HttpClient<Buffer, Buffer> client = ReactiveNet.httpClient();
 
-		//Don't quit
+		client
+		           .ws("ws://localhost:12012/nexus/stream")
+				   .subscribe(Subscribers.consumer( ch -> {
+						ch.input().subscribe(Subscribers.consumer(b -> {
+							System.out.println(b);
+						}));
+					}));
+
+		nexus2.monitor(nexus2);
+
 		CountDownLatch latch = new CountDownLatch(1);
+
 		latch.await();
 	}
 }

@@ -476,6 +476,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			public int getActiveThreads() {
 				return Thread.activeCount();
 			}
+
+			public int getAvailableProcessors(){
+				return runtime.availableProcessors();
+			}
 		}
 
 		final static class ThreadState {
@@ -532,6 +536,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public Event apply(Event event) {
 			if (GraphEvent.class.equals(event.getClass())) {
 				lastState.graph.mergeWith(((GraphEvent) event).graph);
+				//lastState.graph.removeTerminatedNodes();
 				return lastState;
 			}
 			return event;
