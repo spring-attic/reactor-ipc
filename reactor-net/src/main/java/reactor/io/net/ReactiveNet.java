@@ -71,7 +71,8 @@ import reactor.io.net.udp.DatagramServer;
  */
 public class ReactiveNet {
 
-	public static final int    DEFAULT_PORT         = 12012;
+	public static final int    DEFAULT_PORT         = System.getenv("PORT") != null ?
+			Integer.parseInt(System.getenv("PORT")) : 12012;
 	public static final String DEFAULT_BIND_ADDRESS = "127.0.0.1";
 	public static final Class<? extends TcpServer>      DEFAULT_TCP_SERVER_TYPE;
 	public static final Class<? extends TcpClient>      DEFAULT_TCP_CLIENT_TYPE;
