@@ -42,7 +42,6 @@ import reactor.fn.Function;
 import reactor.fn.timer.Timer;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
-import reactor.io.codec.json.JsonCodec;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactiveNet;
@@ -51,6 +50,8 @@ import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.HttpServer;
 import reactor.io.net.impl.netty.http.NettyHttpServer;
+
+import static reactor.core.support.ReactiveStateUtils.property;
 
 /**
  * @author Stephane Maldini
@@ -63,7 +64,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	private static final String API_STREAM_URL = "/nexus/stream";
 	private final HttpServer<Buffer, Buffer> server;
-	private final JsonCodec<Event, Event>    jsonCodec;
 	private final BaseProcessor<Event, Event> eventStream = Processors.emitter(false);
 	private final GraphEvent  lastState;
 	private final SystemEvent lastSystemState;
@@ -113,7 +113,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private Nexus(Timer defaultTimer, HttpServer<Buffer, Buffer> server) {
 		super(defaultTimer);
 		this.server = server;
-		this.jsonCodec = new JsonCodec<>(Event.class);
 
 		BaseProcessor<Publisher<Event>, Publisher<Event>> cannons = Processors.emitter();
 
@@ -349,14 +348,17 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private Publisher<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Publisher<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
-			return Publishers.capacity(jsonCodec.encode(stream), 1L);
+			return Publishers.capacity(Publishers.map(stream, BUFFER_STRING_FUNCTION), 1L);
 		}
 
 		Publisher<Buffer> mergedUpstreams =
 				Publishers.merge(Publishers.map(Publishers.from(Arrays.asList(clients)), new FederatedMerger(c)));
 
-		return Publishers.capacity(Publishers.merge(jsonCodec.encode(stream), mergedUpstreams), 1L);
+		return Publishers.capacity(Publishers.merge(Publishers.map(stream, BUFFER_STRING_FUNCTION), mergedUpstreams),
+				1L);
 	}
+
+	private static final Function<Event, Buffer> BUFFER_STRING_FUNCTION = new StringToBuffer();
 
 	private static class Event {
 
@@ -397,6 +399,14 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public boolean isRemoved() {
 			return removed;
 		}
+
+		@Override
+		public String toString() {
+			return "{ " + property("streams", getStreams()) +
+					", " + property("removed", isRemoved()) +
+					", " + property("type", getType()) +
+					", " + property("nexusHost", getNexusHost()) + " }";
+		}
 	}
 
 	private final static class LogEvent extends Event {
@@ -418,12 +428,32 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public String getLevel() {
 			return level;
 		}
+
+		public long getTimestamp() {
+			return timestamp;
+		}
+
+		@Override
+		public String toString() {
+			return "{ " + property("timestamp", getTimestamp()) +
+					", " + property("level", getLevel()) +
+					", " + property("message", getMessage()) +
+					", " + property("type", getType()) +
+					", " + property("nexusHost", getNexusHost()) + " }";
+		}
 	}
 
 	private final static class MetricEvent extends Event {
 
 		public MetricEvent(String hostname) {
 			super(hostname);
+		}
+
+		@Override
+		public String toString() {
+			return "{ " + property("nexusHost", getNexusHost()) +
+					", " + property("type", getType()) +
+					" }";
 		}
 	}
 
@@ -459,6 +489,14 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			return this;
 		}
 
+		@Override
+		public String toString() {
+			return "{ " + property("jvmStats", getJvmStats()) +
+					", " + property("threads", getThreads()) +
+					", " + property("type", getType()) +
+					", " + property("nexusHost", getNexusHost()) + " }";
+		}
+
 		final static class JvmStats {
 
 			public long getFreeMemory() {
@@ -477,8 +515,17 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				return Thread.activeCount();
 			}
 
-			public int getAvailableProcessors(){
+			public int getAvailableProcessors() {
 				return runtime.availableProcessors();
+			}
+
+			@Override
+			public String toString() {
+				return "{ " + property("freeMemory", getFreeMemory()) +
+						", " + property("maxMemory", getMaxMemory()) +
+						", " + property("usedMemory", getUsedMemory()) +
+						", " + property("activeThreads", getActiveThreads()) +
+						", " + property("availableProcessors", getAvailableProcessors()) + " }";
 			}
 		}
 
@@ -518,7 +565,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			public String getThreadGroup() {
 				ThreadGroup group = thread.getThreadGroup();
 				return group != null ? thread.getThreadGroup()
-				             .getName() : null;
+				                             .getName() : null;
 			}
 
 			public boolean isDaemon() {
@@ -528,6 +575,27 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			public int getPriority() {
 				return thread.getPriority();
 			}
+
+			@Override
+			public String toString() {
+				return "{ " + property("id", getId()) +
+						", " + property("name", getName()) +
+						", " + property("alive", isAlive()) +
+						", " + property("state", getState().name()) +
+						", " + property("threadGroup", getThreadGroup()) +
+						", " + property("contextHash", getContextHash()) +
+						", " + property("interrupted", isInterrupted()) +
+						", " + property("priority", getPriority()) +
+						", " + property("daemon", isDaemon()) + " }";
+			}
+		}
+	}
+
+	private static class StringToBuffer implements Function<Event, Buffer> {
+
+		@Override
+		public Buffer apply(Event event) {
+			return reactor.io.buffer.StringBuffer.wrap(event.toString());
 		}
 	}
 
