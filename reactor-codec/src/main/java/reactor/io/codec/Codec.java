@@ -18,6 +18,7 @@ package reactor.io.codec;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.Publishers;
 import reactor.core.publisher.PublisherFactory;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.support.ReactiveState;
@@ -244,7 +245,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private class DecoderOperator implements Function<Subscriber<? super IN>, Subscriber<? super SRC>>{
+	private class DecoderOperator implements Publishers.Operator<SRC, IN>{
 
 		@Override
 		public Subscriber<? super SRC> apply(final Subscriber<? super IN> subscriber) {
@@ -252,7 +253,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private class EncoderOperator implements Function<Subscriber<? super SRC>, Subscriber<? super OUT>> {
+	private class EncoderOperator implements Publishers.Operator<OUT, SRC> {
 
 		@Override
 		public Subscriber<? super OUT> apply(final Subscriber<? super SRC> subscriber) {
