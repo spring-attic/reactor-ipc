@@ -238,13 +238,15 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
 		final ReactiveSession<Object> session = p.startSession();
+		log.info("State Monitoring Starting on "+ReactiveStateUtils.getName(o));
 		timer.schedule(new Consumer<Long>() {
 			@Override
 			public void accept(Long aLong) {
-				if(session.isCancelled()) {
+				if(!session.isCancelled()) {
 					session.emit(ReactiveStateUtils.scan(o));
 				}
 				else{
+					log.info("State Monitoring stopping on "+ReactiveStateUtils.getName(o));
 					throw CancelException.INSTANCE;
 				}
 			}
@@ -326,7 +328,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			BaseProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
 			this.cannons.submit(p);
 			final ReactiveSession<Event> session = p.startSession();
-
+			log.info("System Monitoring Starting");
 			timer.schedule(new Consumer<Long>() {
 				@Override
 				public void accept(Long aLong) {
@@ -334,6 +336,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 						session.submit(lastSystemState.scan());
 					}
 					else{
+						log.info("System Monitoring Stopped");
 						throw CancelException.INSTANCE;
 					}
 				}
