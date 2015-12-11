@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import reactor.Processors;
 import reactor.Publishers;
 import reactor.Timers;
+import reactor.core.error.CancelException;
 import reactor.core.error.ReactorFatalException;
 import reactor.core.processor.BaseProcessor;
 import reactor.core.processor.ProcessorGroup;
@@ -240,7 +241,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		timer.schedule(new Consumer<Long>() {
 			@Override
 			public void accept(Long aLong) {
-				session.submit(ReactiveStateUtils.scan(o));
+				if(session.isCancelled()) {
+					session.emit(ReactiveStateUtils.scan(o));
+				}
+				else{
+					throw CancelException.INSTANCE;
+				}
 			}
 		}, _period, TimeUnit.MILLISECONDS);
 
@@ -324,7 +330,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			timer.schedule(new Consumer<Long>() {
 				@Override
 				public void accept(Long aLong) {
-					session.submit(lastSystemState.scan());
+					if(!session.isCancelled()) {
+						session.submit(lastSystemState.scan());
+					}
+					else{
+						throw CancelException.INSTANCE;
+					}
 				}
 			}, systemStatsPeriod, TimeUnit.MILLISECONDS);
 		}
