@@ -709,7 +709,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	private class FlushOnCapacitySubscriber extends BaseSubscriber<Object>
 			implements Runnable,
 			           ChannelFutureListener, FeedbackLoop, Buffering, ActiveUpstream,
-			           ActiveDownstream{
+			           ActiveDownstream, UpstreamDemand{
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -862,6 +862,10 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			}
 		}
 
+		@Override
+		public long expectedFromUpstream() {
+			return capacity == 1 ? (ctx.channel().isWritable() ? 1 : 0 ) : capacity - written;
+		}
 	}
 
 	public ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> getHandler() {
