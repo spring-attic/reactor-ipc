@@ -407,6 +407,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			return "{ " + property("streams", getStreams()) +
 					", " + property("removed", isRemoved()) +
 					", " + property("type", getType()) +
+					", " + property("timestamp", System.currentTimeMillis()) +
 					", " + property("nexusHost", getNexusHost()) + " }";
 		}
 	}
@@ -441,6 +442,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					", " + property("level", getLevel()) +
 					", " + property("message", getMessage()) +
 					", " + property("type", getType()) +
+					", " + property("timestamp", System.currentTimeMillis()) +
 					", " + property("nexusHost", getNexusHost()) + " }";
 		}
 	}
@@ -455,6 +457,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public String toString() {
 			return "{ " + property("nexusHost", getNexusHost()) +
 					", " + property("type", getType()) +
+					", " + property("timestamp", System.currentTimeMillis()) +
 					" }";
 		}
 	}
@@ -496,6 +499,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			return "{ " + property("jvmStats", getJvmStats()) +
 					", " + property("threads", getThreads()) +
 					", " + property("type", getType()) +
+					", " + property("timestamp", System.currentTimeMillis()) +
 					", " + property("nexusHost", getNexusHost()) + " }";
 		}
 
