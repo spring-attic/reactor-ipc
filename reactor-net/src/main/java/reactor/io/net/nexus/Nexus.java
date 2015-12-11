@@ -602,7 +602,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 						", " + property("name", getName()) +
 						", " + property("alive", isAlive()) +
 						", " + property("state", getState().name()) +
-						", " + property("threadGroup", getThreadGroup()) +
+						(getThreadGroup() != null ? ", " + property("threadGroup", getThreadGroup()) : "") +
 						", " + property("contextHash", getContextHash()) +
 						", " + property("interrupted", isInterrupted()) +
 						", " + property("priority", getPriority()) +
