@@ -18,12 +18,16 @@ package reactor.io.net.http;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
 import reactor.Publishers;
+import reactor.core.error.CancelException;
+import reactor.fn.Function;
 import reactor.fn.Predicate;
 import reactor.fn.timer.Timer;
 import reactor.io.IO;
@@ -199,7 +203,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> file(String path, final File file) {
-		file(ChannelMappings.get(path), file.getAbsolutePath());
+		file(ChannelMappings.get(path), file.getAbsolutePath(), null);
 		return this;
 	}
 
@@ -213,7 +217,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> file(String path, final String filepath) {
-		file(ChannelMappings.get(path), filepath);
+		file(ChannelMappings.get(path), filepath, null);
 		return this;
 	}
 
@@ -221,15 +225,21 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param condition a {@link Predicate} to match the incoming connection with registered handler
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
 	 * @param filepath the Path to the file to serve
+	 * @param interceptor a channel pre-intercepting handler e.g. for content type header
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> condition, final String filepath) {
+	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> path, final String filepath,
+			final Function<HttpChannel<IN, OUT>, HttpChannel<IN, OUT>> interceptor) {
 		final Publisher<Buffer> file = IO.readFile(filepath);
-		route(condition, new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+		route(path, new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
+				if(interceptor != null){
+					return interceptor.apply(channel).writeBufferWith(file);
+				}
 				return channel.writeBufferWith(file);
 			}
 		});
@@ -260,6 +270,20 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> directory(final String path, final String directory) {
+		return directory(path, directory, null);
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param directory the Path to the file to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer<IN, OUT> directory(final String path, final String directory,
+			final Function<HttpChannel<IN, OUT>, HttpChannel<IN, OUT>> interceptor) {
 		route(ChannelMappings.prefix(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
@@ -270,7 +294,18 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 					strippedPrefix = strippedPrefix.substring(0, paramIndex);
 				}
 
-				return channel.writeBufferWith(IO.readFile(directory + strippedPrefix));
+				if(Files.isReadable(Paths.get(directory + strippedPrefix))) {
+					Publisher<Buffer> filePub = IO.readFile(directory + strippedPrefix);
+
+					if (interceptor != null) {
+						return interceptor.apply(channel)
+						                  .writeBufferWith(filePub);
+					}
+					return channel.writeBufferWith(filePub);
+				}
+				else{
+					return Publishers.error(CancelException.get());
+				}
 			}
 		});
 		return this;

@@ -16,6 +16,7 @@
 
 package reactor.io.net.nexus;
 
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import reactor.Processors;
 import reactor.Publishers;
 import reactor.Timers;
+import reactor.core.error.ReactorFatalException;
 import reactor.core.processor.BaseProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.subscription.ReactiveSession;
@@ -595,7 +597,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		@Override
 		public Buffer apply(Event event) {
-			return reactor.io.buffer.StringBuffer.wrap(event.toString());
+			try {
+				return reactor.io.buffer.StringBuffer.wrap(event.toString().getBytes("UTF-8"));
+			}
+			catch (UnsupportedEncodingException e) {
+				throw ReactorFatalException.create(e);
+			}
 		}
 	}
 
