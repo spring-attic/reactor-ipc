@@ -229,4 +229,5 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 	public long downstreamsCount() {
 		return sessionTracker.getSessionCounter();
 	}
+
 }

@@ -26,6 +26,7 @@ import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.core.error.SpecificationExceptions;
+import reactor.core.support.ReactiveState;
 import reactor.core.support.SingleUseExecutor;
 import reactor.core.support.UUIDUtils;
 import reactor.fn.Consumer;
@@ -39,11 +40,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Anatoly Kadyshev
  */
-public class AeronPublisher implements Publisher<Buffer> {
+public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Upstream {
+
+	final AeronInfra aeronInfra;
 
 	private final Context context;
-
-	private final AeronInfra aeronInfra;
 
 	private final Logger logger;
 
@@ -80,9 +81,9 @@ public class AeronPublisher implements Publisher<Buffer> {
 		this.executor = SingleUseExecutor.create(context.name() + "-signal-poller");
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
 		String sessionId = getSessionId(context);
-		this.serviceMessageSender = new ServiceMessageSender(aeronInfra, serviceRequestPub, sessionId);
+		this.serviceMessageSender = new ServiceMessageSender(this, serviceRequestPub, sessionId);
 		this.heartbeatSender = new HeartbeatSender(context,
-				new ServiceMessageSender(aeronInfra, serviceRequestPub, sessionId), new Consumer<Throwable>() {
+				new ServiceMessageSender(this, serviceRequestPub, sessionId), new Consumer<Throwable>() {
 			@Override
 			public void accept(Throwable throwable) {
 				shutdown();
@@ -202,6 +203,11 @@ public class AeronPublisher implements Publisher<Buffer> {
 				}
 			});
 		}
+	}
+
+	@Override
+	public Object upstream() {
+		return signalPoller;
 	}
 
 	public boolean alive() {

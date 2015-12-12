@@ -15,7 +15,6 @@
  */
 package reactor.aeron.publisher;
 
-import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.core.support.ReactiveState;
@@ -27,10 +26,9 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
 /**
  * @author Anatoly Kadyshev
+ * @author Stephane Maldini
  */
 public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveState.FeedbackLoop {
-
-	private final AeronInfra aeronInfra;
 
 	private final Publication serviceRequestPub;
 
@@ -40,8 +38,10 @@ public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveSta
 
 	private final byte[] sessionId;
 
-	public ServiceMessageSender(AeronInfra aeronInfra, Publication serviceRequestPub, String sessionId) {
-		this.aeronInfra = aeronInfra;
+	private final AeronPublisher parent;
+
+	public ServiceMessageSender(AeronPublisher parent, Publication serviceRequestPub, String sessionId) {
+		this.parent = parent;
 		this.serviceRequestPub = serviceRequestPub;
 		this.sessionId = sessionId.getBytes(AeronUtils.UTF_8_CHARSET);
 	}
@@ -106,7 +106,7 @@ public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveSta
 	 * @return buffer claim when successful and null when Aeron publication was either backpressured or not connected
 	 */
 	private long claimBuffer(int length) {
-		return aeronInfra.claim(serviceRequestPub, bufferClaim, length,	idleStrategy, true);
+		return parent.aeronInfra.claim(serviceRequestPub, bufferClaim, length,	idleStrategy, true);
 	}
 
 	private void putSessionId(MutableDirectBuffer mutableBuffer, int offset, byte[] sessionId) {
@@ -155,11 +155,11 @@ public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveSta
 
 	@Override
 	public Object delegateInput() {
-		return aeronInfra;
+		return parent;
 	}
 
 	@Override
 	public Object delegateOutput() {
-		return aeronInfra;
+		return parent;
 	}
 }

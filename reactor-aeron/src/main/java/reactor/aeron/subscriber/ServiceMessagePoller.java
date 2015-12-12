@@ -20,6 +20,7 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
+import reactor.core.support.ReactiveState;
 import reactor.core.support.SingleUseExecutor;
 import uk.co.real_logic.aeron.FragmentAssembler;
 import uk.co.real_logic.aeron.Subscription;
@@ -33,7 +34,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author Anatoly Kadyshev
  */
-class ServiceMessagePoller implements Runnable {
+class ServiceMessagePoller implements Runnable, ReactiveState.Upstream {
 
 	private final Logger logger;
 
@@ -153,6 +154,11 @@ class ServiceMessagePoller implements Runnable {
 		this.running = false;
 
 		executor.shutdown();
+	}
+
+	@Override
+	public Object upstream() {
+		return serviceRequestSub.channel()+"/"+serviceRequestSub.streamId();
 	}
 
 	public boolean isTerminated() {

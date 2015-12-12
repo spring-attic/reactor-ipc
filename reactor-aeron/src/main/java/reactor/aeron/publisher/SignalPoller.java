@@ -24,6 +24,7 @@ import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.DemandTracker;
 import reactor.aeron.support.SignalType;
 import reactor.core.error.Exceptions;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.FragmentAssembler;
@@ -36,7 +37,7 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 /**
  * Signals receiver functionality which polls for signals sent by senders
  */
-public class SignalPoller implements Runnable {
+public class SignalPoller implements Runnable, ReactiveState.Upstream, ReactiveState.Inner {
 
 	private static final Logger logger = LoggerFactory.getLogger(SignalPoller.class);
 
@@ -55,6 +56,8 @@ public class SignalPoller implements Runnable {
 	private final CompleteNextFragmentHandler completeNextFragmentHandler;
 
 	private volatile boolean running;
+
+	private volatile uk.co.real_logic.aeron.Subscription nextCompleteSub;
 
 	private abstract class SignalPollerFragmentHandler implements FragmentHandler {
 
@@ -211,6 +214,7 @@ public class SignalPoller implements Runnable {
 		logger.debug("Signal poller started");
 
 		uk.co.real_logic.aeron.Subscription nextCompleteSub = createNextCompleteSub();
+		this.nextCompleteSub = nextCompleteSub;
 		uk.co.real_logic.aeron.Subscription errorSub = createErrorSub();
 
 		setSubscriberSubscription();
@@ -295,4 +299,9 @@ public class SignalPoller implements Runnable {
 		running = false;
 	}
 
+	@Override
+	public Object upstream() {
+		return nextCompleteSub != null ? nextCompleteSub.channel()+"/"+nextCompleteSub.streamId() :
+				context.receiverChannel()+"/"+context.streamId();
+	}
 }

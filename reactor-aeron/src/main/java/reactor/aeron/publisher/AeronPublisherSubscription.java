@@ -30,7 +30,7 @@ import reactor.io.buffer.Buffer;
  */
 class AeronPublisherSubscription implements Subscription, ReactiveState.Upstream, ReactiveState.Downstream,
                                             ReactiveState.DownstreamDemand, ReactiveState.ActiveUpstream,
-                                            ReactiveState.ActiveDownstream {
+                                            ReactiveState.ActiveDownstream, ReactiveState.Inner {
 
 	private final Subscriber<? super Buffer> subscriber;
 
