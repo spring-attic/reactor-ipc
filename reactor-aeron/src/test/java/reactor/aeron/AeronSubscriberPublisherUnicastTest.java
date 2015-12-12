@@ -21,6 +21,7 @@ import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
+import reactor.core.support.ReactiveStateUtils;
 import reactor.io.net.tcp.support.SocketUtils;
 
 /**
@@ -49,8 +50,11 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		DataTestSubscriber client1 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		publisher1.subscribe(client1);
 
+
 		// Waiting till Aeron publications are created to avoid switching to async sender
 		Thread.sleep(2000);
+		System.out.println(ReactiveStateUtils.scan(client1).toString());
+
 
 		client1.request(3);
 
@@ -63,6 +67,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		// Waiting till Aeron publications are created to avoid switching to async sender
 		Thread.sleep(2000);
+		System.out.println(ReactiveStateUtils.scan(client2).toString());
 
 		client2.request(6);
 
@@ -72,6 +77,8 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		client2.request(1);
 
 		client2.assertCompleteReceived();
+
+		System.out.println(ReactiveStateUtils.scan(client1).toString());
 
 		client1.request(3);
 		client1.assertNextSignals("4", "5", "6");

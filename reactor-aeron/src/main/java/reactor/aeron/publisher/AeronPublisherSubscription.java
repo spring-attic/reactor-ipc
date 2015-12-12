@@ -22,12 +22,15 @@ import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.core.support.Assert;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.ReactiveState;
 import reactor.io.buffer.Buffer;
 
 /**
  * @author Anatoly Kadyshev
  */
-class AeronPublisherSubscription implements Subscription {
+class AeronPublisherSubscription implements Subscription, ReactiveState.Upstream, ReactiveState.Downstream,
+                                            ReactiveState.DownstreamDemand, ReactiveState.ActiveUpstream,
+                                            ReactiveState.ActiveDownstream {
 
 	private final Subscriber<? super Buffer> subscriber;
 
@@ -60,12 +63,37 @@ class AeronPublisherSubscription implements Subscription {
 		active = false;
 	}
 
-	public boolean isActive() {
-		return active;
-	}
-
 	public DemandTracker getDemandTracker() {
 		return demandTracker;
 	}
 
+	@Override
+	public boolean isStarted() {
+		return active;
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return !active;
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return !active;
+	}
+
+	@Override
+	public Object downstream() {
+		return subscriber;
+	}
+
+	@Override
+	public long requestedFromDownstream() {
+		return demandTracker.current();
+	}
+
+	@Override
+	public Object upstream() {
+		return serviceMessageSender;
+	}
 }

@@ -147,7 +147,7 @@ public class AeronPublisher implements Publisher<Buffer> {
 			public void accept(Boolean isTerminalSignalReceived) {
 				heartbeatSender.shutdown();
 
-				if (!subscription.isActive() || AeronUtils.isMulticastCommunication(context)) {
+				if (!subscription.isStarted() || AeronUtils.isMulticastCommunication(context)) {
 					terminateSession();
 				}
 

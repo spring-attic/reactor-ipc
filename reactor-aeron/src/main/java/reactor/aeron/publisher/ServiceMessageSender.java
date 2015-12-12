@@ -18,6 +18,7 @@ package reactor.aeron.publisher;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
+import reactor.core.support.ReactiveState;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;
@@ -27,7 +28,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 /**
  * @author Anatoly Kadyshev
  */
-public class ServiceMessageSender {
+public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveState.FeedbackLoop {
 
 	private final AeronInfra aeronInfra;
 
@@ -147,4 +148,18 @@ public class ServiceMessageSender {
 		}
 	}
 
+	@Override
+	public Object upstream() {
+		return serviceRequestPub.channel();
+	}
+
+	@Override
+	public Object delegateInput() {
+		return aeronInfra;
+	}
+
+	@Override
+	public Object delegateOutput() {
+		return aeronInfra;
+	}
 }

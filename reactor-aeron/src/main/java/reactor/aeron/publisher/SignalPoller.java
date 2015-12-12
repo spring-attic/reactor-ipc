@@ -220,7 +220,7 @@ public class SignalPoller implements Runnable {
 		boolean isTerminalSignalReceived = false;
 		long demand = 0;
 		try {
-			while (running && downstreamSubscription.isActive()) {
+			while (running && downstreamSubscription.isStarted()) {
 				errorSub.poll(errorFragmentHandler, 1);
 				if (errorFragmentHandler.isErrorReceived()) {
 					isTerminalSignalReceived = true;

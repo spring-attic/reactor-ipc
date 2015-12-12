@@ -41,8 +41,20 @@ public class DemandTracker {
 		return BackpressureUtils.getAndAdd(requestedUpdater, this, n);
 	}
 
+	/**
+	 *
+	 * @return
+	 */
 	public long getAndReset() {
 		return requestedUpdater.getAndSet(this, 0);
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public long current(){
+		return requested;
 	}
 
 }
