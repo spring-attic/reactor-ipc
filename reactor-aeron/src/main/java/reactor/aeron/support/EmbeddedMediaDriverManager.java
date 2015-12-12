@@ -70,7 +70,7 @@ public class EmbeddedMediaDriverManager {
 		}
 
 		private boolean canShutdownMediaDriver() {
-			boolean canShutdownDriver[] = new boolean[] { true };
+			final boolean canShutdownDriver[] = new boolean[] { true };
 			aeronCounters.forEach(new BiConsumer<Integer, String>() {
 				@Override
 				public void accept(Integer id, String label) {
