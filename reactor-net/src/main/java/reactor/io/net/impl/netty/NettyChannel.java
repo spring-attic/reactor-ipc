@@ -50,7 +50,7 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
 public class NettyChannel
 		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,
 		           ReactiveState.Named,
-		           ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream, ReactiveState.Identified {
+		           ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
 
 	private final Channel ioChannel;
 	private final long    prefetch;
@@ -86,11 +86,6 @@ public class NettyChannel
 
 	@Override
 	public Object delegateOutput() {
-		return null;
-	}
-
-	@Override
-	public String getId() {
 		Channel parent = ioChannel.parent();
 		SocketAddress remote = ioChannel.remoteAddress();
 		SocketAddress local = ioChannel.localAddress();
