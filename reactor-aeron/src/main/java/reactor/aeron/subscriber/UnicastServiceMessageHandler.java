@@ -80,11 +80,8 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler {
 			session.setTerminal();
 
 			Buffer buffer = Buffer.wrap(context.exceptionSerializer().serialize(t));
-			long position = signalSender.publishSignal(session.getSessionId(), session.getErrorPublication(), buffer,
+			signalSender.publishSignal(session.getSessionId(), session.getErrorPublication(), buffer,
 					SignalType.Error, true);
-			if (position >= 0) {
-				aeronInfra.waitSent(session.getErrorPublication(), position);
-			}
 
 			runTerminalTaskWhenAllSessionsTerminal();
 		}
@@ -94,11 +91,8 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler {
 			session.setTerminal();
 
 			Buffer buffer = new Buffer(0, true);
-			long position = signalSender.publishSignal(session.getSessionId(), session.getPublication(), buffer,
+			signalSender.publishSignal(session.getSessionId(), session.getPublication(), buffer,
 					SignalType.Complete, true);
-			if (position >= 0) {
-				aeronInfra.waitSent(session.getPublication(), position);
-			}
 
 			runTerminalTaskWhenAllSessionsTerminal();
 		}
@@ -177,7 +171,6 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler {
 				signalSender.publishSignal(session.getSessionId(), session.getPublication(), buffer,
 						SignalType.Complete, true);
 			}
-			aeronInfra.waitPublicationLinger();
 		}
 	}
 

@@ -34,9 +34,8 @@ public class AeronProcessorUnicastVerificationTest extends AeronProcessorCommonV
 				.errorStreamId(streamId + 1)
 				.serviceRequestStreamId(streamId + 2)
 				.receiverChannel(CHANNEL)
-				.publicationLingerMillis(250)
 				.publicationRetryMillis(500)
-				.ringBufferSize(1024 * 10);
+				.ringBufferSize(1024);
 	}
 
 }

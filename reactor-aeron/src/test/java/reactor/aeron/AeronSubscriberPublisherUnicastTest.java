@@ -31,8 +31,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 	@Override
 	protected Context createContext() {
 		return new Context().name("test")
-				.senderPort(senderPort)
-				.publicationLingerMillis(1000);
+				.senderPort(senderPort);
 	}
 
 	@Test

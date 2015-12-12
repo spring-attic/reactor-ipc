@@ -18,7 +18,6 @@ package reactor.aeron.subscriber;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
@@ -48,9 +47,7 @@ public class AeronSubscriberTest {
 	public void doTearDown() throws InterruptedException {
 		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
 
-		Timers.unregisterGlobal();
-
-		assertTrue(threadSnapshot.takeAndCompare(TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
+		assertTrue(threadSnapshot.takeAndCompare(new String[] {"global"}, TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
 	}
 
 	@Test
@@ -59,7 +56,6 @@ public class AeronSubscriberTest {
 
 		AeronSubscriber subscriber = AeronSubscriber.create(new Context()
 				.name("publisher")
-				.publicationLingerMillis(2000)
 				.senderPort(senderPort));
 
 		subscriber.shutdown();

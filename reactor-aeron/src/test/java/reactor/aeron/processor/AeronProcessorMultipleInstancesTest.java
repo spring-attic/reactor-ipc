@@ -210,8 +210,7 @@ public class AeronProcessorMultipleInstancesTest {
 				.name(name)
 				.autoCancel(false)
 				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL)
-				.publicationLingerMillis(250));
+				.receiverChannel(CHANNEL));
 	}
 
 	private DataTestSubscriber createTestSubscriber() {

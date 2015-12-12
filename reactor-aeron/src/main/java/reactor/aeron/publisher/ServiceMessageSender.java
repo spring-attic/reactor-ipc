@@ -18,7 +18,6 @@ package reactor.aeron.publisher;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.fn.Supplier;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;
@@ -76,7 +75,6 @@ public class ServiceMessageSender {
 		long position = claimBuffer(1 + (sessionId.length + 1));
 		if (position >= 0) {
 			commitCancel(bufferClaim, sessionId);
-			aeronInfra.waitSent(serviceRequestPub, position);
 		} else {
 			throw new RuntimeException("Failed to send cancel service message" +
 					" due to backpressured/not connected publication");

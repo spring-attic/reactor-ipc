@@ -18,6 +18,7 @@ package reactor.aeron.support;
 import reactor.core.subscriber.test.TestSubscriber;
 import uk.co.real_logic.aeron.driver.Configuration;
 import uk.co.real_logic.aeron.driver.MediaDriver;
+import uk.co.real_logic.aeron.driver.ThreadingMode;
 
 import java.util.concurrent.TimeUnit;
 
@@ -35,12 +36,14 @@ public class AeronTestUtils {
 		System.setProperty(Configuration.TERM_BUFFER_MAX_LENGTH_PROP_NAME, bufferLength);
 		System.setProperty(Configuration.COUNTER_VALUES_BUFFER_LENGTH_PROP_NAME, bufferLength);
 		System.setProperty(Configuration.PUBLICATION_LINGER_PROP_NAME,
-				String.valueOf(TimeUnit.NANOSECONDS.toMillis(300)));
+				String.valueOf(TimeUnit.MILLISECONDS.toNanos(500)));
+
+		EmbeddedMediaDriverManager.getInstance().getDriverContext().threadingMode(ThreadingMode.SHARED);
 	}
 
 	public static void awaitMediaDriverIsTerminated(int timeoutSecs) throws InterruptedException {
 		TestSubscriber.waitFor(timeoutSecs, "Aeron hasn't been shutdown properly",
-				() -> EmbeddedMediaDriverManager.getInstance().getCounter() == 0);
+				() -> EmbeddedMediaDriverManager.getInstance().isTerminated());
 	}
 
 }

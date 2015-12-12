@@ -58,11 +58,11 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 	public void cleanUp(Method method) throws InterruptedException {
 		// A previous test didn't call onComplete on the processor, manual clean up
 		EmbeddedMediaDriverManager driverManager = EmbeddedMediaDriverManager.getInstance();
-		if (driverManager.getCounter() > 0) {
+		if (!driverManager.isTerminated()) {
 
 			Thread.sleep(1000);
 
-			if (driverManager.getCounter() > 0) {
+			if (!driverManager.isTerminated()) {
 				System.err.println("Possibly method " + method.getName() + " didn't call onComplete on processor");
 
 				for (AeronProcessor processor: processors) {
@@ -70,7 +70,7 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 					TestSubscriber.waitFor(5, "processor didn't terminate", processor::isTerminated);
 				}
 
-				AeronTestUtils.awaitMediaDriverIsTerminated(5);
+				AeronTestUtils.awaitMediaDriverIsTerminated(10);
 			}
 		}
 

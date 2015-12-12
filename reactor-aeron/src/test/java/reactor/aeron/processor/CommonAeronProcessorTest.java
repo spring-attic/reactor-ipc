@@ -67,7 +67,6 @@ public abstract class CommonAeronProcessorTest {
 	protected Context createContext() {
 		return new Context()
 				.autoCancel(false)
-				.publicationLingerMillis(1000)
 				.publicationRetryMillis(1000)
 				.errorConsumer(new Consumer<Throwable>() {
 					@Override

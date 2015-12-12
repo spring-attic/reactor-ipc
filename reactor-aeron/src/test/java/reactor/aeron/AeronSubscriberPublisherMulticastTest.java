@@ -35,8 +35,7 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 		return new Context()
 				.name("test")
 				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL)
-				.publicationLingerMillis(2000);
+				.receiverChannel(CHANNEL);
 	}
 
 	@Test

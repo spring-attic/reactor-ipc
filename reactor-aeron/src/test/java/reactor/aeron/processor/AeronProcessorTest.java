@@ -87,7 +87,6 @@ public class AeronProcessorTest {
 					.autoCancel(false)
 					.senderChannel(CHANNEL)
 					.receiverChannel(CHANNEL)
-					.publicationLingerMillis(1000)
 					.aeron(aeron));
 
 			Streams.just(
@@ -151,8 +150,7 @@ public class AeronProcessorTest {
 	protected Context createAeronContext() {
 		return new Context().name("multicast")
 				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL)
-				.publicationLingerMillis(1000);
+				.receiverChannel(CHANNEL);
 	}
 
 }

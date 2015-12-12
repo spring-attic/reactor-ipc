@@ -122,14 +122,6 @@ public class TestAeronInfra implements AeronInfra {
 	}
 
 	@Override
-	public void waitPublicationLinger() {
-	}
-
-	@Override
-	public void waitSent(Publication publication, long position) {
-	}
-
-	@Override
 	public void close(Publication publication) {
 	}
 

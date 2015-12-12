@@ -35,9 +35,8 @@ public class AeronProcessorMulticastVerificationTest extends AeronProcessorCommo
 				.serviceRequestStreamId(streamId + 2)
 				.senderChannel(CHANNEL)
 				.receiverChannel(CHANNEL)
-				.publicationLingerMillis(250)
 				.publicationRetryMillis(500)
-				.ringBufferSize(1024 * 10);
+				.ringBufferSize(1024);
 	}
 
 }

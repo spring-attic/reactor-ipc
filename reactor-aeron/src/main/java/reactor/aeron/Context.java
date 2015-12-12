@@ -95,12 +95,6 @@ public class Context {
 	private int signalPollerFragmentLimit = 64;
 
 	/**
-	 * A time interval in millis after which a message is considered published via Aeron into network
-	 */
-	private long publicationLingerMillis =
-			TimeUnit.NANOSECONDS.toMillis(Configuration.PUBLICATION_LINGER_DEFAULT_NS);
-
-	/**
 	 * A timeout during which a message is retied to be published into Aeron.
 	 * If the timeout elapses and the message cannot be published because of
 	 * either {@link uk.co.real_logic.aeron.Publication#BACK_PRESSURED} or
@@ -206,11 +200,6 @@ public class Context {
 		return this;
 	}
 
-	public Context publicationLingerMillis(int publicationLingerMillis) {
-		this.publicationLingerMillis = publicationLingerMillis;
-		return this;
-	}
-
 	public Context publicationRetryMillis(long publicationRetryMillis) {
 		this.publicationRetryMillis = publicationRetryMillis;
 		return this;
@@ -286,10 +275,6 @@ public class Context {
 		return signalPollerFragmentLimit;
 	}
 
-	public long publicationLingerMillis() {
-		return publicationLingerMillis;
-	}
-
 	public long publicationRetryMillis() {
 		return publicationRetryMillis;
 	}
@@ -320,7 +305,7 @@ public class Context {
 
 	//TODO: Move into another class
 	public AeronInfra createAeronInfra(Logger logger) {
-		AeronInfra aeronInfra = new BasicAeronInfra(logger, aeron, 	publicationRetryMillis, publicationLingerMillis);
+		AeronInfra aeronInfra = new BasicAeronInfra(logger, aeron, publicationRetryMillis);
 		aeronInfra.initialise();
 		return aeronInfra;
 	}

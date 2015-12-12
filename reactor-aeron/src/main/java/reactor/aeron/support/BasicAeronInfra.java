@@ -37,11 +37,6 @@ public class BasicAeronInfra implements AeronInfra {
 
 	private final boolean launchEmbeddedMediaDriver;
 
-	/**
-	 * @see Context#publicationLingerMillis
-	 */
-	private final long publicationLingerMillis;
-
 	private volatile Aeron aeron;
 
 	/**
@@ -49,10 +44,9 @@ public class BasicAeronInfra implements AeronInfra {
 	 */
 	private final long publicationRetryNs;
 
-	public BasicAeronInfra(Logger logger, Aeron aeron, long publicationRetryMillis, long publicationLingerMillis) {
+	public BasicAeronInfra(Logger logger, Aeron aeron, long publicationRetryMillis) {
 		this.logger = logger;
 		this.launchEmbeddedMediaDriver = (aeron == null);
-		this.publicationLingerMillis = publicationLingerMillis;
 		this.aeron = aeron;
 		this.publicationRetryNs = TimeUnit.MILLISECONDS.toNanos(publicationRetryMillis);
 	}
@@ -117,30 +111,6 @@ public class BasicAeronInfra implements AeronInfra {
 		}
 		idleStrategy.idle(1);
 		return result;
-	}
-
-	/**
-	 * Wait till a message is published into Aeron. A message is considered
-	 * published after {@link #publicationLingerMillis} elapses.
-	 */
-	@Override
-	public void waitPublicationLinger() {
-		try {
-			Thread.sleep(publicationLingerMillis);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
-	}
-
-	/**
-	 * Waits till data at stream <code>position</code> is sent into the network
-	 *
-	 * @param position stream position of data to be sent into the network
-	 */
-	@Override
-	public void waitSent(Publication publication, long position) {
-		//TODO: Improve the implementation
-		waitPublicationLinger();
 	}
 
 	@Override

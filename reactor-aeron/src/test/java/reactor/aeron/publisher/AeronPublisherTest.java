@@ -82,8 +82,7 @@ public class AeronPublisherTest {
 		aeronInfra.setShouldFailClaim(true);
 
 		context.name("test")
-			.heartbeatIntervalMillis(500)
-			.publicationLingerMillis(0);
+			.heartbeatIntervalMillis(500);
 
 		AeronPublisher publisher = AeronPublisher.create(context);
 
