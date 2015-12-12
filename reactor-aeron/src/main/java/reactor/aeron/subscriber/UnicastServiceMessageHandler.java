@@ -15,6 +15,8 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.Iterator;
+
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.SignalType;
 import reactor.core.processor.BaseProcessor;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
@@ -30,7 +33,7 @@ import reactor.io.buffer.Buffer;
 /**
  * @author Anatoly Kadyshev
  */
-public class UnicastServiceMessageHandler implements ServiceMessageHandler {
+public class UnicastServiceMessageHandler implements ServiceMessageHandler, ReactiveState.LinkedDownstreams {
 
 	private final static Logger logger = LoggerFactory.getLogger(UnicastServiceMessageHandler.class);
 
@@ -217,4 +220,13 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler {
 		return session;
 	}
 
+	@Override
+	public Iterator<?> downstreams() {
+		return sessionTracker.getSessions().iterator();
+	}
+
+	@Override
+	public long downstreamsCount() {
+		return sessionTracker.getSessionCounter();
+	}
 }

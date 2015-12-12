@@ -150,7 +150,7 @@ public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveSta
 
 	@Override
 	public Object upstream() {
-		return serviceRequestPub.channel();
+		return serviceRequestPub.channel()+"/"+serviceRequestPub.streamId();
 	}
 
 	@Override

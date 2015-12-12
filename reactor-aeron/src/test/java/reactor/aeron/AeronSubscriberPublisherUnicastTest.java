@@ -53,6 +53,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		// Waiting till Aeron publications are created to avoid switching to async sender
 		Thread.sleep(2000);
+		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client1).toString());
 
 
@@ -67,6 +68,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		// Waiting till Aeron publications are created to avoid switching to async sender
 		Thread.sleep(2000);
+		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client2).toString());
 
 		client2.request(6);

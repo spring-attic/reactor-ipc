@@ -24,6 +24,7 @@ import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.timer.Timer;
 import reactor.io.buffer.Buffer;
@@ -32,8 +33,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Anatoly Kadyshev
+ * @author Stephane Maldini
  */
-public class AeronSubscriber extends BaseSubscriber<Buffer> {
+public class AeronSubscriber extends BaseSubscriber<Buffer>
+		implements ReactiveState.ActiveUpstream, ReactiveState.Upstream, ReactiveState.FeedbackLoop {
 
 	private final Logger logger;
 
@@ -181,8 +184,27 @@ public class AeronSubscriber extends BaseSubscriber<Buffer> {
 		}
 	}
 
+	@Override
 	public boolean isTerminated() {
 		return terminated;
 	}
 
+	@Override
+	public boolean isStarted() {
+		return alive.get();
+	}
+	@Override
+	public Object delegateInput() {
+		return serviceMessageHandler;
+	}
+
+	@Override
+	public Object upstream() {
+		return processor;
+	}
+
+	@Override
+	public Object delegateOutput() {
+		return serviceMessagePoller;
+	}
 }

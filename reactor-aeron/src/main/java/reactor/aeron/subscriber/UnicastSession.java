@@ -17,12 +17,13 @@ package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscription;
 import reactor.aeron.support.DemandTracker;
+import reactor.core.support.ReactiveState;
 import uk.co.real_logic.aeron.Publication;
 
 /**
  * @author Anatoly Kadyshev
  */
-class UnicastSession implements Session {
+class UnicastSession implements Session, ReactiveState.Inner, ReactiveState.Downstream {
 
 	private static int nextSessionUid = 0;
 
@@ -117,4 +118,8 @@ class UnicastSession implements Session {
 		return demandTracker.getAndReset();
 	}
 
+	@Override
+	public Object downstream() {
+		return publication.channel()+"/"+publication.streamId();
+	}
 }
