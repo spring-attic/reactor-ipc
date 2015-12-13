@@ -238,15 +238,15 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
 		final ReactiveSession<Object> session = p.startSession();
-		log.info("State Monitoring Starting on "+ReactiveStateUtils.getName(o));
+		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
 		timer.schedule(new Consumer<Long>() {
 			@Override
 			public void accept(Long aLong) {
-				if(!session.isCancelled()) {
+				if (!session.isCancelled()) {
 					session.emit(ReactiveStateUtils.scan(o));
 				}
-				else{
-					log.info("State Monitoring stopping on "+ReactiveStateUtils.getName(o));
+				else {
+					log.info("State Monitoring stopping on " + ReactiveStateUtils.getName(o));
 					throw CancelException.INSTANCE;
 				}
 			}
@@ -332,10 +332,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			timer.schedule(new Consumer<Long>() {
 				@Override
 				public void accept(Long aLong) {
-					if(!session.isCancelled()) {
+					if (!session.isCancelled()) {
 						session.submit(lastSystemState.scan());
 					}
-					else{
+					else {
 						log.info("System Monitoring Stopped");
 						throw CancelException.INSTANCE;
 					}
@@ -396,30 +396,41 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final static class GraphEvent extends Event {
 
 		private final ReactiveStateUtils.Graph graph;
-		private final boolean                  removed;
 
 		public GraphEvent(String name, ReactiveStateUtils.Graph graph) {
-			this(name, graph, false);
-		}
-
-		public GraphEvent(String name, ReactiveStateUtils.Graph graph, boolean removed) {
 			super(name);
 			this.graph = graph;
-			this.removed = removed;
 		}
 
 		public ReactiveStateUtils.Graph getStreams() {
 			return graph;
 		}
 
-		public boolean isRemoved() {
-			return removed;
+		@Override
+		public String toString() {
+			return "{ " + property("streams", getStreams()) +
+					", " + property("type", getType()) +
+					", " + property("timestamp", System.currentTimeMillis()) +
+					", " + property("nexusHost", getNexusHost()) + " }";
+		}
+	}
+
+	private final static class RemovedGraphEvent extends Event {
+
+		private final Collection<String> ids;
+
+		public RemovedGraphEvent(String name, Collection<String> ids) {
+			super(name);
+			this.ids = ids;
+		}
+
+		public Collection<String> getStreams() {
+			return ids;
 		}
 
 		@Override
 		public String toString() {
 			return "{ " + property("streams", getStreams()) +
-					", " + property("removed", isRemoved()) +
 					", " + property("type", getType()) +
 					", " + property("timestamp", System.currentTimeMillis()) +
 					", " + property("nexusHost", getNexusHost()) + " }";
@@ -616,7 +627,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		@Override
 		public Buffer apply(Event event) {
 			try {
-				return reactor.io.buffer.StringBuffer.wrap(event.toString().getBytes("UTF-8"));
+				return reactor.io.buffer.StringBuffer.wrap(event.toString()
+				                                                .getBytes("UTF-8"));
 			}
 			catch (UnsupportedEncodingException e) {
 				throw ReactorFatalException.create(e);
@@ -630,7 +642,13 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public Event apply(Event event) {
 			if (GraphEvent.class.equals(event.getClass())) {
 				lastState.graph.mergeWith(((GraphEvent) event).graph);
-				//lastState.graph.removeTerminatedNodes();
+//				Collection<String> removed = lastState.graph.removeTerminatedNodes();
+//
+//				if(removed != null && !removed.isEmpty()){
+//					return Publishers.from(
+//							Arrays.asList(lastState, new RemovedGraphEvent(server.getListenAddress().getHostName(), removed)));
+//				}
+
 				return lastState;
 			}
 			return event;
