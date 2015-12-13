@@ -53,6 +53,8 @@ public abstract class CommonSubscriberPublisherTest {
 
 	@After
 	public void doTearDown() throws InterruptedException {
+		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
+
 		assertTrue(threadSnapshot.takeAndCompare(new String[] {"hash", "global"},
 				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
 	}
