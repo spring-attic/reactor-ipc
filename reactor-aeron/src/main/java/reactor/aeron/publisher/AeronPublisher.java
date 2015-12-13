@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Anatoly Kadyshev
  */
-public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Upstream {
+public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstream {
 
 	final AeronInfra aeronInfra;
 
@@ -128,8 +128,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Upstream
 			throw new IllegalStateException("Only single subscriber is supported");
 		}
 
-		AeronPublisherSubscription subscription = new AeronPublisherSubscription(subscriber, serviceMessageSender);
-		signalPoller = createSignalsPoller(subscriber, subscription);
+		signalPoller = createSignalsPoller(subscriber);
 		try {
 			executor.execute(signalPoller);
 			heartbeatSender.start();
@@ -140,15 +139,14 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Upstream
 		}
 	}
 
-	private SignalPoller createSignalsPoller(final Subscriber<? super Buffer> subscriber,
-											 final AeronPublisherSubscription subscription) {
-		return new SignalPoller(context, subscriber, subscription, aeronInfra, new Consumer<Boolean>() {
+	private SignalPoller createSignalsPoller(final Subscriber<? super Buffer> subscriber) {
+		return new SignalPoller(context, serviceMessageSender, subscriber, aeronInfra, new Consumer<Boolean>() {
 
 			@Override
 			public void accept(Boolean isTerminalSignalReceived) {
 				heartbeatSender.shutdown();
 
-				if (!subscription.isStarted() || AeronUtils.isMulticastCommunication(context)) {
+				if (!alive() || AeronUtils.isMulticastCommunication(context)) {
 					terminateSession();
 				}
 
@@ -206,7 +204,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Upstream
 	}
 
 	@Override
-	public Object upstream() {
+	public Object downstream() {
 		return signalPoller;
 	}
 

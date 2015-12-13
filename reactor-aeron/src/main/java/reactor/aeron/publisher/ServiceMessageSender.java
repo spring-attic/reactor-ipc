@@ -28,7 +28,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveState.FeedbackLoop {
+public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveState.FeedbackLoop {
 
 	private final Publication serviceRequestPub;
 
@@ -149,13 +149,13 @@ public class ServiceMessageSender implements ReactiveState.Upstream, ReactiveSta
 	}
 
 	@Override
-	public Object upstream() {
+	public Object downstream() {
 		return serviceRequestPub.channel()+"/"+serviceRequestPub.streamId();
 	}
 
 	@Override
 	public Object delegateInput() {
-		return parent;
+		return null;
 	}
 
 	@Override

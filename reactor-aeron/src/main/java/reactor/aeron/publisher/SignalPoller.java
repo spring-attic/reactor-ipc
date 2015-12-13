@@ -15,6 +15,9 @@
  */
 package reactor.aeron.publisher;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +25,11 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.DemandTracker;
+import reactor.aeron.support.ServiceMessagePublicationFailedException;
+import reactor.aeron.support.ServiceMessageType;
 import reactor.aeron.support.SignalType;
 import reactor.core.error.Exceptions;
+import reactor.core.support.BackpressureUtils;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
@@ -37,17 +43,19 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 /**
  * Signals receiver functionality which polls for signals sent by senders
  */
-public class SignalPoller implements Runnable, ReactiveState.Upstream, ReactiveState.Inner {
+public class SignalPoller implements org.reactivestreams.Subscription, Runnable, ReactiveState.Downstream,
+                                     ReactiveState.DownstreamDemand, ReactiveState.ActiveUpstream,
+                                     ReactiveState.ActiveDownstream, ReactiveState.LinkedDownstreams, ReactiveState.Inner {
 
 	private static final Logger logger = LoggerFactory.getLogger(SignalPoller.class);
 
-	private final Subscriber<? super Buffer> subscriber;
-
-	private final AeronPublisherSubscription downstreamSubscription;
-
 	private final AeronInfra aeronInfra;
 
+	private final Subscriber<? super Buffer> subscriber;
+
 	private final Consumer<Boolean> shutdownTask;
+
+	private final DemandTracker demandTracker;
 
 	private final Context context;
 
@@ -58,6 +66,8 @@ public class SignalPoller implements Runnable, ReactiveState.Upstream, ReactiveS
 	private volatile boolean running;
 
 	private volatile uk.co.real_logic.aeron.Subscription nextCompleteSub;
+
+	private final ServiceMessageSender serviceMessageSender;
 
 	private abstract class SignalPollerFragmentHandler implements FragmentHandler {
 
@@ -195,17 +205,19 @@ public class SignalPoller implements Runnable, ReactiveState.Upstream, ReactiveS
 	}
 
 	public SignalPoller(Context context,
+						ServiceMessageSender serviceMessageSender,
 						Subscriber<? super Buffer> subscriber,
-						AeronPublisherSubscription downstreamSubscription,
 						AeronInfra aeronInfra,
 						Consumer<Boolean> shutdownTask) {
+
 		this.context = context;
+		this.serviceMessageSender = serviceMessageSender;
 		this.subscriber = subscriber;
-		this.downstreamSubscription = downstreamSubscription;
 		this.aeronInfra = aeronInfra;
 		this.shutdownTask = shutdownTask;
 		this.errorFragmentHandler = new ErrorFragmentHandler();
 		this.completeNextFragmentHandler = new CompleteNextFragmentHandler();
+		this.demandTracker = new DemandTracker();
 	}
 
 	@Override
@@ -220,11 +232,11 @@ public class SignalPoller implements Runnable, ReactiveState.Upstream, ReactiveS
 		setSubscriberSubscription();
 
 		final IdleStrategy idleStrategy = AeronUtils.newBackoffIdleStrategy();
-		final DemandTracker demandTracker = downstreamSubscription.getDemandTracker();
+		final DemandTracker demandTracker = this.demandTracker;
 		boolean isTerminalSignalReceived = false;
 		long demand = 0;
 		try {
-			while (running && downstreamSubscription.isStarted()) {
+			while (running) {
 				errorSub.poll(errorFragmentHandler, 1);
 				if (errorFragmentHandler.isErrorReceived()) {
 					isTerminalSignalReceived = true;
@@ -274,7 +286,9 @@ public class SignalPoller implements Runnable, ReactiveState.Upstream, ReactiveS
 	private void setSubscriberSubscription() {
 		//TODO: Possible timing issue due to ServiceMessagePoller termination
 		try {
-			subscriber.onSubscribe(downstreamSubscription);
+			if(running) {
+				subscriber.onSubscribe(this);
+			}
 		} catch (Throwable t) {
 			Exceptions.throwIfFatal(t);
 			subscriber.onError(t);
@@ -300,8 +314,58 @@ public class SignalPoller implements Runnable, ReactiveState.Upstream, ReactiveS
 	}
 
 	@Override
-	public Object upstream() {
-		return nextCompleteSub != null ? nextCompleteSub.channel()+"/"+nextCompleteSub.streamId() :
+	public Iterator<?> downstreams() {
+
+		String up1 = nextCompleteSub != null ? nextCompleteSub.channel()+"/"+nextCompleteSub.streamId() :
 				context.receiverChannel()+"/"+context.streamId();
+
+		return Arrays.asList(up1, serviceMessageSender).iterator();
+	}
+
+	@Override
+	public long downstreamsCount() {
+		return running ? 2 : 0;
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return !running;
+	}
+
+	@Override
+	public boolean isStarted() {
+		return running;
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return !running;
+	}
+
+	@Override
+	public Object downstream() {
+		return subscriber;
+	}
+
+	@Override
+	public long requestedFromDownstream() {
+		return demandTracker.current();
+	}
+
+	@Override
+	public void request(long n) {
+		if (running && BackpressureUtils.checkRequest(n, subscriber)) {
+			try {
+				serviceMessageSender.sendRequest(n);
+				demandTracker.request(n);
+			} catch (Exception e) {
+				subscriber.onError(new ServiceMessagePublicationFailedException(ServiceMessageType.Request, e));
+			}
+		}
+	}
+
+	@Override
+	public void cancel() {
+		running = false;
 	}
 }
