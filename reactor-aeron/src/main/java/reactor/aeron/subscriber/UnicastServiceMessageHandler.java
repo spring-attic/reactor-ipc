@@ -16,6 +16,8 @@
 package reactor.aeron.subscriber;
 
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -51,6 +53,8 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 	private final SessionTracker<UnicastSession> sessionTracker;
 
 	private final HeartbeatWatchdog heartbeatWatchdog;
+
+	private final Pattern SESSION_ID_PATTERN = Pattern.compile("(udp://.+:\\d+)/(\\d+)/(\\d+)");
 
 	private class InnerSubscriber implements Subscriber<Buffer> {
 
@@ -183,11 +187,23 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 		}
 	}
 
-	private UnicastSession createSession(String receiverChannel) {
+	private UnicastSession createSession(String sessionId) {
+		Matcher matcher = SESSION_ID_PATTERN.matcher(sessionId);
+		int streamId;
+		int errorStreamId;
+		String receiverChannel;
+		if (matcher.matches()) {
+			receiverChannel = matcher.group(1);
+			streamId = Integer.parseInt(matcher.group(2));
+			errorStreamId = Integer.parseInt(matcher.group(3));
+		} else {
+			throw new IllegalArgumentException("Malformed unicast sessionId: " + sessionId);
+		}
+
 		return new UnicastSession(
-				receiverChannel,
-				aeronInfra.addPublication(receiverChannel, context.streamId()),
-				aeronInfra.addPublication(receiverChannel, context.errorStreamId()));
+				sessionId,
+				aeronInfra.addPublication(receiverChannel, streamId),
+				aeronInfra.addPublication(receiverChannel, errorStreamId));
 	}
 
 	private void cancel(UnicastSession session) {

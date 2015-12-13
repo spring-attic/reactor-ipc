@@ -20,6 +20,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import org.reactivestreams.tck.IdentityProcessorVerification;
 import org.reactivestreams.tck.TestEnvironment;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -31,6 +32,7 @@ import reactor.io.buffer.Buffer;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +47,8 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 
 	int streamId = 1;
 
+	private EmbeddedMediaDriverManager driverManager;
+
 	public AeronProcessorCommonVerificationTest() {
 		super(new TestEnvironment(1100, true), 1100);
 	}
@@ -52,17 +56,25 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 	@BeforeClass
 	public void doSetup() {
 		AeronTestUtils.setAeronEnvProps();
+
+		driverManager = EmbeddedMediaDriverManager.getInstance();
+		driverManager.setShouldShutdownWhenNotUsed(false);
+	}
+
+	@AfterClass
+	public void doTeardown() throws InterruptedException {
+		driverManager.shutdown();
+		AeronTestUtils.awaitMediaDriverIsTerminated(10);
 	}
 
 	@AfterMethod
 	public void cleanUp(Method method) throws InterruptedException {
 		// A previous test didn't call onComplete on the processor, manual clean up
-		EmbeddedMediaDriverManager driverManager = EmbeddedMediaDriverManager.getInstance();
-		if (!driverManager.isTerminated()) {
+		if (driverManager.getCounter() > 0) {
 
 			Thread.sleep(1000);
 
-			if (!driverManager.isTerminated()) {
+			if (driverManager.getCounter() > 0) {
 				System.err.println("Possibly method " + method.getName() + " didn't call onComplete on processor");
 
 				for (AeronProcessor processor: processors) {
@@ -70,7 +82,8 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 					TestSubscriber.waitFor(5, "processor didn't terminate", processor::isTerminated);
 				}
 
-				AeronTestUtils.awaitMediaDriverIsTerminated(10);
+				TestSubscriber.waitFor(5, "Embedded Media driver wasn't shutdown properly",
+						() -> driverManager.getCounter() == 0);
 			}
 		}
 
@@ -79,6 +92,15 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 
 	@Override
 	public Processor<Buffer, Buffer> createIdentityProcessor(int bufferSize) {
+		for (Iterator<AeronProcessor> it = processors.iterator(); it.hasNext(); ) {
+			AeronProcessor processor = it.next();
+			if (processor.isTerminated()) {
+				it.remove();
+			} else {
+				processor.shutdown();
+			}
+		}
+
 		AeronProcessor processor = AeronProcessor.create(createContext(streamId += 10));
 		processors.add(processor);
 		return processor;
