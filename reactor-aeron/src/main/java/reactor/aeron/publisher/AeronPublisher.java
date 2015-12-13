@@ -100,7 +100,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 	protected String getSessionId(Context context) {
 		return AeronUtils.isMulticastCommunication(context) ?
 				UUIDUtils.create().toString():
-				context.receiverChannel();
+				context.receiverChannel() + "/" + context.streamId() + "/" + context.errorStreamId();
 	}
 
 	public AeronPublisher(Context context) {
@@ -146,7 +146,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 			public void accept(Boolean isTerminalSignalReceived) {
 				heartbeatSender.shutdown();
 
-				if (!alive() || AeronUtils.isMulticastCommunication(context)) {
+				if (signalPoller.isTerminated() && !isTerminalSignalReceived || AeronUtils.isMulticastCommunication(context)) {
 					terminateSession();
 				}
 
