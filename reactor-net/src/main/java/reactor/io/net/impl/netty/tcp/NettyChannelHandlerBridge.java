@@ -57,7 +57,7 @@ import reactor.io.net.impl.netty.NettyChannel;
  */
 public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		implements ReactiveState.Named, ReactiveState.FeedbackLoop, ReactiveState.Downstream, ReactiveState
-		.ActiveUpstream {
+		.ActiveUpstream , ReactiveState.Inner{
 
 	protected static final Logger log = LoggerFactory.getLogger(NettyChannelHandlerBridge.class);
 

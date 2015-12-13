@@ -140,7 +140,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 	}
 
-	private class CloseSubscriber extends BaseSubscriber<Void>  {
+	private class CloseSubscriber extends BaseSubscriber<Void> implements ActiveUpstream {
 
 		private final ChannelHandlerContext ctx;
 		Subscription subscription;
@@ -169,6 +169,16 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 				       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR))
 						.addListener(ChannelFutureListener.CLOSE);
 			}
+		}
+
+		@Override
+		public boolean isStarted() {
+			return ctx.channel().isActive();
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return !ctx.channel().isOpen();
 		}
 
 		@Override
