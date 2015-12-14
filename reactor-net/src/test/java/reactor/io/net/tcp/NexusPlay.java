@@ -15,12 +15,16 @@
  */
 package reactor.io.net.tcp;
 
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
+import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
+import reactor.core.processor.BaseProcessor;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
@@ -28,6 +32,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.nexus.Nexus;
+import reactor.rx.Streams;
 
 /**
  * @author Stephane Maldini
@@ -43,11 +48,31 @@ public class NexusPlay {
 
 		//ReactiveStateUtils.scan(o).toString()
 
-		nexus.monitor(nexus);
+		//SAMPLE streams to monitor
+		//nexus.monitor(nexus);
+
+		BaseProcessor<Integer, Integer> p = Processors.emitter();
+		Random r = new Random();
+		Streams.wrap(p)
+		        .dispatchOn(Processors.asyncGroup())
+		        //.log()
+				.multiConsume(4, d -> {
+					try{
+						Thread.sleep(r.nextInt(80) + 1);
+					}
+					catch (Exception e){
+
+					}
+				});
 
 
-		//Don't quit
-		CountDownLatch latch = new CountDownLatch(1);
-		latch.await();
+		ReactiveSession<Integer> s = p.startSession();
+		nexus.monitor(s);
+		int i = 0;
+		for(;;){
+			s.emit(i);
+			LockSupport.parkNanos(30_000_000);
+		}
+
 	}
 }
