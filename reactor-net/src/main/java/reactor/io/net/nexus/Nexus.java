@@ -31,10 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.Processors;
 import reactor.Publishers;
+import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.error.ReactorFatalException;
 import reactor.core.processor.BaseProcessor;
+import reactor.core.processor.EmitterProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.ReactiveState;
@@ -302,6 +304,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		Publisher<Event> eventStream = Publishers.map(this.eventStream.dispatchOn(group), lastStateMerge);
 
+
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
 			p = Publishers.concat(NettyHttpServer.upgradeToWebsocket(channel),
@@ -310,6 +313,25 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		else {
 			p = channel.writeBufferWith(federateAndEncode(channel, eventStream));
 		}
+
+		channel.input().subscribe(Subscribers.consumer(new Consumer<Buffer>() {
+			@Override
+			public void accept(Buffer buffer) {
+				String command = buffer.asString();
+				int indexArg = command.indexOf("\n");
+				if(indexArg > 0) {
+					String action = command.substring(0, indexArg);
+					String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
+					log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
+//					if(action.equals("pause") && !arg.isEmpty()){
+//						((EmitterProcessor)Nexus.this.eventStream).pause();
+//					}
+//					else if(action.equals("resume") && !arg.isEmpty()){
+//						((EmitterProcessor)Nexus.this.eventStream).resume();
+//					}
+				}
+			}
+		}));
 
 		return p;
 	}
