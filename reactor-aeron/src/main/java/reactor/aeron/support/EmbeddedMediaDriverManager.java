@@ -18,7 +18,7 @@ package reactor.aeron.support;
 import reactor.Timers;
 import reactor.core.support.BackpressureUtils;
 import reactor.fn.Consumer;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 import uk.co.real_logic.agrona.CloseHelper;

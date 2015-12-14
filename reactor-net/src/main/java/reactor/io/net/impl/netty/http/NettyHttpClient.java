@@ -38,7 +38,7 @@ import reactor.Subscribers;
 import reactor.core.support.Assert;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;

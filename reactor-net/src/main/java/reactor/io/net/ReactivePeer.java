@@ -24,7 +24,7 @@ import reactor.Timers;
 import reactor.core.support.Assert;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 
 /**
  * Abstract base class that implements common functionality shared by clients and servers.

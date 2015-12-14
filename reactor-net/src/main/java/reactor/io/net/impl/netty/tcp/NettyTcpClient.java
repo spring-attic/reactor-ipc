@@ -50,7 +50,7 @@ import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;

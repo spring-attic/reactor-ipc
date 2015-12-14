@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 import reactor.Publishers;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;

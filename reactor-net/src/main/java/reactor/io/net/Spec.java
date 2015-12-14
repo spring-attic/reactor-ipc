@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 
 import reactor.core.support.Assert;
 import reactor.fn.Supplier;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
@@ -116,7 +116,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.fn.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}
@@ -198,7 +198,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.fn.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}
@@ -513,7 +513,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.fn.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}
@@ -668,7 +668,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.fn.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}

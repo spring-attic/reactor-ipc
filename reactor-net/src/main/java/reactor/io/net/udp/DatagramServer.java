@@ -23,7 +23,7 @@ import java.net.NetworkInterface;
 import org.reactivestreams.Publisher;
 import reactor.Processors;
 import reactor.fn.Function;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;

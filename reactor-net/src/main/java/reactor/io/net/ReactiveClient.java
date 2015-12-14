@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
 import reactor.Publishers;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple2;
 
 /**

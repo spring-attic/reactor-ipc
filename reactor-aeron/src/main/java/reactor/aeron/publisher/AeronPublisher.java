@@ -30,7 +30,7 @@ import reactor.core.support.ReactiveState;
 import reactor.core.support.SingleUseExecutor;
 import reactor.core.support.UUIDUtils;
 import reactor.fn.Consumer;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 

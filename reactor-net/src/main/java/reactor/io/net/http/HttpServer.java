@@ -29,7 +29,7 @@ import reactor.Publishers;
 import reactor.core.error.CancelException;
 import reactor.fn.Function;
 import reactor.fn.Predicate;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannelHandler;

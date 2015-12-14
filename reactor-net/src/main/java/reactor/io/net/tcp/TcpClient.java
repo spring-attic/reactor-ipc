@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 import org.reactivestreams.Publisher;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
-import reactor.fn.timer.Timer;
+import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
