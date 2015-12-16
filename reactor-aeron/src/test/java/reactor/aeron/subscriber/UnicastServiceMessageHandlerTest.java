@@ -49,11 +49,8 @@ public class UnicastServiceMessageHandlerTest {
 
 		Context context = new Context();
 
-		handler = new UnicastServiceMessageHandler(processor, aeronInfra, context, new Consumer<Void>() {
-			@Override
-			public void accept(Void aVoid) {
+		handler = new UnicastServiceMessageHandler(processor, aeronInfra, context, (Consumer<Void>) aVoid -> {
 
-			}
 		}) {
 			@Override
 			protected SignalSender createSignalSender() {

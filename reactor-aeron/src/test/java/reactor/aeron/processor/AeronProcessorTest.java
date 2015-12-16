@@ -23,6 +23,7 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
+import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
@@ -70,7 +71,7 @@ public class AeronProcessorTest {
 				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
 	}
 
-	protected DataTestSubscriber createTestSubscriber() {
+	protected DataTestSubscriber<String>createTestSubscriber() {
 		return DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 	}
 
@@ -93,15 +94,15 @@ public class AeronProcessorTest {
 					Buffer.wrap("Live"))
 					.subscribe(processor);
 
-			DataTestSubscriber subscriber = createTestSubscriber();
-			processor.subscribe(subscriber);
+			DataTestSubscriber<String>subscriber = createTestSubscriber();
+			IO.bufferToString(processor).subscribe(subscriber);
 			subscriber.requestUnboundedWithTimeout();
 
 			subscriber.assertNextSignals("Live");
 			subscriber.assertCompleteReceived();
 
 			TestSubscriber.waitFor(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
-					() -> processor.isTerminated());
+					processor::isTerminated);
 		} finally {
 			aeron.close();
 
@@ -123,8 +124,8 @@ public class AeronProcessorTest {
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
-		DataTestSubscriber subscriber = createTestSubscriber();
-		processor.subscribe(subscriber);
+		DataTestSubscriber<String>subscriber = createTestSubscriber();
+		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		subscriber.assertNextSignals("Live");
@@ -139,8 +140,8 @@ public class AeronProcessorTest {
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
-		DataTestSubscriber subscriber = createTestSubscriber();
-		processor.subscribe(subscriber);
+		DataTestSubscriber<String>subscriber = createTestSubscriber();
+		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		subscriber.assertNextSignals("Live");

@@ -15,20 +15,19 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
 import reactor.aeron.support.Stepper;
 import reactor.aeron.support.TestAeronInfra;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.io.buffer.Buffer;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -52,21 +51,16 @@ public class MulticastServiceMessageHandlerTest {
 
 	@Test
 	public void test() throws InterruptedException {
-		Publisher<Buffer> publisher = new Publisher<Buffer>() {
+		Publisher<Buffer> publisher = s -> s.onSubscribe(new Subscription() {
 			@Override
-			public void subscribe(Subscriber<? super Buffer> s) {
-				s.onSubscribe(new Subscription() {
-					@Override
-					public void request(long n) {
-						System.out.println("Requested: " + n);
-					}
-
-					@Override
-					public void cancel() {
-					}
-				});
+			public void request(long n) {
+				System.out.println("Requested: " + n);
 			}
-		};
+
+			@Override
+			public void cancel() {
+			}
+		});
 		RingBufferProcessor<Buffer> processor = RingBufferProcessor.create();
 		publisher.subscribe(processor);
 
@@ -74,58 +68,52 @@ public class MulticastServiceMessageHandlerTest {
 				processor, new TestAeronInfra(), new Context(), v -> {});
 
 		final Stepper first = new Stepper();
-		Runnable flow1 = new Runnable() {
-			@Override
-			public void run() {
-				try {
+		Runnable flow1 = () -> {
+			try {
 
-					first.reached(0);
+				first.reached(0);
 
-					requestHandler.incrementCursor();
+				requestHandler.incrementCursor();
 
-					first.reached(1);
+				first.reached(1);
 
-					requestHandler.incrementCursor();
+				requestHandler.incrementCursor();
 
-					first.reached(2);
+				first.reached(2);
 
-					requestHandler.incrementCursor();
+				requestHandler.incrementCursor();
 
-					first.reached(3);
+				first.reached(3);
 
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 		};
 
 		final Stepper second = new Stepper();
-		Runnable flow2 = new Runnable() {
-			@Override
-			public void run() {
-				try {
+		Runnable flow2 = () -> {
+			try {
 
-					second.reached(0);
+				second.reached(0);
 
-					requestHandler.handleMore("session-1", 1);
+				requestHandler.handleMore("session-1", 1);
 
-					second.reached(1);
+				second.reached(1);
 
-					requestHandler.handleMore("session-1", 1);
+				requestHandler.handleMore("session-1", 1);
 
-					second.reached(2);
+				second.reached(2);
 
-					requestHandler.handleMore("session-2", 1);
+				requestHandler.handleMore("session-2", 1);
 
-					second.reached(3);
+				second.reached(3);
 
-					requestHandler.handleMore("session-1", 1);
+				requestHandler.handleMore("session-1", 1);
 
-					second.reached(4);
+				second.reached(4);
 
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 		};
 

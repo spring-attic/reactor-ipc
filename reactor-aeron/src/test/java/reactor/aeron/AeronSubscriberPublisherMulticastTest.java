@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package reactor.aeron;
 
 import org.junit.Test;
@@ -21,6 +22,7 @@ import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
+import reactor.io.IO;
 import reactor.io.net.tcp.support.SocketUtils;
 
 /**
@@ -32,23 +34,22 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 
 	@Override
 	protected Context createContext() {
-		return new Context()
-				.name("test")
-				.senderChannel(CHANNEL)
-				.receiverChannel(CHANNEL);
+		return new Context().name("test")
+		                    .senderChannel(CHANNEL)
+		                    .receiverChannel(CHANNEL);
 	}
 
 	@Test
 	public void testSubscriptionCancellationDoesNotShutdownPublisherWhenNoAutocancel() throws InterruptedException {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext());
-		Publishers.from(createBuffers(256)).subscribe(subscriber);
+		Publishers.from(createBuffers(256))
+		          .subscribe(subscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext().autoCancel(false));
-		TestSubscriber client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		publisher.subscribe(client);
+		TestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		IO.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
-
 
 		client.assertNumNextSignalsReceived(3);
 
@@ -56,14 +57,13 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 
 		Thread.sleep(3000);
 
-
-		DataTestSubscriber client2 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		publisher.subscribe(client2);
+		DataTestSubscriber<String> client2 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		IO.bufferToString(publisher)
+		  .subscribe(client2);
 
 		Thread.sleep(1000);
 
 		client2.request(6);
-
 
 		client2.assertNumNextSignalsReceived(6);
 

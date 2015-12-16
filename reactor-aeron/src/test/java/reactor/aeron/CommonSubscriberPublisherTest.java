@@ -79,7 +79,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 		AeronPublisher publisher = AeronPublisher.create(createContext());
 
-		DataTestSubscriber clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		DataTestSubscriber<String>clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		publisher.subscribe(clientSubscriber);
 
 
@@ -95,7 +95,7 @@ public abstract class CommonSubscriberPublisherTest {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext());
 		AeronPublisher publisher = AeronPublisher.create(createContext());
 
-		DataTestSubscriber clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		DataTestSubscriber<String>clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		publisher.subscribe(clientSubscriber);
 
 		clientSubscriber.requestUnboundedWithTimeout();
