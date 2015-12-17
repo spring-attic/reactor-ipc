@@ -15,7 +15,12 @@
  */
 package reactor.aeron;
 
-import org.slf4j.Logger;
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import reactor.aeron.processor.AeronProcessor;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
@@ -27,16 +32,10 @@ import reactor.aeron.support.LoggingErrorConsumer;
 import reactor.aeron.support.Serializer;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.support.Assert;
+import reactor.core.support.Logger;
 import reactor.fn.Consumer;
 import uk.co.real_logic.aeron.Aeron;
-import uk.co.real_logic.aeron.driver.Configuration;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
-
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A class containing parameter values required to create instances of

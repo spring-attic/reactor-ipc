@@ -27,8 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.Processors;
 import reactor.Publishers;
 import reactor.Subscribers;
@@ -65,7 +64,7 @@ import static reactor.core.support.ReactiveStateUtils.property;
 public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>
 		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, ReactiveState.FeedbackLoop {
 
-	private static final Logger log = LoggerFactory.getLogger(Nexus.class);
+	private static final Logger log = Logger.getLogger(Nexus.class);
 
 	private static final String API_STREAM_URL = "/nexus/stream";
 	private final HttpServer<Buffer, Buffer> server;

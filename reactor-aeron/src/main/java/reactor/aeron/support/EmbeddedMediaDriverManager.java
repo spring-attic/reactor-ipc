@@ -15,8 +15,8 @@
  */
 package reactor.aeron.support;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.core.support.BackpressureUtils;
 import reactor.fn.Consumer;
@@ -37,7 +37,7 @@ import java.util.function.BiConsumer;
  */
 public class EmbeddedMediaDriverManager {
 
-	private final Logger logger = LoggerFactory.getLogger(EmbeddedMediaDriverManager.class);
+	private final Logger logger = Logger.getLogger(EmbeddedMediaDriverManager.class);
 
 	private static final EmbeddedMediaDriverManager INSTANCE = new EmbeddedMediaDriverManager();
 

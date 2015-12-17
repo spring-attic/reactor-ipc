@@ -31,8 +31,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
 import reactor.core.error.ReactorFatalException;
@@ -59,7 +58,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		implements ReactiveState.Named, ReactiveState.FeedbackLoop, ReactiveState.Downstream, ReactiveState
 		.ActiveUpstream , ReactiveState.Inner{
 
-	protected static final Logger log = LoggerFactory.getLogger(NettyChannelHandlerBridge.class);
+	protected static final Logger log = Logger.getLogger(NettyChannelHandlerBridge.class);
 
 	protected final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler;
 	protected final NettyChannel                                                            reactorNettyChannel;

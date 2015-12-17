@@ -43,8 +43,7 @@ import io.netty.util.NetUtil;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.core.error.Exceptions;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.SignalType;
@@ -67,7 +66,7 @@ import reactor.io.net.udp.DatagramServer;
  */
 public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 
-	private final static Logger log = LoggerFactory.getLogger(NettyDatagramServer.class);
+	private final static Logger log = Logger.getLogger(NettyDatagramServer.class);
 
 	private final    NettyServerSocketOptions nettyOptions;
 	private final    Bootstrap                bootstrap;

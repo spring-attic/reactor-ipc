@@ -15,8 +15,8 @@
  */
 package reactor.aeron.subscriber;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class UnicastAsyncSignalSender implements Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger(UnicastAsyncSignalSender.class);
+	private static final Logger logger = Logger.getLogger(UnicastAsyncSignalSender.class);
 
 	private final Context context;
 

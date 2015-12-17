@@ -15,8 +15,8 @@
  */
 package reactor.aeron.subscriber;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.fn.Consumer;
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class HeartbeatWatchdog {
 
-	private static final Logger logger = LoggerFactory.getLogger(HeartbeatWatchdog.class);
+	private static final Logger logger = Logger.getLogger(HeartbeatWatchdog.class);
 
 	private final ServiceMessageHandler serviceMessageHandler;
 

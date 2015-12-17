@@ -1,7 +1,7 @@
 package reactor.aeron.support;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.fn.Consumer;
 
 
@@ -10,7 +10,7 @@ import reactor.fn.Consumer;
  */
 public class LoggingErrorConsumer implements Consumer<Throwable> {
 
-	private static final Logger logger = LoggerFactory.getLogger(LoggingErrorConsumer.class);
+	private static final Logger logger = Logger.getLogger(LoggingErrorConsumer.class);
 
 	@Override
 	public void accept(Throwable t) {

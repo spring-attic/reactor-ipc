@@ -16,8 +16,7 @@
 
 package reactor.io.codec;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
@@ -35,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class SerializationCodec<E, IN, OUT> extends BufferCodec<IN, OUT> {
 
-	private final Logger                 log   = LoggerFactory.getLogger(getClass());
+	private final Logger                 log   = Logger.getLogger(getClass());
 	private final Map<String, Class<IN>> types = new ConcurrentHashMap<String, Class<IN>>();
 	private final E                      engine;
 	private final boolean                lengthFieldFraming;

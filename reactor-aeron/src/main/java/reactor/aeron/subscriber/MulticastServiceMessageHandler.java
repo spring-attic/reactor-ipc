@@ -17,8 +17,8 @@ package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.Serializer;
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 
-	private final static Logger logger = LoggerFactory.getLogger(MulticastServiceMessageHandler.class);
+	private final static Logger logger = Logger.getLogger(MulticastServiceMessageHandler.class);
 
 	private final Context context;
 

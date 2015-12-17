@@ -31,8 +31,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.Publishers;
 import reactor.Subscribers;
 import reactor.core.support.Assert;
@@ -59,7 +58,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpClient;
  */
 public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements ReactiveState.FeedbackLoop {
 
-	private final static Logger log = LoggerFactory.getLogger(NettyHttpClient.class);
+	private final static Logger log = Logger.getLogger(NettyHttpClient.class);
 
 	private final NettyTcpClient client;
 

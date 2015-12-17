@@ -26,8 +26,7 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.Publishers;
 import reactor.core.error.Exceptions;
 import reactor.core.support.ReactiveState;
@@ -49,7 +48,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpServer;
  */
 public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements ReactiveState.FeedbackLoop{
 
-	private static final Logger log = LoggerFactory.getLogger(NettyHttpServer.class);
+	private static final Logger log = Logger.getLogger(NettyHttpServer.class);
 
 	protected NettyTcpServer server;
 

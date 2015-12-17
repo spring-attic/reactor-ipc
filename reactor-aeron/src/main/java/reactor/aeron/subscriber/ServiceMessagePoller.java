@@ -15,7 +15,7 @@
  */
 package reactor.aeron.subscriber;
 
-import org.slf4j.Logger;
+import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;

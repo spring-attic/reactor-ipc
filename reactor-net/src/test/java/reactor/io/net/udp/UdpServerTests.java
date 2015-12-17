@@ -25,8 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.Processors;
 import reactor.Timers;
 import reactor.rx.net.NetStreams;
@@ -45,7 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class UdpServerTests {
 
-	final Logger log = LoggerFactory.getLogger(getClass());
+	final Logger log = Logger.getLogger(getClass());
 
 	ExecutorService threadPool;
 

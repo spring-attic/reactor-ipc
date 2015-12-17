@@ -15,7 +15,7 @@
  */
 package reactor.aeron.support;
 
-import org.slf4j.Logger;
+import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.Publication;

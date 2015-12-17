@@ -18,8 +18,7 @@ package reactor.aeron.processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
@@ -155,7 +154,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 
-	private static final Logger logger = LoggerFactory.getLogger(AeronProcessor.class);
+	private static final Logger logger = Logger.getLogger(AeronProcessor.class);
 
 	/**
 	 * Reactive Publisher part of the processor - signals sender

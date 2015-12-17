@@ -37,8 +37,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.core.processor.RingBufferWorkProcessor;
 import reactor.fn.Consumer;
@@ -73,7 +72,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class TcpServerTests {
 
-	final Logger log = LoggerFactory.getLogger(TcpServerTests.class);
+	final Logger log = Logger.getLogger(TcpServerTests.class);
 	ExecutorService threadPool;
 	final int msgs    = 10;
 	final int threads = 4;

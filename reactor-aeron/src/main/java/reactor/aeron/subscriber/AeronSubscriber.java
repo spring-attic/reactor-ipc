@@ -16,8 +16,8 @@
 package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
@@ -101,13 +101,13 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 	}
 
 	protected Logger createLogger(Logger parentLogger) {
-		return parentLogger != LoggerFactory.getLogger(this.getClass()) ?
-				LoggerFactory.getLogger(parentLogger.getName() + ".subscriber") : parentLogger;
+		return parentLogger != Logger.getLogger(this.getClass()) ?
+				Logger.getLogger(parentLogger.getName() + ".subscriber") : parentLogger;
 	}
 
 	public AeronSubscriber(Context context, boolean multiPublishers) {
 		this(context,
-				LoggerFactory.getLogger(AeronSubscriber.class),
+				Logger.getLogger(AeronSubscriber.class),
 				multiPublishers,
 				null);
 	}

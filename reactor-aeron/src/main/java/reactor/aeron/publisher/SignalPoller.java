@@ -19,8 +19,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
@@ -47,7 +47,7 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
                                      ReactiveState.DownstreamDemand, ReactiveState.ActiveUpstream,
                                      ReactiveState.ActiveDownstream, ReactiveState.LinkedDownstreams, ReactiveState.Inner {
 
-	private static final Logger logger = LoggerFactory.getLogger(SignalPoller.class);
+	private static final Logger logger = Logger.getLogger(SignalPoller.class);
 
 	private final AeronInfra aeronInfra;
 

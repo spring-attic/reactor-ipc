@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.SignalType;
@@ -37,7 +37,7 @@ import reactor.io.buffer.Buffer;
  */
 public class UnicastServiceMessageHandler implements ServiceMessageHandler, ReactiveState.LinkedDownstreams {
 
-	private final static Logger logger = LoggerFactory.getLogger(UnicastServiceMessageHandler.class);
+	private final static Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
 
 	private final BaseProcessor<Buffer, Buffer> processor;
 

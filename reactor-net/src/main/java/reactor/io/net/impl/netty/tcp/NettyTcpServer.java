@@ -38,8 +38,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
 import reactor.Publishers;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
@@ -64,7 +63,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  */
 public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements ReactiveState.LinkedDownstreams {
 
-	private final static Logger log = LoggerFactory.getLogger(NettyTcpServer.class);
+	private final static Logger log = Logger.getLogger(NettyTcpServer.class);
 
 	private final NettyServerSocketOptions nettyOptions;
 	private final ServerBootstrap          bootstrap;

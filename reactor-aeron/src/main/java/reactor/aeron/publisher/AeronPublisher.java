@@ -17,8 +17,8 @@ package reactor.aeron.publisher;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.core.support.Logger;
+import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
@@ -94,8 +94,8 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 	}
 
 	protected Logger createLogger(Logger parentLogger) {
-		return parentLogger != LoggerFactory.getLogger(this.getClass()) ?
-				LoggerFactory.getLogger(parentLogger.getName() + ".publisher") : parentLogger;
+		return parentLogger != Logger.getLogger(this.getClass()) ?
+				Logger.getLogger(parentLogger.getName() + ".publisher") : parentLogger;
 	}
 
 	protected String getSessionId(Context context) {
@@ -106,7 +106,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 
 	public AeronPublisher(Context context) {
 		this(context,
-				LoggerFactory.getLogger(AeronPublisher.class),
+				Logger.getLogger(AeronPublisher.class),
 				new Consumer<Void>() {
 					@Override
 					public void accept(Void aVoid) {
