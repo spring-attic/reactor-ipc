@@ -204,6 +204,9 @@ project('reactor-net') {
 		//Codec Preprocessor
 		optional project(':reactor-codec')
 
+	  	//Stream support
+		optional "io.projectreactor:reactor-stream:$reactorVersion"
+
 		//Default reactor-net impl
 		optional "io.netty:netty-all:$nettyVersion"
 
