@@ -73,8 +73,8 @@ import reactor.rx.net.udp.ReactorDatagramServer;
 public class NetStreams {
 
 	static {
-		if (!DependencyUtils.hasReactorNet()) {
-			throw new IllegalStateException("io.projectreactor:reactor-net:" + DependencyUtils.reactorVersion() +
+		if (!DependencyUtils.hasReactorStream()) {
+			throw new IllegalStateException("io.projectreactor:reactor-stream:" + DependencyUtils.reactorVersion() +
 					" dependency is missing from the classpath.");
 		}
 
