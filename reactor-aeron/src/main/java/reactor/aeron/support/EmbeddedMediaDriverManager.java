@@ -15,6 +15,8 @@
  */
 package reactor.aeron.support;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.Timers;
 import reactor.core.support.BackpressureUtils;
 import reactor.fn.Consumer;
@@ -22,7 +24,11 @@ import reactor.core.timer.Timer;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 import uk.co.real_logic.agrona.CloseHelper;
+import uk.co.real_logic.agrona.IoUtil;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
@@ -31,11 +37,30 @@ import java.util.function.BiConsumer;
  */
 public class EmbeddedMediaDriverManager {
 
+	private final Logger logger = LoggerFactory.getLogger(EmbeddedMediaDriverManager.class);
+
 	private static final EmbeddedMediaDriverManager INSTANCE = new EmbeddedMediaDriverManager();
 
-	public static final int RETRY_SHUTDOWN_MILLIS = 250;
+	private final List<String> aeronDirNames = new ArrayList<>();
 
-	public static final long DRIVER_SHUTDOWN_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(10);
+	private Thread shutdownHook;
+
+	enum State {
+
+		NOT_STARTED,
+
+		STARTED,
+
+		SHUTTING_DOWN
+	}
+
+	public static final long DEFAULT_RETRY_SHUTDOWN_MILLIS = 250;
+
+	public static final long DEFAULT_SHUTDOWN_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(10);
+
+	private long retryShutdownMillis = DEFAULT_RETRY_SHUTDOWN_MILLIS;
+
+	private long shutdownTimeoutNs = DEFAULT_SHUTDOWN_TIMEOUT_NS;
 
 	private MediaDriver driver;
 
@@ -47,7 +72,9 @@ public class EmbeddedMediaDriverManager {
 
 	private MediaDriver.Context driverContext;
 
-	private boolean terminated = true;
+	private State state = State.NOT_STARTED;
+
+	private boolean shouldShutdownWhenNotUsed = true;
 
 	private class RetryShutdownTask implements Consumer<Long> {
 
@@ -62,10 +89,10 @@ public class EmbeddedMediaDriverManager {
 
 		@Override
 		public void accept(Long aLong) {
-			if (canShutdownMediaDriver() || System.nanoTime() - startNs > DRIVER_SHUTDOWN_TIMEOUT_NS) {
-				forceShutdown();
+			if (canShutdownMediaDriver() || System.nanoTime() - startNs > shutdownTimeoutNs) {
+				doShutdown();
 			} else {
-				timer.submit(this, RETRY_SHUTDOWN_MILLIS, TimeUnit.MILLISECONDS);
+				timer.submit(this, retryShutdownMillis, TimeUnit.MILLISECONDS);
 			}
 		}
 
@@ -95,21 +122,30 @@ public class EmbeddedMediaDriverManager {
 	}
 
 	public synchronized void launchDriver() {
+		if (state == State.SHUTTING_DOWN) {
+			throw new IllegalStateException("Manager is being shutdown");
+		}
+
 		if (driver == null) {
 			driver = MediaDriver.launchEmbedded(getDriverContext());
 			Aeron.Context ctx = new Aeron.Context();
-			ctx.aeronDirectoryName(driver.aeronDirectoryName());
+			String aeronDirName = driver.aeronDirectoryName();
+			ctx.aeronDirectoryName(aeronDirName);
 			aeron = Aeron.connect(ctx);
 
-			aeronCounters = new AeronCounters(driver.aeronDirectoryName());
-			terminated = false;
+			aeronCounters = new AeronCounters(aeronDirName);
+			state = State.STARTED;
+
+			aeronDirNames.add(aeronDirName);
+
+			logger.debug("Media driver started");
 		}
 		counter++;
 	}
 
 	public synchronized void shutdownDriver() {
 		counter = BackpressureUtils.subOrZero(counter, 1);
-		if (counter == 0) {
+		if (counter == 0 && shouldShutdownWhenNotUsed) {
 			shutdown();
 		}
 	}
@@ -123,32 +159,77 @@ public class EmbeddedMediaDriverManager {
 	}
 
 	public synchronized void shutdown() {
+		if (state != State.STARTED) {
+			throw new IllegalStateException("Cannot shutdown manager in state: " + state);
+		}
+		state = State.SHUTTING_DOWN;
+
 		counter = 0;
 
 		if (driver != null) {
 			aeron.close();
 
 			Timer timer = Timers.global();
-			timer.submit(new RetryShutdownTask(timer), RETRY_SHUTDOWN_MILLIS, TimeUnit.MILLISECONDS);
+			timer.submit(new RetryShutdownTask(timer), retryShutdownMillis, TimeUnit.MILLISECONDS);
 		}
 	}
 
 	/**
 	 * Could result into JVM crashes when there is pending Aeron activity
 	 */
-	public synchronized void forceShutdown() {
+	private synchronized void doShutdown() {
 		aeron = null;
+		try {
+			aeronCounters.shutdown();
+		} catch (Throwable t) {
+			logger.error("Failed to shutdown Aeron counters", t);
+		}
 		aeronCounters = null;
-		driverContext = null;
 
 		CloseHelper.quietClose(driver);
+
+		driverContext = null;
 		driver = null;
 
-		terminated = true;
+		state = State.NOT_STARTED;
+
+		setupShutdownHook();
+
+		logger.debug("Media driver shutdown");
+	}
+
+	private void setupShutdownHook() {
+		if (shutdownHook != null) {
+			return;
+		}
+
+		shutdownHook = new Thread() {
+
+			@Override
+			public void run() {
+				synchronized (EmbeddedMediaDriverManager.this) {
+					for (String aeronDirName : aeronDirNames) {
+						try {
+							File dirFile = new File(aeronDirName);
+							IoUtil.delete(dirFile, false);
+						} catch (Exception e) {
+							logger.error("Failed to delete Aeron directory: {}", aeronDirName);
+						}
+					}
+				}
+			}
+
+		};
+
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 
 	public synchronized boolean isTerminated() {
-		return terminated;
+		return state == State.NOT_STARTED;
+	}
+
+	public void setShouldShutdownWhenNotUsed(boolean shouldShutdownWhenNotUsed) {
+		this.shouldShutdownWhenNotUsed = shouldShutdownWhenNotUsed;
 	}
 
 }

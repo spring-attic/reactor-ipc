@@ -70,21 +70,25 @@ public class UnicastServiceMessageHandlerTest {
 	public void testItWorks() throws InterruptedException {
 		Streams.just(1, 2, 3, 4, 5).map(i -> Buffer.wrap("" + i)).subscribe(processor);
 
-		handler.handleMore("session-1", 1);
+		String receiverChannel1 = "udp://192.168.1.1:12000";
+		String sessionId1 = receiverChannel1 + "/1/2";
+		handler.handleMore(sessionId1, 1);
 
-		String session1Key = "session-1/" + Context.DEFAULT_SIGNAL_STREAM_ID;
+		String session1Key = receiverChannel1 + "/1";
 		aeronInfra.assertNextSignalPublished(session1Key, 1);
 
 		TestAeronInfra.SignalData lastSignalData = aeronInfra.getSignalDataByKey(session1Key);
 		assertThat(lastSignalData.lastSignalType, is(SignalType.Next));
 		assertThat(lastSignalData.lastBuffer.asString(), is("1"));
 
-		handler.handleMore("session-2", 3);
+		String receiverChannel2 = "udp://192.168.1.1:12000";
+		String sessionId2 = receiverChannel2 + "/11/12";
+		handler.handleMore(sessionId2, 3);
 
-		String session2Key = "session-2/" + Context.DEFAULT_SIGNAL_STREAM_ID;
+		String session2Key = receiverChannel2 + "/11";
 		aeronInfra.assertNextSignalPublished(session2Key, 2);
 
-		handler.handleMore("session-1", 1);
+		handler.handleMore(sessionId1, 1);
 
 		aeronInfra.assertNextSignalPublished(session1Key, 1);
 		aeronInfra.assertNextSignalPublished(session2Key, 1);

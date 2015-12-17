@@ -16,6 +16,8 @@
 package reactor.aeron.subscriber;
 
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -52,6 +54,9 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 
 	private final HeartbeatWatchdog heartbeatWatchdog;
 
+	//TODO: Change to work with IPC as well
+	private final Pattern SESSION_ID_PATTERN = Pattern.compile("(udp://.+:\\d+)/(\\d+)/(\\d+)");
+
 	private class InnerSubscriber implements Subscriber<Buffer> {
 
 		private final SignalSender signalSender;
@@ -85,8 +90,6 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 			Buffer buffer = Buffer.wrap(context.exceptionSerializer().serialize(t));
 			signalSender.publishSignal(session.getSessionId(), session.getErrorPublication(), buffer,
 					SignalType.Error, true);
-
-			runTerminalTaskWhenAllSessionsTerminal();
 		}
 
 		@Override
@@ -96,14 +99,6 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 			Buffer buffer = new Buffer(0, true);
 			signalSender.publishSignal(session.getSessionId(), session.getPublication(), buffer,
 					SignalType.Complete, true);
-
-			runTerminalTaskWhenAllSessionsTerminal();
-		}
-
-		protected void runTerminalTaskWhenAllSessionsTerminal() {
-			if (!sessionTracker.hasNonTerminalSession()) {
-				onTerminalEventTask.accept(null);
-			}
 		}
 
 	}
@@ -147,7 +142,14 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 	public void handleCancel(String sessionId) {
 		UnicastSession session = sessionTracker.remove(sessionId);
 		if (session != null) {
+			boolean isTerminal = session.isTerminal();
+
 			cancel(session);
+
+			if (isTerminal && sessionTracker.getSessionCounter() == 0) {
+				onTerminalEventTask.accept(null);
+			}
+
 		} else {
 			//TODO: Handle
 		}
@@ -167,10 +169,11 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 	}
 
 	private void sendCompleteIntoNonTerminalSessions() {
-		if (sessionTracker.hasNonTerminalSession()) {
-			SignalSender signalSender = new SignalSender(aeronInfra, context.errorConsumer());
-			Buffer buffer = new Buffer(0, true);
-			for (UnicastSession session: sessionTracker.getSessions()) {
+		SignalSender signalSender = new SignalSender(aeronInfra, context.errorConsumer());
+		Buffer buffer = new Buffer(0, true);
+		for (UnicastSession session: sessionTracker.getSessions()) {
+			if (!session.isTerminal()) {
+				session.setTerminal();
 				signalSender.publishSignal(session.getSessionId(), session.getPublication(), buffer,
 						SignalType.Complete, true);
 			}
@@ -183,11 +186,23 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 		}
 	}
 
-	private UnicastSession createSession(String receiverChannel) {
+	private UnicastSession createSession(String sessionId) {
+		Matcher matcher = SESSION_ID_PATTERN.matcher(sessionId);
+		int streamId;
+		int errorStreamId;
+		String receiverChannel;
+		if (matcher.matches()) {
+			receiverChannel = matcher.group(1);
+			streamId = Integer.parseInt(matcher.group(2));
+			errorStreamId = Integer.parseInt(matcher.group(3));
+		} else {
+			throw new IllegalArgumentException("Malformed unicast sessionId: " + sessionId);
+		}
+
 		return new UnicastSession(
-				receiverChannel,
-				aeronInfra.addPublication(receiverChannel, context.streamId()),
-				aeronInfra.addPublication(receiverChannel, context.errorStreamId()));
+				sessionId,
+				aeronInfra.addPublication(receiverChannel, streamId),
+				aeronInfra.addPublication(receiverChannel, errorStreamId));
 	}
 
 	private void cancel(UnicastSession session) {

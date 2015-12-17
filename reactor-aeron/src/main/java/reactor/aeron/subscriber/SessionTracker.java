@@ -35,6 +35,4 @@ interface SessionTracker<T extends Session> {
 	 */
 	int getSessionCounter();
 
-	boolean hasNonTerminalSession();
-
 }
