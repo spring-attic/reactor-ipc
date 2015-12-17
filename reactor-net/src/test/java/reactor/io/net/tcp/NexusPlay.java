@@ -59,17 +59,21 @@ public class NexusPlay {
 		Random r = new Random();
 		Stream<Integer> dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
 
-		dispatched
-		        //.log()
-				.multiConsume(3, d -> {
-					try{
-						Thread.sleep(r.nextInt(80) + 1);
-					}
-					catch (Exception e){
+		//slow subscribers
+		for(int i = 0; i < 3; i++) {
+			dispatched
+					//.log()
+					.consume(d -> {
+						try {
+							Thread.sleep(r.nextInt(80) + 1);
+						}
+						catch (Exception e) {
 
-					}
-				});
+						}
+					});
+		}
 
+		//fast subscriber
 		dispatched.consume();
 
 
