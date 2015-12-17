@@ -27,6 +27,8 @@ import org.junit.Test;
 import reactor.io.buffer.Buffer;
 import reactor.rx.net.NetStreams;
 import reactor.rx.Streams;
+import reactor.rx.net.http.ReactorHttpHandler;
+import reactor.rx.net.http.ReactorHttpServer;
 
 /**
  * @author tjreactive

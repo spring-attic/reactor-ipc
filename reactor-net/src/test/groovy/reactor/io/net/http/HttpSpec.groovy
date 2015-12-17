@@ -19,6 +19,7 @@ import reactor.rx.net.NetStreams
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.Streams
+import reactor.rx.net.http.HttpChannelStream
 import rx.Observable
 import spock.lang.Specification
 

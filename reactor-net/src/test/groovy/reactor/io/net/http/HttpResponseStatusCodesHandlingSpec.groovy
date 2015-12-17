@@ -3,6 +3,7 @@ package reactor.io.net.http
 import reactor.rx.net.NetStreams
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.Streams
+import reactor.rx.net.http.HttpChannelStream
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit

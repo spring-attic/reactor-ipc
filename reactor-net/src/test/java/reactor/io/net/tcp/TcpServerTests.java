@@ -60,6 +60,8 @@ import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
 import reactor.rx.broadcast.Broadcaster;
+import reactor.rx.net.tcp.ReactorTcpClient;
+import reactor.rx.net.tcp.ReactorTcpServer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
