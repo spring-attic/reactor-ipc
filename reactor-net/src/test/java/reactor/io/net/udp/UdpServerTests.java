@@ -35,6 +35,7 @@ import reactor.io.net.impl.netty.udp.NettyDatagramServer;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
+import reactor.rx.net.udp.ReactorDatagramServer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
