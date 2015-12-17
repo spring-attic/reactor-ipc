@@ -16,6 +16,7 @@
 
 package reactor.rx.net;
 
+import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactivePeer;
 import reactor.rx.Promise;
 import reactor.rx.Promises;
