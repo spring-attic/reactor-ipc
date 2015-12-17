@@ -6,7 +6,7 @@
 .Head first with a Java 8 example of some Net work
 [source,java]
 ----
-import reactor.io.net.NetStreams;
+import reactor.rx.net.NetStreams;
 import reactor.io.net.tcp.TcpServer;
 import reactor.io.net.tcp.TcpClient;
 

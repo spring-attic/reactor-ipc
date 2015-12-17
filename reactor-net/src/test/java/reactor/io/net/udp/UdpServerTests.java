@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.Processors;
 import reactor.Timers;
-import reactor.io.net.NetStreams;
+import reactor.rx.net.NetStreams;
 import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.impl.netty.udp.NettyDatagramServer;
 import reactor.io.net.preprocessor.CodecPreprocessor;

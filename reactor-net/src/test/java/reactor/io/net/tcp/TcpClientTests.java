@@ -50,7 +50,7 @@ import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.NetStreams;
+import reactor.rx.net.NetStreams;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.impl.netty.NettyBuffer;

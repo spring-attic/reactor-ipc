@@ -15,7 +15,7 @@
  */
 package reactor.io.net.http
 
-import reactor.io.net.NetStreams
+import reactor.rx.net.NetStreams
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.Streams

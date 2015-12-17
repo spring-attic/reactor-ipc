@@ -25,7 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.NetStreams;
+import reactor.rx.net.NetStreams;
 import reactor.rx.Streams;
 
 /**

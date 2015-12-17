@@ -18,9 +18,9 @@ package reactor.io.net.tcp.netty
 
 import reactor.io.buffer.Buffer
 import reactor.io.codec.json.JsonCodec
-import reactor.io.net.NetStreams
+import reactor.rx.net.NetStreams
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.io.net.tcp.ReactorTcpServer
+import reactor.rx.net.tcp.ReactorTcpServer
 import reactor.io.net.tcp.support.SocketUtils
 import reactor.rx.Streams
 import spock.lang.Specification
