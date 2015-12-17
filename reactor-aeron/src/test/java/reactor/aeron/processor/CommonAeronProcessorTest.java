@@ -15,6 +15,9 @@
  */
 package reactor.aeron.processor;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,13 +31,10 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.processor.BaseProcessor;
 import reactor.core.subscriber.test.DataTestSubscriber;
-import reactor.fn.Consumer;
+import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
 import reactor.rx.Streams;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -68,15 +68,10 @@ public abstract class CommonAeronProcessorTest {
 		return new Context()
 				.autoCancel(false)
 				.publicationRetryMillis(1000)
-				.errorConsumer(new Consumer<Throwable>() {
-					@Override
-					public void accept(Throwable throwable) {
-						throwable.printStackTrace();
-					}
-				});
+				.errorConsumer(Throwable::printStackTrace);
 	}
 
-	protected DataTestSubscriber createTestSubscriber() {
+	protected DataTestSubscriber<String> createTestSubscriber() {
 		return DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 	}
 
@@ -84,8 +79,8 @@ public abstract class CommonAeronProcessorTest {
 	@Test
 	public void testNextSignalIsReceived() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
-		DataTestSubscriber subscriber = createTestSubscriber();
-		processor.subscribe(subscriber);
+		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(4);
 
 		Streams.just(Buffer.wrap("Live"),
@@ -113,8 +108,8 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Three"))
 				.subscribe(processor);
 
-		DataTestSubscriber subscriber = createTestSubscriber();
-		processor.subscribe(subscriber);
+		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		IO.bufferToString(processor).subscribe(subscriber);
 
 		subscriber.request(1);
 		subscriber.assertNextSignals("One");
@@ -152,11 +147,11 @@ public abstract class CommonAeronProcessorTest {
 		BaseProcessor<Buffer, Buffer> emitter = Processors.emitter();
 		processor.subscribe(emitter);
 
-		DataTestSubscriber subscriber1 = createTestSubscriber();
-		emitter.subscribe(subscriber1);
+		DataTestSubscriber<String> subscriber1 = createTestSubscriber();
+		IO.bufferToString(emitter).subscribe(subscriber1);
 
-		DataTestSubscriber subscriber2 = createTestSubscriber();
-		emitter.subscribe(subscriber2);
+		DataTestSubscriber<String> subscriber2 = createTestSubscriber();
+		IO.bufferToString(emitter).subscribe(subscriber2);
 
 		subscriber1.requestUnboundedWithTimeout();
 		subscriber2.requestUnboundedWithTimeout();
@@ -179,8 +174,8 @@ public abstract class CommonAeronProcessorTest {
 				Streams.fail(new RuntimeException("Something went wrong")))
 				.subscribe(processor);
 
-		DataTestSubscriber subscriber = createTestSubscriber();
-		processor.subscribe(subscriber);
+		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		subscriber.assertErrorReceived();
@@ -193,8 +188,8 @@ public abstract class CommonAeronProcessorTest {
 	public void testExceptionWithNullMessageIsHandled() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
 
-		DataTestSubscriber subscriber = createTestSubscriber();
-		processor.subscribe(subscriber);
+		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		Stream<Buffer> sourceStream = Streams.fail(new RuntimeException());
@@ -231,9 +226,9 @@ public abstract class CommonAeronProcessorTest {
 		};
 		dataPublisher.subscribe(processor);
 
-		DataTestSubscriber client = createTestSubscriber();
+		DataTestSubscriber<String> client = createTestSubscriber();
 
-		processor.subscribe(client);
+		IO.bufferToString(processor).subscribe(client);
 		client.requestUnboundedWithTimeout();
 
 		processor.onNext(Buffer.wrap("Hello"));

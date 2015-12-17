@@ -25,6 +25,7 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.TestAeronInfra;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.test.TestSubscriber;
+import reactor.io.IO;
 
 import java.util.concurrent.TimeUnit;
 
@@ -71,8 +72,8 @@ public class AeronPublisherTest {
 	public void testShutdown() {
 		AeronPublisher publisher = AeronPublisher.create(context);
 
-		TestSubscriber subscriber = TestSubscriber.createWithTimeoutSecs(1);
-		publisher.subscribe(subscriber);
+		TestSubscriber<String> subscriber = TestSubscriber.createWithTimeoutSecs(1);
+		IO.bufferToString(publisher).subscribe(subscriber);
 
 		publisher.shutdown();
 	}
@@ -86,8 +87,8 @@ public class AeronPublisherTest {
 
 		AeronPublisher publisher = AeronPublisher.create(context);
 
-		TestSubscriber subscriber = TestSubscriber.createWithTimeoutSecs(1);
-		publisher.subscribe(subscriber);
+		TestSubscriber<String> subscriber = TestSubscriber.createWithTimeoutSecs(1);
+		IO.bufferToString(publisher).subscribe(subscriber);
 
 		TestSubscriber.waitFor(2, "publisher didn't terminate due to heartbeat loss", publisher::isTerminated);
 	}

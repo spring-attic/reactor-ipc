@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package reactor.aeron;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
@@ -23,13 +28,10 @@ import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.test.DataTestSubscriber;
+import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 
@@ -53,9 +55,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 	@After
 	public void doTearDown() throws InterruptedException {
-		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
-
-		assertTrue(threadSnapshot.takeAndCompare(new String[] {"hash", "global"},
+		assertTrue(threadSnapshot.takeAndCompare(new String[]{"hash", "global"},
 				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
 	}
 
@@ -73,20 +73,15 @@ public abstract class CommonSubscriberPublisherTest {
 	public void testNextSignalIsReceivedByPublisher() throws InterruptedException {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext());
 
-		Streams.just(
-				Buffer.wrap("One"),
-				Buffer.wrap("Two"),
-				Buffer.wrap("Three"))
-				.subscribe(subscriber);
+		Streams.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
+		       .subscribe(subscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext());
 
-		DataTestSubscriber clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		publisher.subscribe(clientSubscriber);
-
+		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		IO.bufferToString(publisher).subscribe(clientSubscriber);
 
 		clientSubscriber.requestUnboundedWithTimeout();
-
 
 		clientSubscriber.assertNextSignals("One", "Two", "Three");
 		clientSubscriber.assertCompleteReceived();
@@ -97,15 +92,14 @@ public abstract class CommonSubscriberPublisherTest {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext());
 		AeronPublisher publisher = AeronPublisher.create(createContext());
 
-		DataTestSubscriber clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		publisher.subscribe(clientSubscriber);
+		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		IO.bufferToString(publisher).subscribe(clientSubscriber);
 
 		clientSubscriber.requestUnboundedWithTimeout();
 
 		Thread.sleep(1000);
 
-		Streams.<Buffer, Throwable>fail(new RuntimeException("Something went wrong"))
-				.subscribe(subscriber);
+		Streams.<Buffer, Throwable>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
 		clientSubscriber.assertErrorReceived();
 	}

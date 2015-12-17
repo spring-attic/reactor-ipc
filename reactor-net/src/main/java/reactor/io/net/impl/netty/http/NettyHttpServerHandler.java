@@ -157,7 +157,8 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
 		@Override
 		public void onError(Throwable t) {
-			if(t instanceof IOException && t.getMessage().contains("Broken pipe")){
+			if(t != null && t instanceof IOException && t.getMessage() != null && t.getMessage().contains("Broken " +
+					"pipe")){
 				if (log.isDebugEnabled()) {
 					log.debug("Connection closed remotely", t);
 				}

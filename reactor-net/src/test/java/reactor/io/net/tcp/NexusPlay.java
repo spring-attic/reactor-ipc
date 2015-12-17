@@ -18,6 +18,7 @@ package reactor.io.net.tcp;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 import reactor.Processors;
@@ -32,6 +33,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.nexus.Nexus;
+import reactor.rx.Stream;
 import reactor.rx.Streams;
 
 /**
@@ -51,12 +53,15 @@ public class NexusPlay {
 		//SAMPLE streams to monitor
 		//nexus.monitor(nexus);
 
+		AtomicInteger count = new AtomicInteger();
+
 		BaseProcessor<Integer, Integer> p = Processors.emitter();
 		Random r = new Random();
-		Streams.wrap(p)
-		        .dispatchOn(Processors.asyncGroup())
+		Stream<Integer> dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
+
+		dispatched
 		        //.log()
-				.multiConsume(4, d -> {
+				.multiConsume(3, d -> {
 					try{
 						Thread.sleep(r.nextInt(80) + 1);
 					}
@@ -64,6 +69,8 @@ public class NexusPlay {
 
 					}
 				});
+
+		dispatched.consume();
 
 
 		ReactiveSession<Integer> s = p.startSession();

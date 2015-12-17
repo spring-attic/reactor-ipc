@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.fn.Consumer;
-import reactor.fn.Pausable;
+import reactor.core.support.ReactiveState.Pausable;
 
 import java.util.ArrayList;
 import java.util.List;
