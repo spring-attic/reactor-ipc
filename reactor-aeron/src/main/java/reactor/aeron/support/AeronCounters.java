@@ -32,10 +32,12 @@ public class AeronCounters {
 
 	private final CountersManager countersManager;
 
+	private final MappedByteBuffer cncByteBuffer;
+
 	public AeronCounters(String dirName) {
 		final File cncFile = new File(dirName + "/cnc");
 
-		final MappedByteBuffer cncByteBuffer = IoUtil.mapExistingFile(cncFile, "cnc");
+		cncByteBuffer = IoUtil.mapExistingFile(cncFile, "cnc");
 		final DirectBuffer metaDataBuffer = CncFileDescriptor.createMetaDataBuffer(cncByteBuffer);
 		final int cncVersion = metaDataBuffer.getInt(CncFileDescriptor.cncVersionOffset(0));
 
@@ -46,6 +48,10 @@ public class AeronCounters {
 		AtomicBuffer labelsBuffer = CncFileDescriptor.createCounterLabelsBuffer(cncByteBuffer, metaDataBuffer);
 		AtomicBuffer valuesBuffer = CncFileDescriptor.createCounterValuesBuffer(cncByteBuffer, metaDataBuffer);
 		countersManager = new CountersManager(labelsBuffer, valuesBuffer);
+	}
+
+	public void shutdown() {
+		IoUtil.unmap(cncByteBuffer);
 	}
 
 	public void forEach(BiConsumer<Integer, String> consumer) {

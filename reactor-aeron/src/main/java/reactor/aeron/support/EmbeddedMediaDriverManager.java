@@ -27,6 +27,8 @@ import uk.co.real_logic.agrona.CloseHelper;
 import uk.co.real_logic.agrona.IoUtil;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
@@ -38,6 +40,10 @@ public class EmbeddedMediaDriverManager {
 	private final Logger logger = LoggerFactory.getLogger(EmbeddedMediaDriverManager.class);
 
 	private static final EmbeddedMediaDriverManager INSTANCE = new EmbeddedMediaDriverManager();
+
+	private final List<String> aeronDirNames = new ArrayList<>();
+
+	private Thread shutdownHook;
 
 	enum State {
 
@@ -84,7 +90,7 @@ public class EmbeddedMediaDriverManager {
 		@Override
 		public void accept(Long aLong) {
 			if (canShutdownMediaDriver() || System.nanoTime() - startNs > shutdownTimeoutNs) {
-				forceShutdown();
+				doShutdown();
 			} else {
 				timer.submit(this, retryShutdownMillis, TimeUnit.MILLISECONDS);
 			}
@@ -123,11 +129,14 @@ public class EmbeddedMediaDriverManager {
 		if (driver == null) {
 			driver = MediaDriver.launchEmbedded(getDriverContext());
 			Aeron.Context ctx = new Aeron.Context();
-			ctx.aeronDirectoryName(driver.aeronDirectoryName());
+			String aeronDirName = driver.aeronDirectoryName();
+			ctx.aeronDirectoryName(aeronDirName);
 			aeron = Aeron.connect(ctx);
 
-			aeronCounters = new AeronCounters(driver.aeronDirectoryName());
+			aeronCounters = new AeronCounters(aeronDirName);
 			state = State.STARTED;
+
+			aeronDirNames.add(aeronDirName);
 
 			logger.debug("Media driver started");
 		}
@@ -168,33 +177,51 @@ public class EmbeddedMediaDriverManager {
 	/**
 	 * Could result into JVM crashes when there is pending Aeron activity
 	 */
-	public synchronized void forceShutdown() {
+	private synchronized void doShutdown() {
 		aeron = null;
+		try {
+			aeronCounters.shutdown();
+		} catch (Throwable t) {
+			logger.error("Failed to shutdown Aeron counters", t);
+		}
 		aeronCounters = null;
 
 		CloseHelper.quietClose(driver);
-
-		final String aeronDirectoryName = driverContext.aeronDirectoryName();
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-
-			@Override
-			public void run() {
-				try {
-					File dirFile = new File(aeronDirectoryName);
-					IoUtil.delete(dirFile, false);
-				} catch (Exception e) {
-					logger.error("Failed to delete Aeron directory: {}", aeronDirectoryName);
-				}
-			}
-
-		});
 
 		driverContext = null;
 		driver = null;
 
 		state = State.NOT_STARTED;
 
+		setupShutdownHook();
+
 		logger.debug("Media driver shutdown");
+	}
+
+	private void setupShutdownHook() {
+		if (shutdownHook != null) {
+			return;
+		}
+
+		shutdownHook = new Thread() {
+
+			@Override
+			public void run() {
+				synchronized (EmbeddedMediaDriverManager.this) {
+					for (String aeronDirName : aeronDirNames) {
+						try {
+							File dirFile = new File(aeronDirName);
+							IoUtil.delete(dirFile, false);
+						} catch (Exception e) {
+							logger.error("Failed to delete Aeron directory: {}", aeronDirName);
+						}
+					}
+				}
+			}
+
+		};
+
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 
 	public synchronized boolean isTerminated() {

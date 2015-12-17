@@ -58,15 +58,5 @@ public class BasicSessionTracker<T extends Session> implements SessionTracker<T>
 		return sessionCounter;
 	}
 
-	@Override
-	public boolean hasNonTerminalSession() {
-		for (T session: sessionById.values()) {
-			if (!session.isTerminal()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 }
 

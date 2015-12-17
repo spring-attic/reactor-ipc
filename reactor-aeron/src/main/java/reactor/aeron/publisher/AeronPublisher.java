@@ -146,9 +146,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 			public void accept(Boolean isTerminalSignalReceived) {
 				heartbeatSender.shutdown();
 
-				if (signalPoller.isTerminated() && !isTerminalSignalReceived || AeronUtils.isMulticastCommunication(context)) {
-					terminateSession();
-				}
+				terminateSession();
 
 				signalPoller = null;
 				subscribed.set(false);
