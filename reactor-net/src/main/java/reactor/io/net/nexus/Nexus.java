@@ -25,9 +25,9 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.logging.Level;
 
 import org.reactivestreams.Publisher;
-import reactor.core.support.Logger;
 import reactor.Processors;
 import reactor.Publishers;
 import reactor.Subscribers;
@@ -35,16 +35,15 @@ import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.error.ReactorFatalException;
 import reactor.core.processor.BaseProcessor;
-import reactor.core.processor.EmitterProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.subscription.ReactiveSession;
+import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.core.support.internal.PlatformDependent;
+import reactor.core.timer.Timer;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
-import reactor.core.timer.Timer;
-import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -64,16 +63,17 @@ import static reactor.core.support.ReactiveStateUtils.property;
 public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>
 		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, ReactiveState.FeedbackLoop {
 
-	private static final Logger log = Logger.getLogger(Nexus.class);
-
+	private static final Logger log            = Logger.getLogger(Nexus.class);
 	private static final String API_STREAM_URL = "/nexus/stream";
-	private final HttpServer<Buffer, Buffer> server;
-	private final BaseProcessor<Event, Event> eventStream = Processors.emitter(false);
-	private final GraphEvent  lastState;
-	private final SystemEvent lastSystemState;
-	private final ProcessorGroup         group          = Processors.asyncGroup("nexus", 1024, 1, null, null, false);
-	private final Function<Event, Event> lastStateMerge = new LastGraphStateMap();
-	private final Timer                  timer          = Timers.create("nexus-poller");
+
+	private final HttpServer<Buffer, Buffer>        server;
+	private final GraphEvent                        lastState;
+	private final SystemEvent                       lastSystemState;
+	private final BaseProcessor<Event, Event>       eventStream;
+	private final ProcessorGroup                    group;
+	private final Function<Event, Event>            lastStateMerge;
+	private final Timer                             timer;
+	private final ReactiveSession<Publisher<Event>> cannons;
 
 	@SuppressWarnings("unused")
 	private volatile FederatedClient[] federatedClients;
@@ -81,10 +81,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED =
 			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
 
-	private final ReactiveSession<Publisher<Event>> cannons;
+	private long             systemStatsPeriod;
+	private boolean          systemStats;
+	private boolean          logExtensionEnabled;
+	private Logger.Extension logExtension;
 
-	private boolean systemStats;
-	private long    systemStatsPeriod;
+	private long websocketCapacity = 1L;
 
 	public static void main(String... args) throws Exception {
 		log.info("Deploying Nexus... ");
@@ -117,6 +119,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private Nexus(Timer defaultTimer, HttpServer<Buffer, Buffer> server) {
 		super(defaultTimer);
 		this.server = server;
+		this.eventStream = Processors.emitter(false);
+		this.lastStateMerge = new LastGraphStateMap();
+		this.timer = Timers.create("nexus-poller");
+		this.group = Processors.asyncGroup("nexus", 1024, 1, null, null, false);
 
 		BaseProcessor<Publisher<Event>, Publisher<Event>> cannons = Processors.emitter();
 
@@ -150,23 +156,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		start(null);
 	}
 
-	public final Nexus disableSystemStats() {
-		this.systemStats = false;
-		this.systemStatsPeriod = -1;
-		return this;
-	}
-
-	public final Nexus withSystemStats() {
-		return withSystemStats(true, 1);
-	}
-
-	public final Nexus withSystemStats(boolean enabled, long period) {
-		return withSystemStats(enabled, period, TimeUnit.SECONDS);
-	}
-
-	public final Nexus withSystemStats(boolean enabled, long period, TimeUnit unit) {
-		this.systemStatsPeriod = unit == null || period < 1L ? 1000 : TimeUnit.MILLISECONDS.convert(period, unit);
-		this.systemStats = enabled;
+	/**
+	 *
+	 * @return
+	 */
+	public final Nexus capacity(long capacity) {
+		this.websocketCapacity = capacity;
 		return this;
 	}
 
@@ -174,11 +169,49 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 *
 	 * @return
 	 */
-	public final ReactiveSession<Object> logCannon() {
-		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
-		                                                .dispatchOn();
-		this.cannons.submit(Publishers.map(p, new LogMapper()));
-		return p.startSession();
+	public final Nexus disableLogTail() {
+		this.logExtensionEnabled = false;
+		return this;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public final Nexus withLogTail() {
+		this.logExtensionEnabled = true;
+		return this;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public final Nexus withSystemStats() {
+		return withSystemStats(true, 1);
+	}
+
+	/**
+	 *
+	 * @param enabled
+	 * @param period
+	 * @return
+	 */
+	public final Nexus withSystemStats(boolean enabled, long period) {
+		return withSystemStats(enabled, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 *
+	 * @param enabled
+	 * @param period
+	 * @param unit
+	 * @return
+	 */
+	public final Nexus withSystemStats(boolean enabled, long period, TimeUnit unit) {
+		this.systemStatsPeriod = unit == null || period < 1L ? 1000 : TimeUnit.MILLISECONDS.convert(period, unit);
+		this.systemStats = enabled;
+		return this;
 	}
 
 	/**
@@ -303,7 +336,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		Publisher<Event> eventStream = Publishers.map(this.eventStream.dispatchOn(group), lastStateMerge);
 
-
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
 			p = Publishers.concat(NettyHttpServer.upgradeToWebsocket(channel),
@@ -313,24 +345,25 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			p = channel.writeBufferWith(federateAndEncode(channel, eventStream));
 		}
 
-		channel.input().subscribe(Subscribers.consumer(new Consumer<Buffer>() {
-			@Override
-			public void accept(Buffer buffer) {
-				String command = buffer.asString();
-				int indexArg = command.indexOf("\n");
-				if(indexArg > 0) {
-					String action = command.substring(0, indexArg);
-					String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
-					log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
+		channel.input()
+		       .subscribe(Subscribers.consumer(new Consumer<Buffer>() {
+			       @Override
+			       public void accept(Buffer buffer) {
+				       String command = buffer.asString();
+				       int indexArg = command.indexOf("\n");
+				       if (indexArg > 0) {
+					       String action = command.substring(0, indexArg);
+					       String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
+					       log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
 //					if(action.equals("pause") && !arg.isEmpty()){
 //						((EmitterProcessor)Nexus.this.eventStream).pause();
 //					}
 //					else if(action.equals("resume") && !arg.isEmpty()){
 //						((EmitterProcessor)Nexus.this.eventStream).resume();
 //					}
-				}
-			}
-		}));
+				       }
+			       }
+		       }));
 
 		return p;
 	}
@@ -345,6 +378,18 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	@Override
 	protected Publisher<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
+
+		if (logExtensionEnabled) {
+			BaseProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
+			cannons.submit(p);
+			logExtension = new NexusLoggerExtension(server.getListenAddress()
+			                                              .toString(), p.startSession());
+			if (!Logger.enableExtension(logExtension)) {
+				log.warn("Couldn't setup logger extension as one is already in place");
+				logExtension = null;
+			}
+		}
+
 		if (systemStats) {
 			BaseProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
 			this.cannons.submit(p);
@@ -363,12 +408,19 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				}
 			}, systemStatsPeriod, TimeUnit.MILLISECONDS);
 		}
+
 		return server.start();
 	}
 
 	@Override
 	protected Publisher<Void> doShutdown() {
 		timer.cancel();
+		this.cannons.finish();
+		this.eventStream.onComplete();
+		if (logExtension != null) {
+			Logger.disableExtension(logExtension);
+			logExtension = null;
+		}
 		return server.shutdown();
 	}
 
@@ -385,14 +437,14 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private Publisher<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Publisher<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
-			return Publishers.capacity(Publishers.map(stream, BUFFER_STRING_FUNCTION), 1L);
+			return Publishers.capacity(Publishers.map(stream, BUFFER_STRING_FUNCTION), websocketCapacity);
 		}
 
 		Publisher<Buffer> mergedUpstreams =
 				Publishers.merge(Publishers.map(Publishers.from(Arrays.asList(clients)), new FederatedMerger(c)));
 
 		return Publishers.capacity(Publishers.merge(Publishers.map(stream, BUFFER_STRING_FUNCTION), mergedUpstreams),
-				1L);
+				websocketCapacity);
 	}
 
 	private static final Function<Event, Buffer> BUFFER_STRING_FUNCTION = new StringToBuffer();
@@ -461,21 +513,39 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final static class LogEvent extends Event {
 
 		private final String message;
-		private final String level;
+		private final String category;
+		private final String  origin;
+		private final Level  level;
+		private final long   threadId;
 		private final long timestamp = System.currentTimeMillis();
 
-		public LogEvent(String name, String message, String level) {
+		public LogEvent(String name, String category, Level level, String message, Object... args) {
 			super(name);
+			this.threadId = Thread.currentThread().getId();
 			this.message = message;
 			this.level = level;
+			this.origin = args != null && args.length > 0 ? ReactiveStateUtils.getIdOrDefault(args[args.length - 1]) :
+				null;
+			this.category = category;
 		}
 
 		public String getMessage() {
 			return message;
 		}
 
-		public String getLevel() {
+		public String getCategory() {
+			return category;
+		}
+		public String getOrigin() {
+			return origin;
+		}
+
+		public Level getLevel() {
 			return level;
+		}
+
+		public long getThreadId() {
+			return threadId;
 		}
 
 		public long getTimestamp() {
@@ -485,10 +555,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		@Override
 		public String toString() {
 			return "{ " + property("timestamp", getTimestamp()) +
-					", " + property("level", getLevel()) +
+					", " + property("level", getLevel().getName()) +
+					", " + property("category", getCategory()) +
+					(origin != null ? ", " + property("origin", getOrigin()) : "")+
 					", " + property("message", getMessage()) +
+					", " + property("threadId", getThreadId()) +
 					", " + property("type", getType()) +
-					", " + property("timestamp", System.currentTimeMillis()) +
 					", " + property("nexusHost", getNexusHost()) + " }";
 		}
 	}
@@ -602,8 +674,13 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 
 			public long getContextHash() {
-				return thread.getContextClassLoader()
-				             .hashCode();
+				if(thread.getContextClassLoader() != null) {
+					return thread.getContextClassLoader()
+					             .hashCode();
+				}
+				else{
+					return -1;
+				}
 			}
 
 			public long getId() {
@@ -635,7 +712,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 						", " + property("alive", isAlive()) +
 						", " + property("state", getState().name()) +
 						(getThreadGroup() != null ? ", " + property("threadGroup", getThreadGroup()) : "") +
-						", " + property("contextHash", getContextHash()) +
+						(getContextHash() != -1 ? ", " + property("contextHash", getContextHash()) : "") +
 						", " + property("interrupted", isInterrupted()) +
 						", " + property("priority", getPriority()) +
 						", " + property("daemon", isDaemon()) + " }";
@@ -653,6 +730,27 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 			catch (UnsupportedEncodingException e) {
 				throw ReactorFatalException.create(e);
+			}
+		}
+	}
+
+	private final static class NexusLoggerExtension implements Logger.Extension {
+
+		final ReactiveSession<Event> logSink;
+		final String                 hostname;
+
+		public NexusLoggerExtension(String hostname, ReactiveSession<Event> logSink) {
+			this.logSink = logSink;
+			this.hostname = hostname;
+		}
+
+		@Override
+		public void log(String category, Level level, String msg, Object... arguments) {
+			if (arguments != null && arguments.length != 0) {
+				logSink.emit(new LogEvent(hostname, category, level, msg, arguments));
+			}
+			else {
+				logSink.emit(new LogEvent(hostname, category, level, msg, arguments));
 			}
 		}
 	}
@@ -678,26 +776,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		@Override
 		public String getName() {
 			return "ScanIfGraphEvent";
-		}
-	}
-
-	private final class LogMapper implements Function<Object, Event> {
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public Event apply(Object o) {
-			String level;
-			String message;
-			if (Tuple2.class.equals(o.getClass())) {
-				level = ((Tuple2<String, String>) o).getT1();
-				message = ((Tuple2<String, String>) o).getT2();
-			}
-			else {
-				level = null;
-				message = o.toString();
-			}
-			return new LogEvent(server.getListenAddress()
-			                          .toString(), message, level);
 		}
 	}
 

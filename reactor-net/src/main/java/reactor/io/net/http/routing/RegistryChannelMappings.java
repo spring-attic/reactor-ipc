@@ -36,7 +36,7 @@ import reactor.io.net.http.model.Protocol;
 public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
 
 	static {
-		if (!DependencyUtils.hasReactorCodec()) {
+		if (!DependencyUtils.hasReactorBus()) {
 			throw new IllegalStateException("io.projectreactor:reactor-bus:" + DependencyUtils.reactorVersion() +
 					" dependency is missing from the classpath.");
 		}

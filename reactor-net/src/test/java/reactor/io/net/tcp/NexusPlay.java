@@ -46,6 +46,7 @@ public class NexusPlay {
 
 		Nexus nexus = ReactiveNet.nexus();
 		nexus.withSystemStats()
+		     .withLogTail()
 		     .startAndAwait();
 
 		//ReactiveStateUtils.scan(o).toString()
@@ -82,7 +83,7 @@ public class NexusPlay {
 		int i = 0;
 		for(;;){
 			s.emit(i);
-			LockSupport.parkNanos(30_000_000);
+			LockSupport.parkNanos(50_000_000);
 		}
 
 	}
