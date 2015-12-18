@@ -20,12 +20,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
+import java.util.logging.Level;
 
 import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.processor.BaseProcessor;
+import reactor.core.publisher.operator.LogOperator;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
@@ -63,7 +65,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int i = 0; i < 3; i++) {
 			dispatched
-					//.log()
+					.log("test",  Level.FINEST, LogOperator.ALL)
 					.consume(d -> {
 						try {
 							Thread.sleep(r.nextInt(80) + 1);

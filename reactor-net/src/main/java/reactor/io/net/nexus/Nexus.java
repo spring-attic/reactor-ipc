@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
 
 import org.reactivestreams.Publisher;
 import reactor.Processors;
@@ -514,19 +515,30 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		private final String message;
 		private final String category;
-		private final String  origin;
 		private final Level  level;
 		private final long   threadId;
+		private final String origin;
+		private final String data;
+		private final String kind;
 		private final long timestamp = System.currentTimeMillis();
 
 		public LogEvent(String name, String category, Level level, String message, Object... args) {
 			super(name);
-			this.threadId = Thread.currentThread().getId();
+			this.threadId = Thread.currentThread()
+			                      .getId();
 			this.message = message;
 			this.level = level;
-			this.origin = args != null && args.length > 0 ? ReactiveStateUtils.getIdOrDefault(args[args.length - 1]) :
-				null;
 			this.category = category;
+			if (args != null && args.length == 3) {
+				this.kind = args[0].toString();
+				this.data = args[1] != null ? args[1].toString() : null;
+				this.origin = ReactiveStateUtils.getIdOrDefault(args[2]);
+			}
+			else{
+				this.origin = null;
+				this.kind = null;
+				this.data = null;
+			}
 		}
 
 		public String getMessage() {
@@ -536,8 +548,17 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		public String getCategory() {
 			return category;
 		}
+
 		public String getOrigin() {
 			return origin;
+		}
+
+		public String getKind() {
+			return kind;
+		}
+
+		public String getData() {
+			return data;
 		}
 
 		public Level getLevel() {
@@ -557,7 +578,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			return "{ " + property("timestamp", getTimestamp()) +
 					", " + property("level", getLevel().getName()) +
 					", " + property("category", getCategory()) +
-					(origin != null ? ", " + property("origin", getOrigin()) : "")+
+					(kind != null ? ", " + property("kind", getKind()) : "") +
+					(origin != null ? ", " + property("origin", getOrigin()) : "") +
+					(data != null ? ", " + property("data", getData()) : "") +
 					", " + property("message", getMessage()) +
 					", " + property("threadId", getThreadId()) +
 					", " + property("type", getType()) +
@@ -674,11 +697,11 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 
 			public long getContextHash() {
-				if(thread.getContextClassLoader() != null) {
+				if (thread.getContextClassLoader() != null) {
 					return thread.getContextClassLoader()
 					             .hashCode();
 				}
-				else{
+				else {
 					return -1;
 				}
 			}
@@ -746,11 +769,17 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		@Override
 		public void log(String category, Level level, String msg, Object... arguments) {
+			String computed = msg;
 			if (arguments != null && arguments.length != 0) {
-				logSink.emit(new LogEvent(hostname, category, level, msg, arguments));
+				for (Object argument : arguments) {
+					computed = computed.replaceFirst("\\{\\}",  Matcher.quoteReplacement(argument.toString()));
+				}
+			}
+			if (arguments != null && arguments.length == 3 && ReactiveStateUtils.isLogging(arguments[2])) {
+				logSink.emit(new LogEvent(hostname, category, level, computed, arguments));
 			}
 			else {
-				logSink.emit(new LogEvent(hostname, category, level, msg, arguments));
+				logSink.emit(new LogEvent(hostname, category, level, computed));
 			}
 		}
 	}
@@ -779,6 +808,27 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		}
 	}
 
+	private final class MetricMapper implements Function<Object, Event> {
+
+		@Override
+		public Event apply(Object o) {
+			return new MetricEvent(server.getListenAddress()
+			                             .toString());
+		}
+
+	}
+	private final class GraphMapper implements Function<Object, Event> {
+
+		@Override
+		public Event apply(Object o) {
+			return new GraphEvent(server.getListenAddress()
+			                            .toString(),
+					ReactiveStateUtils.Graph.class.equals(o.getClass()) ? ((ReactiveStateUtils.Graph) o) :
+							ReactiveStateUtils.scan(o));
+		}
+
+	}
+
 	private static final class FederatedMerger implements Function<FederatedClient, Publisher<Buffer>> {
 
 		private final HttpChannel<Buffer, Buffer> c;
@@ -799,27 +849,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		}
 	}
 
-	private final class MetricMapper implements Function<Object, Event> {
-
-		@Override
-		public Event apply(Object o) {
-			return new MetricEvent(server.getListenAddress()
-			                             .toString());
-		}
-	}
-
-	private final class GraphMapper implements Function<Object, Event> {
-
-		@Override
-		public Event apply(Object o) {
-			return new GraphEvent(server.getListenAddress()
-			                            .toString(),
-					ReactiveStateUtils.Graph.class.equals(o.getClass()) ? ((ReactiveStateUtils.Graph) o) :
-							ReactiveStateUtils.scan(o));
-		}
-	}
-
-	private final class FederatedClient {
+	private static final class FederatedClient {
 
 		private final HttpClient<Buffer, Buffer> client;
 		private final String                     targetAPI;
