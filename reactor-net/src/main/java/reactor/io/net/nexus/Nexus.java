@@ -385,6 +385,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
+
+			//monitor(p);
 			if (!Logger.enableExtension(logExtension)) {
 				log.warn("Couldn't setup logger extension as one is already in place");
 				logExtension = null;
@@ -770,16 +772,21 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		@Override
 		public void log(String category, Level level, String msg, Object... arguments) {
 			String computed = msg;
+			ReactiveSession.Emission emission;
 			if (arguments != null && arguments.length != 0) {
 				for (Object argument : arguments) {
 					computed = computed.replaceFirst("\\{\\}",  Matcher.quoteReplacement(argument.toString()));
 				}
 			}
 			if (arguments != null && arguments.length == 3 && ReactiveStateUtils.isLogging(arguments[2])) {
-				logSink.emit(new LogEvent(hostname, category, level, computed, arguments));
+				if( !(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()){
+					//System.out.println(emission+ " "+computed);
+				}
 			}
 			else {
-				logSink.emit(new LogEvent(hostname, category, level, computed));
+				if( !(emission = logSink.emit(new LogEvent(hostname, category, level, computed))).isOk()){
+					//System.out.println(emission+ " "+computed);
+				}
 			}
 		}
 	}

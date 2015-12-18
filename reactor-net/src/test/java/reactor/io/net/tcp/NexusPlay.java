@@ -65,7 +65,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int i = 0; i < 3; i++) {
 			dispatched
-					.log("test",  Level.FINEST, LogOperator.ALL)
+					.log("test"/*,  Level.FINEST, LogOperator.ALL*/)
 					.consume(d -> {
 						try {
 							Thread.sleep(r.nextInt(80) + 1);
@@ -84,8 +84,8 @@ public class NexusPlay {
 		nexus.monitor(s);
 		int i = 0;
 		for(;;){
-			s.emit(i);
-			LockSupport.parkNanos(50_000_000);
+			s.emit(i++);
+			LockSupport.parkNanos(100_000_000);
 		}
 
 	}
