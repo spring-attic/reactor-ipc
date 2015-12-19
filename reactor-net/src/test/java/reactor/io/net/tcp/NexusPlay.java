@@ -49,6 +49,7 @@ public class NexusPlay {
 		Nexus nexus = ReactiveNet.nexus();
 		nexus.withSystemStats()
 		     .withLogTail()
+		     //.capacity(5l)
 		     .startAndAwait();
 
 		//ReactiveStateUtils.scan(o).toString()

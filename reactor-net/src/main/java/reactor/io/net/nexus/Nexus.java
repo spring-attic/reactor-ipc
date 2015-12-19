@@ -43,9 +43,12 @@ import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.core.support.internal.PlatformDependent;
+import reactor.core.support.wait.BlockingWaitStrategy;
+import reactor.core.support.wait.WaitStrategy;
 import reactor.core.timer.Timer;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
+import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -124,7 +127,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.eventStream = Processors.emitter(false);
 		this.lastStateMerge = new LastGraphStateMap();
 		this.timer = Timers.create("nexus-poller");
-		this.group = Processors.asyncGroup("nexus", 1024, 1, null, null, false);
+		this.group = Processors.asyncGroup("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
+			@Override
+			public WaitStrategy get() {
+				return new BlockingWaitStrategy();
+			}
+		});
 
 		BaseProcessor<Publisher<Event>, Publisher<Event>> cannons = Processors.emitter();
 
@@ -383,12 +391,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	protected Publisher<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
 
 		if (logExtensionEnabled) {
-			BaseProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256);
+			BaseProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256, new BlockingWaitStrategy());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
 
-			//monitor(p);
+			monitor(p);
 			if (!Logger.enableExtension(logExtension)) {
 				log.warn("Couldn't setup logger extension as one is already in place");
 				logExtension = null;
