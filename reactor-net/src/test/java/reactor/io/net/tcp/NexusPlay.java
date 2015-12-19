@@ -65,20 +65,15 @@ public class NexusPlay {
 		//slow subscribers
 		for(int i = 0; i < 3; i++) {
 			dispatched
-					.log("test",  Level.FINEST, LogOperator.ALL)
+					.log("slow",  Level.FINEST, LogOperator.ALL)
 					//.capacity(5)
-					.consume(d -> {
-						try {
-							Thread.sleep(r.nextInt(80) + 1);
-						}
-						catch (Exception e) {
-
-						}
-					});
+					.consume(d ->
+						LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
+					);
 		}
 
 		//fast subscriber
-		dispatched.consume();
+		dispatched.log("fast",  Level.FINEST, LogOperator.ALL).consume();
 
 
 		ReactiveSession<Integer> s = p.startSession();
@@ -86,7 +81,7 @@ public class NexusPlay {
 		int i = 0;
 		for(;;){
 			s.emit(i++);
-			LockSupport.parkNanos(100_000_000);
+			LockSupport.parkNanos(30_000_000);
 //			if(i == 200){
 //				s.failWith(new Exception("LMAO"));
 //				break;

@@ -336,7 +336,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
 		channel.responseHeader("Access-Control-Allow-Origin", "*");
 
-		Publisher<Event> eventStream = Publishers.map(this.eventStream.dispatchOn(group), lastStateMerge);
+		Publisher<Event> eventStream = Publishers.map(this.eventStream.dispatchOn(group),
+				lastStateMerge);
 
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
@@ -584,7 +585,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					", " + property("category", getCategory()) +
 					(kind != null ? ", " + property("kind", getKind()) : "") +
 					(origin != null ? ", " + property("origin", getOrigin()) : "") +
-					(data != null ? ", " + property("data", getData()) : "") +
+					(data != null ? ", " +property("data",  getData()) : "") +
 					", " + property("message", getMessage()) +
 					", " + property("threadId", getThreadId()) +
 					", " + property("type", getType()) +
