@@ -65,7 +65,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int i = 0; i < 3; i++) {
 			dispatched
-					.log("test"/*,  Level.FINEST, LogOperator.ALL*/)
+					.log("test",  Level.FINEST, LogOperator.ALL)
 					//.capacity(5)
 					.consume(d -> {
 						try {
@@ -87,10 +87,10 @@ public class NexusPlay {
 		for(;;){
 			s.emit(i++);
 			LockSupport.parkNanos(100_000_000);
-			if(i == 200){
-				s.failWith(new Exception("LMAO"));
-				break;
-			}
+//			if(i == 200){
+//				s.failWith(new Exception("LMAO"));
+//				break;
+//			}
 		}
 
 	}

@@ -37,6 +37,7 @@ import reactor.core.error.CancelException;
 import reactor.core.error.ReactorFatalException;
 import reactor.core.processor.BaseProcessor;
 import reactor.core.processor.ProcessorGroup;
+import reactor.core.processor.RingBufferProcessor;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
@@ -82,10 +83,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED =
 			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
 
-	private long             systemStatsPeriod;
-	private boolean          systemStats;
-	private boolean          logExtensionEnabled;
-	private Logger.Extension logExtension;
+	private long                 systemStatsPeriod;
+	private boolean              systemStats;
+	private boolean              logExtensionEnabled;
+	private NexusLoggerExtension logExtension;
 
 	private long websocketCapacity = 1L;
 
@@ -381,7 +382,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	protected Publisher<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
 
 		if (logExtensionEnabled) {
-			BaseProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
+			BaseProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256);
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
@@ -422,6 +423,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.eventStream.onComplete();
 		if (logExtension != null) {
 			Logger.disableExtension(logExtension);
+			logExtension.logSink.finish();
 			logExtension = null;
 		}
 		return server.shutdown();
@@ -536,7 +538,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				this.data = args[1] != null ? args[1].toString() : null;
 				this.origin = ReactiveStateUtils.getIdOrDefault(args[2]);
 			}
-			else{
+			else {
 				this.origin = null;
 				this.kind = null;
 				this.data = null;
@@ -775,16 +777,16 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			ReactiveSession.Emission emission;
 			if (arguments != null && arguments.length != 0) {
 				for (Object argument : arguments) {
-					computed = computed.replaceFirst("\\{\\}",  Matcher.quoteReplacement(argument.toString()));
+					computed = computed.replaceFirst("\\{\\}", Matcher.quoteReplacement(argument.toString()));
 				}
 			}
 			if (arguments != null && arguments.length == 3 && ReactiveStateUtils.isLogging(arguments[2])) {
-				if( !(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()){
+				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()) {
 					//System.out.println(emission+ " "+computed);
 				}
 			}
 			else {
-				if( !(emission = logSink.emit(new LogEvent(hostname, category, level, computed))).isOk()){
+				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed))).isOk()) {
 					//System.out.println(emission+ " "+computed);
 				}
 			}
@@ -824,6 +826,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		}
 
 	}
+
 	private final class GraphMapper implements Function<Object, Event> {
 
 		@Override
