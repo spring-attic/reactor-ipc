@@ -36,7 +36,7 @@ import java.util.function.BiConsumer;
  */
 public class EmbeddedMediaDriverManager {
 
-	private final Logger logger = Logger.getLogger(EmbeddedMediaDriverManager.class);
+	private static final Logger logger = Logger.getLogger(EmbeddedMediaDriverManager.class);
 
 	private static final EmbeddedMediaDriverManager INSTANCE = new EmbeddedMediaDriverManager();
 

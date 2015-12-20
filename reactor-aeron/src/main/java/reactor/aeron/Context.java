@@ -32,7 +32,6 @@ import reactor.aeron.support.LoggingErrorConsumer;
 import reactor.aeron.support.Serializer;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.support.Assert;
-import reactor.core.support.Logger;
 import reactor.fn.Consumer;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
@@ -303,8 +302,8 @@ public class Context {
 	}
 
 	//TODO: Move into another class
-	public AeronInfra createAeronInfra(Logger logger) {
-		AeronInfra aeronInfra = new BasicAeronInfra(logger, aeron, publicationRetryMillis);
+	public AeronInfra createAeronInfra() {
+		AeronInfra aeronInfra = new BasicAeronInfra(aeron, publicationRetryMillis);
 		aeronInfra.initialise();
 		return aeronInfra;
 	}

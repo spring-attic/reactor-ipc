@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class BasicAeronInfra implements AeronInfra {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(BasicAeronInfra.class);
 
 	private final boolean launchEmbeddedMediaDriver;
 
@@ -44,8 +44,7 @@ public class BasicAeronInfra implements AeronInfra {
 	 */
 	private final long publicationRetryNs;
 
-	public BasicAeronInfra(Logger logger, Aeron aeron, long publicationRetryMillis) {
-		this.logger = logger;
+	public BasicAeronInfra(Aeron aeron, long publicationRetryMillis) {
 		this.launchEmbeddedMediaDriver = (aeron == null);
 		this.aeron = aeron;
 		this.publicationRetryNs = TimeUnit.MILLISECONDS.toNanos(publicationRetryMillis);

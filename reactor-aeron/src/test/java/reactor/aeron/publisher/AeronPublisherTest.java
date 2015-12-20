@@ -54,7 +54,7 @@ public class AeronPublisherTest {
 
 		context = new Context() {
 			@Override
-			public AeronInfra createAeronInfra(Logger logger) {
+			public AeronInfra createAeronInfra() {
 				return aeronInfra;
 			}
 		};

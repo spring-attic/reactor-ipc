@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 
-	private final static Logger logger = Logger.getLogger(MulticastServiceMessageHandler.class);
+	private static final Logger logger = Logger.getLogger(MulticastServiceMessageHandler.class);
 
 	private final Context context;
 

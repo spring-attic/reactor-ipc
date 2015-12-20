@@ -42,15 +42,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstream {
 
+	private static final Logger logger = Logger.getLogger(AeronPublisher.class);
+
 	final AeronInfra aeronInfra;
 
 	private final Context context;
 
-	private final Logger logger;
-
 	private final ExecutorService executor;
 
 	private final Consumer<Void> shutdownTask;
+
+	private final Consumer<Void> onTerminateTask;
 
 	private final Publication serviceRequestPub;
 
@@ -74,12 +76,21 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 	}
 
 	public AeronPublisher(Context context,
-						  Logger logger,
-						  Consumer<Void> shutdownTask) {
+						  Consumer<Void> shutdownTask,
+						  Consumer<Void> onTerminateTask) {
+
+		if (shutdownTask == null) {
+			shutdownTask = new Consumer<Void>() {
+				@Override
+				public void accept(Void value) {
+					shutdown();
+				}
+			};
+		}
 
 		this.context = context;
-		this.logger = createLogger(logger);
-		this.aeronInfra = context.createAeronInfra(this.logger);
+		this.onTerminateTask = onTerminateTask;
+		this.aeronInfra = context.createAeronInfra();
 		this.executor = SingleUseExecutor.create(context.name() + "-signal-poller");
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
 		this.sessionId = getSessionId(context);
@@ -94,11 +105,6 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 		this.shutdownTask = shutdownTask;
 	}
 
-	protected Logger createLogger(Logger parentLogger) {
-		return parentLogger != Logger.getLogger(this.getClass()) ?
-				Logger.getLogger(parentLogger.getName() + ".publisher") : parentLogger;
-	}
-
 	protected String getSessionId(Context context) {
 		return AeronUtils.isMulticastCommunication(context) ?
 				UUIDUtils.create().toString():
@@ -107,10 +113,10 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 
 	public AeronPublisher(Context context) {
 		this(context,
-				Logger.getLogger(AeronPublisher.class),
+				null,
 				new Consumer<Void>() {
 					@Override
-					public void accept(Void aVoid) {
+					public void accept(Void value) {
 					}
 				});
 
@@ -154,7 +160,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 				subscribed.set(false);
 
 				if (context.autoCancel() || isTerminalSignalReceived) {
-					shutdown();
+					shutdownTask.accept(null);
 				}
 			}
 		});
@@ -192,10 +198,10 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 							aeronInfra.close(serviceRequestPub);
 							aeronInfra.shutdown();
 
-							shutdownTask.accept(null);
-
 							logger.info("publisher shutdown, sessionId: {}", sessionId);
 							terminated = true;
+
+							onTerminateTask.accept(null);
 						}
 					});
 				}

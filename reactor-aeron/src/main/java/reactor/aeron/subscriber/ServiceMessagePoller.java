@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutorService;
  */
 class ServiceMessagePoller implements Runnable, ReactiveState.Upstream {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(ServiceMessagePoller.class);
 
 	private final Subscription serviceRequestSub;
 
@@ -110,8 +110,7 @@ class ServiceMessagePoller implements Runnable, ReactiveState.Upstream {
 
 	}
 
-	ServiceMessagePoller(Logger logger, Context context, AeronInfra aeronInfra, ServiceMessageHandler serviceMessageHandler) {
-		this.logger = logger;
+	ServiceMessagePoller(Context context, AeronInfra aeronInfra, ServiceMessageHandler serviceMessageHandler) {
 		this.context = context;
 		this.serviceMessageHandler = serviceMessageHandler;
 		this.aeronInfra = aeronInfra;

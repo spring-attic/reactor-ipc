@@ -33,19 +33,19 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
 
 	@Override
-	protected Context createContext() {
-		return new Context().name("test")
+	protected Context createContext(String name) {
+		return new Context().name(name)
 		                    .senderChannel(CHANNEL)
 		                    .receiverChannel(CHANNEL);
 	}
 
 	@Test
 	public void testSubscriptionCancellationDoesNotShutdownPublisherWhenNoAutocancel() throws InterruptedException {
-		AeronSubscriber subscriber = AeronSubscriber.create(createContext());
+		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
 		Publishers.from(createBuffers(256))
 		          .subscribe(subscriber);
 
-		AeronPublisher publisher = AeronPublisher.create(createContext().autoCancel(false));
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
 		TestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		IO.bufferToString(publisher).subscribe(client);
 

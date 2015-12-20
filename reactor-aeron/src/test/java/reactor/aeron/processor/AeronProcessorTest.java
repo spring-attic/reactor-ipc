@@ -63,8 +63,6 @@ public class AeronProcessorTest {
 					() -> processor.isTerminated());
 		}
 
-		Thread.sleep(1000);
-
 		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
 
 		assertTrue(threadSnapshot.takeAndCompare(new String[] {"hash", "global"},

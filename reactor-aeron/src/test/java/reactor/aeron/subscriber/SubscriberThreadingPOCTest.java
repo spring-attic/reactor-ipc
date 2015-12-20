@@ -15,6 +15,7 @@
  */
 package reactor.aeron.subscriber;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Anatoly Kadyshev
  */
+@Ignore
 public class SubscriberThreadingPOCTest {
 
 	class SignalPollerForPOC implements Runnable {

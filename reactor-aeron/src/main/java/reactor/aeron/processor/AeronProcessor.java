@@ -168,6 +168,15 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 
 	private final AtomicBoolean alive = new AtomicBoolean(true);
 
+	private final Consumer<Void> onTerminateTask = new Consumer<Void>() {
+		@Override
+		public void accept(Void value) {
+			if (subscriber.isTerminated() && publisher.isTerminated()) {
+				logger.info("processor shutdown");
+			}
+		}
+	};
+
 	/**
 	 * Creates a new processor using the context
 	 *
@@ -180,25 +189,25 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 	}
 
 	private AeronPublisher createAeronPublisher(Context context) {
-		return new AeronPublisher(context, logger, new Consumer<Void>() {
+		return new AeronPublisher(context, new Consumer<Void>() {
 			@Override
-			public void accept(Void aVoid) {
+			public void accept(Void value) {
 				shutdown();
 			}
-		});
+		}, onTerminateTask);
 	}
 
 	private AeronSubscriber createAeronSubscriber(Context context, boolean multiPublishers) {
 		return new AeronSubscriber(
 				context,
-				logger,
 				multiPublishers,
 				new Consumer<Void>() {
 					@Override
 					public void accept(Void value) {
 						shutdown();
 					}
-				});
+				},
+				onTerminateTask);
 	}
 
 	public static AeronProcessor create(Context context) {
@@ -259,7 +268,6 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 		if (alive.compareAndSet(true, false)) {
 			subscriber.shutdown();
 			publisher.shutdown();
-			logger.info("processor shutdown");
 		}
 	}
 

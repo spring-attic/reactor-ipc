@@ -37,7 +37,7 @@ import reactor.io.buffer.Buffer;
  */
 public class UnicastServiceMessageHandler implements ServiceMessageHandler, ReactiveState.LinkedDownstreams {
 
-	private final static Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
+	private static final Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
 
 	private final BaseProcessor<Buffer, Buffer> processor;
 

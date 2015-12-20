@@ -37,11 +37,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AeronSubscriber extends BaseSubscriber<Buffer>
 		implements ReactiveState.ActiveUpstream, ReactiveState.Upstream, ReactiveState.FeedbackLoop {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
 
 	private final AtomicBoolean alive = new AtomicBoolean(true);
 
 	private volatile boolean terminated = false;
+
+	private final Consumer<Void> onTerminateTask;
 
 	private final AeronInfra aeronInfra;
 
@@ -62,22 +64,21 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 	}
 
 	public AeronSubscriber(Context context,
-						   Logger logger,
 						   boolean multiPublishers,
-						   Consumer<Void> shutdownTask) {
-
-		this.logger = createLogger(logger);
+						   Consumer<Void> shutdownTask,
+						   Consumer<Void> onTerminateTask) {
+		this.onTerminateTask = onTerminateTask;
 
 		if (shutdownTask == null) {
 			shutdownTask = new Consumer<Void>() {
 				@Override
-				public void accept(Void aVoid) {
+				public void accept(Void value) {
 					shutdown();
 				}
 			};
 		}
 
-		this.aeronInfra = context.createAeronInfra(this.logger);
+		this.aeronInfra = context.createAeronInfra();
 		this.processor = createRingBufferProcessor(context, multiPublishers);
 		boolean isMulticast = AeronUtils.isMulticastCommunication(context);
 		if (isMulticast) {
@@ -87,8 +88,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 			this.serviceMessageHandler = new UnicastServiceMessageHandler(processor, aeronInfra, context,
 					shutdownTask);
 		}
-		this.serviceMessagePoller = createServiceMessagePoller(context, aeronInfra, logger,
-				serviceMessageHandler);
+		this.serviceMessagePoller = createServiceMessagePoller(context, aeronInfra, serviceMessageHandler);
 
 		//TODO: Do not start from constructor
 		serviceMessageHandler.start();
@@ -99,16 +99,15 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		}
 	}
 
-	protected Logger createLogger(Logger parentLogger) {
-		return parentLogger != Logger.getLogger(this.getClass()) ?
-				Logger.getLogger(parentLogger.getName() + ".subscriber") : parentLogger;
-	}
-
 	public AeronSubscriber(Context context, boolean multiPublishers) {
 		this(context,
-				Logger.getLogger(AeronSubscriber.class),
 				multiPublishers,
-				null);
+				null,
+				new Consumer<Void>() {
+					@Override
+					public void accept(Void value) {
+					}
+				});
 	}
 
 	@Override
@@ -139,9 +138,9 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		processor.onComplete();
 	}
 
-	private ServiceMessagePoller createServiceMessagePoller(Context context, AeronInfra aeronInfra, Logger logger,
+	private ServiceMessagePoller createServiceMessagePoller(Context context, AeronInfra aeronInfra,
 															ServiceMessageHandler serviceMessageHandler) {
-		return new ServiceMessagePoller(logger, context, aeronInfra, serviceMessageHandler);
+		return new ServiceMessagePoller(context, aeronInfra, serviceMessageHandler);
 	}
 
 	private RingBufferProcessor<Buffer> createRingBufferProcessor(Context context, boolean multiPublishers) {
@@ -176,6 +175,8 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 
 							logger.info("subscriber shutdown");
 							terminated = true;
+
+							onTerminateTask.accept(null);
 						}
 					});
 				}

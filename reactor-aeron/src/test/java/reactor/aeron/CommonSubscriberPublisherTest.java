@@ -59,7 +59,7 @@ public abstract class CommonSubscriberPublisherTest {
 				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
 	}
 
-	protected abstract Context createContext();
+	protected abstract Context createContext(String name);
 
 	protected List<Buffer> createBuffers(int n) {
 		List<Buffer> items = new ArrayList<>(n);
@@ -71,12 +71,12 @@ public abstract class CommonSubscriberPublisherTest {
 
 	@Test
 	public void testNextSignalIsReceivedByPublisher() throws InterruptedException {
-		AeronSubscriber subscriber = AeronSubscriber.create(createContext());
+		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
 
 		Streams.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
 		       .subscribe(subscriber);
 
-		AeronPublisher publisher = AeronPublisher.create(createContext());
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher"));
 
 		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		IO.bufferToString(publisher).subscribe(clientSubscriber);
@@ -89,15 +89,13 @@ public abstract class CommonSubscriberPublisherTest {
 
 	@Test
 	public void testErrorShutsDownAeronPublisherAndSubscriber() throws InterruptedException {
-		AeronSubscriber subscriber = AeronSubscriber.create(createContext());
-		AeronPublisher publisher = AeronPublisher.create(createContext());
+		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher"));
 
 		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		IO.bufferToString(publisher).subscribe(clientSubscriber);
 
 		clientSubscriber.requestUnboundedWithTimeout();
-
-		Thread.sleep(1000);
 
 		Streams.<Buffer, Throwable>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
