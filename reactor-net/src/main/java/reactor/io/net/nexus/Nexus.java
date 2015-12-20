@@ -396,7 +396,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
 
-			monitor(p);
+			//monitor(p);
 			if (!Logger.enableExtension(logExtension)) {
 				log.warn("Couldn't setup logger extension as one is already in place");
 				logExtension = null;
