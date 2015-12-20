@@ -52,7 +52,7 @@ public class AeronSubscriberTest {
 
 	@Test
 	public void testShutdown() {
-		final int senderPort = SocketUtils.findAvailableTcpPort();
+		final int senderPort = SocketUtils.findAvailableUdpPort();
 
 		AeronSubscriber subscriber = AeronSubscriber.create(new Context()
 				.name("publisher")

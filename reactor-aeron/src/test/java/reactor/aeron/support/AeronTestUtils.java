@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class AeronTestUtils {
 
 	public static void setAeronEnvProps() {
-		String bufferLength = String.valueOf(128 * 1024);
+		String bufferLength = String.valueOf(64 * 1024);
 		System.setProperty(MediaDriver.DIRS_DELETE_ON_START_PROP_NAME, "true");
 
 		System.setProperty(Configuration.TERM_BUFFER_LENGTH_PROP_NAME, bufferLength);
@@ -39,6 +39,7 @@ public class AeronTestUtils {
 
 		EmbeddedMediaDriverManager driverManager = EmbeddedMediaDriverManager.getInstance();
 		driverManager.getDriverContext().threadingMode(ThreadingMode.SHARED);
+		driverManager.setDeleteAeronDirsOnExit(true);
 	}
 
 	public static void awaitMediaDriverIsTerminated(int timeoutSecs) throws InterruptedException {

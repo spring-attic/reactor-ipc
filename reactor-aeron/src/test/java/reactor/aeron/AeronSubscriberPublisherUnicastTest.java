@@ -16,6 +16,8 @@
 package reactor.aeron;
 
 import org.junit.Test;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.Publishers;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
@@ -24,6 +26,11 @@ import reactor.core.subscriber.test.TestSubscriber;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.io.IO;
 import reactor.io.net.tcp.support.SocketUtils;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Anatoly Kadyshev
@@ -46,7 +53,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		AeronPublisher publisher2 = AeronPublisher.create(
 				createContext()
-						.receiverPort(SocketUtils.findAvailableTcpPort()));
+						.receiverPort(SocketUtils.findAvailableUdpPort()));
 
 		DataTestSubscriber<String>client1 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		IO.bufferToString(publisher1).subscribe(client1);
@@ -145,6 +152,61 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		TestSubscriber.waitFor(TIMEOUT_SECS, "AeronPublisher should be dead", () -> !publisher.alive());
 
 		aeronSubscriber.shutdown();
+	}
+
+	private static class HangingOnCompleteSubscriber implements Subscriber<String> {
+
+		CountDownLatch completeReceivedLatch = new CountDownLatch(1);
+
+		CountDownLatch canReturnLatch = new CountDownLatch(1);
+
+		@Override
+		public void onSubscribe(Subscription s) {
+			s.request(Integer.MAX_VALUE);
+		}
+
+		@Override
+		public void onNext(String s) {
+		}
+
+		@Override
+		public void onError(Throwable t) {
+		}
+
+		@Override
+		public void onComplete() {
+			try {
+				completeReceivedLatch.countDown();
+				canReturnLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+	}
+
+	@Test
+	public void testPublisherCanConnectToATerminalButRunningSubscriber() throws InterruptedException {
+		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext());
+		Publishers.from(createBuffers(3)).subscribe(aeronSubscriber);
+
+		AeronPublisher publisher = AeronPublisher.create(createContext().autoCancel(true));
+		HangingOnCompleteSubscriber client = new HangingOnCompleteSubscriber();
+		IO.bufferToString(publisher).subscribe(client);
+
+		assertTrue(client.completeReceivedLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
+
+		AeronPublisher publisher2 = AeronPublisher.create(
+				createContext().autoCancel(true).streamId(10).errorStreamId(11));
+
+		TestSubscriber<String> client2 = TestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		IO.bufferToString(publisher2).subscribe(client2);
+
+		client2.request(3 + 1);
+
+		client2.assertNumNextSignalsReceived(3);
+		client2.assertCompleteReceived();
+
+		client.canReturnLatch.countDown();
 	}
 
 }

@@ -223,7 +223,7 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
 	@Override
 	public void run() {
 		running = true;
-		logger.debug("Signal poller started");
+		logger.debug("Signal poller started, sessionId: {}", serviceMessageSender.getSessionId());
 
 		uk.co.real_logic.aeron.Subscription nextCompleteSub = createNextCompleteSub();
 		this.nextCompleteSub = nextCompleteSub;
@@ -280,7 +280,7 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
 			shutdownTask.accept(isTerminalSignalReceived);
 		}
 
-		logger.debug("Signal poller shutdown");
+		logger.debug("Signal poller shutdown, sessionId: {}", serviceMessageSender.getSessionId());
 	}
 
 	private void setSubscriberSubscription() {

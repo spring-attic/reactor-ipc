@@ -36,14 +36,17 @@ public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveS
 
 	private final BackoffIdleStrategy idleStrategy = AeronUtils.newBackoffIdleStrategy();
 
-	private final byte[] sessionId;
+	private final byte[] sessionIdEncoded;
 
 	private final AeronPublisher parent;
+
+	private final String sessionId;
 
 	public ServiceMessageSender(AeronPublisher parent, Publication serviceRequestPub, String sessionId) {
 		this.parent = parent;
 		this.serviceRequestPub = serviceRequestPub;
-		this.sessionId = sessionId.getBytes(AeronUtils.UTF_8_CHARSET);
+		this.sessionId = sessionId;
+		this.sessionIdEncoded = sessionId.getBytes(AeronUtils.UTF_8_CHARSET);
 	}
 
 	/**
@@ -56,8 +59,8 @@ public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveS
 	 * @throws IllegalArgumentException if publication is closed
 	 */
 	public synchronized void sendRequest(long n) {
-		if (claimBuffer(1 + 8 + (sessionId.length + 1)) >= 0) {
-			commitRequest(bufferClaim, n, sessionId);
+		if (claimBuffer(1 + 8 + (sessionIdEncoded.length + 1)) >= 0) {
+			commitRequest(bufferClaim, n, sessionIdEncoded);
 		} else {
 			//TODO: Handle a situation when service request cannot be sent
 			throw new RuntimeException("Failed to send request service message" +
@@ -73,9 +76,9 @@ public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveS
 	 * @throws IllegalArgumentException if publication is closed
 	 */
 	public synchronized void sendCancel() {
-		long position = claimBuffer(1 + (sessionId.length + 1));
+		long position = claimBuffer(1 + (sessionIdEncoded.length + 1));
 		if (position >= 0) {
-			commitCancel(bufferClaim, sessionId);
+			commitCancel(bufferClaim, sessionIdEncoded);
 		} else {
 			throw new RuntimeException("Failed to send cancel service message" +
 					" due to backpressured/not connected publication");
@@ -90,9 +93,9 @@ public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveS
 	 * @throws IllegalArgumentException if publication is closed
 	 */
 	public synchronized long sendHeartbeat() {
-		long result = claimBuffer(1 + (sessionId.length + 1));
+		long result = claimBuffer(1 + (sessionIdEncoded.length + 1));
 		if (result >= 0) {
-			commitHeartbeat(bufferClaim, sessionId);
+			commitHeartbeat(bufferClaim, sessionIdEncoded);
 		}
 		return result;
 	}
@@ -162,4 +165,9 @@ public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveS
 	public Object delegateOutput() {
 		return parent;
 	}
+
+	public String getSessionId() {
+		return sessionId;
+	}
+
 }

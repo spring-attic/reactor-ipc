@@ -16,7 +16,6 @@
 package reactor.aeron.support;
 
 import reactor.core.support.Logger;
-import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.core.support.BackpressureUtils;
 import reactor.fn.Consumer;
@@ -75,6 +74,8 @@ public class EmbeddedMediaDriverManager {
 	private State state = State.NOT_STARTED;
 
 	private boolean shouldShutdownWhenNotUsed = true;
+
+	private boolean deleteAeronDirsOnExit = false;
 
 	private class RetryShutdownTask implements Consumer<Long> {
 
@@ -138,7 +139,7 @@ public class EmbeddedMediaDriverManager {
 
 			aeronDirNames.add(aeronDirName);
 
-			logger.debug("Media driver started");
+			logger.info("Embedded media driver started");
 		}
 		counter++;
 	}
@@ -195,11 +196,11 @@ public class EmbeddedMediaDriverManager {
 
 		setupShutdownHook();
 
-		logger.debug("Media driver shutdown");
+		logger.info("Embedded media driver shutdown");
 	}
 
 	private void setupShutdownHook() {
-		if (shutdownHook != null) {
+		if (!deleteAeronDirsOnExit || shutdownHook != null) {
 			return;
 		}
 
@@ -230,6 +231,10 @@ public class EmbeddedMediaDriverManager {
 
 	public void setShouldShutdownWhenNotUsed(boolean shouldShutdownWhenNotUsed) {
 		this.shouldShutdownWhenNotUsed = shouldShutdownWhenNotUsed;
+	}
+
+	public void setDeleteAeronDirsOnExit(boolean deleteAeronDirsOnExit) {
+		this.deleteAeronDirsOnExit = deleteAeronDirsOnExit;
 	}
 
 }

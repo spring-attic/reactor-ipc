@@ -17,7 +17,6 @@ package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscription;
 import reactor.core.support.Logger;
-import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;

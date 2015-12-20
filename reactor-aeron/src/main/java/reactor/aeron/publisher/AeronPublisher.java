@@ -18,7 +18,6 @@ package reactor.aeron.publisher;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.support.Logger;
-import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
@@ -67,6 +66,8 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 
 	private volatile SignalPoller signalPoller;
 
+	private final String sessionId;
+
 	public static AeronPublisher create(Context context) {
 		context.validate();
 		return new AeronPublisher(context);
@@ -81,7 +82,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 		this.aeronInfra = context.createAeronInfra(this.logger);
 		this.executor = SingleUseExecutor.create(context.name() + "-signal-poller");
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
-		String sessionId = getSessionId(context);
+		this.sessionId = getSessionId(context);
 		this.serviceMessageSender = new ServiceMessageSender(this, serviceRequestPub, sessionId);
 		this.heartbeatSender = new HeartbeatSender(context,
 				new ServiceMessageSender(this, serviceRequestPub, sessionId), new Consumer<Throwable>() {
@@ -193,7 +194,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 
 							shutdownTask.accept(null);
 
-							logger.info("publisher shutdown");
+							logger.info("publisher shutdown, sessionId: {}", sessionId);
 							terminated = true;
 						}
 					});

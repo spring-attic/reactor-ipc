@@ -42,7 +42,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 	public static final int TIMEOUT_SECS = 5;
 
-	final int senderPort = SocketUtils.findAvailableTcpPort();
+	final int senderPort = SocketUtils.findAvailableUdpPort();
 
 	private ThreadSnapshot threadSnapshot;
 
