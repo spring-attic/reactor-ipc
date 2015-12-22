@@ -133,23 +133,23 @@ class HttpSpec extends Specification {
 
 
 
-//	when: "data is sent with Reactor HTTP support"
+	when: "data is sent with Reactor HTTP support"
 
-	//prepare an http post request-reply flow
-//	client
-//			.get('/test')
-//			.flatMap { replies ->
-//	  Streams.just(replies.responseStatus().code)
-//			  .log("received-status-1")
-//	}
-//	.next()
-//			.await(5, TimeUnit.SECONDS)
-//
-//
-//
-//	then: "data was recieved"
-//	//the produced reply should be there soon
-//	thrown HttpException
+	prepare an http post request-reply flow
+	client
+			.get('/test')
+			.flatMap { replies ->
+	  Streams.just(replies.responseStatus().code)
+			  .log("received-status-1")
+	}
+	.next()
+			.await(5, TimeUnit.SECONDS)
+
+
+
+	then: "data was recieved"
+	//the produced reply should be there soon
+	thrown HttpException
 
 	when:
 	//prepare an http post request-reply flow
@@ -166,20 +166,20 @@ class HttpSpec extends Specification {
 	errored.await(5, TimeUnit.SECONDS.SECONDS)
 	!content
 
-	//when:
-	//prepare an http post request-reply flow
-//	client
-//			.get('/test3')
-//			.flatMap { replies ->
-//	  Streams.just(replies.responseStatus().code)
-//			  .log("received-status-3")
-//	}
-//	.next()
-//			.poll(5, TimeUnit.SECONDS)
-//
-//	then: "data was recieved"
-//	//the produced reply should be there soon
-//	thrown HttpException
+	when:
+	prepare an http post request-reply flow
+	client
+			.get('/test3')
+			.flatMap { replies ->
+	  Streams.just(replies.responseStatus().code)
+			  .log("received-status-3")
+	}
+	.next()
+			.poll(5, TimeUnit.SECONDS)
+
+	then: "data was recieved"
+	//the produced reply should be there soon
+	thrown HttpException
 
 	cleanup: "the client/server where stopped"
 	//note how we order first the client then the server shutdown
