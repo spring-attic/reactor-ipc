@@ -57,17 +57,17 @@ public class NexusPlay {
 		//SAMPLE streams to monitor
 		//nexus.monitor(nexus);
 
-		AtomicInteger count = new AtomicInteger();
+		Random r = new Random();
+
+		// =========================================================
 
 		BaseProcessor<Integer, Integer> p = Processors.emitter();
-		Random r = new Random();
 		Stream<Integer> dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
-		for(int i = 0; i < 3; i++) {
+		for(int i = 0; i < 2; i++) {
 			dispatched
 					.log("slow",  Level.FINEST, LogOperator.ALL)
-					//.capacity(5)
 					.consume(d ->
 						LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
 					);
@@ -77,10 +77,10 @@ public class NexusPlay {
 		dispatched.log("fast",  Level.FINEST, LogOperator.ALL).consume();
 
 
-		ReactiveSession<Integer> s = p.startSession();
-		nexus.monitor(s);
-		int i = 0;
+		ReactiveSession<Integer> s1 = p.startSession();
+		nexus.monitor(s1);
 
+		// =========================================================
 
 		p = Processors.emitter();
 		dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
@@ -91,7 +91,7 @@ public class NexusPlay {
 					.log("slow",  Level.FINEST, LogOperator.ALL)
 					//.capacity(5)
 					.consume(d ->
-							LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
+							LockSupport.parkNanos(100_000_000 * (r.nextInt(80) + 1))
 					);
 		}
 
@@ -99,11 +99,36 @@ public class NexusPlay {
 		dispatched.log("fast",  Level.FINEST, LogOperator.ALL).consume();
 
 
-		s = p.startSession();
-		nexus.monitor(s);
+		ReactiveSession<Integer> s2 = p.startSession();
+
+		nexus.monitor(s2);
+
+		// =========================================================
+
+		p = Processors.emitter();
+		dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
+
+		//slow subscribers
+		for(int j = 0; j < 3; j++) {
+			dispatched
+					.log("slow",  Level.FINEST, LogOperator.ALL)
+					//.capacity(5)
+					.consume(d ->
+							LockSupport.parkNanos(1000_000_000)
+					);
+		}
+
+
+		ReactiveSession<Integer> s3 = p.startSession();
+		nexus.monitor(s3);
+
+
 		int j = 0;
 		for(;;){
-			s.emit(j++);
+			s1.emit(j);
+			s2.emit(j);
+			s3.emit(j);
+			j++;
 			LockSupport.parkNanos(30_000_000);
 //			if(i == 200){
 //				s.failWith(new Exception("LMAO"));

@@ -59,25 +59,25 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		IO.bufferToString(publisher1).subscribe(client1);
 
 
+		client1.request(3);
+
+		client1.assertNextSignals("1", "2", "3");
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client1).toString());
 
-
-		client1.request(3);
-
-
-		client1.assertNextSignals("1", "2", "3");
 
 
 		DataTestSubscriber<String>client2 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 		IO.bufferToString(publisher2).subscribe(client2);
 
-		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
-		System.out.println(ReactiveStateUtils.scan(client2).toString());
 
 		client2.request(6);
 
 		client2.assertNextSignals("1", "2", "3", "4", "5", "6");
+
+		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
+		System.out.println(ReactiveStateUtils.scan(client2).toString());
+
 
 		//TODO: A temp work-around
 		client2.request(1);

@@ -251,7 +251,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 							"<DEFAULT>"));
 		}
 		ch.pipeline()
-		  .addLast(new SslHandler(ssl));
+		  .addFirst(new SslHandler(ssl));
 	}
 
 	protected void bindChannel(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,

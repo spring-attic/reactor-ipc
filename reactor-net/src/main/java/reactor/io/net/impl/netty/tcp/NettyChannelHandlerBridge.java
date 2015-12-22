@@ -31,17 +31,17 @@ import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.support.Logger;
 import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
 import reactor.core.error.ReactorFatalException;
+import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.support.BackpressureUtils;
+import reactor.core.support.Logger;
+import reactor.core.support.ReactiveState;
+import reactor.core.support.SignalType;
 import reactor.core.support.rb.disruptor.RingBuffer;
 import reactor.core.support.rb.disruptor.Sequence;
 import reactor.core.support.rb.disruptor.Sequencer;
-import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.support.BackpressureUtils;
-import reactor.core.support.ReactiveState;
-import reactor.core.support.SignalType;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -286,7 +286,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		return buff.writeBytes(data.byteBuffer());
 	}
 
-	protected void doOnTerminate(ChannelHandlerContext ctx, ChannelFuture last, final ChannelPromise promise) {
+	protected void doOnTerminate(ChannelHandlerContext ctx, ChannelFuture last, final ChannelPromise promise, final
+			Throwable exception) {
 		CHANNEL_REF.decrementAndGet(this);
 
 		if (ctx.channel()
@@ -294,7 +295,10 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			ChannelFutureListener listener = new ChannelFutureListener() {
 				@Override
 				public void operationComplete(ChannelFuture future) throws Exception {
-					if (future.isSuccess()) {
+					if(exception != null) {
+						promise.tryFailure(exception);
+					}
+					else if (future.isSuccess()) {
 						promise.trySuccess();
 					}
 					else {
@@ -313,7 +317,12 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			}
 		}
 		else {
-			promise.trySuccess();
+			if(exception != null) {
+				promise.tryFailure(exception);
+			}
+			else {
+				promise.trySuccess();
+			}
 		}
 	}
 
@@ -689,7 +698,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			ctx.channel()
 			   .closeFuture()
 			   .removeListener(this);
-			doOnTerminate(ctx, lastWrite, promise);
+			doOnTerminate(ctx, lastWrite, promise, t);
 		}
 
 		@Override
@@ -701,7 +710,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			ctx.channel()
 			   .closeFuture()
 			   .removeListener(this);
-			doOnTerminate(ctx, lastWrite, promise);
+			doOnTerminate(ctx, lastWrite, promise, null);
 		}
 	}
 
@@ -824,7 +833,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			ctx.channel()
 			   .closeFuture()
 			   .removeListener(this);
-			doOnTerminate(ctx, null, promise);
+			doOnTerminate(ctx, null, promise, t);
 		}
 
 		@Override
@@ -840,7 +849,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			   .closeFuture()
 			   .removeListener(this);
 
-			doOnTerminate(ctx, null, promise);
+			doOnTerminate(ctx, null, promise, null);
 		}
 
 		@Override
