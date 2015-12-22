@@ -287,6 +287,8 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 				                                                 .equals(HttpChannel.HTTPS_SCHEME) || currentURI.getScheme()
 				                                                                                                .toLowerCase()
 				                                                                                                .equals(HttpChannel.WSS_SCHEME))) {
+					nativeChannel.config()
+					             .setAutoRead(true);
 					addSecureHandler(nativeChannel);
 				} else {
 					nativeChannel.config()
