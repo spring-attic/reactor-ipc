@@ -135,7 +135,7 @@ class HttpSpec extends Specification {
 
 	when: "data is sent with Reactor HTTP support"
 
-	prepare an http post request-reply flow
+	//prepare an http post request-reply flow
 	client
 			.get('/test')
 			.flatMap { replies ->
@@ -167,7 +167,7 @@ class HttpSpec extends Specification {
 	!content
 
 	when:
-	prepare an http post request-reply flow
+	//prepare an http post request-reply flow
 	client
 			.get('/test3')
 			.flatMap { replies ->
