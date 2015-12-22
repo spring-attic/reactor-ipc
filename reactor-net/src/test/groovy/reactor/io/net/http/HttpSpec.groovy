@@ -248,7 +248,9 @@ class HttpSpec extends Specification {
 	  replies
 			  .log('client-received')
 			  .observe { clientRes++ }
-	}.toList(1000)
+	}
+	.take(1000)
+	.toList()
 			.onError {
 	  //something failed during the request or the reply processing
 	  println "Failed requesting server: $it"
