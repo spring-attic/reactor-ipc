@@ -57,17 +57,17 @@ public class NexusPlay {
 		//SAMPLE streams to monitor
 		//nexus.monitor(nexus);
 
-		AtomicInteger count = new AtomicInteger();
+		Random r = new Random();
+
+		// =========================================================
 
 		BaseProcessor<Integer, Integer> p = Processors.emitter();
-		Random r = new Random();
 		Stream<Integer> dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int i = 0; i < 2; i++) {
 			dispatched
 					.log("slow",  Level.FINEST, LogOperator.ALL)
-					//.capacity(5)
 					.consume(d ->
 						LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
 					);
@@ -80,6 +80,7 @@ public class NexusPlay {
 		ReactiveSession<Integer> s1 = p.startSession();
 		nexus.monitor(s1);
 
+		// =========================================================
 
 		p = Processors.emitter();
 		dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
@@ -99,9 +100,10 @@ public class NexusPlay {
 
 
 		ReactiveSession<Integer> s2 = p.startSession();
+
 		nexus.monitor(s2);
 
-
+		// =========================================================
 
 		p = Processors.emitter();
 		dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
