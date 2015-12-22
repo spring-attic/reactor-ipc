@@ -94,9 +94,9 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		serviceMessageHandler.start();
 		serviceMessagePoller.start();
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("Initialized in {} sending mode", isMulticast ? "multicast" : "unicast");
-		}
+		logger.info("subscriber initialized in {} mode, service request channel/streamId: {}",
+				isMulticast ? "multicast" : "unicast",
+				context.senderChannel() + "/" + context.serviceRequestStreamId());
 	}
 
 	public AeronSubscriber(Context context, boolean multiPublishers) {

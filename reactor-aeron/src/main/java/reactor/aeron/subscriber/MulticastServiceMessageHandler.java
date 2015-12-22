@@ -214,7 +214,7 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 					subscriber.subscription.cancel();
 				}
 
-				if (subscriber.isTerminal()) {
+				if (context.autoCancel() || subscriber.isTerminal()) {
 					shutdownTask.accept(null);
 				}
 			}

@@ -16,12 +16,13 @@
 package reactor.aeron.subscriber;
 
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.support.Logger;
+import reactor.aeron.support.AeronUtils;
 import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
@@ -30,6 +31,7 @@ import reactor.core.processor.BaseProcessor;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
+import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
 
 /**
@@ -38,6 +40,12 @@ import reactor.io.buffer.Buffer;
 public class UnicastServiceMessageHandler implements ServiceMessageHandler, ReactiveState.LinkedDownstreams {
 
 	private static final Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
+
+	/**
+	 * Timeout for a subscription to be assigned into {@link InnerSubscriber}
+	 * after it has been subscribed to the processor
+	 */
+	private static final long SUBSCRIPTION_TIMEOUT_NS = TimeUnit.MILLISECONDS.toNanos(100);
 
 	private final BaseProcessor<Buffer, Buffer> processor;
 
@@ -146,7 +154,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 
 			cancel(session);
 
-			if (isTerminal && sessionTracker.getSessionCounter() == 0) {
+			if ((isTerminal || context.autoCancel()) && sessionTracker.getSessionCounter() == 0) {
 				onTerminalEventTask.accept(null);
 			}
 
@@ -206,10 +214,13 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 	}
 
 	private void cancel(UnicastSession session) {
-		if (session.subscription != null) {
+		if (waitTillSubscriptionIsAssigned(session)) {
 			session.subscription.cancel();
 		} else {
-			//TODO: Implement
+			context.errorConsumer().accept(
+					new RuntimeException(String.format(
+							"No subscription for inner subscriber for sessionId: %s was assigned during %d millis",
+							session.getSessionId(), 100)));
 		}
 
 		aeronInfra.close(session.getPublication());
@@ -218,6 +229,20 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 		if (logger.isDebugEnabled()) {
 			logger.debug("Closed session with sessionId: {}", session.getSessionId());
 		}
+	}
+
+	public boolean waitTillSubscriptionIsAssigned(UnicastSession session) {
+		long start = System.nanoTime();
+		if (session.subscription == null) {
+			BackoffIdleStrategy idleStrategy = AeronUtils.newBackoffIdleStrategy();
+			while (session.subscription == null) {
+				idleStrategy.idle(0);
+				if (System.nanoTime() - start > SUBSCRIPTION_TIMEOUT_NS) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	public UnicastSession getOrCreateSession(String sessionId) {

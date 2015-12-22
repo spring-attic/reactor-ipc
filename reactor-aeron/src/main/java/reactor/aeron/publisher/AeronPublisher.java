@@ -103,6 +103,8 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 			}
 		});
 		this.shutdownTask = shutdownTask;
+
+		logger.info("publisher initialized, sessionId: {}", sessionId);
 	}
 
 	protected String getSessionId(Context context) {

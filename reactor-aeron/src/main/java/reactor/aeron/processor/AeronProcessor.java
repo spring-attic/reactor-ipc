@@ -186,6 +186,8 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 		super(context.autoCancel());
 		this.subscriber = createAeronSubscriber(context, multiPublishers);
 		this.publisher = createAeronPublisher(context);
+
+		logger.info("processor initialized");
 	}
 
 	private AeronPublisher createAeronPublisher(Context context) {

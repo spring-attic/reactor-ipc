@@ -18,21 +18,31 @@ package reactor.aeron;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.aeron.support.AeronTestUtils;
+import reactor.aeron.support.SignalPublicationFailedException;
 import reactor.aeron.support.ThreadSnapshot;
+import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
 
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -100,6 +110,110 @@ public abstract class CommonSubscriberPublisherTest {
 		Streams.<Buffer, Throwable>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
 		clientSubscriber.assertErrorReceived();
+	}
+
+	@Test
+	public void testFailedOnNextSignalPublicationIsReported() throws InterruptedException {
+		final CountDownLatch gotErrorLatch = new CountDownLatch(1);
+		final AtomicReference<Throwable> error = new AtomicReference<>();
+		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber").errorConsumer(th -> {
+			gotErrorLatch.countDown();
+			error.set(th);
+		}));
+
+		final byte[] bytes = new byte[2048];
+		Streams.range(1, 100).map(i -> Buffer.wrap(bytes)).subscribe(subscriber);
+
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
+
+		CountDownLatch onNextLatch = new CountDownLatch(1);
+		publisher.subscribe(new BaseSubscriber<Buffer>() {
+			@Override
+			public void onSubscribe(Subscription s) {
+				s.request(Long.MAX_VALUE);
+			}
+
+			@Override
+			public void onNext(Buffer buffer) {
+				try {
+					onNextLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+		});
+
+		assertTrue(gotErrorLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
+		onNextLatch.countDown();
+
+		assertThat(error.get(), Matchers.instanceOf(SignalPublicationFailedException.class));
+	}
+
+	static class TestPublisher implements Publisher<String> {
+
+		private Subscriber<? super String> subscriber;
+
+		private final CountDownLatch cancelledLatch = new CountDownLatch(1);
+
+		@Override
+		public void subscribe(Subscriber<? super String> s) {
+			subscriber = s;
+			s.onSubscribe(new Subscription() {
+				@Override
+				public void request(long n) {
+					subscriber.onNext("" + n);
+				}
+
+				@Override
+				public void cancel() {
+					cancelledLatch.countDown();
+				}
+			});
+		}
+
+		public boolean awaitCancelled(int timeoutSecs) throws InterruptedException {
+			return cancelledLatch.await(timeoutSecs, TimeUnit.SECONDS);
+		}
+
+	}
+
+	@Test
+	public void testUpstreamSubscriptionIsCancelledWhenAutoCancel() throws InterruptedException {
+		TestPublisher valuePublisher = new TestPublisher();
+
+		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber").autoCancel(true));
+		IO.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
+
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(true));
+		DataTestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		IO.bufferToString(publisher).subscribe(client);
+
+		client.requestWithTimeout(1);
+		client.cancel();
+
+
+		assertTrue(valuePublisher.awaitCancelled(TIMEOUT_SECS));
+	}
+
+	@Test
+	public void testUpstreamSubscriptionIsNotCancelledWhenNoAutoCancel() throws InterruptedException {
+		TestPublisher valuePublisher = new TestPublisher();
+
+		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber").autoCancel(false));
+		IO.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
+
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
+		DataTestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		IO.bufferToString(publisher).subscribe(client);
+
+		client.requestWithTimeout(1);
+		client.cancel();
+
+
+		assertFalse(valuePublisher.awaitCancelled(2));
+
+		publisher.shutdown();
+		aeronSubscriber.shutdown();
 	}
 
 }
