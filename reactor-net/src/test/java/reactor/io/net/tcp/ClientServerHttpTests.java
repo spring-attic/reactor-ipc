@@ -141,8 +141,8 @@ public class ClientServerHttpTests {
 		sender.sendNext(10);
 		t2.join();
 		assertThat(data2.size(), is(3));
-		assertThat(split(data2.get(0)), contains("10", "11", "12", "13", "14"));
-		assertThat(split(data2.get(1)), contains("15", "16", "17", "18", "19"));
+		assertThat(split(data2.get(1)), contains("10", "11", "12", "13", "14"));
+		assertThat(split(data2.get(0)), contains("15", "16", "17", "18", "19"));
 		assertThat(data2.get(2), containsString("END"));
 		assertThat(data2.get(2), is("END\n"));
 	}
