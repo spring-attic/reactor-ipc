@@ -26,7 +26,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
 
 import org.reactivestreams.Publisher;
 import reactor.Processors;
@@ -782,13 +781,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		@Override
 		public void log(String category, Level level, String msg, Object... arguments) {
-			String computed = msg;
+			String computed = Logger.format(msg, arguments);
 			ReactiveSession.Emission emission;
-			if (arguments != null && arguments.length != 0) {
-				for (Object argument : arguments) {
-					computed = computed.replaceFirst("\\{\\}", Matcher.quoteReplacement(argument.toString()));
-				}
-			}
+
 			if (arguments != null && arguments.length == 3 && ReactiveStateUtils.isLogging(arguments[2])) {
 				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()) {
 					//System.out.println(emission+ " "+computed);
