@@ -62,6 +62,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		client1.request(3);
 
 		client1.assertNextSignals("1", "2", "3");
+
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client1).toString());
 

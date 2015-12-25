@@ -16,24 +16,14 @@
 package reactor.io.net.tcp;
 
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
 import reactor.Processors;
-import reactor.Subscribers;
-import reactor.Timers;
-import reactor.core.error.CancelException;
 import reactor.core.processor.BaseProcessor;
-import reactor.core.publisher.operator.LogOperator;
+import reactor.core.publisher.PublisherLog;
 import reactor.core.subscription.ReactiveSession;
-import reactor.core.support.ReactiveState;
-import reactor.core.support.ReactiveStateUtils;
-import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
-import reactor.io.net.http.HttpClient;
 import reactor.io.net.nexus.Nexus;
 import reactor.rx.Stream;
 import reactor.rx.Streams;
@@ -67,14 +57,14 @@ public class NexusPlay {
 		//slow subscribers
 		for(int i = 0; i < 2; i++) {
 			dispatched
-					.log("slow",  Level.FINEST, LogOperator.ALL)
+					.log("slow",  Level.FINEST, PublisherLog.ALL)
 					.consume(d ->
 						LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
 					);
 		}
 
 		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, LogOperator.ALL).consume();
+		dispatched.log("fast",  Level.FINEST, PublisherLog.ALL).consume();
 
 
 		ReactiveSession<Integer> s1 = p.startSession();
@@ -88,7 +78,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
 			dispatched
-					.log("slow",  Level.FINEST, LogOperator.ALL)
+					.log("slow",  Level.FINEST, PublisherLog.ALL)
 					//.capacity(5)
 					.consume(d ->
 							LockSupport.parkNanos(100_000_000 * (r.nextInt(80) + 1))
@@ -96,7 +86,7 @@ public class NexusPlay {
 		}
 
 		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, LogOperator.ALL).consume();
+		dispatched.log("fast",  Level.FINEST, PublisherLog.ALL).consume();
 
 
 		ReactiveSession<Integer> s2 = p.startSession();
@@ -111,7 +101,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
 			dispatched
-					.log("slow",  Level.FINEST, LogOperator.ALL)
+					.log("slow",  Level.FINEST, PublisherLog.ALL)
 					//.capacity(5)
 					.consume(d ->
 							LockSupport.parkNanos(1000_000_000)
