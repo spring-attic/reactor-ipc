@@ -42,8 +42,7 @@ import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.core.support.internal.PlatformDependent;
-import reactor.core.support.wait.BlockingWaitStrategy;
-import reactor.core.support.wait.WaitStrategy;
+import reactor.core.support.WaitStrategy;
 import reactor.core.timer.Timer;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
@@ -129,7 +128,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.group = Processors.asyncGroup("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
 			@Override
 			public WaitStrategy get() {
-				return new BlockingWaitStrategy();
+				return new WaitStrategy.Blocking();
 			}
 		});
 
@@ -390,7 +389,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	protected Publisher<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
 
 		if (logExtensionEnabled) {
-			BaseProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256, new BlockingWaitStrategy());
+			BaseProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
