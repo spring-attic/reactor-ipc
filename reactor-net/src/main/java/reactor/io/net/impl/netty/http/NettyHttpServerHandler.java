@@ -18,6 +18,7 @@ package reactor.io.net.impl.netty.http;
 
 import java.io.IOException;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -34,10 +35,8 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Publishers;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
-import reactor.io.net.impl.netty.NettyBuffer;
 import reactor.io.net.impl.netty.NettyChannel;
 import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
 
@@ -52,7 +51,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 	protected     NettyHttpChannel request;
 
 	public NettyHttpServerHandler(
-			ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+			ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler,
 			NettyChannel tcpStream) {
 		super(handler, tcpStream);
 		this.tcpStream = tcpStream;
@@ -96,6 +95,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 			channelSubscriber = null;
 		}
 	}
+	
 	protected void writeLast(ChannelHandlerContext ctx){
 		ctx
 		  .writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
@@ -104,11 +104,8 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
 	@Override
 	protected ChannelFuture doOnWrite(final Object data, final ChannelHandlerContext ctx) {
-		if (Buffer.class.isAssignableFrom(data.getClass())) {
-			if(NettyBuffer.class.equals(data.getClass())){
-				return ctx.write(((NettyBuffer)data).get());
-			}
-			return ctx.write(new DefaultHttpContent(convertBufferToByteBuff(ctx, (Buffer) data)));
+		if (ByteBuf.class.isAssignableFrom(data.getClass())) {
+			return ctx.write(new DefaultHttpContent((ByteBuf) data));
 		} else {
 			return ctx.write(data);
 		}

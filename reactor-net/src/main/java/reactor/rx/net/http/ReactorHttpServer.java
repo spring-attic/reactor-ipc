@@ -125,7 +125,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final ReactorHttpServer<IN, OUT> get(String path,
+	public final ReactorHttpServer<IN, OUT>  get(String path,
 	                                    final ReactorHttpHandler<IN, OUT> handler) {
 		peer.get(path, HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
 		return this;

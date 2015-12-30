@@ -176,7 +176,7 @@ public class TcpServerTests {
 				.reuseAddr(true)
 				.tcpNoDelay(true))
 			  .listen(port)
-			  .preprocessor(CodecPreprocessor.from(new LengthFieldCodec<>(StandardCodecs.BYTE_ARRAY_CODEC)))
+			  .preprocessor(CodecPreprocessor.from(null)) //new LengthFieldCodec<>(StandardCodecs.BYTE_ARRAY_CODEC)
 		);
 
 		System.out.println(latch.getCount());
@@ -236,7 +236,7 @@ public class TcpServerTests {
 			    .reuseAddr(true)
 			    .tcpNoDelay(true))
 			  .listen(port)
-			  .preprocessor(CodecPreprocessor.from(new FrameCodec(2, FrameCodec.LengthField.SHORT)))
+			  .preprocessor(CodecPreprocessor.from(null)) // new FrameCodec(2, FrameCodec.LengthField.SHORT)
 		);
 
 		server.start(ch -> {
@@ -278,7 +278,7 @@ public class TcpServerTests {
 
 		ReactorTcpServer<Buffer, Buffer> server = NetStreams.tcpServer(s ->
 			s.listen(port)
-			  .preprocessor(CodecPreprocessor.passthrough())
+			  .preprocessor(null) //CodecPreprocessor.passthrough()
 		);
 
 		server.start(ch -> {
@@ -318,7 +318,7 @@ public class TcpServerTests {
 			  .options(new NettyServerSocketOptions()
 			    .pipelineConfigurer(pipeline -> pipeline.addLast(new LineBasedFrameDecoder(8 * 1024))))
 			  .listen(port)
-			  .preprocessor(CodecPreprocessor.string())
+			  .preprocessor(null) //CodecPreprocessor.string()
 		);
 
 		server.start(serverHandler).await();
@@ -388,7 +388,7 @@ public class TcpServerTests {
 
 		//create a server dispatching data on the default shared dispatcher, and serializing/deserializing as string
 		ReactorHttpServer<String, String> httpServer = NetStreams.httpServer(server -> server
-		  .httpProcessor(CodecPreprocessor.string())
+		  .httpProcessor(null) //CodecPreprocessor.string()
 		  .listen(0)
 		  );
 
@@ -429,7 +429,7 @@ public class TcpServerTests {
 		ReactorTcpServer<String, String> server =
 		  NetStreams.tcpServer(s ->
 			  s
-				.preprocessor(CodecPreprocessor.string())
+				.preprocessor(null) //CodecPreprocessor.string()
 				.listen(0)
 		  );
 
@@ -444,7 +444,7 @@ public class TcpServerTests {
 		ReactorTcpClient<String, String> client =
 		  NetStreams.tcpClient(s ->
 			  s
-				.preprocessor(CodecPreprocessor.string())
+				.preprocessor(null) //CodecPreprocessor.string()
 				.connect("127.0.0.1", server.getListenAddress().getPort())
 		  );
 

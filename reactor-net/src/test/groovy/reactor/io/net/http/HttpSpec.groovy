@@ -45,7 +45,6 @@ class HttpSpec extends Specification {
 	server.post('/test/{param}') {
 	  HttpChannelStream<String, String> req
 		->
-
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
 

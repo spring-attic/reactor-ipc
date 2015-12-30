@@ -213,6 +213,7 @@ project('reactor-net') {
 
 		// Testing
 		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
+		testCompile "io.netty:netty-all:$nettyVersion"
 		testCompile "org.apache.httpcomponents:fluent-hc:4.3.6"
 		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
 	  	testCompile "io.reactivex:rxjava:$rxJavaVersion"
