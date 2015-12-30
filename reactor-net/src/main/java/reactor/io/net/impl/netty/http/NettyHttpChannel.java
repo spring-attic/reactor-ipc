@@ -68,6 +68,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 		this.tcpStream = tcpStream;
 		this.nettyRequest = request;
 		this.nettyResponse = new DefaultHttpResponse(request.getProtocolVersion(), HttpResponseStatus.OK);
+
 		this.headers = new NettyHttpHeaders(request);
 		this.responseHeaders = new NettyHttpResponseHeaders(this.nettyResponse);
 

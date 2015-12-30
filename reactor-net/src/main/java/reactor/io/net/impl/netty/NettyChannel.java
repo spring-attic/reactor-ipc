@@ -48,9 +48,11 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  * @since 2.1
  */
 public class NettyChannel
-		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,
+		implements ReactiveChannel<Buffer, Buffer>,
+				   Publisher<Buffer>,
 		           ReactiveState.Named,
-		           ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
+		           ReactiveState.FeedbackLoop,
+				   ReactiveState.ActiveUpstream {
 
 	private final Channel ioChannel;
 	private final long    prefetch;

@@ -96,6 +96,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 			channelSubscriber = null;
 		}
 	}
+	
 	protected void writeLast(ChannelHandlerContext ctx){
 		ctx
 		  .writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
