@@ -31,7 +31,7 @@ import java.net.InetSocketAddress;
  * When a drained Publisher completes or error, the channel will automatically "flush" its pending writes.
  *
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public interface ReactiveChannel<IN, OUT>  {
 

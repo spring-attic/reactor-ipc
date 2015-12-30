@@ -44,7 +44,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpServer;
 /**
  * A Netty-based {@code HttpServer} implementation
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements ReactiveState.FeedbackLoop{
 

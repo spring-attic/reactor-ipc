@@ -54,7 +54,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpClient;
 /**
  * A Netty-based {@code HttpClient}.
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements ReactiveState.FeedbackLoop {
 

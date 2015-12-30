@@ -45,7 +45,7 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
 /**
  * {@link ReactiveChannel} implementation that delegates to Netty.
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public class NettyChannel
 		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,

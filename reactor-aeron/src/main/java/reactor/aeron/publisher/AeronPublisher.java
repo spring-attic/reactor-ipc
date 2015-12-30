@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Anatoly Kadyshev
- * @since 2.1
+ * @since 2.5
  */
 public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstream {
 

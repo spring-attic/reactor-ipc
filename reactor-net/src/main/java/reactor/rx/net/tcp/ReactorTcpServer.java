@@ -32,7 +32,7 @@ import reactor.rx.Promises;
  * @param <IN>   the type of the received data
  * @param <OUT>  the type of replied data
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public final class ReactorTcpServer<IN, OUT> extends ReactorPeer<IN, OUT, TcpServer<IN, OUT>> {
 

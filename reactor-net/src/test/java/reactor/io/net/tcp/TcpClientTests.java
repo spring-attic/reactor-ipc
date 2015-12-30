@@ -69,7 +69,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public class TcpClientTests {
 

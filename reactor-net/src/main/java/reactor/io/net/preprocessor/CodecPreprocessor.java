@@ -43,7 +43,7 @@ import reactor.io.net.http.model.Transfer;
 
 /**
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public final class CodecPreprocessor<IN, OUT>
 		implements Preprocessor<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>, IN, OUT, ReactiveChannel<IN, OUT>>,

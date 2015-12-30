@@ -59,7 +59,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  * A Netty-based {@code TcpServer} implementation
  *
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements ReactiveState.LinkedDownstreams {
 

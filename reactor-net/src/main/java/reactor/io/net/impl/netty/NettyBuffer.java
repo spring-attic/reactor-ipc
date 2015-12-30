@@ -21,7 +21,7 @@ import reactor.io.buffer.Buffer;
 
 /**
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public final class NettyBuffer extends Buffer {
 

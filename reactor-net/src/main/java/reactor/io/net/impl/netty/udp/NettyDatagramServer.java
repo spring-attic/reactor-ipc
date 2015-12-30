@@ -62,7 +62,7 @@ import reactor.io.net.udp.DatagramServer;
  * {@link DatagramServer} implementation built on Netty.
  *
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 

@@ -34,7 +34,7 @@ import reactor.io.net.http.model.Transfer;
  * URI, method, websocket...
  *
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public interface HttpChannel<IN, OUT> extends ReactiveChannel<IN, OUT> {
 

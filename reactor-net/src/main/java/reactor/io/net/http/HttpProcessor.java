@@ -29,7 +29,7 @@ import reactor.io.net.ReactivePeer;
  * @param <IN>  the type of the received data
  * @param <OUT> the type of replied data
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public interface HttpProcessor<IN, OUT, CONN extends HttpChannel<IN, OUT>,
 		NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>> {

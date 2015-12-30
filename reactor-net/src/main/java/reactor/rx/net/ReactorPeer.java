@@ -28,7 +28,7 @@ import reactor.rx.Promises;
  * @param <OUT> The type that will be sent by this server
  *
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public abstract class ReactorPeer<IN, OUT, PEER extends ReactivePeer<IN, OUT, ? extends ReactiveChannel<IN, OUT>>> {
 

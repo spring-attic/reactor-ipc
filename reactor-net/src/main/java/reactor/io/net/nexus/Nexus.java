@@ -61,7 +61,7 @@ import static reactor.core.support.ReactiveStateUtils.property;
 
 /**
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>
 		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, ReactiveState.FeedbackLoop {

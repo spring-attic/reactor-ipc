@@ -31,7 +31,7 @@ import reactor.rx.Streams;
  * @param <OUT> The type that will be sent by this client
  *
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpClient<IN, OUT>> {
 

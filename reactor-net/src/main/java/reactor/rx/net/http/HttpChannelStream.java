@@ -38,7 +38,7 @@ import reactor.rx.Streams;
  * A Request/Response {@link ChannelStream} extension that provides for several helpers to
  * control HTTP behavior and observe its metadata.
  * @author Stephane maldini
- * @since 2.1
+ * @since 2.5
  */
 public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implements HttpChannel<IN, OUT> {
 

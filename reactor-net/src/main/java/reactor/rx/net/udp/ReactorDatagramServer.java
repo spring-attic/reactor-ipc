@@ -30,7 +30,7 @@ import reactor.rx.Promises;
 
 /**
  * @author Stephane Maldini
- * @since 2.1
+ * @since 2.5
  */
 public class ReactorDatagramServer<IN, OUT> extends ReactorPeer<IN, OUT, DatagramServer<IN, OUT>> {
 

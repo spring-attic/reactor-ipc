@@ -46,7 +46,7 @@ import reactor.io.net.udp.DatagramServer;
  *
  * @author Stephane Maldini
  * @author Jon Brisbin
- * @since 2.0, 2.1
+ * @since 2.0, 2.5
  */
 public interface Spec {
 
