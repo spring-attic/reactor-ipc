@@ -18,6 +18,7 @@ package reactor.io.net.impl.netty.http;
 
 import java.net.InetSocketAddress;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -43,6 +44,7 @@ import reactor.io.net.http.model.ResponseHeaders;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
 import reactor.io.net.impl.netty.NettyChannel;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 
@@ -50,8 +52,8 @@ import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
-		implements Publisher<Buffer>, ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
+public abstract class NettyHttpChannel extends BaseHttpChannel<ByteBuf, ByteBuf>
+		implements Publisher<ByteBuf>, ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
 
 	private static final FullHttpResponse CONTINUE =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
@@ -76,7 +78,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	}
 
 	@Override
-	public Publisher<Buffer> input() {
+	public Publisher<ByteBuf> input() {
 		return this;
 	}
 
@@ -101,7 +103,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	}
 
 	@Override
-	public void subscribe(final Subscriber<? super Buffer> subscriber) {
+	public void subscribe(final Subscriber<? super ByteBuf> subscriber) {
 		// Handle the 'Expect: 100-continue' header if necessary.
 		// TODO: Respond with 413 Request Entity Too Large
 		//   and discard the traffic or close the connection.
@@ -138,13 +140,15 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 
 
 	@Override
-	protected Publisher<Void> writeWithAfterHeaders(Publisher<? extends Buffer> writer) {
+	protected Publisher<Void> writeWithAfterHeaders(Publisher<? extends ByteBuf> writer) {
 		return tcpStream.writeWith(writer);
 	}
 
 	@Override
 	protected Publisher<Void> writeWithBufferAfterHeaders(Publisher<? extends Buffer> s) {
-		return tcpStream.writeBufferWith(s);
+		// return tcpStream.writeBufferWith(s);
+		// TODO
+		throw new NotImplementedException();
 	}
 
 	@Override
@@ -205,7 +209,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	}
 
 	@Override
-	public HttpChannel<Buffer, Buffer> transfer(Transfer transfer) {
+	public HttpChannel<ByteBuf, ByteBuf> transfer(Transfer transfer) {
 		switch (transfer) {
 			case EVENT_STREAM:
 				this.responseHeader(ResponseHeaders.CONTENT_TYPE, "text/event-stream");
@@ -270,7 +274,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	}
 
 	@Override
-	public HttpChannel<Buffer, Buffer> keepAlive(boolean keepAlive) {
+	public HttpChannel<ByteBuf, ByteBuf> keepAlive(boolean keepAlive) {
 		responseHeaders.keepAlive(keepAlive);
 		return this;
 	}

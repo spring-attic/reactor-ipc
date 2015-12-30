@@ -23,6 +23,7 @@ import java.net.ProtocolFamily;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -48,7 +49,6 @@ import reactor.core.error.Exceptions;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.SignalType;
 import reactor.core.timer.Timer;
-import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.config.ServerSocketOptions;
@@ -64,7 +64,7 @@ import reactor.io.net.udp.DatagramServer;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
+public class NettyDatagramServer extends DatagramServer<ByteBuf, ByteBuf> {
 
 	private final static Logger log = Logger.getLogger(NettyDatagramServer.class);
 
@@ -149,7 +149,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Publisher<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> channelHandler) {
+	protected Publisher<Void> doStart(final ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> channelHandler) {
 		return new Publisher<Void>(){
 
 			@Override
@@ -251,7 +251,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 		};
 	}
 
-	protected void bindChannel(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+	protected void bindChannel(ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler,
 			Object _ioChannel) {
 		DatagramChannel ioChannel = (DatagramChannel) _ioChannel;
 		NettyChannel netChannel = new NettyChannel(

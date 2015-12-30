@@ -16,23 +16,15 @@
 
 package reactor.io.net.impl.netty.http;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.*;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
-import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.impl.netty.NettyBuffer;
-import reactor.io.net.impl.netty.NettyChannel;
 
 /**
  * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link Buffer}).
@@ -41,75 +33,74 @@ import reactor.io.net.impl.netty.NettyChannel;
  */
 public class NettyHttpWSServerHandler extends NettyHttpServerHandler {
 
-	private final WebSocketServerHandshaker handshaker;
+    private final WebSocketServerHandshaker handshaker;
 
-	final ChannelFuture handshakerResult;
+    final ChannelFuture handshakerResult;
 
-	public NettyHttpWSServerHandler(String wsUrl,
-			String protocols,
-			NettyHttpServerHandler originalHandler
-	) {
-		super(originalHandler.getHandler(), originalHandler.getReactorNettyChannel());
-		this.request = originalHandler.request;
+    public NettyHttpWSServerHandler(String wsUrl,
+                                    String protocols,
+                                    NettyHttpServerHandler originalHandler
+    ) {
+        super(originalHandler.getHandler(), originalHandler.getReactorNettyChannel());
+        this.request = originalHandler.request;
 
-		// Handshake
-		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(wsUrl, protocols, true);
-		handshaker = wsFactory.newHandshaker(request.getNettyRequest());
-		if (handshaker == null) {
-			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(reactorNettyChannel.delegate());
-			handshakerResult = null;
-		}
-		else {
-			request.responseHeaders().removeTransferEncodingChunked();
-			handshakerResult = handshaker.handshake(
-					reactorNettyChannel.delegate(),
-					request.getNettyRequest(),
-					request.responseHeaders().delegate(),
-					reactorNettyChannel.delegate().newPromise());
-		}
-	}
+        // Handshake
+        WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(wsUrl, protocols, true);
+        handshaker = wsFactory.newHandshaker(request.getNettyRequest());
+        if (handshaker == null) {
+            WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(reactorNettyChannel.delegate());
+            handshakerResult = null;
+        } else {
+            request.responseHeaders().removeTransferEncodingChunked();
+            handshakerResult = handshaker.handshake(
+                reactorNettyChannel.delegate(),
+                request.getNettyRequest(),
+                request.responseHeaders().delegate(),
+                reactorNettyChannel.delegate().newPromise());
+        }
+    }
 
-	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object frame) throws Exception {
-		if (CloseWebSocketFrame.class.equals(frame.getClass())) {
-			handshaker.close(ctx.channel(), ((CloseWebSocketFrame) frame).retain());
-			if(channelSubscriber != null) {
-				channelSubscriber.onComplete();
-				channelSubscriber = null;
-			}
-			return;
-		}
-		if (PingWebSocketFrame.class.isAssignableFrom(frame.getClass())) {
-			ctx.channel().write(new PongWebSocketFrame(((PingWebSocketFrame)frame).content().retain()));
-			return;
-		}
-		doRead(ctx, ((WebSocketFrame)frame).content());
-	}
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object frame) throws Exception {
+        if (CloseWebSocketFrame.class.equals(frame.getClass())) {
+            handshaker.close(ctx.channel(), ((CloseWebSocketFrame) frame).retain());
+            if (channelSubscriber != null) {
+                channelSubscriber.onComplete();
+                channelSubscriber = null;
+            }
+            return;
+        }
+        if (PingWebSocketFrame.class.isAssignableFrom(frame.getClass())) {
+            ctx.channel().write(new PongWebSocketFrame(((PingWebSocketFrame) frame).content().retain()));
+            return;
+        }
+        doRead(ctx, ((WebSocketFrame) frame).content());
+    }
 
-	protected void writeLast(ChannelHandlerContext ctx){
-		ChannelFuture f = ctx.channel().writeAndFlush(new CloseWebSocketFrame());
-	if (!request.isKeepAlive() || request.responseStatus() != Status.OK) {
-			f.addListener(ChannelFutureListener.CLOSE);
-		}
-	}
+    protected void writeLast(ChannelHandlerContext ctx) {
+        ChannelFuture f = ctx.channel().writeAndFlush(new CloseWebSocketFrame());
+        if (!request.isKeepAlive() || request.responseStatus() != Status.OK) {
+            f.addListener(ChannelFutureListener.CLOSE);
+        }
+    }
 
-	@Override
-	protected ChannelFuture doOnWrite(final Object data, final ChannelHandlerContext ctx) {
-		return writeWS(data, ctx);
-	}
+    @Override
+    protected ChannelFuture doOnWrite(final Object data, final ChannelHandlerContext ctx) {
+        return writeWS(data, ctx);
+    }
 
-	static ChannelFuture writeWS(final Object data, ChannelHandlerContext ctx){
-		if (Buffer.class.isAssignableFrom(data.getClass())) {
-			if(!(StringBuffer.class.equals(data.getClass()))) {
-				if(NettyBuffer.class.equals(data.getClass())) {
-					return ctx.write(((NettyBuffer)data).get());
-				}
-				return ctx.write(new BinaryWebSocketFrame(convertBufferToByteBuff(ctx, (Buffer) data)));
-			}else{
-				return ctx.write(new TextWebSocketFrame(convertBufferToByteBuff(ctx, (Buffer) data)));
-			}
-		} else {
-			return ctx.write(data);
-		}
-	}
+    static ChannelFuture writeWS(final Object data, ChannelHandlerContext ctx) {
+        if (Buffer.class.isAssignableFrom(data.getClass())) {
+            if (!(StringBuffer.class.equals(data.getClass()))) {
+                if (NettyBuffer.class.equals(data.getClass())) {
+                    return ctx.write(((NettyBuffer) data).get());
+                }
+                return ctx.write(new BinaryWebSocketFrame((ByteBuf) data));
+            } else {
+                return ctx.write(new TextWebSocketFrame((ByteBuf) data));
+            }
+        } else {
+            return ctx.write(data);
+        }
+    }
 }

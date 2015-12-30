@@ -253,7 +253,7 @@ public class ClientServerHttpTests {
 
 		DummyListCodec codec = new DummyListCodec();
 		httpServer = NetStreams.httpServer(server -> server
-				.httpProcessor(CodecPreprocessor.from(codec)).listen(0));
+				.httpProcessor(null).listen(0)); //CodecPreprocessor.from(codec)
 
 		httpServer.get("/data", (request) -> {
 			request.responseHeaders().removeTransferEncodingChunked();

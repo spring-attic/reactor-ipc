@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -52,7 +53,6 @@ import reactor.fn.Supplier;
 import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
-import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.Reconnect;
@@ -71,7 +71,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements ReactiveState.LinkedDownstreams {
+public class NettyTcpClient extends TcpClient<ByteBuf, ByteBuf> implements ReactiveState.LinkedDownstreams {
 
 	private static final Logger log = Logger.getLogger(NettyTcpClient.class);
 
@@ -186,10 +186,10 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected Publisher<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
+	protected Publisher<Void> doStart(final ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler) {
 
-		final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> targetHandler =
-				null == handler ? (ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>) PING :
+		final ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> targetHandler =
+				null == handler ? (ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>>) PING :
 						handler;
 
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
@@ -217,7 +217,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 	}
 
 	@Override
-	protected Publisher<Tuple2<InetSocketAddress, Integer>> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+	protected Publisher<Tuple2<InetSocketAddress, Integer>> doStart(final ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler,
 			final Reconnect reconnect) {
 
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
@@ -254,7 +254,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 		  .addFirst(new SslHandler(ssl));
 	}
 
-	protected void bindChannel(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+	protected void bindChannel(ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler,
 			SocketChannel ch) throws Exception {
 
 		if (null != getSslOptions()) {

@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -48,8 +49,8 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  * @since 2.1
  */
 public class NettyChannel
-		implements ReactiveChannel<Buffer, Buffer>,
-				   Publisher<Buffer>,
+		implements ReactiveChannel<ByteBuf, ByteBuf>,
+				   Publisher<ByteBuf>,
 		           ReactiveState.Named,
 		           ReactiveState.FeedbackLoop,
 				   ReactiveState.ActiveUpstream {
@@ -63,17 +64,18 @@ public class NettyChannel
 	}
 
 	@Override
-	public Publisher<Void> writeWith(final Publisher<? extends Buffer> dataStream) {
+	public Publisher<Void> writeWith(final Publisher<? extends ByteBuf> dataStream) {
 		return new PostWritePublisher(dataStream);
 	}
 
 	@Override
 	public Publisher<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
-		return writeWith(dataStream);
+		// TODO
+        return null;
 	}
 
 	@Override
-	public Publisher<Buffer> input() {
+	public Publisher<ByteBuf> input() {
 		return this;
 	}
 
@@ -104,13 +106,13 @@ public class NettyChannel
 	}
 
 	@Override
-	public void subscribe(Subscriber<? super Buffer> subscriber) {
+	public void subscribe(Subscriber<? super ByteBuf> subscriber) {
 		try {
 			ioChannel.pipeline()
 			         .fireUserEventTriggered(new NettyChannelHandlerBridge.ChannelInputSubscriber(subscriber, prefetch));
 		}
 		catch (Throwable throwable) {
-			Publishers.<Buffer>error(throwable).subscribe(subscriber);
+			Publishers.<ByteBuf>error(throwable).subscribe(subscriber);
 		}
 	}
 
@@ -315,9 +317,9 @@ public class NettyChannel
 
 	private class PostWritePublisher implements Publisher<Void>, Upstream, FeedbackLoop {
 
-		private final Publisher<? extends Buffer> dataStream;
+		private final Publisher<? extends ByteBuf> dataStream;
 
-		public PostWritePublisher(Publisher<? extends Buffer> dataStream) {
+		public PostWritePublisher(Publisher<? extends ByteBuf> dataStream) {
 			this.dataStream = dataStream;
 		}
 

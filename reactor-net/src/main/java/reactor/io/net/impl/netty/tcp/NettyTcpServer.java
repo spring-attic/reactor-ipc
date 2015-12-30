@@ -22,6 +22,7 @@ import java.util.Iterator;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -43,7 +44,6 @@ import reactor.Publishers;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
-import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.config.CommonSocketOptions;
@@ -61,7 +61,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements ReactiveState.LinkedDownstreams {
+public class NettyTcpServer extends TcpServer<ByteBuf, ByteBuf> implements ReactiveState.LinkedDownstreams {
 
 	private final static Logger log = Logger.getLogger(NettyTcpServer.class);
 
@@ -153,7 +153,7 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements Reactiv
 	}
 
 	@Override
-	protected Publisher<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
+	protected Publisher<Void> doStart(final ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler) {
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
@@ -231,7 +231,7 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements Reactiv
 		return shutdown;
 	}
 
-	protected void bindChannel(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler, SocketChannel
+	protected void bindChannel(ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler, SocketChannel
 	  nativeChannel) {
 
 		NettyChannel netChannel = new NettyChannel(

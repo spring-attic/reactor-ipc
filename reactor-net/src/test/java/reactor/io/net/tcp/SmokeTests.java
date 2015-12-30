@@ -94,7 +94,7 @@ public class SmokeTests {
 	private final ReactiveNet.HttpClientFactory<String, String> clientFactory =
 	  spec -> spec
 		.options(nettyOptions)
-		.httpProcessor(CodecPreprocessor.string())
+		.httpProcessor(null) //CodecPreprocessor.string()
 		.connect("localhost", httpServer.getListenAddress().getPort());
 
 	@SuppressWarnings("unchecked")
@@ -281,7 +281,7 @@ public class SmokeTests {
 		  .process(workProcessor);
 
 		httpServer = NetStreams.httpServer(server -> server
-			.httpProcessor(CodecPreprocessor.from(codec)).listen(port)
+			.httpProcessor(null).listen(port) //CodecPreprocessor.from(codec)
 		);
 
 		httpServer.get("/data", (request) -> {

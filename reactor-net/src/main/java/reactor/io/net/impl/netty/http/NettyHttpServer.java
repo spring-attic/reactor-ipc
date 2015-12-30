@@ -18,6 +18,7 @@ package reactor.io.net.impl.netty.http;
 
 import java.net.InetSocketAddress;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -46,7 +47,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpServer;
  * @author Stephane Maldini
  * @since 2.1
  */
-public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements ReactiveState.FeedbackLoop{
+public class NettyHttpServer extends HttpServer<ByteBuf, ByteBuf> implements ReactiveState.FeedbackLoop{
 
 	private static final Logger log = Logger.getLogger(NettyHttpServer.class);
 
@@ -67,10 +68,10 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 
 	@Override
 	protected Publisher<Void> doStart(
-			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> defaultHandler) {
-		return server.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
+			final ReactiveChannelHandler<ByteBuf, ByteBuf, HttpChannel<ByteBuf, ByteBuf>> defaultHandler) {
+		return server.start(new ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>>() {
 			@Override
-			public Publisher<Void> apply(ReactiveChannel<Buffer, Buffer> ch) {
+			public Publisher<Void> apply(ReactiveChannel<ByteBuf, ByteBuf> ch) {
 				NettyHttpChannel request = (NettyHttpChannel) ch;
 
 				try {
@@ -161,7 +162,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 	}
 
 	protected void bindChannel(
-			ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+			ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler,
 			SocketChannel nativeChannel) {
 
 		NettyChannel netChannel =
@@ -190,7 +191,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 
 		@Override
 		protected void bindChannel(
-				ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+				ReactiveChannelHandler<ByteBuf, ByteBuf, ReactiveChannel<ByteBuf, ByteBuf>> handler,
 				SocketChannel nativeChannel) {
 			NettyHttpServer.this.bindChannel(handler, nativeChannel);
 		}

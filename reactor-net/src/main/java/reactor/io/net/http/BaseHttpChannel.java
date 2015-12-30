@@ -19,6 +19,7 @@ package reactor.io.net.http;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
+import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -30,6 +31,7 @@ import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * An HTTP {@link HttpChannel} extension that provides Headers status check and optional
@@ -224,7 +226,9 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 
 	@Override
 	public Publisher<Void> writeBufferWith(final Publisher<? extends Buffer> dataStream) {
-		return new PostBufferWritePublisher(dataStream);
+		// return new PostBufferWritePublisher(dataStream);
+		// TODO
+		throw new NotImplementedException();
 	}
 
 	@Override
@@ -334,80 +338,4 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 		}
 	}
 
-	private class PostBufferWritePublisher implements Publisher<Void>, Upstream, FeedbackLoop {
-
-		private final Publisher<? extends Buffer> dataStream;
-
-		public PostBufferWritePublisher(Publisher<? extends Buffer> dataStream) {
-			this.dataStream = dataStream;
-		}
-
-		@Override
-		public void subscribe(final Subscriber<? super Void> s) {
-			if(markHeadersAsFlushed()){
-				doSubscribeHeaders(new PostHeaderWriteBufferSubscriber(s));
-			}
-			else{
-				writeWithBufferAfterHeaders(dataStream).subscribe(s);
-			}
-		}
-
-		@Override
-		public Object delegateInput() {
-			return BaseHttpChannel.this;
-		}
-
-		@Override
-		public Object delegateOutput() {
-			return BaseHttpChannel.this;
-		}
-
-		@Override
-		public Object upstream() {
-			return dataStream;
-		}
-
-		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Downstream, Upstream {
-
-			private final Subscriber<? super Void> s;
-			private Subscription subscription;
-
-			public PostHeaderWriteBufferSubscriber(Subscriber<? super Void> s) {
-				this.s = s;
-			}
-
-			@Override
-			public void onSubscribe(Subscription sub) {
-				this.subscription = sub;
-				sub.request(Long.MAX_VALUE);
-			}
-
-			@Override
-			public void onNext(Void aVoid) {
-				//Ignore
-			}
-
-			@Override
-			public Subscriber downstream() {
-				return s;
-			}
-
-			@Override
-			public Object upstream() {
-				return subscription;
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				this.subscription = null;
-				s.onError(t);
-			}
-
-			@Override
-			public void onComplete() {
-				this.subscription = null;
-				writeWithBufferAfterHeaders(dataStream).subscribe(s);
-			}
-		}
-	}
 }
