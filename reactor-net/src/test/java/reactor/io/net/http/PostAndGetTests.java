@@ -97,7 +97,7 @@ public class PostAndGetTests {
 
 	private void get(String path, SocketAddress address) {
 		try {
-			StringBuilder request = new StringBuilder().append(String.format("GET %s HTTP/1.1\r\n", path)).append
+            StringBuilder request = new StringBuilder().append(String.format("GET %s HTTP/1.1\r\n", path)).append
 			  ("Connection: Keep-Alive\r\n").append("\r\n");
 			java.nio.channels.SocketChannel channel = java.nio.channels.SocketChannel.open(address);
 			System.out.println(String.format("get: request >> [%s]", request.toString()));
