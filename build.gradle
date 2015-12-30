@@ -216,8 +216,7 @@ project('reactor-net') {
 		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
 	  	testCompile "io.reactivex:rxjava:$rxJavaVersion"
 
-		testRuntime "io.projectreactor:reactor-logback:$reactorVersion"
-				"org.slf4j:jcl-over-slf4j:$slf4jVersion"
+		testRuntime "org.slf4j:jcl-over-slf4j:$slf4jVersion"
 	}
 
 	jar {
