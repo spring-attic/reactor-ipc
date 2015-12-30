@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.io.net.tcp;
+package reactor.io.net.http;
 
 import java.util.ArrayList;
 import java.util.Arrays;
