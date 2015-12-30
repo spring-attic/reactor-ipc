@@ -19,7 +19,6 @@ package reactor.io.codec;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.Publishers;
-import reactor.core.publisher.PublisherFactory;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
@@ -92,7 +91,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 	 * @since 2.0.4
 	 */
 	public Publisher<IN> decode(final Publisher<SRC> publisherToDecode) {
-		return PublisherFactory.lift(publisherToDecode, new DecoderOperator());
+		return Publishers.lift(publisherToDecode, new DecoderOperator());
 	}
 
 	/**
@@ -129,7 +128,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 	 */
 	@SuppressWarnings("unchecked")
 	public Publisher<SRC> encode(Publisher<? extends OUT> publisherToEncode) {
-		return PublisherFactory.lift((Publisher<OUT>)publisherToEncode, new EncoderOperator());
+		return Publishers.lift((Publisher<OUT>)publisherToEncode, new EncoderOperator());
 	}
 
 	/**
