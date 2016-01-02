@@ -19,7 +19,7 @@ package reactor.io.net;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
-import reactor.Publishers;
+import reactor.Flux;
 import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple2;
 
@@ -37,7 +37,7 @@ public abstract class ReactiveClient<IN, OUT, CONN extends ReactiveChannel<IN, O
 	public static final ReactiveChannelHandler PING = new ReactiveChannelHandler() {
 		@Override
 		public Object apply(Object o) {
-			return Publishers.empty();
+			return Flux.empty();
 		}
 	};
 

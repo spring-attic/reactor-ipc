@@ -35,8 +35,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Publishers;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.ReactiveState;
-import reactor.core.support.SignalType;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -128,7 +128,7 @@ public class NettyChannel
 		final ChannelFutureListener postWriteListener = new ChannelFutureListener() {
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
-				postWriter.onSubscribe(SignalType.NOOP_SUBSCRIPTION);
+				postWriter.onSubscribe(EmptySubscription.INSTANCE);
 				if (future.isSuccess()) {
 					postWriter.onComplete();
 				}
@@ -325,7 +325,7 @@ public class NettyChannel
 				emitWriter(dataStream, s);
 			}
 			catch (Throwable throwable) {
-				Publishers.<Void>error(throwable).subscribe(s);
+				EmptySubscription.error(s, throwable);
 			}
 		}
 

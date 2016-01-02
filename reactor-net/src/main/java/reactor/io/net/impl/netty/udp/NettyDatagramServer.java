@@ -43,10 +43,10 @@ import io.netty.util.NetUtil;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.Logger;
 import reactor.core.error.Exceptions;
 import reactor.core.support.NamedDaemonThreadFactory;
-import reactor.core.support.SignalType;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -167,7 +167,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 				future.addListener(new ChannelFutureListener() {
 					@Override
 					public void operationComplete(ChannelFuture future) throws Exception {
-						subscriber.onSubscribe(SignalType.NOOP_SUBSCRIPTION);
+						subscriber.onSubscribe(EmptySubscription.INSTANCE);
 						if (future.isSuccess()) {
 							log.info("BIND {}", future.channel().localAddress());
 							channel = (DatagramChannel) future.channel();

@@ -42,8 +42,8 @@ import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.Flux;
 import reactor.core.support.Logger;
-import reactor.Publishers;
 import reactor.core.support.BackpressureUtils;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
@@ -237,7 +237,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 	protected Publisher<Void> doShutdown() {
 
 		if (nettyOptions != null && nettyOptions.eventLoopGroup() != null) {
-			return Publishers.empty();
+			return Flux.empty();
 		}
 
 		return new NettyChannel.FuturePublisher<Future<?>>(ioGroup.shutdownGracefully());

@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
+import reactor.Flux;
 import reactor.Publishers;
 import reactor.core.error.CancelException;
 import reactor.fn.Function;
@@ -356,7 +357,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		}
 		while (selected.hasNext());
 
-		return Publishers.concat(Publishers.from(multiplexing));
+		return Flux.concat(Flux.from(multiplexing));
 	}
 
 	private final class PreprocessedHttpServer<NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>>

@@ -26,6 +26,7 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
+import reactor.Flux;
 import reactor.core.support.Logger;
 import reactor.Publishers;
 import reactor.core.error.Exceptions;
@@ -85,7 +86,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 							request.delegate()
 							       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND));
 						}
-						return Publishers.empty();
+						return Flux.empty();
 
 					}
 					else {

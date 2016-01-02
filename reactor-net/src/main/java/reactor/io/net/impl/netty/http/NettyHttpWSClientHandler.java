@@ -30,7 +30,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Subscriber;
-import reactor.Publishers;
+import reactor.Flux;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
 import reactor.io.net.ReactiveChannel;
@@ -83,7 +83,7 @@ public class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 			httpChannel = new NettyHttpChannel(tcpStream, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/")) {
 				@Override
 				protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-					Publishers.<Void>empty().subscribe(s);
+					Flux.<Void>empty().subscribe(s);
 				}
 			};
 			NettyHttpWSClientHandler.super.channelActive(ctx);

@@ -27,22 +27,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.logging.Level;
 
+import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
+import reactor.Flux;
 import reactor.Processors;
 import reactor.Publishers;
 import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.error.ReactorFatalException;
-import reactor.core.processor.BaseProcessor;
+import reactor.core.processor.FluxProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
-import reactor.core.support.internal.PlatformDependent;
 import reactor.core.support.WaitStrategy;
+import reactor.core.support.internal.PlatformDependent;
 import reactor.core.timer.Timer;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
@@ -72,7 +74,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final HttpServer<Buffer, Buffer>        server;
 	private final GraphEvent                        lastState;
 	private final SystemEvent                       lastSystemState;
-	private final BaseProcessor<Event, Event>       eventStream;
+	private final Processor<Event, Event>           eventStream;
 	private final ProcessorGroup                    group;
 	private final Function<Event, Event>            lastStateMerge;
 	private final Timer                             timer;
@@ -132,10 +134,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 		});
 
-		BaseProcessor<Publisher<Event>, Publisher<Event>> cannons = Processors.emitter();
+		FluxProcessor<Publisher<Event>, Publisher<Event>> cannons = Processors.emitter();
 
-		Publishers.merge(cannons)
-		          .subscribe(eventStream);
+		Flux.merge(cannons)
+		    .subscribe(eventStream);
 
 		this.cannons = cannons.startSession();
 
@@ -227,9 +229,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 * @return
 	 */
 	public final ReactiveSession<Object> metricCannon() {
-		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
+		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		this.cannons.submit(Publishers.map(p, new MetricMapper()));
+		this.cannons.submit(Flux.map(p, new MetricMapper()));
 		return p.startSession();
 	}
 
@@ -238,9 +240,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 * @return
 	 */
 	public final ReactiveSession<Object> streamCannon() {
-		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
+		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		this.cannons.submit(Publishers.map(p, new GraphMapper()));
+		this.cannons.submit(Flux.map(p, new GraphMapper()));
 		return p.startSession();
 	}
 
@@ -277,7 +279,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		final long _period = period > 0 ? (unit != null ? TimeUnit.MILLISECONDS.convert(period, unit) : period) : 400L;
 
-		BaseProcessor<Object, Object> p = ProcessorGroup.sync()
+		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
 		final ReactiveSession<Object> session = p.startSession();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
@@ -294,7 +296,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 		}, _period, TimeUnit.MILLISECONDS);
 
-		this.cannons.submit(Publishers.map(p, new GraphMapper()));
+		this.cannons.submit(Flux.map(p, new GraphMapper()));
 
 		return o;
 	}
@@ -342,12 +344,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
 		channel.responseHeader("Access-Control-Allow-Origin", "*");
 
-		Publisher<Event> eventStream = Publishers.map(this.eventStream.dispatchOn(group),
+		Publisher<Event> eventStream = Flux.map(this.eventStream.dispatchOn(group),
 				lastStateMerge);
 
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
-			p = Publishers.concat(NettyHttpServer.upgradeToWebsocket(channel),
+			p = Flux.concat(NettyHttpServer.upgradeToWebsocket(channel),
 					channel.writeBufferWith(federateAndEncode(channel, eventStream)));
 		}
 		else {
@@ -389,7 +391,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	protected Publisher<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
 
 		if (logExtensionEnabled) {
-			BaseProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
+			FluxProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
@@ -402,7 +404,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		}
 
 		if (systemStats) {
-			BaseProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
+			FluxProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
 			this.cannons.submit(p);
 			final ReactiveSession<Event> session = p.startSession();
 			log.info("System Monitoring Starting");
@@ -449,13 +451,13 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private Publisher<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Publisher<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
-			return Publishers.capacity(Publishers.map(stream, BUFFER_STRING_FUNCTION), websocketCapacity);
+			return Publishers.capacity(Flux.map(stream, BUFFER_STRING_FUNCTION), websocketCapacity);
 		}
 
 		Publisher<Buffer> mergedUpstreams =
-				Publishers.merge(Publishers.map(Publishers.from(Arrays.asList(clients)), new FederatedMerger(c)));
+				Flux.merge(Flux.map(Flux.from(Arrays.asList(clients)), new FederatedMerger(c)));
 
-		return Publishers.capacity(Publishers.merge(Publishers.map(stream, BUFFER_STRING_FUNCTION), mergedUpstreams),
+		return Publishers.capacity(Flux.merge(Flux.map(stream, BUFFER_STRING_FUNCTION), mergedUpstreams),
 				websocketCapacity);
 	}
 

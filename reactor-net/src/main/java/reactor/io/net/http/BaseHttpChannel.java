@@ -22,11 +22,11 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.Flux;
 import reactor.Publishers;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
@@ -189,7 +189,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 			return new PostHeaderWritePublisher();
 		}
 		else {
-			return Publishers.empty();
+			return Flux.empty();
 		}
 	}
 

@@ -19,6 +19,7 @@ package reactor.io.net;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.reactivestreams.Publisher;
+import reactor.Flux;
 import reactor.Publishers;
 import reactor.Timers;
 import reactor.core.support.Assert;
@@ -86,7 +87,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 		if (started.compareAndSet(true, false)) {
 			return doShutdown();
 		}
-		return Publishers.empty();
+		return Flux.empty();
 	}
 
 	/**

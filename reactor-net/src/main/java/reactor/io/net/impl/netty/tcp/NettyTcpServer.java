@@ -38,6 +38,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.Flux;
 import reactor.core.support.Logger;
 import reactor.Publishers;
 import reactor.core.support.NamedDaemonThreadFactory;
@@ -220,8 +221,8 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements Reactiv
 		final Publisher<Void> shutdown = new NettyChannel.FuturePublisher<Future<?>>(selectorGroup.shutdownGracefully());
 
 		if (null == nettyOptions || null == nettyOptions.eventLoopGroup()) {
-			return Publishers.concat(
-					Publishers.from(Arrays.asList(
+			return Flux.concat(
+					Flux.from(Arrays.asList(
 						 shutdown,
 						 new NettyChannel.FuturePublisher<Future<?>>(ioGroup.shutdownGracefully())
 					))

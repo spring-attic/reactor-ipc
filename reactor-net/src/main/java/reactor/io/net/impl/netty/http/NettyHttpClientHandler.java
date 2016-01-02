@@ -78,7 +78,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 			       @Override
 			       public void onSubscribe(final Subscription s) {
 				       ctx.read();
-				       BackpressureUtils.checkSubscription(null, s);
+				       BackpressureUtils.validate(null, s);
 				       s.request(Long.MAX_VALUE);
 			       }
 

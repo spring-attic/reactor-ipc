@@ -20,8 +20,8 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
 import reactor.Processors;
-import reactor.core.processor.BaseProcessor;
-import reactor.core.publisher.PublisherLog;
+import reactor.core.processor.FluxProcessor;
+import reactor.core.publisher.FluxLog;
 import reactor.core.subscription.ReactiveSession;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.nexus.Nexus;
@@ -51,20 +51,20 @@ public class NexusPlay {
 
 		// =========================================================
 
-		BaseProcessor<Integer, Integer> p = Processors.emitter();
+		FluxProcessor<Integer, Integer> p = Processors.emitter();
 		Stream<Integer> dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int i = 0; i < 2; i++) {
 			dispatched
-					.log("slow",  Level.FINEST, PublisherLog.ALL)
+					.log("slow",  Level.FINEST, FluxLog.ALL)
 					.consume(d ->
 						LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
 					);
 		}
 
 		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, PublisherLog.ALL).consume();
+		dispatched.log("fast",  Level.FINEST, FluxLog.ALL).consume();
 
 
 		ReactiveSession<Integer> s1 = p.startSession();
@@ -78,7 +78,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
 			dispatched
-					.log("slow",  Level.FINEST, PublisherLog.ALL)
+					.log("slow",  Level.FINEST, FluxLog.ALL)
 					//.capacity(5)
 					.consume(d ->
 							LockSupport.parkNanos(100_000_000 * (r.nextInt(80) + 1))
@@ -86,7 +86,7 @@ public class NexusPlay {
 		}
 
 		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, PublisherLog.ALL).consume();
+		dispatched.log("fast",  Level.FINEST, FluxLog.ALL).consume();
 
 
 		ReactiveSession<Integer> s2 = p.startSession();
@@ -101,7 +101,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
 			dispatched
-					.log("slow",  Level.FINEST, PublisherLog.ALL)
+					.log("slow",  Level.FINEST, FluxLog.ALL)
 					//.capacity(5)
 					.consume(d ->
 							LockSupport.parkNanos(1000_000_000)

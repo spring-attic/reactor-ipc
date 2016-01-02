@@ -35,10 +35,10 @@ import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
 import reactor.core.error.ReactorFatalException;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
-import reactor.core.support.SignalType;
 import reactor.core.support.rb.disruptor.RingBuffer;
 import reactor.core.support.rb.disruptor.Sequence;
 import reactor.core.support.rb.disruptor.Sequencer;
@@ -109,7 +109,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 			}
 			else {
-				channelSubscriber.onSubscribe(SignalType.NOOP_SUBSCRIPTION);
+				channelSubscriber.onSubscribe(EmptySubscription.INSTANCE);
 				channelSubscriber.onError(new IllegalStateException("Only one connection input subscriber allowed."));
 			}
 		}
@@ -431,7 +431,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			if (BackpressureUtils.checkSubscription(subscription, s)) {
+			if (BackpressureUtils.validate(subscription, s)) {
 				subscription = s;
 				inputSubscriber.onSubscribe(this);
 			}
@@ -648,7 +648,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onSubscribe(final Subscription s) {
-			if (BackpressureUtils.checkSubscription(subscription, s)) {
+			if (BackpressureUtils.validate(subscription, s)) {
 				this.subscription = s;
 
 				ctx.channel()
@@ -785,7 +785,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onSubscribe(final Subscription s) {
-			if (BackpressureUtils.checkSubscription(subscription, s)) {
+			if (BackpressureUtils.validate(subscription, s)) {
 				subscription = s;
 
 				ctx.channel()
