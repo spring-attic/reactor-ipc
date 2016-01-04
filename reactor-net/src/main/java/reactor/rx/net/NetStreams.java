@@ -88,7 +88,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP server to "loopback" on port {@literal 12012}. By default the default server implementation is
 	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
@@ -114,7 +114,7 @@ public class NetStreams {
 
 	/**
 	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -150,7 +150,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
 	 * implementation is scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty first is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -186,7 +186,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is
 	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -223,7 +223,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP server to the specified bind address and port. By default the default server implementation is
 	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -306,7 +306,7 @@ public class NetStreams {
 
 	/**
 	 * Bind a new TCP client to the localhost on port 12012. By default the default client implementation is scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -341,7 +341,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP client to the specified connect address and port 12012. By default the default client
 	 * implementation is scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -377,7 +377,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP client to "loopback" on the the specified port. By default the default client implementation is
 	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -413,7 +413,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
 	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
@@ -450,7 +450,7 @@ public class NetStreams {
 	/**
 	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
 	 * scanned
-	 * from the classpath on Class init. Support for Netty first and ZeroMQ then is provided as long as the relevant
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
