@@ -52,7 +52,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> get(String url,
+	public final Mono<? extends HttpChannel<IN, OUT>> get(String url,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.GET, url, handler);
 	}
@@ -63,7 +63,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> get(String url) {
+	public final Mono<? extends HttpChannel<IN, OUT>> get(String url) {
 
 		return request(Method.GET, url, null);
 	}
@@ -76,7 +76,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> post(String url,
+	public final Mono<? extends HttpChannel<IN, OUT>> post(String url,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.POST, url, handler);
 	}
@@ -89,7 +89,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> put(String url,
+	public final Mono<? extends HttpChannel<IN, OUT>> put(String url,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.PUT, url, handler);
 	}
@@ -102,7 +102,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> delete(String url,
+	public final Mono<? extends HttpChannel<IN, OUT>> delete(String url,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.DELETE, url, handler);
 	}
@@ -114,7 +114,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> delete(String url) {
+	public final Mono<? extends HttpChannel<IN, OUT>> delete(String url) {
 		return request(Method.DELETE, url, null);
 	}
 
@@ -124,7 +124,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> ws(String url) {
+	public final Mono<? extends HttpChannel<IN, OUT>> ws(String url) {
 		return request(Method.WS, url, null);
 	}
 
@@ -138,7 +138,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Flux<? extends HttpChannel<IN, OUT>> ws(String url,
+	public final Mono<? extends HttpChannel<IN, OUT>> ws(String url,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.WS, url, handler);
 	}
@@ -153,7 +153,7 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public abstract Flux<? extends HttpChannel<IN, OUT>> request(Method method,
+	public abstract Mono<? extends HttpChannel<IN, OUT>> request(Method method,
 			String url,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler);
 
@@ -184,16 +184,17 @@ public abstract class HttpClient<IN, OUT>
 		}
 
 		@Override
-		public Flux<? extends HttpChannel<NEWIN, NEWOUT>> request(Method method,
+		public Mono<? extends HttpChannel<NEWIN, NEWOUT>> request(Method method,
 				String url,
 				final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
-			return Flux.map(HttpClient.this.request(method, url, handler != null ?
+			return
+					HttpClient.this.request(method, url, handler != null ?
 					new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 				@Override
 				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
 					return handler.apply(preprocessor.transform(conn));
 				}
-			} : null), new Function<HttpChannel<IN, OUT>, HttpChannel<NEWIN, NEWOUT>>() {
+			} : null).map(new Function<HttpChannel<IN, OUT>, HttpChannel<NEWIN, NEWOUT>>() {
 				@Override
 				public HttpChannel<NEWIN, NEWOUT> apply(HttpChannel<IN, OUT> channel) {
 					return preprocessor.transform(channel);

@@ -30,8 +30,9 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.Publishers;
+import reactor.Flux;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -121,7 +122,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 				postRead(ctx, msg);
 			}
 			if(!discardBody && replySubscriber != null){
-				Publishers.just(httpChannel).subscribe(replySubscriber);
+				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
 		} else if (HttpContent.class.isAssignableFrom(messageClass)) {
 			super.channelRead(ctx, ((ByteBufHolder) msg).content());
@@ -141,7 +142,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 			Exception ex = new HttpException(httpChannel);
 			exceptionCaught(ctx, ex);
 			if(replySubscriber != null){
-				Publishers.<HttpChannel<Buffer, Buffer>>error(ex).subscribe(replySubscriber);
+				EmptySubscription.error(replySubscriber, ex);
 			}
 			discardBody = true;
 		}
@@ -207,7 +208,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 
 		@Override
 		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-			tcpStream.emitWriter(Publishers.just(getNettyRequest()), s);
+			tcpStream.emitWriter(Flux.just(getNettyRequest()), s);
 		}
 	}
 }

@@ -18,14 +18,12 @@ package reactor.io.net;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.reactivestreams.Publisher;
-import reactor.Flux;
-import reactor.Publishers;
+import reactor.Mono;
 import reactor.Timers;
 import reactor.core.support.Assert;
 import reactor.core.support.ReactiveState;
-import reactor.fn.Function;
 import reactor.core.timer.Timer;
+import reactor.fn.Function;
 
 /**
  * Abstract base class that implements common functionality shared by clients and servers.
@@ -54,10 +52,10 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 
 	/**
 	 * Start this {@literal Peer}.
-	 * @return a {@link Publisher<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public final Publisher<Void> start(
+	public final Mono<Void> start(
 			final ReactiveChannelHandler<IN, OUT, CONN> handler) {
 
 		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
@@ -74,20 +72,20 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 	 */
 	public final void startAndAwait(final ReactiveChannelHandler<IN, OUT, CONN> handler)
 			throws InterruptedException {
-		Publishers.toReadQueue(start(handler)).take();
+		start(handler).get();
 	}
 
 	/**
-	 * Shutdown this {@literal Peer} and complete the returned {@link Publisher<Void>}
+	 * Shutdown this {@literal Peer} and complete the returned {@link Mono<Void>}
 	 * when shut down.
-	 * @return a {@link Publisher<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is shutdown
 	 */
-	public final Publisher<Void> shutdown() {
+	public final Mono<Void> shutdown() {
 		if (started.compareAndSet(true, false)) {
 			return doShutdown();
 		}
-		return Flux.empty();
+		return Mono.empty();
 	}
 
 	/**
@@ -96,7 +94,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 	 */
 	public final void shutdownAndAwait()
 			throws InterruptedException {
-		Publishers.toReadQueue(shutdown()).take();
+		shutdown().get();
 	}
 
 	/**
@@ -157,10 +155,10 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 		return defaultPrefetch;
 	}
 
-	protected abstract Publisher<Void> doStart(
+	protected abstract Mono<Void> doStart(
 			ReactiveChannelHandler<IN, OUT, CONN> handler);
 
-	protected abstract Publisher<Void> doShutdown();
+	protected abstract Mono<Void> doShutdown();
 
 	protected boolean shouldFailOnStarted() {
 		return true;
@@ -187,14 +185,14 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 		}
 
 		@Override
-		protected Publisher<Void> doStart(
+		protected Mono<Void> doStart(
 				final ReactiveChannelHandler<NEWIN, NEWOUT, NEWCONN> handler) {
 			ReactiveChannelHandler<IN, OUT, CONN> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return ReactivePeer.this.start(p);
 		}
 
 		@Override
-		protected Publisher<Void> doShutdown() {
+		protected Mono<Void> doShutdown() {
 			return ReactivePeer.this.shutdown();
 		}
 	}

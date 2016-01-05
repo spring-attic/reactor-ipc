@@ -19,19 +19,19 @@ package reactor.rx.net.tcp;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
+import reactor.Mono;
 import reactor.fn.tuple.Tuple2;
-import reactor.rx.net.ChannelStream;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
-import reactor.rx.net.ReactorChannelHandler;
-import reactor.rx.net.ReactorPeer;
 import reactor.io.net.Reconnect;
 import reactor.io.net.tcp.TcpClient;
 import reactor.rx.Promise;
-import reactor.rx.Promises;
 import reactor.rx.Stream;
 import reactor.rx.Streams;
+import reactor.rx.net.ChannelStream;
+import reactor.rx.net.ReactorChannelHandler;
+import reactor.rx.net.ReactorPeer;
 
 /**
  * A network-aware client that will publish its connection once available to the {@link
@@ -59,13 +59,13 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 
 	/**
 	 * Start this {@literal ReactorPeer}.
-	 * @return a {@link Promise<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Promise<Void> start(ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> handler) {
-		return Promises.from(peer.start(
+	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> handler) {
+		return peer.start(
 				ChannelStream.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-		));
+		);
 	}
 
 	/**

@@ -18,7 +18,6 @@ package reactor.io.net.nexus;
 
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -27,11 +26,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.logging.Level;
 
-import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import reactor.Flux;
+import reactor.Mono;
 import reactor.Processors;
-import reactor.Publishers;
 import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
@@ -74,7 +72,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final HttpServer<Buffer, Buffer>        server;
 	private final GraphEvent                        lastState;
 	private final SystemEvent                       lastSystemState;
-	private final Processor<Event, Event>           eventStream;
+	private final FluxProcessor<Event, Event>       eventStream;
 	private final ProcessorGroup                    group;
 	private final Function<Event, Event>            lastStateMerge;
 	private final Timer                             timer;
@@ -107,8 +105,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @param server
+	 *
 	 * @return
 	 */
 	public static Nexus create(HttpServer<Buffer, Buffer> server) {
@@ -152,8 +150,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 * @see this#start(ReactiveChannelHandler)
 	 */
 	public final void startAndAwait() throws InterruptedException {
-		Publishers.toReadQueue(start(null))
-		          .take();
+		start().get();
 		InetSocketAddress addr = server.getListenAddress();
 		log.info("Nexus Warped. Transmitting signal to troops under http://" + addr.getHostName() + ":" + addr.getPort() +
 				API_STREAM_URL);
@@ -162,12 +159,11 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	/**
 	 * @see this#start(ReactiveChannelHandler)
 	 */
-	public final void start() throws InterruptedException {
-		start(null);
+	public final Mono<Void> start() throws InterruptedException {
+		return start(null);
 	}
 
 	/**
-	 *
 	 * @return
 	 */
 	public final Nexus capacity(long capacity) {
@@ -176,7 +172,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @return
 	 */
 	public final Nexus disableLogTail() {
@@ -185,7 +180,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @return
 	 */
 	public final Nexus withLogTail() {
@@ -194,7 +188,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @return
 	 */
 	public final Nexus withSystemStats() {
@@ -202,9 +195,9 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @param enabled
 	 * @param period
+	 *
 	 * @return
 	 */
 	public final Nexus withSystemStats(boolean enabled, long period) {
@@ -212,10 +205,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @param enabled
 	 * @param period
 	 * @param unit
+	 *
 	 * @return
 	 */
 	public final Nexus withSystemStats(boolean enabled, long period, TimeUnit unit) {
@@ -225,31 +218,29 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @return
 	 */
 	public final ReactiveSession<Object> metricCannon() {
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		this.cannons.submit(Flux.map(p, new MetricMapper()));
+		this.cannons.submit(p.map(new MetricMapper()));
 		return p.startSession();
 	}
 
 	/**
-	 *
 	 * @return
 	 */
 	public final ReactiveSession<Object> streamCannon() {
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		this.cannons.submit(Flux.map(p, new GraphMapper()));
+		this.cannons.submit(p.map(new GraphMapper()));
 		return p.startSession();
 	}
 
 	/**
-	 *
 	 * @param o
 	 * @param <E>
+	 *
 	 * @return
 	 */
 	public final <E> E monitor(E o) {
@@ -257,10 +248,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @param o
 	 * @param period
 	 * @param <E>
+	 *
 	 * @return
 	 */
 	public final <E> E monitor(E o, long period) {
@@ -268,11 +259,11 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @param o
 	 * @param period
 	 * @param unit
 	 * @param <E>
+	 *
 	 * @return
 	 */
 	public final <E> E monitor(final E o, long period, TimeUnit unit) {
@@ -296,14 +287,14 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 		}, _period, TimeUnit.MILLISECONDS);
 
-		this.cannons.submit(Flux.map(p, new GraphMapper()));
+		this.cannons.submit(p.map(new GraphMapper()));
 
 		return o;
 	}
 
 	/**
-	 *
 	 * @param urls
+	 *
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -344,8 +335,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
 		channel.responseHeader("Access-Control-Allow-Origin", "*");
 
-		Publisher<Event> eventStream = Flux.map(this.eventStream.dispatchOn(group),
-				lastStateMerge);
+		Flux<Event> eventStream = this.eventStream.dispatchOn(group)
+		                                          .map(lastStateMerge);
 
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
@@ -380,7 +371,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	/**
-	 *
 	 * @return
 	 */
 	public HttpServer<Buffer, Buffer> getServer() {
@@ -388,10 +378,11 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	@Override
-	protected Publisher<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
+	protected Mono<Void> doStart(ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
 
 		if (logExtensionEnabled) {
-			FluxProcessor<Event, Event> p = RingBufferProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
+			FluxProcessor<Event, Event> p =
+					RingBufferProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
@@ -426,7 +417,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	@Override
-	protected Publisher<Void> doShutdown() {
+	protected Mono<Void> doShutdown() {
 		timer.cancel();
 		this.cannons.finish();
 		this.eventStream.onComplete();
@@ -448,17 +439,17 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		return server;
 	}
 
-	private Publisher<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Publisher<Event> stream) {
+	private Flux<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Flux<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
-			return Publishers.capacity(Flux.map(stream, BUFFER_STRING_FUNCTION), websocketCapacity);
+			return stream.map(BUFFER_STRING_FUNCTION)
+			             .capacity(websocketCapacity);
 		}
+		Flux<Buffer> mergedUpstreams = Flux.merge(Flux.fromArray(clients)
+		                                              .map(new FederatedMerger(c)));
 
-		Publisher<Buffer> mergedUpstreams =
-				Flux.merge(Flux.map(Flux.from(Arrays.asList(clients)), new FederatedMerger(c)));
-
-		return Publishers.capacity(Flux.merge(Flux.map(stream, BUFFER_STRING_FUNCTION), mergedUpstreams),
-				websocketCapacity);
+		return Flux.merge(stream.map(BUFFER_STRING_FUNCTION), mergedUpstreams)
+		           .capacity(websocketCapacity);
 	}
 
 	private static final Function<Event, Buffer> BUFFER_STRING_FUNCTION = new StringToBuffer();
@@ -593,7 +584,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					", " + property("category", getCategory()) +
 					(kind != null ? ", " + property("kind", getKind()) : "") +
 					(origin != null ? ", " + property("origin", getOrigin()) : "") +
-					(data != null ? ", " +property("data",  getData()) : "") +
+					(data != null ? ", " + property("data", getData()) : "") +
 					", " + property("message", getMessage()) +
 					", " + property("threadId", getThreadId()) +
 					", " + property("type", getType()) +
@@ -854,13 +845,13 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		@Override
 		public Publisher<Buffer> apply(FederatedClient o) {
-			return Publishers.flatMap(o.client.ws(o.targetAPI),
-					new Function<HttpChannel<Buffer, Buffer>, Publisher<Buffer>>() {
-						@Override
-						public Publisher<Buffer> apply(HttpChannel<Buffer, Buffer> channel) {
-							return channel.input();
-						}
-					});
+			return o.client.ws(o.targetAPI)
+			               .flatMap(new Function<HttpChannel<Buffer, Buffer>, Publisher<Buffer>>() {
+				               @Override
+				               public Publisher<Buffer> apply(HttpChannel<Buffer, Buffer> channel) {
+					               return channel.input();
+				               }
+			               });
 		}
 	}
 

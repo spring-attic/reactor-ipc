@@ -39,17 +39,17 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Flux;
-import reactor.core.support.Logger;
+import reactor.Mono;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.Logger;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
+import reactor.core.timer.Timer;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
-import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
@@ -186,7 +186,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected Publisher<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
+	protected Mono<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
 
 		final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> targetHandler =
 				null == handler ? (ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>) PING :
@@ -202,7 +202,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 			}
 		});
 
-		return new Publisher<Void>() {
+		return new Mono<Void>() {
 			@Override
 			public void subscribe(Subscriber<? super Void> s) {
 				ChannelFuture channelFuture = connectionSupplier.get();
@@ -217,7 +217,8 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 	}
 
 	@Override
-	protected Publisher<Tuple2<InetSocketAddress, Integer>> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler,
+	protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(final ReactiveChannelHandler<Buffer, Buffer,
+			ReactiveChannel<Buffer, Buffer>> handler,
 			final Reconnect reconnect) {
 
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
@@ -234,10 +235,10 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 	}
 
 	@Override
-	protected Publisher<Void> doShutdown() {
+	protected Mono<Void> doShutdown() {
 
 		if (nettyOptions != null && nettyOptions.eventLoopGroup() != null) {
-			return Flux.empty();
+			return Mono.empty();
 		}
 
 		return new NettyChannel.FuturePublisher<Future<?>>(ioGroup.shutdownGracefully());
@@ -279,7 +280,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 		pipeline.addLast(new NettyChannelHandlerBridge(handler, netChannel));
 	}
 
-	private class ReconnectingChannelPublisher implements Publisher<Tuple2<InetSocketAddress, Integer>> {
+	private class ReconnectingChannelPublisher extends Flux<Tuple2<InetSocketAddress, Integer>> {
 
 		private final AtomicInteger attempts = new AtomicInteger(0);
 		private final Reconnect reconnect;

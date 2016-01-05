@@ -15,20 +15,20 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.reactivestreams.Subscription;
-import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
-import reactor.fn.Consumer;
 import reactor.core.timer.Timer;
+import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Anatoly Kadyshev
@@ -43,7 +43,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 
 	private volatile boolean terminated = false;
 
-	private final Consumer<Void> onTerminateTask;
+	private final Runnable onTerminateTask;
 
 	private final AeronInfra aeronInfra;
 
@@ -65,14 +65,14 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 
 	public AeronSubscriber(Context context,
 						   boolean multiPublishers,
-						   Consumer<Void> shutdownTask,
-						   Consumer<Void> onTerminateTask) {
+			Runnable shutdownTask,
+			Runnable onTerminateTask) {
 		this.onTerminateTask = onTerminateTask;
 
 		if (shutdownTask == null) {
-			shutdownTask = new Consumer<Void>() {
+			shutdownTask = new Runnable() {
 				@Override
-				public void accept(Void value) {
+				public void run() {
 					shutdown();
 				}
 			};
@@ -103,9 +103,9 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		this(context,
 				multiPublishers,
 				null,
-				new Consumer<Void>() {
+				new Runnable() {
 					@Override
-					public void accept(Void value) {
+					public void run() {
 					}
 				});
 	}
@@ -176,7 +176,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 							logger.info("subscriber shutdown");
 							terminated = true;
 
-							onTerminateTask.accept(null);
+							onTerminateTask.run();
 						}
 					});
 				}

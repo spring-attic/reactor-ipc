@@ -20,13 +20,13 @@ import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.Mono;
 import reactor.core.support.Logger;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
 
 /**
  * An abstract {@link ReactiveChannel} implementation that handles the basic interaction and behave as a {@link
@@ -97,7 +97,7 @@ public class ChannelStream<IN, OUT> extends Stream<IN> implements
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Stream<Void> writeWith(final Publisher<? extends OUT> source) {
+	public Mono<Void> writeWith(final Publisher<? extends OUT> source) {
 		final Stream<? extends OUT> sourceStream;
 
 		if (Stream.class.isAssignableFrom(source.getClass())) {
@@ -121,23 +121,17 @@ public class ChannelStream<IN, OUT> extends Stream<IN> implements
 			};
 		}
 
-		return new Stream<Void>() {
+		return new Mono<Void>() {
 			@Override
 			public void subscribe(Subscriber<? super Void> s) {
 				actual.writeWith(sourceStream).subscribe(s);
-			}
-
-			@Override
-			public Timer getTimer() {
-				return timer;
 			}
 		};
 	}
 
 	@Override
-	final public Stream<Void> writeBufferWith(Publisher<? extends Buffer> source) {
-
-		return Streams.wrap(this.actual.writeBufferWith(source));
+	final public Mono<Void> writeBufferWith(Publisher<? extends Buffer> source) {
+		return this.actual.writeBufferWith(source);
 	}
 
 	@Override

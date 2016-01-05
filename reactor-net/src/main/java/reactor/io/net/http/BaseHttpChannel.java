@@ -23,7 +23,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Flux;
-import reactor.Publishers;
+import reactor.Mono;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
@@ -38,7 +39,7 @@ import reactor.io.net.http.model.Transfer;
  * @author Sebastien Deleuze
  * @author Stephane maldini
  */
-public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, HttpChannel<IN,OUT> {
+public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements ReactiveState.Named, HttpChannel<IN,OUT> {
 
 	private volatile int statusAndHeadersSent = 0;
 	private Function<? super String, Map<String, Object>> paramsResolver;
@@ -184,12 +185,12 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 	 * @return Stream to signal error or successful write to the client
 	 */
 	@Override
-	public Publisher<Void> writeHeaders() {
+	public Mono<Void> writeHeaders() {
 		if (statusAndHeadersSent == 0) {
 			return new PostHeaderWritePublisher();
 		}
 		else {
-			return Flux.empty();
+			return Mono.empty();
 		}
 	}
 
@@ -223,16 +224,16 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 	protected abstract Publisher<Void> writeWithBufferAfterHeaders(Publisher<? extends Buffer> s);
 
 	@Override
-	public Publisher<Void> writeBufferWith(final Publisher<? extends Buffer> dataStream) {
+	public Mono<Void> writeBufferWith(final Publisher<? extends Buffer> dataStream) {
 		return new PostBufferWritePublisher(dataStream);
 	}
 
 	@Override
-	public Publisher<Void> writeWith(final Publisher<? extends OUT> source) {
+	public Mono<Void> writeWith(final Publisher<? extends OUT> source) {
 		return new PostWritePublisher(source);
 	}
 
-	private class PostWritePublisher implements Publisher<Void>,
+	private class PostWritePublisher extends Mono<Void> implements
 	                                            Upstream, FeedbackLoop {
 
 		private final Publisher<? extends OUT> source;
@@ -310,7 +311,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 		}
 	}
 
-	private class PostHeaderWritePublisher implements Publisher<Void>, FeedbackLoop{
+	private class PostHeaderWritePublisher extends Mono<Void> implements FeedbackLoop{
 
 		@Override
 		public void subscribe(Subscriber<? super Void> s) {
@@ -318,8 +319,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 				doSubscribeHeaders(s);
 			}
 			else {
-				Publishers.<Void>error(new IllegalStateException("Status and headers already sent"))
-				          .subscribe(s);
+				EmptySubscription.error(s, new IllegalStateException("Status and headers already sent"));
 			}
 		}
 
@@ -334,7 +334,7 @@ public abstract class BaseHttpChannel<IN, OUT> implements ReactiveState.Named, H
 		}
 	}
 
-	private class PostBufferWritePublisher implements Publisher<Void>, Upstream, FeedbackLoop {
+	private class PostBufferWritePublisher extends Mono<Void> implements Upstream, FeedbackLoop {
 
 		private final Publisher<? extends Buffer> dataStream;
 

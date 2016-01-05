@@ -16,13 +16,12 @@
 package reactor.aeron.subscriber;
 
 import reactor.core.support.Logger;
-import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.SignalPublicationFailedException;
 import reactor.aeron.support.SignalType;
-import reactor.core.processor.RingBufferProcessor;
+import reactor.core.support.ReactiveState;
 import reactor.core.support.rb.disruptor.RingBuffer;
 import reactor.core.support.rb.disruptor.Sequence;
 import reactor.core.support.rb.disruptor.Sequencer;
@@ -106,7 +105,7 @@ public class UnicastAsyncSignalSender implements Runnable {
 			public Slot get() {
 				return new Slot();
 			}
-		}, RingBufferProcessor.MEDIUM_BUFFER_SIZE);
+		}, ReactiveState.MEDIUM_BUFFER_SIZE);
 
 		this.pollCursor = Sequencer.newSequence(-1L);
 		buffer.addGatingSequence(pollCursor);

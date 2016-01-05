@@ -18,7 +18,7 @@ package reactor.io.codec;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Publishers;
+import reactor.Flux;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
@@ -90,8 +90,8 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 	 * @return The decoded object.
 	 * @since 2.0.4
 	 */
-	public Publisher<IN> decode(final Publisher<SRC> publisherToDecode) {
-		return Publishers.lift(publisherToDecode, new DecoderOperator());
+	public Flux<IN> decode(final Publisher<SRC> publisherToDecode) {
+		return new DecoderOperator(publisherToDecode);
 	}
 
 	/**
@@ -127,8 +127,8 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 	 * @since 2.0.4
 	 */
 	@SuppressWarnings("unchecked")
-	public Publisher<SRC> encode(Publisher<? extends OUT> publisherToEncode) {
-		return Publishers.lift((Publisher<OUT>)publisherToEncode, new EncoderOperator());
+	public Flux<SRC> encode(Publisher<? extends OUT> publisherToEncode) {
+		return new EncoderOperator(publisherToEncode);
 	}
 
 	/**
@@ -244,19 +244,27 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private class DecoderOperator implements Publishers.Operator<SRC, IN>{
+	private class DecoderOperator extends Flux.FluxBarrier<SRC, IN>{
+
+		public DecoderOperator(Publisher<? extends SRC> source) {
+			super(source);
+		}
 
 		@Override
-		public Subscriber<? super SRC> apply(final Subscriber<? super IN> subscriber) {
-			return new DecoderBarrier(subscriber);
+		public void subscribe(Subscriber<? super IN> s) {
+			source.subscribe(new DecoderBarrier(s));
 		}
 	}
 
-	private class EncoderOperator implements Publishers.Operator<OUT, SRC> {
+	private class EncoderOperator extends Flux.FluxBarrier<OUT, SRC> {
+
+		public EncoderOperator(Publisher<? extends OUT> source) {
+			super(source);
+		}
 
 		@Override
-		public Subscriber<? super OUT> apply(final Subscriber<? super SRC> subscriber) {
-			return new EncoderBarrier(subscriber);
+		public void subscribe(Subscriber<? super SRC> s) {
+			source.subscribe(new EncoderBarrier(s));
 		}
 	}
 }

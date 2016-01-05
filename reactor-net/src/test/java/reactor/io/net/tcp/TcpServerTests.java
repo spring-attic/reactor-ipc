@@ -37,9 +37,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
-import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.core.processor.RingBufferWorkProcessor;
+import reactor.core.support.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
@@ -47,11 +47,8 @@ import reactor.io.codec.Frame;
 import reactor.io.codec.FrameCodec;
 import reactor.io.codec.LengthFieldCodec;
 import reactor.io.codec.StandardCodecs;
-import reactor.rx.net.NetStreams;
-import reactor.rx.net.ReactorChannelHandler;
 import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.config.SslOptions;
-import reactor.rx.net.http.ReactorHttpServer;
 import reactor.io.net.impl.netty.NettyBuffer;
 import reactor.io.net.impl.netty.NettyServerSocketOptions;
 import reactor.io.net.impl.netty.tcp.NettyTcpClient;
@@ -59,6 +56,9 @@ import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
 import reactor.rx.broadcast.Broadcaster;
+import reactor.rx.net.NetStreams;
+import reactor.rx.net.ReactorChannelHandler;
+import reactor.rx.net.http.ReactorHttpServer;
 import reactor.rx.net.tcp.ReactorTcpClient;
 import reactor.rx.net.tcp.ReactorTcpServer;
 
@@ -157,7 +157,7 @@ public class TcpServerTests {
 		});
 
 
-		client.start(ch -> ch.writeWith(Streams.just(new Pojo("John Doe")))).await();
+		client.start(ch -> ch.writeWith(Streams.just(new Pojo("John Doe")))).get();
 
 		assertTrue("Latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -205,7 +205,7 @@ public class TcpServerTests {
 			             .toString());
 			  return Streams.never();
 		  }
-		).await();
+		).get();
 
 		start.set(System.currentTimeMillis());
 		for (int i = 0; i < threads; i++) {
@@ -249,7 +249,7 @@ public class TcpServerTests {
 				latch.countDown();
 			});
 			return Streams.never();
-		}).await();
+		}).get();
 
 		start.set(System.currentTimeMillis());
 		for (int i = 0; i < threads; i++) {
@@ -287,9 +287,9 @@ public class TcpServerTests {
 			latch.countDown();
 
 			return Streams.never();
-		}).await();
+		}).get();
 
-		client.start(ch -> ch.writeWith(Streams.just(Buffer.wrap("Hello World!"))));
+		client.start(ch -> ch.writeWith(Streams.just(Buffer.wrap("Hello World!")))).get();
 
 		assertTrue("latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -321,9 +321,9 @@ public class TcpServerTests {
 			  .preprocessor(CodecPreprocessor.string())
 		);
 
-		server.start(serverHandler).await();
+		server.start(serverHandler).get();
 
-		client.start(ch -> ch.writeWith(Streams.just("Hello World!", "Hello 11!"))).await();
+		client.start(ch -> ch.writeWith(Streams.just("Hello World!", "Hello 11!"))).get();
 
 		assertTrue("Latch was counted down", latch.await(10, TimeUnit.SECONDS));
 
@@ -353,7 +353,7 @@ public class TcpServerTests {
 				byteBuf.getByteBuf().release();
 			});
 			return Streams.never();
-		}).await();
+		}).get();
 
 
 		for (int i = 0; i < threads; i++) {
@@ -408,7 +408,7 @@ public class TcpServerTests {
 			  );
 		});
 
-		httpServer.start().awaitSuccess();
+		httpServer.start().get();
 
 
 		for (int i = 0; i < 50; i++) {
@@ -438,7 +438,7 @@ public class TcpServerTests {
 				countDownLatch.countDown();
 			});
 			return Streams.never();
-		}).await();
+		}).get();
 
 		System.out.println("PORT +"+server.getListenAddress().getPort());
 		ReactorTcpClient<String, String> client =
@@ -451,7 +451,7 @@ public class TcpServerTests {
 
 		client.start(ch ->
 			ch.writeWith(Streams.just("test"))
-		);
+		).get();
 
 		assertThat("countDownLatch counted down", countDownLatch.await(5, TimeUnit.SECONDS));
 	}
@@ -468,7 +468,7 @@ public class TcpServerTests {
 					.writeWith(repliesOut)
 			  )
 		);
-		server.start().await();
+		server.start().get();
 		//System.in.read();
 		Thread.sleep(1000000);
 	}
@@ -487,7 +487,7 @@ public class TcpServerTests {
 					.writeWith(repliesOut.capacity(100))
 			  )
 		);
-		server.start().await();
+		server.start().get();
 		//System.in.read();
 		Thread.sleep(1000000);
 	}

@@ -31,6 +31,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.Flux;
 import reactor.core.support.Assert;
 import reactor.core.support.ReactiveState;
 import reactor.io.buffer.Buffer;
@@ -75,7 +76,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	}
 
 	@Override
-	public Publisher<Buffer> input() {
+	public Flux<Buffer> input() {
 		return this;
 	}
 

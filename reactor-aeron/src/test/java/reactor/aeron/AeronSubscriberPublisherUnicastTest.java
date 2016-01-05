@@ -18,7 +18,7 @@ package reactor.aeron;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.Publishers;
+import reactor.Flux;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.subscriber.test.DataTestSubscriber;
@@ -47,7 +47,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 	public void testNextSignalIsReceivedByTwoPublishers() throws InterruptedException {
 		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber"));
 
-		Publishers.from(createBuffers(6)).subscribe(aeronSubscriber);
+		Flux.fromIterable(createBuffers(6)).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher1 = AeronPublisher.create(createContext("publisher1"));
 
@@ -101,7 +101,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 	public void testSubscriptionCancellationDoesNotShutdownPublisherWhenNoAutocancel() throws InterruptedException {
 		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber"));
 
-		Publishers.from(createBuffers(6)).subscribe(aeronSubscriber);
+		Flux.fromIterable(createBuffers(6)).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
 		DataTestSubscriber<String>client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
@@ -134,7 +134,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 	public void testSubscriptionCancellationShutdownsPublisherWhenAutocancel() throws InterruptedException {
 		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber"));
 
-		Publishers.from(createBuffers(6)).subscribe(aeronSubscriber);
+		Flux.fromIterable(createBuffers(6)).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(true));
 		DataTestSubscriber<String>client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
@@ -184,7 +184,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 	@Test
 	public void testPublisherCanConnectToATerminalButRunningSubscriber() throws InterruptedException {
 		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber"));
-		Publishers.from(createBuffers(3)).subscribe(aeronSubscriber);
+		Flux.fromIterable(createBuffers(3)).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(true));
 		HangingOnCompleteSubscriber client = new HangingOnCompleteSubscriber();

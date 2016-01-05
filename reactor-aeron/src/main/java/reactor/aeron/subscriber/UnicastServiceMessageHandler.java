@@ -20,22 +20,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.aeron.support.AeronUtils;
-import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
+import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.SignalType;
-import reactor.core.processor.BaseProcessor;
+import reactor.core.processor.FluxProcessor;
+import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
 
 /**
  * @author Anatoly Kadyshev
+ * @author Stephane Maldini
  */
 public class UnicastServiceMessageHandler implements ServiceMessageHandler, ReactiveState.LinkedDownstreams {
 
@@ -47,7 +48,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 	 */
 	private static final long SUBSCRIPTION_TIMEOUT_NS = TimeUnit.MILLISECONDS.toNanos(100);
 
-	private final BaseProcessor<Buffer, Buffer> processor;
+	private final Processor<Buffer, Buffer> processor;
 
 	private final AeronInfra aeronInfra;
 
@@ -56,7 +57,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 	/**
 	 * Run when a terminal event is published into all established sessions
 	 */
-	private final Consumer<Void> onTerminalEventTask;
+	private final Runnable onTerminalEventTask;
 
 	private final SessionTracker<UnicastSession> sessionTracker;
 
@@ -111,10 +112,10 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 
 	}
 
-	public UnicastServiceMessageHandler(BaseProcessor<Buffer, Buffer> processor,
+	public UnicastServiceMessageHandler(FluxProcessor<Buffer, Buffer> processor,
 										AeronInfra aeronInfra,
 										Context context,
-										Consumer<Void> onTerminalEventTask) {
+										Runnable onTerminalEventTask) {
 		this.processor = processor;
 		this.aeronInfra = aeronInfra;
 		this.context = context;
@@ -155,7 +156,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Reac
 			cancel(session);
 
 			if ((isTerminal || context.autoCancel()) && sessionTracker.getSessionCounter() == 0) {
-				onTerminalEventTask.accept(null);
+				onTerminalEventTask.run();
 			}
 
 		} else {

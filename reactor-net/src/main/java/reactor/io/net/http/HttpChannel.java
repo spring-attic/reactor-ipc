@@ -18,6 +18,7 @@ package reactor.io.net.http;
 import java.util.Map;
 
 import org.reactivestreams.Publisher;
+import reactor.Mono;
 import reactor.fn.Function;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -139,7 +140,7 @@ public interface HttpChannel<IN, OUT> extends ReactiveChannel<IN, OUT> {
 	 *
 	 * @return
 	 */
-	Publisher<Void> writeHeaders();
+	Mono<Void> writeHeaders();
 
 	/**
 	 *

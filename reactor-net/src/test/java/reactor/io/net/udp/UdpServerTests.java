@@ -25,15 +25,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import reactor.core.support.Logger;
 import reactor.Processors;
 import reactor.Timers;
-import reactor.rx.net.NetStreams;
+import reactor.core.support.Logger;
 import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.impl.netty.udp.NettyDatagramServer;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
+import reactor.rx.net.NetStreams;
 import reactor.rx.net.udp.ReactorDatagramServer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -79,7 +79,7 @@ public class UdpServerTests {
 				}
 			});
 			return Streams.never();
-		}).onComplete(p -> {
+		}).doOnSuccess(v -> {
 			try {
 				DatagramChannel udp = DatagramChannel.open();
 				udp.configureBlocking(true);
@@ -99,7 +99,7 @@ public class UdpServerTests {
 		});
 
 		assertThat("latch was counted down", latch.await(10, TimeUnit.SECONDS));
-		server.shutdown().await();
+		server.shutdown().get();
 	}
 
 	@Test
@@ -132,7 +132,7 @@ public class UdpServerTests {
 					}
 				});
 				return Streams.never();
-			}).onComplete(b -> {
+			}).doOnSuccess(v -> {
 				try {
 					for (Enumeration<NetworkInterface> ifaces =
 					     NetworkInterface.getNetworkInterfaces();
@@ -146,7 +146,7 @@ public class UdpServerTests {
 				catch (Throwable t) {
 					throw new IllegalStateException(t);
 				}
-			}).await();
+			}).get();
 
 			servers.add(server);
 		}
@@ -173,7 +173,7 @@ public class UdpServerTests {
 		assertThat("latch was not counted down enough: "+latch.getCount()+" left on "+(4 ^ 2), latch.getCount() == 0 );
 
 		for (ReactorDatagramServer s : servers) {
-			s.shutdown().await();
+			s.shutdown().get();
 		}
 	}
 

@@ -16,10 +16,10 @@
 
 package reactor.rx.net;
 
+import reactor.Mono;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactivePeer;
 import reactor.rx.Promise;
-import reactor.rx.Promises;
 
 /**
  * Base functionality needed by all reactor peers
@@ -39,13 +39,13 @@ public abstract class ReactorPeer<IN, OUT, PEER extends ReactivePeer<IN, OUT, ? 
 	}
 
 	/**
-	 * Shutdown this {@literal ReactorPeer} and complete the returned {@link Promise<Void>}
+	 * Shutdown this {@literal ReactorPeer} and complete the returned {@link Mono<Void>}
 	 * when shut down.
-	 * @return a {@link Promise<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is shutdown
 	 */
-	public Promise<Void> shutdown() {
-		return Promises.from(peer.shutdown());
+	public Mono<Void> shutdown() {
+		return peer.shutdown();
 	}
 
 

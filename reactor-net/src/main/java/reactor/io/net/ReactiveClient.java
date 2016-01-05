@@ -54,7 +54,7 @@ public abstract class ReactiveClient<IN, OUT, CONN extends ReactiveChannel<IN, O
 	 * @param reconnect the reconnection strategy to use when disconnects happen
 	 * @return a Publisher of reconnected address and accumulated number of attempt pairs
 	 */
-	public final Publisher<Tuple2<InetSocketAddress, Integer>> start(
+	public final Flux<Tuple2<InetSocketAddress, Integer>> start(
 			ReactiveChannelHandler<IN, OUT, CONN> handler, Reconnect reconnect) {
 		if (!started.compareAndSet(false, true)) {
 			throw new IllegalStateException("Client already started");
@@ -63,7 +63,7 @@ public abstract class ReactiveClient<IN, OUT, CONN extends ReactiveChannel<IN, O
 		return doStart(handler, reconnect);
 	}
 
-	protected abstract Publisher<Tuple2<InetSocketAddress, Integer>> doStart(
+	protected abstract Flux<Tuple2<InetSocketAddress, Integer>> doStart(
 			ReactiveChannelHandler<IN, OUT, CONN> handler, Reconnect reconnect);
 
 

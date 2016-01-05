@@ -18,15 +18,14 @@ package reactor.rx.net.http;
 
 import java.net.InetSocketAddress;
 
+import reactor.Mono;
 import reactor.fn.Predicate;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
-import reactor.rx.net.ReactorPeer;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpServer;
 import reactor.io.net.http.routing.ChannelMappings;
-import reactor.rx.Promise;
-import reactor.rx.Promises;
+import reactor.rx.net.ReactorPeer;
 
 /**
  * Base functionality needed by all servers that communicate with clients over HTTP.
@@ -49,43 +48,43 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 
 	/**
 	 * Start this {@literal ReactorPeer}.
-	 * @return a {@link Promise<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Promise<Void> start(ReactiveChannelHandler<IN, OUT, HttpChannelStream<IN, OUT>> handler) {
-		return Promises.from(peer.start(
+	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, HttpChannelStream<IN, OUT>> handler) {
+		return peer.start(
 				HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-		));
+		);
 	}
 
 	/**
 	 * Start the server without any global handler, only the specific routed methods (get, post...) will apply.
 	 *
-	 * @return a Promise fulfilled when server is started
+	 * @return a Mono fulfilled when server is started
 	 */
-	public Promise<Void> start() {
-		return Promises.from(peer.start(null));
+	public Mono<Void> start() {
+		return peer.start(null);
 	}
 
 	/**
 	 * Start this {@literal ReactorPeer}.
-	 * @return a {@link Promise<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Promise<Void> start(ReactorHttpHandler<IN, OUT> handler) {
-		return Promises.from(peer.start(
+	public Mono<Void> start(ReactorHttpHandler<IN, OUT> handler) {
+		return peer.start(
 				HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-		));
+		);
 	}
 
 	/**
-	 * Shutdown this {@literal ReactorPeer} and complete the returned {@link Promise<Void>}
+	 * Shutdown this {@literal ReactorPeer} and complete the returned {@link Mono<Void>}
 	 * when shut down.
-	 * @return a {@link Promise<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is shutdown
 	 */
-	public Promise<Void> shutdown() {
-		return Promises.from(peer.shutdown());
+	public Mono<Void> shutdown() {
+		return peer.shutdown();
 	}
 
 	/**

@@ -18,10 +18,11 @@ package reactor.io.net.tcp;
 
 import java.net.InetSocketAddress;
 
-import org.reactivestreams.Publisher;
+import reactor.Flux;
+import reactor.Mono;
 import reactor.core.support.ReactiveState;
-import reactor.fn.Function;
 import reactor.core.timer.Timer;
+import reactor.fn.Function;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
@@ -108,14 +109,14 @@ public abstract class TcpClient<IN, OUT>
 		}
 
 		@Override
-		protected Publisher<Void> doStart(
+		protected Mono<Void> doStart(
 				ReactiveChannelHandler<NEWIN, NEWOUT, ReactiveChannel<NEWIN, NEWOUT>> handler) {
 			ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return TcpClient.this.start(p);
 		}
 
 		@Override
-		protected Publisher<Tuple2<InetSocketAddress, Integer>> doStart(
+		protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
 				ReactiveChannelHandler<NEWIN, NEWOUT, ReactiveChannel<NEWIN, NEWOUT>> handler,
 				Reconnect reconnect) {
 			ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
@@ -123,7 +124,7 @@ public abstract class TcpClient<IN, OUT>
 		}
 
 		@Override
-		protected Publisher<Void> doShutdown() {
+		protected Mono<Void> doShutdown() {
 			return TcpClient.this.shutdown();
 		}
 

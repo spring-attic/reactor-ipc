@@ -23,14 +23,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import org.reactivestreams.Publisher;
 import reactor.Flux;
-import reactor.Publishers;
+import reactor.Mono;
 import reactor.core.error.CancelException;
+import reactor.core.timer.Timer;
 import reactor.fn.Function;
 import reactor.fn.Predicate;
-import reactor.core.timer.Timer;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannelHandler;
@@ -57,16 +58,15 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * handler, only the specific routed methods (get, post...) will apply.
 	 * @return a Promise fulfilled when server is started
 	 */
-	public final Publisher<Void> start() {
+	public final Mono<Void> start() {
 		return start(null);
 	}
 
 	/**
 	 * @see this#start()
 	 */
-	public final void startAndAwait() throws InterruptedException {
-		Publishers.toReadQueue(start())
-		          .take();
+	public final void startAndAwait() throws TimeoutException {
+		start().get();
 	}
 
 	/**
@@ -305,7 +305,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 					return channel.writeBufferWith(filePub);
 				}
 				else{
-					return Publishers.error(CancelException.get());
+					return Mono.error(CancelException.get());
 				}
 			}
 		});
@@ -357,7 +357,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		}
 		while (selected.hasNext());
 
-		return Flux.concat(Flux.from(multiplexing));
+		return Flux.concat(Flux.fromIterable(multiplexing));
 	}
 
 	private final class PreprocessedHttpServer<NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>>
@@ -393,7 +393,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		}
 
 		@Override
-		protected Publisher<Void> doStart(final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
+		protected Mono<Void> doStart(final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
 			return HttpServer.this.start(null != handler ? new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 				@Override
 				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
@@ -403,7 +403,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		}
 
 		@Override
-		protected Publisher<Void> doShutdown() {
+		protected Mono<Void> doShutdown() {
 			return HttpServer.this.shutdown();
 		}
 	}

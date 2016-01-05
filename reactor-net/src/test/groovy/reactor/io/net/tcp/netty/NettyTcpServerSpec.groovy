@@ -46,7 +46,7 @@ class NettyTcpServerSpec extends Specification {
 		when: "the server is started"
 			server.start { conn ->
 				conn.writeBufferWith(Streams.just(Buffer.wrap("Hello World!")))
-			}.await()
+			}.get()
 
 			def client = new SimpleClient(port, dataLatch, Buffer.wrap("Hello World!"))
 			client.start()
@@ -78,7 +78,7 @@ class NettyTcpServerSpec extends Specification {
 							new Pojo(name: "Jane Doe")
 						}
 				)
-			}.await()
+			}.get()
 
 			def client = new SimpleClient(port, dataLatch, Buffer.wrap("{\"name\":\"John Doe\"}"))
 			client.start()
@@ -109,7 +109,7 @@ class NettyTcpServerSpec extends Specification {
 								.map(codec)
 								.capacity(5l)
 				)
-			}.await()
+			}.get()
 
 			client.start { input ->
 				Streams.wrap(codec.decode(input))
@@ -121,10 +121,10 @@ class NettyTcpServerSpec extends Specification {
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')
 								.map(codec)
-				).consume()
+				).subscribe()
 
 				Streams.never()
-			}.await()
+			}.get()
 
 		then: "the client/server were started"
 			latch.await(5, TimeUnit.SECONDS)
@@ -163,7 +163,7 @@ class NettyTcpServerSpec extends Specification {
 				.map(codec)
 						.capacity(10l)
 				)
-			}.await()
+			}.get()
 
 			client.start { input ->
 				Streams.wrap(codec.decode(input))
@@ -175,10 +175,10 @@ class NettyTcpServerSpec extends Specification {
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')
 								.map(codec)
-				).consume()
+				).subscribe()
 
 				Streams.never()
-			}.await()
+			}.get()
 
 		then: "the client/server were started"
 			latch.await(10, TimeUnit.SECONDS)

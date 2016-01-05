@@ -31,13 +31,15 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.support.Logger;
-import reactor.Publishers;
+import reactor.Flux;
+import reactor.Mono;
 import reactor.Subscribers;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.Assert;
+import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
-import reactor.fn.Consumer;
 import reactor.core.timer.Timer;
+import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -87,7 +89,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 	}
 
 	@Override
-	protected Publisher<Void> doStart(
+	protected Mono<Void> doStart(
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
 		return client.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
 			@Override
@@ -100,7 +102,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 	}
 
 	@Override
-	protected Publisher<Tuple2<InetSocketAddress, Integer>> doStart(
+	protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler,
 			final Reconnect reconnect) {
 		return client.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
@@ -114,7 +116,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 	}
 
 	@Override
-	public Publisher<? extends HttpChannel<Buffer, Buffer>> request(final Method method,
+	public Mono<? extends HttpChannel<Buffer, Buffer>> request(final Method method,
 			final String url,
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
 		final URI currentURI;
@@ -124,7 +126,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 			lastURI = currentURI;
 		}
 		catch (Exception e) {
-			return Publishers.error(e);
+			return Mono.error(e);
 		}
 
 		return new PostRequestPublisher(currentURI, method, handler);
@@ -158,7 +160,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 	}
 
 	@Override
-	protected final Publisher<Void> doShutdown() {
+	protected final Mono<Void> doShutdown() {
 		return client.shutdown();
 	}
 
@@ -194,7 +196,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 		return false;
 	}
 
-	private class PostRequestPublisher implements Publisher<HttpChannel<Buffer, Buffer>> {
+	private class PostRequestPublisher extends Mono<HttpChannel<Buffer, Buffer>> {
 
 		private final URI currentURI;
 		private final Method                                                              method;
@@ -239,15 +241,14 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 						}
 					}
 					catch (Throwable t) {
-						return Publishers.error(t);
+						return Mono.error(t);
 					}
 				}
 
 			}).subscribe(Subscribers.unbounded(null, new Consumer<Throwable>() {
 				@Override
 				public void accept(Throwable reason) {
-					Publishers.<HttpChannel<Buffer, Buffer>>error(reason)
-							.subscribe(subscriber);
+					EmptySubscription.error(subscriber, reason);
 				}
 			}));
 		}

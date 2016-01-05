@@ -18,13 +18,12 @@ package reactor.aeron.processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.processor.FluxProcessor;
 import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.processor.BaseProcessor;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -152,7 +151,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Anatoly Kadyshev
  */
-public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
+public class AeronProcessor extends FluxProcessor<Buffer, Buffer> {
 
 	private static final Logger logger = Logger.getLogger(AeronProcessor.class);
 
@@ -168,9 +167,9 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 
 	private final AtomicBoolean alive = new AtomicBoolean(true);
 
-	private final Consumer<Void> onTerminateTask = new Consumer<Void>() {
+	private final Runnable onTerminateTask = new Runnable() {
 		@Override
-		public void accept(Void value) {
+		public void run() {
 			if (subscriber.isTerminated() && publisher.isTerminated()) {
 				logger.info("processor shutdown");
 			}
@@ -183,7 +182,6 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 	 * @param context configuration of the processor
 	 */
 	AeronProcessor(Context context, boolean multiPublishers) {
-		super(context.autoCancel());
 		this.subscriber = createAeronSubscriber(context, multiPublishers);
 		this.publisher = createAeronPublisher(context);
 
@@ -191,9 +189,9 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 	}
 
 	private AeronPublisher createAeronPublisher(Context context) {
-		return new AeronPublisher(context, new Consumer<Void>() {
+		return new AeronPublisher(context, new Runnable() {
 			@Override
-			public void accept(Void value) {
+			public void run() {
 				shutdown();
 			}
 		}, onTerminateTask);
@@ -203,9 +201,9 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 		return new AeronSubscriber(
 				context,
 				multiPublishers,
-				new Consumer<Void>() {
+				new Runnable() {
 					@Override
-					public void accept(Void value) {
+					public void run() {
 						shutdown();
 					}
 				},
@@ -221,17 +219,6 @@ public class AeronProcessor extends BaseProcessor<Buffer, Buffer> {
 	public static AeronProcessor share(Context context) {
 		context.validate();
 		return new AeronProcessor(context, true);
-	}
-
-	/**
-	 * Returns available capacity for the number of messages which can be sent via the processor.
-	 * Not implemented yet and always returns 0.
-	 *
-	 * @return 0
-	 */
-	@Override
-	public long getAvailableCapacity() {
-		return 0;
 	}
 
 	@Override

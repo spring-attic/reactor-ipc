@@ -48,7 +48,6 @@ import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple;
 import reactor.io.buffer.Buffer;
-import reactor.rx.net.NetStreams;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.impl.netty.NettyBuffer;
 import reactor.io.net.impl.netty.NettyClientSocketOptions;
@@ -56,6 +55,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpClient;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Streams;
+import reactor.rx.net.NetStreams;
 import reactor.rx.net.tcp.ReactorTcpClient;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -148,10 +148,10 @@ public class TcpClientTests {
 
 		client.start(input -> {
 			input.consume(d -> latch.countDown());
-			input.writeWith(Streams.just("Hello")).consume();
+			input.writeWith(Streams.just("Hello")).subscribe();
 
 			return Streams.never();
-		}).await(5, TimeUnit.SECONDS);
+		}).get(5, TimeUnit.SECONDS);
 
 		latch.await(5, TimeUnit.SECONDS);
 
@@ -182,10 +182,10 @@ public class TcpClientTests {
 			  Streams.range(1, messages)
 				.map(i -> "Hello World!")
 				.publishOn(Processors.ioGroup("test-line-feed"))
-			).consume();
+			).subscribe();
 
 			return Streams.never();
-		}).await(5, TimeUnit.SECONDS);
+		}).get(5, TimeUnit.SECONDS);
 
 		assertTrue("Expected messages not received. Received " + strings.size() + " messages: " + strings,
 		  latch.await(5, TimeUnit.SECONDS));
@@ -205,7 +205,7 @@ public class TcpClientTests {
 
 		client.start(null);
 
-		assertTrue("Client was not closed within 30 seconds", client.shutdown().awaitSuccess(30, TimeUnit.SECONDS));
+		client.shutdown().get(30, TimeUnit.SECONDS);
 	}
 
 	@Test
@@ -273,12 +273,12 @@ public class TcpClientTests {
 
 		client.startAndAwait(p -> {
 			  p.on()
-				.close(v -> close.countDown())
-				.readIdle(500, v -> {
+				.close(close::countDown)
+				.readIdle(500, () -> {
 					totalDelay.addAndGet(System.currentTimeMillis() - start);
 					latch.countDown();
 				})
-				.writeIdle(500, v -> {
+				.writeIdle(500, () -> {
 					totalDelay.addAndGet(System.currentTimeMillis() - start);
 					latch.countDown();
 				});
@@ -303,9 +303,7 @@ public class TcpClientTests {
 
 		client.startAndAwait(p -> {
 			  p.on()
-				.readIdle(500, v -> {
-					latch.countDown();
-				});
+				.readIdle(500, latch::countDown);
 			  return Streams.timer(1).after().log();
 		  }
 		);
@@ -332,7 +330,7 @@ public class TcpClientTests {
 		client.startAndAwait(connection -> {
 			System.out.println("hello");
 			  connection.on()
-				.writeIdle(500, v -> latch.countDown());
+				.writeIdle(500, latch::countDown);
 
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {

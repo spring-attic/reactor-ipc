@@ -41,11 +41,11 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.NetUtil;
 import io.netty.util.concurrent.Future;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.Mono;
+import reactor.core.error.Exceptions;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.Logger;
-import reactor.core.error.Exceptions;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
@@ -53,9 +53,9 @@ import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.impl.netty.NettyChannel;
-import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
-import reactor.io.net.impl.netty.internal.NettyNativeDetector;
 import reactor.io.net.impl.netty.NettyServerSocketOptions;
+import reactor.io.net.impl.netty.internal.NettyNativeDetector;
+import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
 import reactor.io.net.udp.DatagramServer;
 
 /**
@@ -149,8 +149,8 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Publisher<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> channelHandler) {
-		return new Publisher<Void>(){
+	protected Mono<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> channelHandler) {
+		return new Mono<Void>(){
 
 			@Override
 			public void subscribe(final Subscriber<? super Void> subscriber) {
@@ -185,7 +185,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected Publisher<Void> doShutdown() {
+	protected Mono<Void> doShutdown() {
 		return new NettyChannel.FuturePublisher<ChannelFuture>(channel.close()){
 			@Override
 			protected void doComplete(ChannelFuture future, Subscriber<? super Void> s) {
@@ -200,7 +200,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 	}
 
 	@Override
-	public Publisher<Void> join(final InetAddress multicastAddress, NetworkInterface iface) {
+	public Mono<Void> join(final InetAddress multicastAddress, NetworkInterface iface) {
 		if (null == channel) {
 			throw new IllegalStateException("DatagramServer not running.");
 		}
@@ -226,7 +226,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 	}
 
 	@Override
-	public Publisher<Void> leave(final InetAddress multicastAddress, NetworkInterface iface) {
+	public Mono<Void> leave(final InetAddress multicastAddress, NetworkInterface iface) {
 		if (null == channel) {
 			throw new IllegalStateException("DatagramServer not running.");
 		}

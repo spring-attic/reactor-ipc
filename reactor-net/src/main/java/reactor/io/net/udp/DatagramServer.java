@@ -21,9 +21,10 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 
 import org.reactivestreams.Publisher;
+import reactor.Mono;
 import reactor.Processors;
-import reactor.fn.Function;
 import reactor.core.timer.Timer;
+import reactor.fn.Function;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -63,7 +64,7 @@ public abstract class DatagramServer<IN, OUT>
 	 * @param iface            interface to use for multicast
 	 * @return a {@link Publisher} that will be complete when the group has been joined
 	 */
-	public abstract Publisher<Void> join(InetAddress multicastAddress, NetworkInterface iface);
+	public abstract Mono<Void> join(InetAddress multicastAddress, NetworkInterface iface);
 
 	/**
 	 * Join a multicast group.
@@ -71,7 +72,7 @@ public abstract class DatagramServer<IN, OUT>
 	 * @param multicastAddress multicast address of the group to join
 	 * @return a {@link Publisher} that will be complete when the group has been joined
 	 */
-	public Publisher<Void> join(InetAddress multicastAddress) {
+	public Mono<Void> join(InetAddress multicastAddress) {
 		return join(multicastAddress, null);
 	}
 
@@ -82,7 +83,7 @@ public abstract class DatagramServer<IN, OUT>
 	 * @param iface            interface to use for multicast
 	 * @return a {@link Publisher} that will be complete when the group has been left
 	 */
-	public abstract Publisher<Void> leave(InetAddress multicastAddress, NetworkInterface iface);
+	public abstract Mono<Void> leave(InetAddress multicastAddress, NetworkInterface iface);
 
 	/**
 	 * Leave a multicast group.
@@ -90,7 +91,7 @@ public abstract class DatagramServer<IN, OUT>
 	 * @param multicastAddress multicast address of the group to leave
 	 * @return a {@link Publisher} that will be complete when the group has been left
 	 */
-	public Publisher<Void> leave(InetAddress multicastAddress) {
+	public Mono<Void> leave(InetAddress multicastAddress) {
 		return leave(multicastAddress, null);
 	}
 
@@ -139,26 +140,26 @@ public abstract class DatagramServer<IN, OUT>
 		}
 
 		@Override
-		protected Publisher<Void> doStart(
+		protected Mono<Void> doStart(
 				ReactiveChannelHandler<NEWIN, NEWOUT, ReactiveChannel<NEWIN, NEWOUT>> handler) {
 			ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return DatagramServer.this.start(p);
 		}
 
 		@Override
-		public Publisher<Void> join(InetAddress multicastAddress,
+		public Mono<Void> join(InetAddress multicastAddress,
 				NetworkInterface iface) {
 			return DatagramServer.this.join(multicastAddress, iface);
 		}
 
 		@Override
-		public Publisher<Void> leave(InetAddress multicastAddress,
+		public Mono<Void> leave(InetAddress multicastAddress,
 				NetworkInterface iface) {
 			return DatagramServer.this.leave(multicastAddress, iface);
 		}
 
 		@Override
-		protected Publisher<Void> doShutdown() {
+		protected Mono<Void> doShutdown() {
 			return DatagramServer.this.shutdown();
 		}
 

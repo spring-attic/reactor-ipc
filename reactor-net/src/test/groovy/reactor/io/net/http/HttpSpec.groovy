@@ -15,6 +15,7 @@
  */
 package reactor.io.net.http
 
+import reactor.core.error.CancelException
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.Streams
@@ -58,7 +59,8 @@ class HttpSpec extends Specification {
 	}
 
 	then: "the server was started"
-	server?.start()?.awaitSuccess(5, TimeUnit.SECONDS)
+	server
+	!server.start().get(5, TimeUnit.SECONDS)
 
 	when: "data is sent with Reactor HTTP support"
 
@@ -83,7 +85,7 @@ class HttpSpec extends Specification {
 			  .log('client-received')
 	}
 	.next()
-			.onError {
+			.doOnError {
 	  //something failed during the request or the reply processing
 	  println "Failed requesting server: $it"
 	}
@@ -92,7 +94,7 @@ class HttpSpec extends Specification {
 
 	then: "data was recieved"
 	//the produced reply should be there soon
-	content.await(5, TimeUnit.SECONDS) == "Hello World!"
+	content.get(5, TimeUnit.SECONDS) == "Hello World!"
 
 	cleanup: "the client/server where stopped"
 	//note how we order first the client then the server shutdown
@@ -113,15 +115,17 @@ class HttpSpec extends Specification {
 	CountDownLatch errored = new CountDownLatch(1)
 
 	server.get('/test') { HttpChannelStream<String, String> req -> throw new Exception()
-	}.get('/test2') {
-	  HttpChannelStream<String, String> req ->
-		req.writeWith(Streams.convert(Observable.error(new Exception()))).log("writeWith").when(Exception, {errored
-				.countDown()})
+	}.get('/test2') { HttpChannelStream<String, String> req ->
+	  req.writeWith(Streams.convert(Observable.error(new Exception()))).flux().log("writeWith").doOnError({
+		errored
+				.countDown()
+	  })
 	}.get('/test3') { HttpChannelStream<String, String> req -> return Streams.fail(new Exception())
 	}
 
 	then: "the server was started"
-	server?.start()?.awaitSuccess(5, TimeUnit.SECONDS)
+	server
+	!server.start().get(5, TimeUnit.SECONDS)
 
 	when:
 	def client = NetStreams.httpClient {
@@ -129,7 +133,7 @@ class HttpSpec extends Specification {
 	}
 
 	then:
-		server.listenAddress.port
+	server.listenAddress.port
 
 
 
@@ -143,7 +147,7 @@ class HttpSpec extends Specification {
 			  .log("received-status-1")
 	}
 	.next()
-			.await(5, TimeUnit.SECONDS)
+			.get(5, TimeUnit.SECONDS)
 
 
 
@@ -155,14 +159,14 @@ class HttpSpec extends Specification {
 	//prepare an http post request-reply flow
 	def content = client
 			.get('/test2')
-			.flatMap { replies ->
-	  			replies.log("received-status-2")
-			}
-			.next()
-			.poll(5, TimeUnit.SECONDS)
+			.flatMap { replies -> replies.log("received-status-2")
+	}
+	.next()
+			.get(3, TimeUnit.SECONDS)
 
 	then: "data was recieved"
 	//the produced reply should be there soon
+	thrown CancelException
 	errored.await(5, TimeUnit.SECONDS.SECONDS)
 	!content
 
@@ -175,7 +179,7 @@ class HttpSpec extends Specification {
 			  .log("received-status-3")
 	}
 	.next()
-			.poll(5, TimeUnit.SECONDS)
+			.get(5, TimeUnit.SECONDS)
 
 	then: "data was recieved"
 	//the produced reply should be there soon
@@ -222,7 +226,8 @@ class HttpSpec extends Specification {
 	}
 
 	then: "the server was started"
-	server?.start()?.awaitSuccess(5, TimeUnit.SECONDS)
+	server
+	!server.start().get(5, TimeUnit.SECONDS)
 
 	when: "data is sent with Reactor HTTP support"
 
@@ -250,14 +255,13 @@ class HttpSpec extends Specification {
 			  .observe { clientRes++ }
 	}
 	.take(1000)
-	.toList()
-			.onError {
+			.toList()
+			.doOnError {
 	  //something failed during the request or the reply processing
 	  println "Failed requesting server: $it"
 	}
 
 
-	content.await()
 	println "server: $serverRes / client: $clientRes"
 
 	then: "data was recieved"
@@ -266,7 +270,7 @@ class HttpSpec extends Specification {
 
 	cleanup: "the client/server where stopped"
 	//note how we order first the client then the server shutdown
-	client?.shutdown()?.await()
+	client?.shutdown()
 	server?.shutdown()
   }
 

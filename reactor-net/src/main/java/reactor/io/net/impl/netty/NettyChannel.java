@@ -34,10 +34,10 @@ import io.netty.util.concurrent.GenericFutureListener;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.Publishers;
+import reactor.Flux;
+import reactor.Mono;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.ReactiveState;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
@@ -48,7 +48,8 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  * @since 2.5
  */
 public class NettyChannel
-		implements ReactiveChannel<Buffer, Buffer>, Publisher<Buffer>,
+		extends Flux<Buffer>
+		implements ReactiveChannel<Buffer, Buffer>,
 		           ReactiveState.Named,
 		           ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
 
@@ -61,17 +62,17 @@ public class NettyChannel
 	}
 
 	@Override
-	public Publisher<Void> writeWith(final Publisher<? extends Buffer> dataStream) {
+	public Mono<Void> writeWith(final Publisher<? extends Buffer> dataStream) {
 		return new PostWritePublisher(dataStream);
 	}
 
 	@Override
-	public Publisher<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
+	public Mono<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
 		return writeWith(dataStream);
 	}
 
 	@Override
-	public Publisher<Buffer> input() {
+	public Flux<Buffer> input() {
 		return this;
 	}
 
@@ -108,7 +109,7 @@ public class NettyChannel
 			         .fireUserEventTriggered(new NettyChannelHandlerBridge.ChannelInputSubscriber(subscriber, prefetch));
 		}
 		catch (Throwable throwable) {
-			Publishers.<Buffer>error(throwable).subscribe(subscriber);
+			EmptySubscription.error(subscriber, throwable);
 		}
 	}
 
@@ -187,13 +188,13 @@ public class NettyChannel
 	private class NettyConsumerSpec implements ConsumerSpec {
 
 		@Override
-		public ConsumerSpec close(final Consumer<Void> onClose) {
+		public ConsumerSpec close(final Runnable onClose) {
 			ioChannel.pipeline()
 			         .addLast(new ChannelDuplexHandler() {
 				         @Override
 				         public void channelInactive(ChannelHandlerContext ctx)
 						         throws Exception {
-					         onClose.accept(null);
+					         onClose.run();
 					         super.channelInactive(ctx);
 				         }
 			         });
@@ -201,14 +202,14 @@ public class NettyChannel
 		}
 
 		@Override
-		public ConsumerSpec readIdle(long idleTimeout, final Consumer<Void> onReadIdle) {
+		public ConsumerSpec readIdle(long idleTimeout, final Runnable onReadIdle) {
 			ioChannel.pipeline()
 			         .addFirst(new IdleStateHandler(idleTimeout, 0, 0, TimeUnit.MILLISECONDS) {
 				         @Override
 				         protected void channelIdle(ChannelHandlerContext ctx,
 						         IdleStateEvent evt) throws Exception {
 					         if (evt.state() == IdleState.READER_IDLE) {
-						         onReadIdle.accept(null);
+						         onReadIdle.run();
 					         }
 					         super.channelIdle(ctx, evt);
 				         }
@@ -218,14 +219,14 @@ public class NettyChannel
 
 		@Override
 		public ConsumerSpec writeIdle(long idleTimeout,
-				final Consumer<Void> onWriteIdle) {
+				final Runnable onWriteIdle) {
 			ioChannel.pipeline()
 			         .addLast(new IdleStateHandler(0, idleTimeout, 0, TimeUnit.MILLISECONDS) {
 				         @Override
 				         protected void channelIdle(ChannelHandlerContext ctx,
 						         IdleStateEvent evt) throws Exception {
 					         if (evt.state() == IdleState.WRITER_IDLE) {
-						         onWriteIdle.accept(null);
+						         onWriteIdle.run();
 					         }
 					         super.channelIdle(ctx, evt);
 				         }
@@ -234,7 +235,7 @@ public class NettyChannel
 		}
 	}
 
-	public static class FuturePublisher<C extends Future> implements Publisher<Void> {
+	public static class FuturePublisher<C extends Future> extends Mono<Void> {
 
 		protected final C future;
 
@@ -311,7 +312,7 @@ public class NettyChannel
 		}
 	}
 
-	private class PostWritePublisher implements Publisher<Void>, Upstream, FeedbackLoop {
+	private class PostWritePublisher extends Mono<Void> implements Upstream, FeedbackLoop {
 
 		private final Publisher<? extends Buffer> dataStream;
 

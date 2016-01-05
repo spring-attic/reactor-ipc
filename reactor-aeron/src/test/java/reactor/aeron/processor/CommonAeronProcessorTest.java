@@ -29,7 +29,7 @@ import reactor.Processors;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
-import reactor.core.processor.BaseProcessor;
+import reactor.core.processor.FluxProcessor;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
@@ -144,7 +144,7 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Die"),
 				Buffer.wrap("Harder")).subscribe(processor);
 
-		BaseProcessor<Buffer, Buffer> emitter = Processors.emitter();
+		FluxProcessor<Buffer, Buffer> emitter = Processors.emitter();
 		processor.subscribe(emitter);
 
 		DataTestSubscriber<String> subscriber1 = createTestSubscriber();

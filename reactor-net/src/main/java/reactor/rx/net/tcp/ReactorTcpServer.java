@@ -18,13 +18,13 @@ package reactor.rx.net.tcp;
 
 import java.net.InetSocketAddress;
 
+import reactor.Mono;
 import reactor.rx.net.ChannelStream;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.rx.net.ReactorPeer;
 import reactor.io.net.tcp.TcpServer;
 import reactor.rx.Promise;
-import reactor.rx.Promises;
 
 /**
  * A network-aware client that will publish its connection once available to the {@link ReactiveChannelHandler} passed.
@@ -54,13 +54,13 @@ public final class ReactorTcpServer<IN, OUT> extends ReactorPeer<IN, OUT, TcpSer
 
 	/**
 	 * Start this {@literal ReactorPeer}.
-	 * @return a {@link Promise<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Promise<Void> start(ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> handler) {
-		return Promises.from(peer.start(
+	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> handler) {
+		return peer.start(
 				ChannelStream.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-		));
+		);
 	}
 
 	/**

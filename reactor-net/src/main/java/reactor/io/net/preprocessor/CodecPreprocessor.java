@@ -20,6 +20,8 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 import org.reactivestreams.Publisher;
+import reactor.Flux;
+import reactor.Mono;
 import reactor.core.publisher.convert.DependencyUtils;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
@@ -31,7 +33,6 @@ import reactor.io.codec.compress.GzipCodec;
 import reactor.io.codec.json.JsonCodec;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
-import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpProcessor;
 import reactor.io.net.http.model.HttpHeaders;
@@ -242,12 +243,12 @@ public final class CodecPreprocessor<IN, OUT>
 		}
 
 		@Override
-		public Publisher<Void> writeWith(Publisher<? extends OUT> dataStream) {
+		public Mono<Void> writeWith(Publisher<? extends OUT> dataStream) {
 			return channel.writeWith(encoder.encode(dataStream));
 		}
 
 		@Override
-		public Publisher<IN> input() {
+		public Flux<IN> input() {
 			return decoder.decode(channel.input());
 		}
 
@@ -262,7 +263,7 @@ public final class CodecPreprocessor<IN, OUT>
 		}
 
 		@Override
-		public Publisher<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
+		public Mono<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
 			return channel.writeWith(dataStream);
 		}
 	}
@@ -348,7 +349,7 @@ public final class CodecPreprocessor<IN, OUT>
 		}
 
 		@Override
-		public Publisher<Void> writeHeaders() {
+		public Mono<Void> writeHeaders() {
 			return channel.writeHeaders();
 		}
 
@@ -380,12 +381,12 @@ public final class CodecPreprocessor<IN, OUT>
 		}
 
 		@Override
-		public Publisher<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
+		public Mono<Void> writeBufferWith(Publisher<? extends Buffer> dataStream) {
 			return channel.writeBufferWith(dataStream);
 		}
 
 		@Override
-		public Publisher<IN> input() {
+		public Flux<IN> input() {
 			return decoder.decode(channel.input());
 		}
 
@@ -422,7 +423,7 @@ public final class CodecPreprocessor<IN, OUT>
 		}
 
 		@Override
-		public Publisher<Void> writeWith(Publisher<? extends OUT> source) {
+		public Mono<Void> writeWith(Publisher<? extends OUT> source) {
 			return channel.writeWith(encoder.encode(source));
 		}
 	}

@@ -22,7 +22,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Processors;
 import reactor.aeron.support.AeronUtils;
-import reactor.core.processor.BaseProcessor;
+import reactor.core.processor.FluxProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.subscriber.BaseSubscriber;
@@ -43,7 +43,7 @@ public class SubscriberThreadingPOCTest {
 
 	class SignalPollerForPOC implements Runnable {
 
-		private final BaseProcessor<Buffer, Buffer> sessionProcessor;
+		private final FluxProcessor<Buffer, Buffer> sessionProcessor;
 
 		private final ConcurrentLinkedQueue<ServiceRequest> requests = new ConcurrentLinkedQueue<>();
 
@@ -96,7 +96,7 @@ public class SubscriberThreadingPOCTest {
 			}
 		}
 
-		SignalPollerForPOC(BaseProcessor<Buffer, Buffer> sessionProcessor) {
+		SignalPollerForPOC(FluxProcessor<Buffer, Buffer> sessionProcessor) {
 			this.sessionProcessor = sessionProcessor;
 		}
 
@@ -226,7 +226,7 @@ public class SubscriberThreadingPOCTest {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(32);
 
 		ProcessorGroup<Buffer> group = Processors.asyncGroup();
-		BaseProcessor<Buffer, Buffer> publishOn = group.publishOn();
+		FluxProcessor<Buffer, Buffer> publishOn = group.publishOn();
 		RingBufferProcessor<Buffer> processor = RingBufferProcessor.create("ringbuffer-sender", 8);
 		dataPublisher.subscribe(publishOn);
 

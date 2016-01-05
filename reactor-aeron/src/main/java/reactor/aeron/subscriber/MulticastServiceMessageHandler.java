@@ -15,20 +15,18 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.support.Logger;
-import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.Serializer;
 import reactor.aeron.support.SignalType;
-import reactor.core.processor.BaseProcessor;
-import reactor.fn.Consumer;
+import reactor.core.processor.FluxProcessor;
+import reactor.core.support.Logger;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Anatoly Kadyshev
@@ -42,7 +40,7 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 	/**
 	 * Run when a terminal event is published into all established sessions
 	 */
-	private final Consumer<Void> shutdownTask;
+	private final Runnable shutdownTask;
 
 	private final SessionTracker<MulticastSession> sessionTracker;
 
@@ -127,10 +125,10 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 
 	}
 
-	public MulticastServiceMessageHandler(BaseProcessor<Buffer, Buffer> processor,
+	public MulticastServiceMessageHandler(FluxProcessor<Buffer, Buffer> processor,
 										  AeronInfra aeronInfra,
 										  Context context,
-										  Consumer<Void> shutdownTask) {
+			Runnable shutdownTask) {
 		this.context = context;
 		this.shutdownTask = shutdownTask;
 		this.sessionTracker = new BasicSessionTracker<>();
@@ -215,7 +213,7 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 				}
 
 				if (context.autoCancel() || subscriber.isTerminal()) {
-					shutdownTask.accept(null);
+					shutdownTask.run();
 				}
 			}
 		} else {

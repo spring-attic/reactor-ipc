@@ -17,6 +17,7 @@ package reactor.aeron.publisher;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.error.Exceptions;
 import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
@@ -24,7 +25,6 @@ import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.error.SpecificationExceptions;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.SingleUseExecutor;
 import reactor.core.support.UUIDUtils;
@@ -50,9 +50,9 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 
 	private final ExecutorService executor;
 
-	private final Consumer<Void> shutdownTask;
+	private final Runnable shutdownTask;
 
-	private final Consumer<Void> onTerminateTask;
+	private final Runnable onTerminateTask;
 
 	private final Publication serviceRequestPub;
 
@@ -76,13 +76,13 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 	}
 
 	public AeronPublisher(Context context,
-						  Consumer<Void> shutdownTask,
-						  Consumer<Void> onTerminateTask) {
+						  Runnable shutdownTask,
+						  Runnable onTerminateTask) {
 
 		if (shutdownTask == null) {
-			shutdownTask = new Consumer<Void>() {
+			shutdownTask = new Runnable() {
 				@Override
-				public void accept(Void value) {
+				public void run() {
 					shutdown();
 				}
 			};
@@ -116,9 +116,9 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 	public AeronPublisher(Context context) {
 		this(context,
 				null,
-				new Consumer<Void>() {
+				new Runnable() {
 					@Override
-					public void accept(Void value) {
+					public void run() {
 					}
 				});
 
@@ -131,7 +131,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 	@Override
 	public void subscribe(Subscriber<? super Buffer> subscriber) {
 		if (subscriber == null) {
-			throw SpecificationExceptions.spec_2_13_exception();
+			throw Exceptions.spec_2_13_exception();
 		}
 
 		if (!subscribed.compareAndSet(false, true)) {
@@ -162,7 +162,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 				subscribed.set(false);
 
 				if (context.autoCancel() || isTerminalSignalReceived) {
-					shutdownTask.accept(null);
+					shutdownTask.run();
 				}
 			}
 		});
@@ -203,7 +203,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 							logger.info("publisher shutdown, sessionId: {}", sessionId);
 							terminated = true;
 
-							onTerminateTask.accept(null);
+							onTerminateTask.run();
 						}
 					});
 				}

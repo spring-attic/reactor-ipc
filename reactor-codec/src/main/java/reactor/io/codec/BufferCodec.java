@@ -23,13 +23,12 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Publishers;
+import reactor.Flux;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.support.BackpressureUtils;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.internal.PlatformDependent;
 import reactor.fn.Consumer;
-import reactor.fn.Function;
 import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 
@@ -81,8 +80,8 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 	}
 
 	@Override
-	public Publisher<IN> decode(final Publisher<Buffer> publisherToDecode) {
-		return Publishers.lift(publisherToDecode, new BufferDecoderOperator());
+	public Flux<IN> decode(final Publisher<Buffer> publisherToDecode) {
+		return new BufferDecoderOperator(publisherToDecode);
 	}
 
 	private static final class AggregatingDecoderBarrier<IN>
@@ -304,12 +303,15 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 		}
 	}
 
-	private class BufferDecoderOperator implements Function<Subscriber<? super IN>, Subscriber<? super Buffer>> {
+	private class BufferDecoderOperator extends Flux.FluxBarrier<Buffer, IN> {
+
+		public BufferDecoderOperator(Publisher<? extends Buffer> source) {
+			super(source);
+		}
 
 		@Override
-		public Subscriber<? super Buffer> apply(
-				final Subscriber<? super IN> subscriber) {
-			return new AggregatingDecoderBarrier<IN>(BufferCodec.this, subscriber);
+		public void subscribe(Subscriber<? super IN> s) {
+			source.subscribe(new AggregatingDecoderBarrier<IN>(BufferCodec.this, s));
 		}
 	}
 }

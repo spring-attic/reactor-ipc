@@ -27,9 +27,9 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import reactor.Flux;
-import reactor.core.support.Logger;
-import reactor.Publishers;
+import reactor.Mono;
 import reactor.core.error.Exceptions;
+import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
@@ -67,7 +67,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 	}
 
 	@Override
-	protected Publisher<Void> doStart(
+	protected Mono<Void> doStart(
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> defaultHandler) {
 		return server.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
 			@Override
@@ -95,7 +95,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 				}
 				catch (Throwable t) {
 					Exceptions.throwIfFatal(t);
-					return Publishers.error(t);
+					return Mono.error(t);
 				}
 				//500
 			}
@@ -107,7 +107,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 	 * @param c
 	 * @return
 	 */
-	public static Publisher<Void> upgradeToWebsocket(HttpChannel<?, ?> c){
+	public static Mono<Void> upgradeToWebsocket(HttpChannel<?, ?> c){
 		return upgradeToWebsocket(c, null);
 	}
 
@@ -117,7 +117,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 	 * @param protocols
 	 * @return
 	 */
-	public static Publisher<Void> upgradeToWebsocket(HttpChannel<?, ?> c, String protocols){
+	public static Mono<Void> upgradeToWebsocket(HttpChannel<?, ?> c, String protocols){
 		ChannelPipeline pipeline = ((SocketChannel) c.delegate()).pipeline();
 		NettyHttpWSServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
 		                                           .withWebsocketSupport(c.uri(), protocols);
@@ -126,7 +126,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 			pipeline.addLast(handler);
 			return new NettyChannel.FuturePublisher<>(handler.handshakerResult);
 		}
-		return Publishers.error(new IllegalStateException("Failed to upgrade to websocket"));
+		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
 	}
 
 	@Override
@@ -157,7 +157,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 	}
 
 	@Override
-	protected final Publisher<Void> doShutdown() {
+	protected final Mono<Void> doShutdown() {
 		return server.shutdown();
 	}
 

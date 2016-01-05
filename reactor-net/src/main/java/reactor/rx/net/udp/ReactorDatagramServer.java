@@ -20,13 +20,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 
-import reactor.rx.net.ChannelStream;
+import reactor.Mono;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
-import reactor.rx.net.ReactorPeer;
 import reactor.io.net.udp.DatagramServer;
-import reactor.rx.Promise;
-import reactor.rx.Promises;
+import reactor.rx.net.ChannelStream;
+import reactor.rx.net.ReactorPeer;
 
 /**
  * @author Stephane Maldini
@@ -48,13 +47,13 @@ public class ReactorDatagramServer<IN, OUT> extends ReactorPeer<IN, OUT, Datagra
 
 	/**
 	 * Start this {@literal ReactorPeer}.
-	 * @return a {@link Promise<Void>} that will be complete when the {@link
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Promise<Void> start(ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> handler) {
-		return Promises.from(peer.start(
+	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> handler) {
+		return peer.start(
 				ChannelStream.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-		));
+		);
 	}
 
 	protected ReactorDatagramServer(DatagramServer<IN, OUT> datagramServer) {
@@ -83,19 +82,19 @@ public class ReactorDatagramServer<IN, OUT> extends ReactorPeer<IN, OUT, Datagra
 	 *
 	 * @param multicastAddress multicast address of the group to join
 	 * @param iface            interface to use for multicast
-	 * @return a {@link Promise} that will be complete when the group has been joined
+	 * @return a {@link Mono} that will be complete when the group has been joined
 	 */
-	public final Promise<Void> join(InetAddress multicastAddress, NetworkInterface iface){
-		return Promises.from(peer.join(multicastAddress, iface));
+	public final Mono<Void> join(InetAddress multicastAddress, NetworkInterface iface){
+		return peer.join(multicastAddress, iface);
 	}
 
 	/**
 	 * Join a multicast group.
 	 *
 	 * @param multicastAddress multicast address of the group to join
-	 * @return a {@link Promise} that will be complete when the group has been joined
+	 * @return a {@link Mono} that will be complete when the group has been joined
 	 */
-	public final Promise<Void> join(InetAddress multicastAddress) {
+	public final Mono<Void> join(InetAddress multicastAddress) {
 		return join(multicastAddress, null);
 	}
 
@@ -104,19 +103,19 @@ public class ReactorDatagramServer<IN, OUT> extends ReactorPeer<IN, OUT, Datagra
 	 *
 	 * @param multicastAddress multicast address of the group to leave
 	 * @param iface            interface to use for multicast
-	 * @return a {@link Promise} that will be complete when the group has been left
+	 * @return a {@link Mono} that will be complete when the group has been left
 	 */
-	public final Promise<Void> leave(InetAddress multicastAddress, NetworkInterface iface){
-		return Promises.from(peer.leave(multicastAddress, iface));
+	public final Mono<Void> leave(InetAddress multicastAddress, NetworkInterface iface){
+		return peer.leave(multicastAddress, iface);
 	}
 
 	/**
 	 * Leave a multicast group.
 	 *
 	 * @param multicastAddress multicast address of the group to leave
-	 * @return a {@link Promise} that will be complete when the group has been left
+	 * @return a {@link Mono} that will be complete when the group has been left
 	 */
-	public final Promise<Void> leave(InetAddress multicastAddress) {
+	public final Mono<Void> leave(InetAddress multicastAddress) {
 		return leave(multicastAddress, null);
 	}
 }

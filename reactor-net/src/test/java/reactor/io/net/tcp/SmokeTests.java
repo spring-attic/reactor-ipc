@@ -34,22 +34,21 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
+import reactor.Mono;
 import reactor.Timers;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.processor.RingBufferWorkProcessor;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
-import reactor.rx.net.NetStreams;
 import reactor.io.net.ReactiveNet;
-import reactor.rx.net.http.ReactorHttpClient;
-import reactor.rx.net.http.ReactorHttpServer;
 import reactor.io.net.impl.netty.NettyClientSocketOptions;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.rx.Promise;
 import reactor.rx.Stream;
 import reactor.rx.Streams;
+import reactor.rx.net.NetStreams;
+import reactor.rx.net.http.ReactorHttpClient;
+import reactor.rx.net.http.ReactorHttpServer;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -112,7 +111,7 @@ public class SmokeTests {
 	@After
 	public void clean() throws Exception {
 		processor.onComplete();
-		httpServer.shutdown().awaitSuccess();
+		httpServer.shutdown().get();
 		Timers.unregisterGlobal();
 	}
 
@@ -306,19 +305,19 @@ public class SmokeTests {
 							.capacity(1L));
 		});
 
-		httpServer.start().awaitSuccess();
+		httpServer.start().get();
 	}
 
 	private List<String> getClientDataPromise() throws Exception {
 		ReactorHttpClient<String, String> httpClient = NetStreams.httpClient(clientFactory);
 
 		Promise<List<String>> content = httpClient.get("/data")
-		  .flatMap(s -> s)
-		  .consumeAsList();
+		                                       .flatMap(Stream::buffer)
+		                                       .to(Promise.ready());
 
-		content.awaitSuccess(20, TimeUnit.SECONDS);
-		httpClient.shutdown().awaitSuccess();
-		return content.get();
+		List<String> res = content.await(20, TimeUnit.SECONDS);
+		httpClient.shutdown().get();
+		return res;
 	}
 
 	@SuppressWarnings("unchecked")

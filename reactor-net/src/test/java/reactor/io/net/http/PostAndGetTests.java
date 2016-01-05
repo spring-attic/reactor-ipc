@@ -25,8 +25,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import reactor.io.buffer.Buffer;
-import reactor.rx.net.NetStreams;
 import reactor.rx.Streams;
+import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpHandler;
 import reactor.rx.net.http.ReactorHttpServer;
 
@@ -46,7 +46,7 @@ public class PostAndGetTests {
 		httpServer = NetStreams.httpServer(server -> server.listen(0));
 		httpServer.get("/get/{name}", getHandler());
 		httpServer.post("/post", postHandler());
-		httpServer.start().awaitSuccess();
+		httpServer.start().get();
 	}
 
 	ReactorHttpHandler<Buffer, Buffer> getHandler() {

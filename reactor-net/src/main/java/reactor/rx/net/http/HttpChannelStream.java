@@ -19,9 +19,9 @@ package reactor.rx.net.http;
 import java.util.Map;
 
 import org.reactivestreams.Publisher;
-import reactor.fn.Function;
+import reactor.Mono;
 import reactor.core.timer.Timer;
-import reactor.rx.net.ChannelStream;
+import reactor.fn.Function;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.BaseHttpChannel;
 import reactor.io.net.http.HttpChannel;
@@ -31,8 +31,7 @@ import reactor.io.net.http.model.Protocol;
 import reactor.io.net.http.model.ResponseHeaders;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
-import reactor.rx.Stream;
-import reactor.rx.Streams;
+import reactor.rx.net.ChannelStream;
 
 /**
  * A Request/Response {@link ChannelStream} extension that provides for several helpers to
@@ -196,8 +195,8 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	}
 
 	@Override
-	public Stream<Void> writeHeaders() {
-		return Streams.wrap(actual.writeHeaders());
+	public Mono<Void> writeHeaders() {
+		return actual.writeHeaders();
 	}
 
 	@Override
@@ -222,8 +221,8 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	}
 
 	@Override
-	public final Stream<Void> writeWith(final Publisher<? extends OUT> source) {
-		return Streams.wrap(actual.writeWith(source));
+	public final Mono<Void> writeWith(final Publisher<? extends OUT> source) {
+		return actual.writeWith(source);
 	}
 
 	@Override

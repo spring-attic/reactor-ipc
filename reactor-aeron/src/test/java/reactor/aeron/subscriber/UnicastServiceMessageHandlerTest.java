@@ -22,8 +22,7 @@ import reactor.Processors;
 import reactor.aeron.Context;
 import reactor.aeron.support.SignalType;
 import reactor.aeron.support.TestAeronInfra;
-import reactor.core.processor.BaseProcessor;
-import reactor.fn.Consumer;
+import reactor.core.processor.FluxProcessor;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Streams;
 
@@ -39,7 +38,7 @@ public class UnicastServiceMessageHandlerTest {
 
 	private TestAeronInfra aeronInfra;
 
-	private BaseProcessor<Buffer, Buffer> processor;
+	private FluxProcessor<Buffer, Buffer> processor;
 
 	@Before
 	public void doSetup() {
@@ -49,9 +48,7 @@ public class UnicastServiceMessageHandlerTest {
 
 		Context context = new Context();
 
-		handler = new UnicastServiceMessageHandler(processor, aeronInfra, context, (Consumer<Void>) aVoid -> {
-
-		}) {
+		handler = new UnicastServiceMessageHandler(processor, aeronInfra, context, () -> {}) {
 			@Override
 			protected SignalSender createSignalSender() {
 				return aeronInfra.getSignalSender();

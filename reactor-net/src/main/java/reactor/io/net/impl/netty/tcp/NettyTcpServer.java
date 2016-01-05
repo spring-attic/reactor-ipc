@@ -17,7 +17,6 @@
 package reactor.io.net.impl.netty.tcp;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Iterator;
 import javax.net.ssl.SSLEngine;
 
@@ -36,14 +35,13 @@ import io.netty.channel.socket.SocketChannelConfig;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Flux;
+import reactor.Mono;
 import reactor.core.support.Logger;
-import reactor.Publishers;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
+import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -51,8 +49,8 @@ import reactor.io.net.config.CommonSocketOptions;
 import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.config.SslOptions;
 import reactor.io.net.impl.netty.NettyChannel;
-import reactor.io.net.impl.netty.internal.NettyNativeDetector;
 import reactor.io.net.impl.netty.NettyServerSocketOptions;
+import reactor.io.net.impl.netty.internal.NettyNativeDetector;
 import reactor.io.net.tcp.TcpServer;
 import reactor.io.net.tcp.ssl.SSLEngineSupplier;
 
@@ -154,7 +152,8 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements Reactiv
 	}
 
 	@Override
-	protected Publisher<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>> handler) {
+	protected Mono<Void> doStart(final ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>
+			handler) {
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
@@ -211,22 +210,22 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements Reactiv
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Publisher<Void> doShutdown() {
+	public Mono<Void> doShutdown() {
 		try {
 			bindFuture.channel().close().sync();
 		} catch (InterruptedException ie){
-			return Publishers.error(ie);
+			return Mono.error(ie);
 		}
 
-		final Publisher<Void> shutdown = new NettyChannel.FuturePublisher<Future<?>>(selectorGroup.shutdownGracefully());
+		final Mono<Void> shutdown = new NettyChannel.FuturePublisher<Future<?>>(selectorGroup.shutdownGracefully());
 
 		if (null == nettyOptions || null == nettyOptions.eventLoopGroup()) {
-			return Flux.concat(
-					Flux.from(Arrays.asList(
-						 shutdown,
-						 new NettyChannel.FuturePublisher<Future<?>>(ioGroup.shutdownGracefully())
-					))
-			);
+			return shutdown.then(new Function<Void, Mono<? extends Void>>() {
+				@Override
+				public Mono<? extends Void> apply(Void aVoid) {
+					return new NettyChannel.FuturePublisher<Future<?>>(ioGroup.shutdownGracefully());
+				}
+			});
 		}
 
 		return shutdown;

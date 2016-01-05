@@ -16,11 +16,12 @@
 
 package reactor.io.net;
 
-import org.reactivestreams.Publisher;
-import reactor.fn.Consumer;
-import reactor.io.buffer.Buffer;
-
 import java.net.InetSocketAddress;
+
+import org.reactivestreams.Publisher;
+import reactor.Flux;
+import reactor.Mono;
+import reactor.io.buffer.Buffer;
 
 /**
  * {@code Channel} is a virtual connection that often matches with a Socket or a Channel (e.g. Netty).
@@ -50,7 +51,7 @@ public interface ReactiveChannel<IN, OUT>  {
 	 * @param dataStream the dataStream publishing OUT items to write on this channel
 	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
 	 */
-	Publisher<Void> writeWith(Publisher<? extends OUT> dataStream);
+	Mono<Void> writeWith(Publisher<? extends OUT> dataStream);
 
 	/**
 	 * Send bytes to the peer, listen for any error on write and close on terminal signal (complete|error).
@@ -60,7 +61,7 @@ public interface ReactiveChannel<IN, OUT>  {
 	 * @param dataStream the dataStream publishing Buffer items to write on this channel
 	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
 	 */
-	Publisher<Void> writeBufferWith(Publisher<? extends Buffer> dataStream);
+	Mono<Void> writeBufferWith(Publisher<? extends Buffer> dataStream);
 
 	/**
 	 * Get the input publisher (request body or incoming tcp traffic for instance)
@@ -91,7 +92,7 @@ public interface ReactiveChannel<IN, OUT>  {
 		 * @param onClose the close event handler
 		 * @return {@literal this}
 		 */
-		ConsumerSpec close(Consumer<Void> onClose);
+		ConsumerSpec close(Runnable onClose);
 
 		/**
 		 * Assign a {@link Runnable} to be invoked when reads have become idle for the given timeout.
@@ -100,7 +101,7 @@ public interface ReactiveChannel<IN, OUT>  {
 		 * @param onReadIdle  the idle timeout handler
 		 * @return {@literal this}
 		 */
-		ConsumerSpec readIdle(long idleTimeout, Consumer<Void> onReadIdle);
+		ConsumerSpec readIdle(long idleTimeout, Runnable onReadIdle);
 
 		/**
 		 * Assign a {@link Runnable} to be invoked when writes have become idle for the given timeout.
@@ -109,7 +110,7 @@ public interface ReactiveChannel<IN, OUT>  {
 		 * @param onWriteIdle the idle timeout handler
 		 * @return {@literal this}
 		 */
-		ConsumerSpec writeIdle(long idleTimeout, Consumer<Void> onWriteIdle);
+		ConsumerSpec writeIdle(long idleTimeout, Runnable onWriteIdle);
 	}
 
 }

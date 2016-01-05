@@ -18,11 +18,11 @@ package reactor.io.net.tcp;
 
 import java.net.InetSocketAddress;
 
-import org.reactivestreams.Publisher;
+import reactor.Mono;
 import reactor.Processors;
 import reactor.core.support.ReactiveState;
-import reactor.fn.Function;
 import reactor.core.timer.Timer;
+import reactor.fn.Function;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -111,14 +111,14 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ReactiveC
 		}
 
 		@Override
-		protected Publisher<Void> doStart(ReactiveChannelHandler<NEWIN, NEWOUT, ReactiveChannel<NEWIN, NEWOUT>> handler) {
+		protected Mono<Void> doStart(ReactiveChannelHandler<NEWIN, NEWOUT, ReactiveChannel<NEWIN, NEWOUT>> handler) {
 			ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>> p =
 					Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return TcpServer.this.start(p);
 		}
 
 		@Override
-		protected Publisher<Void> doShutdown() {
+		protected Mono<Void> doShutdown() {
 			return TcpServer.this.shutdown();
 		}
 

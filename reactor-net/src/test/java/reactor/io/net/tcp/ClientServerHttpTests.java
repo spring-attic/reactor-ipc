@@ -32,16 +32,14 @@ import org.reactivestreams.Processor;
 import reactor.Processors;
 import reactor.Timers;
 import reactor.core.processor.RingBufferWorkProcessor;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
-import reactor.rx.net.NetStreams;
-import reactor.rx.net.http.ReactorHttpClient;
-import reactor.rx.net.http.ReactorHttpServer;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.rx.Promise;
 import reactor.rx.Streams;
+import reactor.rx.net.NetStreams;
+import reactor.rx.net.http.ReactorHttpClient;
+import reactor.rx.net.http.ReactorHttpServer;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -230,7 +228,7 @@ public class ClientServerHttpTests {
 
 	@After
 	public void clean() throws Exception {
-		httpServer.shutdown().awaitSuccess();
+		httpServer.shutdown().get();
 		Timers.unregisterGlobal();
 	}
 
@@ -267,7 +265,7 @@ public class ClientServerHttpTests {
 			);
 		});
 
-		httpServer.start().awaitSuccess();
+		httpServer.start().get();
 	}
 
 	private List<String> getClientData() throws Exception {
@@ -283,7 +281,8 @@ public class ClientServerHttpTests {
 		  .flatMap(s ->
 			  s.log("client")
 		  )
-		  .toList();
+		  .buffer()
+				.to(Promise.ready());
 	}
 
 	private List<List<String>> getClientDatas(int threadCount, Sender sender, int count) throws Exception {

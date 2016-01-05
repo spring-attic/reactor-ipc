@@ -17,7 +17,7 @@
 package reactor.aeron;
 
 import org.junit.Test;
-import reactor.Publishers;
+import reactor.Flux;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.subscriber.test.DataTestSubscriber;
@@ -42,8 +42,8 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 	@Test
 	public void testSubscriptionCancellationDoesNotShutdownPublisherWhenNoAutocancel() throws InterruptedException {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
-		Publishers.from(createBuffers(256))
-		          .subscribe(subscriber);
+		Flux.fromIterable(createBuffers(256))
+		    .subscribe(subscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
 		TestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);

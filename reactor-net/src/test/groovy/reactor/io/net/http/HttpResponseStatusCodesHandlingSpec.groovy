@@ -27,7 +27,8 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             }
 
         then: "the server was started"
-            server?.start()?.awaitSuccess(5, TimeUnit.SECONDS)
+          server
+          !server.start().get(5, TimeUnit.SECONDS)
 
         when: "a request with unsupported URI is sent onto the server"
             def client = NetStreams.httpClient {
@@ -55,7 +56,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
                         }
             }
             .next()
-            .onError {
+            .doOnError {
                 //something failed during the request or the reply processing
                 println "Failed requesting server: $it"
             }
@@ -64,7 +65,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             def exceptionMessage = ""
 
             try {
-                content.await();
+                content.get();
             } catch (RuntimeException ex) {
                 exceptionMessage = ex.getMessage();
             }
