@@ -97,9 +97,11 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 	}
 	protected void writeLast(ChannelHandlerContext ctx){
+		if(request.markHeadersAsFlushed()){
+			ctx.writeAndFlush(request.getNettyResponse());
+		}
 		ctx
-		  .writeAndFlush(request.markHeadersAsFlushed() ? request.getNettyResponse() :
-				  LastHttpContent.EMPTY_LAST_CONTENT)
+		  .writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
 		  .addListener(ChannelFutureListener.CLOSE);
 	}
 
