@@ -267,9 +267,8 @@ public class SmokeTests {
 		  .doOnNext(d ->
 			  windows.getAndIncrement()
 		  )
-		  .flatMap(s -> s
-
-			  .reduce(new Buffer(), Buffer::append)
+		  .flatMap(s ->
+				  s.reduceWith(() -> new Buffer(), Buffer::append)
 		  )
 				.doOnNext(d ->
 								postReduce.getAndIncrement()
