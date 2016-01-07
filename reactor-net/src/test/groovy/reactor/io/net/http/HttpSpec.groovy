@@ -33,7 +33,63 @@ import java.util.concurrent.TimeUnit
  */
 class HttpSpec extends Specification {
 
-  def "http responds to requests from clients"() {
+  def "http responds empty"() {
+	given: "a simple HttpServer"
+
+	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
+	def server = NetStreams.httpServer {
+	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
+	}
+
+	when: "the server is prepared"
+
+	//prepare post request consumer on /test/* and capture the URL parameter "param"
+	server.post('/test/{param}') {
+	  HttpChannelStream<String, String> req
+		->
+
+		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
+		//the returned stream is bound to the request stream and will auto read/close accordingly
+
+		req.writeWith(Stream.empty())
+
+	}
+
+	then: "the server was started"
+	server
+	!server.start().get(5, TimeUnit.SECONDS)
+
+	when: "data is sent with Reactor HTTP support"
+
+	//Prepare a client using default impl (Netty) to connect on http://localhost:port/ and assign global codec to send/receive String data
+	def client = NetStreams.httpClient {
+	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
+	}
+
+	//prepare an http post request-reply flow
+	def content = client.post('/test/World') { HttpChannelStream<String, String> req ->
+	  //prepare content-type
+	  req.header('Content-Type', 'text/plain')
+
+	  //return a producing stream to send some data along the request
+	  req.writeWith(Mono.just("Hello").log('client-send'))
+
+	}.then { replies ->
+	  //successful request, listen for the first returned next reply and pass it downstream
+	  replies.log('client-received').next()
+	}
+	.doOnError {
+	  //something failed during the request or the reply processing
+	  println "Failed requesting server: $it"
+	}
+
+	then: "data was recieved"
+	//the produced reply should be there soon
+	content.get(5, TimeUnit.SECONDS) == "Hello World!"
+  }
+
+
+	def "http responds to requests from clients"() {
 	given: "a simple HttpServer"
 
 	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
