@@ -5,6 +5,7 @@ For more information regarding Aeron go to https://github.com/real-logic/Aeron[A
 Support of http://www.reactive-streams.org/[Reactive Streams] over Aeron transport introduced in module reactor-aeron.
 
 .Core reactor-aeron classes and their purpose
+[cols="m,d", options="header"]
 |============================
 | Class          | Purpose
 | Context        | Provides configuration parameters for AeronSubscriber, AeronPublisher and AeronProcessor
@@ -42,9 +43,32 @@ You can adjust embedded media driver configuration `MediaDriver.Context` via
 `EmbeddedMediaDriverManager.getInstance().getDriverContext()`
 before the driver is started.
 
-
+The embedded Media driver shutdown specifics and clean up activity can be set up via fields of
+`EmbeddedMediaDriverManager` instance.
 
 === AeronSubscriber as server
+
+AeronSubscriber plays a role of a server which passes signals from an upstream publisher to receivers via Aeron.
+
+The subscriber is configured via fields of `Context' which have default values and normally there is no need
+to adjust them.
+
+.Most important fields of `Context` for `AeronSubscriber`
+[cols="m,d", options="header"]
+|======================================================
+| Field                   | Description
+| errorConsumer           | Consumer of errors encountered
+| publicationRetryMillis  | Number of milliseconds to wait before giving up publishing of a message into Aeron. +
+When publication fails the corresponding exception is reported into `errorConsumer`.
+| heartbeatIntervalMillis | Interval in milliseconds for sending heartbeats from a signal receiver to a signal sender.
+| multicastUpstreamRequest| Number of signals requested from an upstream publisher in a single call to its subscription
+by multicast sender.
+| senderChannel           | Aeron channel on which to listen for inbound requests from clients. +
+|======================================================
+
+`senderChannel` has the following format: `udp://<Network Interface IP Address>|<Machine name>:<Port>` +
+Where `Network Interface IP Address` is the IP address of a network interface used for communication between the sender and receivers. +
+Alternatively `Machine name` which is a machine name on the network could be provided as it's resolved to the corresponding network interface IP.
 
 ==== Unicast sending mode
 

@@ -29,6 +29,10 @@ public class AeronUtils {
 
 	public final static Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
+	public static final String LABEL_PREFIX_SENDER_POS = "sender pos";
+
+	public static final String LABEL_PREFIX_SUBSCRIBER_POS = "subscriber pos";
+
 	public static BackoffIdleStrategy newBackoffIdleStrategy() {
 		return new BackoffIdleStrategy(
 				100, 10, TimeUnit.MICROSECONDS.toNanos(1), TimeUnit.MICROSECONDS.toNanos(100));

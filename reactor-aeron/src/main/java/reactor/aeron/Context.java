@@ -95,10 +95,11 @@ public class Context {
 
 	/**
 	 * A timeout during which a message is retied to be published into Aeron.
-	 * If the timeout elapses and the message cannot be published because of
-	 * either {@link uk.co.real_logic.aeron.Publication#BACK_PRESSURED} or
-	 * {@link uk.co.real_logic.aeron.Publication#NOT_CONNECTED} it is discarded.
-	 * In the next version of the processor the behaviour is likely to change.
+	 * If the timeout elapses and the message cannot be published the corresponding
+	 * {@link reactor.aeron.support.SignalPublicationFailedException},
+	 * {@link reactor.aeron.support.ServiceMessagePublicationFailedException}
+	 * depending on the message type is provided into
+	 * {@link #errorConsumer}
 	 */
 	private long publicationRetryMillis = 1000;
 
@@ -108,8 +109,14 @@ public class Context {
 	 */
 	private int ringBufferSize = ReactiveState.MEDIUM_BUFFER_SIZE;
 
+	/**
+	 * Consumer of errors happened
+	 */
 	private Consumer<Throwable> errorConsumer = new LoggingErrorConsumer();
 
+	/**
+	 * Heartbeat interval in milliseconds
+	 */
 	private long heartbeatIntervalMillis = TimeUnit.SECONDS.toMillis(4);
 
 	private final Serializer<Throwable> exceptionSerializer = new BasicExceptionSerializer();

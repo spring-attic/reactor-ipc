@@ -59,6 +59,9 @@ public class EmbeddedMediaDriverManager {
 
 	private long retryShutdownMillis = DEFAULT_RETRY_SHUTDOWN_MILLIS;
 
+	/**
+	 * Timeout in nanos to wait until forcefully shutting down the embedded Media driver
+	 */
 	private long shutdownTimeoutNs = DEFAULT_SHUTDOWN_TIMEOUT_NS;
 
 	private MediaDriver driver;
@@ -73,8 +76,15 @@ public class EmbeddedMediaDriverManager {
 
 	private State state = State.NOT_STARTED;
 
+	/**
+	 * If true then the Media driver is shutdown when the last functionality which
+	 * started it is shutdown
+	 */
 	private boolean shouldShutdownWhenNotUsed = true;
 
+	/**
+	 * If true then deletes previously created Aeron dirs upon JVM termination
+	 */
 	private boolean deleteAeronDirsOnExit = false;
 
 	private class RetryShutdownTask implements Consumer<Long> {
@@ -102,7 +112,7 @@ public class EmbeddedMediaDriverManager {
 			aeronCounters.forEach(new BiConsumer<Integer, String>() {
 				@Override
 				public void accept(Integer id, String label) {
-					if (label.startsWith("sender pos") || label.startsWith("subscriber pos")) {
+					if (label.startsWith(AeronUtils.LABEL_PREFIX_SENDER_POS) || label.startsWith(AeronUtils.LABEL_PREFIX_SUBSCRIBER_POS)) {
 						canShutdownDriver[0] = false;
 					}
 				}
@@ -235,6 +245,10 @@ public class EmbeddedMediaDriverManager {
 
 	public void setDeleteAeronDirsOnExit(boolean deleteAeronDirsOnExit) {
 		this.deleteAeronDirsOnExit = deleteAeronDirsOnExit;
+	}
+
+	public void setShutdownTimeoutNs(long shutdownTimeoutNs) {
+		this.shutdownTimeoutNs = shutdownTimeoutNs;
 	}
 
 }

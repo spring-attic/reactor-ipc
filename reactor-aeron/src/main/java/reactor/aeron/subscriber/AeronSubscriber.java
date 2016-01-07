@@ -38,7 +38,7 @@ import reactor.io.buffer.Buffer;
  * <p/>Can operate in both unicast and multicast sending modes.
  *
  * <br/>First of all, to start using the functionality you need to set
- * {@link Context#senderChannel(String)} to "udp://" + &lt;Network Interface IP Address&gt; + ":&lt;Port&gt;",
+ * {@link Context#senderChannel(String)} to "udp://&lt;Network Interface IP Address&gt;:&lt;Port&gt;",
  * where Network Interface IP Address is the IP address of a network interface used to communicate with signal
  * receivers over the network. It can also be a machine name on the network as it's resolved to the corresponding
  * network interface IP.

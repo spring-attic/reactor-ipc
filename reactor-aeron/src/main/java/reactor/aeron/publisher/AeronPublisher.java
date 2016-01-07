@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * <br/>To configure the publisher in uncast mode of operation set {@link Context#senderChannel} to the value used for
  * the subscriber configuration and {@link Context#receiverChannel} should be set to
- * "udp://" + &lt;Network Interface IP Address&gt; + ":&lt;Port&gt;", where
+ * "udp://&lt;Network Interface IP Address&gt;:&lt;Port&gt;", where
  * Network Interface IP Address is the IP address of a network interface used for communication over the network
  * with the signals sender, Port - is a UDP port on which to listen.
  * <br/>For example, senderChannel - "udp://serverbox:12000", receiverChannel - "udp://clientbox:12001".
