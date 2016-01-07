@@ -16,6 +16,10 @@ include::net-tcp.adoc[]
 include::net-http.adoc[]
 include::net-e2e.adoc[]
 
+[[reactor-aeron]]
+= *reactor-aeron*
+include::aeron.adoc[]
+
 [[reactor-codec]]
 = *reactor-codec*
 

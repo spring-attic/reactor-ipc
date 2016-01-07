@@ -1,0 +1,55 @@
+== Reactive Streams over Aeron
+
+For more information regarding Aeron go to https://github.com/real-logic/Aeron[Aeron Project Home]
+
+Support of http://www.reactive-streams.org/[Reactive Streams] over Aeron transport introduced in module reactor-aeron.
+
+.Core reactor-aeron classes and their purpose
+|============================
+| Class          | Purpose
+| Context        | Provides configuration parameters for AeronSubscriber, AeronPublisher and AeronProcessor
+| AeronSubscriber| Plays a role of a server. Passes signals to clients over Aeron.
+| AeronPublisher | Plays a role of a client. Receives signals from the server.
+| AeronProcessor | Plays both roles of a server and a client.
+|============================
+
+=== Quick start
+
+.Starting a server on box serverbox in unicast mode on UDP port 12000:
+[source,java]
+----
+AeronSubscriber subscriber = AeronSubscriber.create(new Context()
+    .senderChannel("udp://serverbox:12000"));
+----
+
+.Starting a client to be run on box clientbox on UDP port 12001 and connecting to the server on serverbox above:
+[source,java]
+----
+AeronPublisher publisher = AeronPublisher.create(new Context()
+    .senderChannel("udp://serverbox:12000")
+    .receiverChannel("udp://clientbox:12001"));
+----
+
+=== Embedded Aeron Media driver
+
+By default AeronSubscriber, AeronPublisher and AeronProcessor launch embedded Aeron Media Driver if it wasn't launched
+previously. Only a single instance of the embedded `MediaDriver` is normally supported per JVM.
+Also a single `Aeron` instance is supported when the embedded media driver is used.
+
+If you need to use your own Aeron instance then it needs to be set into `Context.aeron` field.
+
+You can adjust embedded media driver configuration `MediaDriver.Context` via
+`EmbeddedMediaDriverManager.getInstance().getDriverContext()`
+before the driver is started.
+
+
+
+=== AeronSubscriber as server
+
+==== Unicast sending mode
+
+==== Multicast sending mode
+
+=== AeronPublisher as client
+
+=== Handling errors
