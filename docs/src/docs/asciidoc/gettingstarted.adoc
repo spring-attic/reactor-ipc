@@ -234,7 +234,7 @@ backpressure and auto-flush options.
 |Type a unique result, reflect the implementation of the Reactive Stream Processor and provides for optional asynchronous dispatching.
 
 |Factory API (just, from, merge....)
-|reactor.rx.Streams
+|reactor.rx.Stream
 |Aligned with a core data-focused subset, return Stream
 
 |Functional API (map, filter, take....)

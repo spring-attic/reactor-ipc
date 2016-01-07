@@ -54,7 +54,7 @@ import reactor.io.net.impl.netty.NettyClientSocketOptions;
 import reactor.io.net.impl.netty.tcp.NettyTcpClient;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Streams;
+import reactor.rx.Stream;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.tcp.ReactorTcpClient;
 
@@ -121,13 +121,13 @@ public class TcpClientTests {
 		);
 
 		client.startAndAwait(conn -> {
-			Streams.from(conn.input()).log("conn").consume(s -> {
+			Stream.from(conn.input()).log("conn").consume(s -> {
 				latch.countDown();
 			});
 
-			Streams.from(conn.writeWith(Streams.just("Hello World!"))).consume();
+			Stream.from(conn.writeWith(Stream.just("Hello World!"))).consume();
 
-			return Streams.never();
+			return Stream.never();
 		});
 
 		latch.await(30, TimeUnit.SECONDS);
@@ -148,9 +148,9 @@ public class TcpClientTests {
 
 		client.start(input -> {
 			input.consume(d -> latch.countDown());
-			input.writeWith(Streams.just("Hello")).subscribe();
+			input.writeWith(Stream.just("Hello")).subscribe();
 
-			return Streams.never();
+			return Stream.never();
 		}).get(5, TimeUnit.SECONDS);
 
 		latch.await(5, TimeUnit.SECONDS);
@@ -179,12 +179,12 @@ public class TcpClientTests {
 			});
 
 			input.writeWith(
-			  Streams.range(1, messages)
+			  Stream.range(1, messages)
 				.map(i -> "Hello World!")
 				.publishOn(Processors.ioGroup("test-line-feed"))
 			).subscribe();
 
-			return Streams.never();
+			return Stream.never();
 		}).get(5, TimeUnit.SECONDS);
 
 		assertTrue("Expected messages not received. Received " + strings.size() + " messages: " + strings,
@@ -283,7 +283,7 @@ public class TcpClientTests {
 					latch.countDown();
 				});
 
-			  return Streams.timer(1).after().log();
+			  return Stream.timer(1).after().log();
 		  }
 		);
 
@@ -304,7 +304,7 @@ public class TcpClientTests {
 		client.startAndAwait(p -> {
 			  p.on()
 				.readIdle(500, latch::countDown);
-			  return Streams.timer(1).after().log();
+			  return Stream.timer(1).after().log();
 		  }
 		);
 
@@ -334,10 +334,10 @@ public class TcpClientTests {
 
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {
-				  allWrites.add(connection.writeBufferWith(Streams.just(Buffer.wrap("a"))
+				  allWrites.add(connection.writeBufferWith(Stream.just(Buffer.wrap("a"))
 				    .throttle(750)));
 			  }
-			  return Streams.merge(allWrites);
+			  return Stream.merge(allWrites);
 		  }
 		);
 		System.out.println("Started");
@@ -369,8 +369,8 @@ public class TcpClientTests {
 			latch.countDown();
 			System.out.println("resp: " + resp);
 
-			return Streams.from(resp
-					.writeWith(Streams.just(
+			return Stream.from(resp
+					.writeWith(Stream.just(
 							NettyBuffer.create(new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.GET, "/"))))
 			).doOnComplete(()-> latch.countDown());
 		});

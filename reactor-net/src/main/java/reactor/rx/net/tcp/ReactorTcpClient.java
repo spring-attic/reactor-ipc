@@ -26,9 +26,7 @@ import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.Reconnect;
 import reactor.io.net.tcp.TcpClient;
-import reactor.rx.Promise;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
 import reactor.rx.net.ChannelStream;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.ReactorPeer;
@@ -88,7 +86,7 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 	 */
 	public Stream<Tuple2<InetSocketAddress, Integer>> start(
 			ReactorChannelHandler<IN, OUT> handler, Reconnect reconnect) {
-		return Streams.from(
+		return Stream.from(
 				peer.start(
 				ChannelStream.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 				, reconnect)

@@ -18,11 +18,11 @@ package reactor.io.net.tcp.netty
 
 import reactor.io.buffer.Buffer
 import reactor.io.codec.json.JsonCodec
-import reactor.rx.net.NetStreams
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.rx.net.tcp.ReactorTcpServer
 import reactor.io.net.tcp.support.SocketUtils
-import reactor.rx.Streams
+import reactor.rx.Stream
+import reactor.rx.net.NetStreams
+import reactor.rx.net.tcp.ReactorTcpServer
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -45,7 +45,7 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the server is started"
 			server.start { conn ->
-				conn.writeBufferWith(Streams.just(Buffer.wrap("Hello World!")))
+				conn.writeBufferWith(Stream.just(Buffer.wrap("Hello World!")))
 			}.get()
 
 			def client = new SimpleClient(port, dataLatch, Buffer.wrap("Hello World!"))
@@ -104,7 +104,7 @@ class NettyTcpServerSpec extends Specification {
 		when: "the client/server are prepared"
 			server.start { input ->
 				input.writeWith(
-						Streams.from(codec.decode(input))
+						Stream.from(codec.decode(input))
 								.log('serve')
 								.map(codec)
 								.capacity(5l)
@@ -112,18 +112,18 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-				Streams.from(codec.decode(input))
+				Stream.from(codec.decode(input))
 						.log('receive')
 						.consume { latch.countDown() }
 
 				input.writeWith(
-						Streams.range(1, 10)
+						Stream.range(1, 10)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')
 								.map(codec)
 				).subscribe()
 
-				Streams.never()
+				Stream.never()
 			}.get()
 
 		then: "the client/server were started"
@@ -149,9 +149,9 @@ class NettyTcpServerSpec extends Specification {
 		when: "the client/server are prepared"
 			server.start { input ->
 				input.writeWith(
-						Streams.from(codec.decode(input.input()))
+						Stream.from(codec.decode(input.input()))
 						.flatMap {
-					Streams.just(it)
+					Stream.just(it)
 							.log('flatmap-retry')
 							.doOnNext {
 						if (i++ < 2) {
@@ -166,18 +166,18 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-				Streams.from(codec.decode(input))
+				Stream.from(codec.decode(input))
 						.log('receive')
 						.consume { latch.countDown() }
 
 				input.writeWith(
-						Streams.range(1, elem)
+						Stream.range(1, elem)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')
 								.map(codec)
 				).subscribe()
 
-				Streams.never()
+				Stream.never()
 			}.get()
 
 		then: "the client/server were started"

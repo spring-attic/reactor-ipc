@@ -1,8 +1,8 @@
 package reactor.io.net.http
 
+import reactor.rx.Stream
 import reactor.rx.net.NetStreams
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.rx.Streams
 import reactor.rx.net.http.HttpChannelStream
 import spock.lang.Specification
 
@@ -42,7 +42,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
 
                 //return a producing stream to send some data along the request
                 req.writeWith(
-                    Streams
+                    Stream
                             .just("Hello")
                             .log('client-send')
                 )

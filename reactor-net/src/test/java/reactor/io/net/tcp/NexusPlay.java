@@ -26,7 +26,6 @@ import reactor.core.subscription.ReactiveSession;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.nexus.Nexus;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
 
 /**
  * @author Stephane Maldini
@@ -52,7 +51,7 @@ public class NexusPlay {
 		// =========================================================
 
 		FluxProcessor<Integer, Integer> p = Processors.emitter();
-		Stream<Integer> dispatched = Streams.from(p).dispatchOn(Processors.asyncGroup());
+		Stream<Integer> dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int i = 0; i < 2; i++) {
@@ -73,7 +72,7 @@ public class NexusPlay {
 		// =========================================================
 
 		p = Processors.emitter();
-		dispatched = Streams.from(p).dispatchOn(Processors.asyncGroup());
+		dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
@@ -96,7 +95,7 @@ public class NexusPlay {
 		// =========================================================
 
 		p = Processors.emitter();
-		dispatched = Streams.from(p).dispatchOn(Processors.asyncGroup());
+		dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {

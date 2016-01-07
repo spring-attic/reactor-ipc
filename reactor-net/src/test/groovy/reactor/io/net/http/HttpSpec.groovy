@@ -15,10 +15,11 @@
  */
 package reactor.io.net.http
 
+import reactor.Mono
 import reactor.core.error.CancelException
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.rx.Streams
+import reactor.rx.Stream
 import reactor.rx.net.NetStreams
 import reactor.rx.net.http.HttpChannelStream
 import rx.Observable
@@ -75,7 +76,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.writeWith(Streams
+	  req.writeWith(Stream
 			  .just("Hello")
 			  .log('client-send'))
 
@@ -116,11 +117,11 @@ class HttpSpec extends Specification {
 
 	server.get('/test') { HttpChannelStream<String, String> req -> throw new Exception()
 	}.get('/test2') { HttpChannelStream<String, String> req ->
-	  req.writeWith(Streams.convert(Observable.error(new Exception()))).flux().log("writeWith").doOnError({
+	  req.writeWith(Stream.convert(Observable.error(new Exception()))).flux().log("writeWith").doOnError({
 		errored
 				.countDown()
 	  })
-	}.get('/test3') { HttpChannelStream<String, String> req -> return Streams.fail(new Exception())
+	}.get('/test3') { HttpChannelStream<String, String> req -> return Stream.fail(new Exception())
 	}
 
 	then: "the server was started"
@@ -142,11 +143,10 @@ class HttpSpec extends Specification {
 	//prepare an http post request-reply flow
 	client
 			.get('/test')
-			.flatMap { replies ->
-	  Streams.just(replies.responseStatus().code)
+			.then { replies ->
+	 			 Mono.just(replies.responseStatus().code)
 			  .log("received-status-1")
-	}
-	.next()
+			}
 			.get(5, TimeUnit.SECONDS)
 
 
@@ -175,7 +175,7 @@ class HttpSpec extends Specification {
 	client
 			.get('/test3')
 			.flatMap { replies ->
-	  Streams.just(replies.responseStatus().code)
+	  Stream.just(replies.responseStatus().code)
 			  .log("received-status-3")
 	}
 	.next()
@@ -242,7 +242,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.writeWith(Streams
+	  req.writeWith(Stream
 			  .range(1, 1000)
 			  .capacity(1)
 			  .map { it.toString() }
@@ -254,6 +254,7 @@ class HttpSpec extends Specification {
 			  .log('client-received')
 			  .doOnNext { clientRes++ }
 	}
+	.as(Stream.&from)
 	.take(1000)
 			.toList()
 			.doOnError {

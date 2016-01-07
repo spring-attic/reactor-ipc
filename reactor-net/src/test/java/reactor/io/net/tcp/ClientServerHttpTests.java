@@ -36,7 +36,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.rx.Promise;
-import reactor.rx.Streams;
+import reactor.rx.Stream;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -247,7 +247,9 @@ public class ClientServerHttpTests {
 	private void setupFakeProtocolListener() throws Exception {
 		broadcaster = Processors.topic();
 		final Processor<List<String>, List<String>> processor = RingBufferWorkProcessor.create(false);
-		Streams.from(broadcaster).buffer(5).subscribe(processor);
+		Stream.from(broadcaster)
+		      .buffer(5)
+		      .subscribe(processor);
 
 		DummyListCodec codec = new DummyListCodec();
 		httpServer = NetStreams.httpServer(server -> server
@@ -255,12 +257,11 @@ public class ClientServerHttpTests {
 
 		httpServer.get("/data", (request) -> {
 			request.responseHeaders().removeTransferEncodingChunked();
-			return request.writeWith(
-			  Streams.from(processor)
-				.log("server")
-				.timeout(2, TimeUnit.SECONDS, Streams.empty())
-				.concatWith(Streams.just(new ArrayList<String>()))
-				.capacity(1L)
+			return request.writeWith(Stream.from(processor)
+			                               .log("server")
+			                               .timeout(2, TimeUnit.SECONDS, Stream.empty())
+			                               .concatWith(Stream.just(new ArrayList<String>()))
+			                               .capacity(1L)
 
 			);
 		});
@@ -278,11 +279,12 @@ public class ClientServerHttpTests {
 		);
 
 		return httpClient.get("/data")
-		  .flatMap(s ->
+		                 .flatMap(s ->
 			  s.log("client")
 		  )
-		  .buffer()
-				.to(Promise.ready());
+		                 .as(Stream::from)
+		                 .toList()
+		                 .to(Promise.ready());
 	}
 
 	private List<List<String>> getClientDatas(int threadCount, Sender sender, int count) throws Exception {

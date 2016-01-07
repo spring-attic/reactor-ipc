@@ -44,7 +44,6 @@ import reactor.io.net.impl.netty.NettyClientSocketOptions;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.rx.Promise;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -262,7 +261,7 @@ public class SmokeTests {
 
 		processor = RingBufferProcessor.create(false);
 		workProcessor = RingBufferWorkProcessor.create(false);
-		Stream<Buffer> bufferStream = Streams
+		Stream<Buffer> bufferStream = Stream
 		  .from(processor)
 		  .window(windowBatch, 2, TimeUnit.SECONDS)
 		  .doOnNext(d ->
@@ -294,9 +293,9 @@ public class SmokeTests {
 			return request.writeWith(bufferStream.doOnNext(d -> integer.getAndIncrement())
 			                                     .take(takeCount)
 			                                     .doOnNext(d -> integerPostTake.getAndIncrement())
-			                                     .timeout(2, TimeUnit.SECONDS, Streams.<Buffer>empty().doOnComplete(() -> System.out.println(
+			                                     .timeout(2, TimeUnit.SECONDS, Stream.<Buffer>empty().doOnComplete(() -> System.out.println(
 					                                     "timeout after 2 ")))
-			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Streams.just(
+			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Stream.just(
 									GpdistCodec.class.equals(codec.getClass()) ?
 											Buffer.wrap(new byte[0]) : Buffer.wrap("END"))
 			                                                                                                           .doOnComplete(

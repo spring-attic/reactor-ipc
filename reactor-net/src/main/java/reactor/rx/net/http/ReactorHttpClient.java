@@ -16,14 +16,14 @@
 
 package reactor.rx.net.http;
 
+import reactor.Mono;
 import reactor.fn.Function;
 import reactor.io.net.ReactiveChannelHandler;
-import reactor.rx.net.ReactorPeer;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.model.Method;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
+import reactor.rx.net.ReactorPeer;
 
 /**
  * The base class for a Reactor-based Http peer.
@@ -48,10 +48,10 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> get(String url,
+	public final Mono<HttpChannelStream<IN, OUT>> get(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.GET, url, handler);
 	}
@@ -59,10 +59,10 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	/**
 	 * HTTP GET the passed URL.
 	 * @param url the target remote URL
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> get(String url) {
+	public final Mono<HttpChannelStream<IN, OUT>> get(String url) {
 
 		return request(Method.GET, url, null);
 	}
@@ -72,10 +72,10 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> post(String url,
+	public final Mono<HttpChannelStream<IN, OUT>> post(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.POST, url, handler);
 	}
@@ -85,10 +85,10 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> put(String url,
+	public final Mono<HttpChannelStream<IN, OUT>> put(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.PUT, url, handler);
 	}
@@ -98,10 +98,10 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> delete(String url,
+	public final Mono<HttpChannelStream<IN, OUT>> delete(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.DELETE, url, handler);
 	}
@@ -110,20 +110,20 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> delete(String url) {
+	public final Mono<HttpChannelStream<IN, OUT>> delete(String url) {
 		return request(Method.DELETE, url, null);
 	}
 
 	/**
 	 * WebSocket to the passed URL.
 	 * @param url the target remote URL
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> ws(String url) {
+	public final Mono<HttpChannelStream<IN, OUT>> ws(String url) {
 		return request(Method.WS, url, null);
 	}
 
@@ -134,10 +134,10 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Stream<HttpChannelStream<IN, OUT>> ws(String url,
+	public final Mono<HttpChannelStream<IN, OUT>> ws(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.WS, url, handler);
 	}
@@ -149,18 +149,16 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @param method the HTTP method to send
 	 * @param url the target remote URL
 	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
-	 * @return a {@link Stream} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public Stream<HttpChannelStream<IN, OUT>> request(Method method,
+	public Mono<HttpChannelStream<IN, OUT>> request(Method method,
 			String url,
 			final ReactorHttpHandler<IN, OUT> handler){
 
-		return Streams.from(
-				peer.request(method, url,
+		return peer.request(method, url,
 						HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-				)
-		).map(new Function<HttpChannel<IN, OUT>, HttpChannelStream<IN, OUT>>() {
+				).map(new Function<HttpChannel<IN, OUT>, HttpChannelStream<IN, OUT>>() {
 			@Override
 			public HttpChannelStream<IN, OUT> apply(HttpChannel<IN, OUT> channel) {
 				return HttpChannelStream.wrap(channel, peer.getDefaultTimer(), peer.getDefaultPrefetchSize());
