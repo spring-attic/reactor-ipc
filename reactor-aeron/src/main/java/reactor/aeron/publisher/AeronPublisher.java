@@ -37,6 +37,28 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * The publisher part of Reactive Streams over Aeron transport implementation
+ * used for receiving signals sent over Aeron from {@link reactor.aeron.subscriber.AeronSubscriber}
+ * and configured via fields of {@link Context}.
+ * <br/>The publisher supports both unicast and multicast modes of {@link reactor.aeron.subscriber.AeronSubscriber}
+ * and uses the same streamIds.
+ *
+ * <br/>To configure the publisher in uncast mode of operation set {@link Context#senderChannel} to the value used for
+ * the subscriber configuration and {@link Context#receiverChannel} should be set to
+ * "udp://" + &lt;Network Interface IP Address&gt; + ":&lt;Port&gt;", where
+ * Network Interface IP Address is the IP address of a network interface used for communication over the network
+ * with the signals sender, Port - is a UDP port on which to listen.
+ * <br/>For example, senderChannel - "udp://serverbox:12000", receiverChannel - "udp://clientbox:12001".
+ *
+ * <p/>
+ * Only a single subscriber to the publisher is supported.
+ *
+ * <p/>Quck start example:
+ * <pre>
+ *     AeronPublisher publisher = AeronPublisher.create(new Context()
+ *         .name("publisher").senderChannel("udp://serverbox:12000).receiverChannel("udp://clientbox:12001"));
+ * </pre>
+ *
  * @author Anatoly Kadyshev
  * @since 2.5
  */
@@ -91,7 +113,7 @@ public class AeronPublisher implements Publisher<Buffer>, ReactiveState.Downstre
 		this.context = context;
 		this.onTerminateTask = onTerminateTask;
 		this.aeronInfra = context.createAeronInfra();
-		this.executor = SingleUseExecutor.create(context.name() + "-signal-poller");
+		this.executor = SingleUseExecutor.create(AeronUtils.makeThreadName(context, "signal-poller"));
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
 		this.sessionId = getSessionId(context);
 		this.serviceMessageSender = new ServiceMessageSender(this, serviceRequestPub, sessionId);

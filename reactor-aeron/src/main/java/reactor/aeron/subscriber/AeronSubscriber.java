@@ -31,8 +31,70 @@ import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
 /**
+ * The subscriber part of Reactive Streams over Aeron transport implementation
+ * used to pass signals to publishers {@link reactor.aeron.publisher.AeronPublisher} over Aeron
+ * and configured via fields of {@link Context}.
+ *
+ * <p/>Can operate in both unicast and multicast sending modes.
+ *
+ * <br/>First of all, to start using the functionality you need to set
+ * {@link Context#senderChannel(String)} to "udp://" + &lt;Network Interface IP Address&gt; + ":&lt;Port&gt;",
+ * where Network Interface IP Address is the IP address of a network interface used to communicate with signal
+ * receivers over the network. It can also be a machine name on the network as it's resolved to the corresponding
+ * network interface IP.
+ * <br/>For example, "udp://serverbox:12000"<br/>
+ * where serverbox is a machine name in the network corresponding to a network interface IP Address
+ * and 12000 is a UDP port on which to listen for subscription requests.
+ * <br/>To configure the subscriber in unicast mode leave field {@link Context#senderChannel(String)} blank.
+ * <br/>To configure the subscriber in multicast mode set field {@link Context#senderChannel(String)}
+ * to a multicast channel, e.g. "udp://239.1.1.1:12001" where 239.1.1.1 is a multicast IP address.
+ *
+ * <p/>
+ * The subscriber uses 3 <b>different</b> pre-configured Aeron streamIds to function:<br>
+ * <ul>
+ *     <li>{@link Context#streamId} - used for passing of Next and Complete signals from
+ *     the signals sender to signals receivers</li>
+ *     <li>{@link Context#errorStreamId} - for passing of Error signals</li>
+ *     <li>{@link Context#serviceRequestStreamId} - for service requests of
+ *     {@link reactor.aeron.support.ServiceMessageType}
+ *     from signal receivers to the signal sender
+ * </ul>
+ *
+ * The streamIds are set by default and normally there is no need to set them manually
+ * unless you need to launch a new instance of the subscriber on the same channel.
+ *
+ * <p>The subscriber could use an external Aeron instance provided via {@link Context#aeron} field.
+ * If no exteranl Aeron instance is provided the subscriber will use an embedded Media driver.
+ *
+ * <p>When the Aeron buffer for published messages becomes completely full
+ * the subscriber starts to throttle and as a result method
+ * {@link #onNext(Buffer)} blocks until messages are consumed or
+ * {@link Context#publicationRetryMillis} timeout elapses.
+ * If a message cannot be published into Aeron within
+ * {@link Context#publicationRetryMillis} the corresponding exception is provided into {@link Context#errorConsumer}.
+ *
+ * <p>When auto-cancel is enabled via {@link Context#autoCancel} and the last signal receiver disconnects
+ * an upstream subscription to the upstream publisher is cancelled.
+ *
+ * <p>When a signal receiver requests {@link Long#MAX_VALUE} there
+ * won't be any backpressure applied and thread publishing into the subscriber
+ * will run at risk of being throttled if signal receivers don't catch up.<br>
+ *
+ * <p>The subscriber created via {@link #create(Context)} methods respects the Reactive Streams contract
+ * and must not be signalled concurrently on any onXXXX methods.
+ * <br/>Nonetheless Reactor allows creating of a subscriber which can be used by
+ * publishers from different threads. In this case the subscriber should be
+ * created via {@link #share(Context)} methods.
+ *
+ * <p/>Quck start example:
+ * <pre>
+ *     AeronSubscriber subscriber = AeronSubscriber.create(new Context()
+ *         .name("subscriber").senderChannel("udp://serverbox:12000));
+ * </pre>
+ *
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
+ * @since 2.5
  */
 public class AeronSubscriber extends BaseSubscriber<Buffer>
 		implements ReactiveState.ActiveUpstream, ReactiveState.Upstream, ReactiveState.FeedbackLoop {
@@ -144,7 +206,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 	}
 
 	private RingBufferProcessor<Buffer> createRingBufferProcessor(Context context, boolean multiPublishers) {
-		String name = context.name() + "-signal-sender";
+		String name = AeronUtils.makeThreadName(context, "signal-sender");
 		return multiPublishers ?
 				RingBufferProcessor.<Buffer>share(name, context.ringBufferSize(), context.autoCancel()) :
 				RingBufferProcessor.<Buffer>create(name, context.ringBufferSize(), context.autoCancel());

@@ -39,6 +39,8 @@ import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 /**
  * A class containing parameter values required to create instances of
  * {@link AeronProcessor}, {@link AeronSubscriber} or {@link AeronPublisher}
+ *
+ * @since 2.5
  */
 public class Context {
 
@@ -49,8 +51,7 @@ public class Context {
 	public static final int DEFAULT_SIGNAL_STREAM_ID = 1;
 
 	/**
-	 * Processor name used as a base name for threads created by
-	 * the processor's executor
+	 * Used as a prefix for names of created threads
 	 */
 	private String name;
 
@@ -220,12 +221,6 @@ public class Context {
 	}
 
 	public void validate() {
-		Assert.isTrue(name != null, "name should be provided");
-
-		assertStreamIdsAreDifferent();
-	}
-
-	private void assertStreamIdsAreDifferent() {
 		Set<Integer> streamIdsSet = new HashSet<>();
 		streamIdsSet.add(streamId);
 		streamIdsSet.add(errorStreamId);

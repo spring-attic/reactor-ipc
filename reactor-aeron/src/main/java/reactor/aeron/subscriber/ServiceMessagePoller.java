@@ -15,11 +15,11 @@
  */
 package reactor.aeron.subscriber;
 
-import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
+import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.SingleUseExecutor;
 import uk.co.real_logic.aeron.FragmentAssembler;
@@ -115,7 +115,7 @@ class ServiceMessagePoller implements Runnable, ReactiveState.Upstream {
 		this.serviceMessageHandler = serviceMessageHandler;
 		this.aeronInfra = aeronInfra;
 		this.serviceRequestSub = aeronInfra.addSubscription(context.senderChannel(), context.serviceRequestStreamId());
-		this.executor = SingleUseExecutor.create(context.name() + "-service-poller");
+		this.executor = SingleUseExecutor.create(AeronUtils.makeThreadName(context, "service-poller"));
 	}
 
 	void start() {
