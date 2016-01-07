@@ -83,9 +83,9 @@ class HttpSpec extends Specification {
 	  println "Failed requesting server: $it"
 	}
 
-	then: "data was recieved"
+	then: "data was not recieved"
 	//the produced reply should be there soon
-	content.get(5, TimeUnit.SECONDS) == "Hello World!"
+	!content.get(5, TimeUnit.SECONDS)
   }
 
 
