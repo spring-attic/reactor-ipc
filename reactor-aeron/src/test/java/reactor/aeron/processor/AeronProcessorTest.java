@@ -26,7 +26,7 @@ import reactor.core.subscriber.test.TestSubscriber;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Streams;
+import reactor.rx.Stream;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 
@@ -88,7 +88,7 @@ public class AeronProcessorTest {
 					.receiverChannel(CHANNEL)
 					.aeron(aeron));
 
-			Streams.just(
+			Stream.just(
 					Buffer.wrap("Live"))
 					.subscribe(processor);
 
@@ -118,7 +118,7 @@ public class AeronProcessorTest {
 	public void testCreate() throws InterruptedException {
 		processor = AeronProcessor.create(createAeronContext());
 
-		Streams.just(
+		Stream.just(
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
@@ -134,7 +134,7 @@ public class AeronProcessorTest {
 	public void testShare() throws InterruptedException {
 		processor = AeronProcessor.share(createAeronContext());
 
-		Streams.just(
+		Stream.just(
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 

@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * The publisher part of Reactive Streams over Aeron transport implementation
+ * The publisher part of Reactive Stream over Aeron transport implementation
  * used for receiving signals sent over Aeron from {@link reactor.aeron.subscriber.AeronSubscriber}
  * and configured via fields of {@link Context}.
  * <br/>The publisher supports both unicast and multicast modes of {@link reactor.aeron.subscriber.AeronSubscriber}

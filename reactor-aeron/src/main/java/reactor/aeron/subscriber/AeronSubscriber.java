@@ -31,7 +31,7 @@ import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
 /**
- * The subscriber part of Reactive Streams over Aeron transport implementation
+ * The subscriber part of Reactive Stream over Aeron transport implementation
  * used to pass signals to publishers {@link reactor.aeron.publisher.AeronPublisher} over Aeron
  * and configured via fields of {@link Context}.
  *
@@ -80,7 +80,7 @@ import reactor.io.buffer.Buffer;
  * won't be any backpressure applied and thread publishing into the subscriber
  * will run at risk of being throttled if signal receivers don't catch up.<br>
  *
- * <p>The subscriber created via {@link #create(Context)} methods respects the Reactive Streams contract
+ * <p>The subscriber created via {@link #create(Context)} methods respects the Reactive Stream contract
  * and must not be signalled concurrently on any onXXXX methods.
  * <br/>Nonetheless Reactor allows creating of a subscriber which can be used by
  * publishers from different threads. In this case the subscriber should be

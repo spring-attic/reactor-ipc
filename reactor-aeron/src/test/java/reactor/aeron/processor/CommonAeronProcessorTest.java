@@ -34,7 +34,7 @@ import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
+import reactor.rx.Stream;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -83,7 +83,7 @@ public abstract class CommonAeronProcessorTest {
 		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(4);
 
-		Streams.just(Buffer.wrap("Live"),
+		Stream.just(Buffer.wrap("Live"),
 				Buffer.wrap("Hard"),
 				Buffer.wrap("Die"),
 				Buffer.wrap("Harder"),
@@ -95,14 +95,14 @@ public abstract class CommonAeronProcessorTest {
 
 		subscriber.assertNextSignals("Extra");
 
-		//FIXME: Remove this work-around for bounded Streams.just not sending Complete signal
+		//FIXME: Remove this work-around for bounded Stream.just not sending Complete signal
 		subscriber.request(1);
 	}
 
 	@Test
 	public void testCompleteSignalIsReceived() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
-		Streams.just(
+		Stream.just(
 				Buffer.wrap("One"),
 				Buffer.wrap("Two"),
 				Buffer.wrap("Three"))
@@ -120,7 +120,7 @@ public abstract class CommonAeronProcessorTest {
 		subscriber.request(1);
 		subscriber.assertNextSignals("Three");
 
-		//FIXME: Remove this work-around for bounded Streams.just not sending Complete signal
+		//FIXME: Remove this work-around for bounded Stream.just not sending Complete signal
 		subscriber.request(1);
 
 		subscriber.assertCompleteReceived();
@@ -139,7 +139,7 @@ public abstract class CommonAeronProcessorTest {
 	@Test
 	public void testWorksWithTwoSubscribersViaEmitter() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
-		Streams.just(Buffer.wrap("Live"),
+		Stream.just(Buffer.wrap("Live"),
 				Buffer.wrap("Hard"),
 				Buffer.wrap("Die"),
 				Buffer.wrap("Harder")).subscribe(processor);
@@ -170,8 +170,8 @@ public abstract class CommonAeronProcessorTest {
 		// as error is delivered on a different channelId compared to signal
 		// its delivery could shutdown the processor before the processor subscriber
 		// receives signal
-		Streams.concat(Streams.just(Buffer.wrap("Item")),
-				Streams.fail(new RuntimeException("Something went wrong")))
+		Stream.concat(Stream.just(Buffer.wrap("Item")),
+				Stream.fail(new RuntimeException("Something went wrong")))
 				.subscribe(processor);
 
 		DataTestSubscriber<String> subscriber = createTestSubscriber();
@@ -192,7 +192,7 @@ public abstract class CommonAeronProcessorTest {
 		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
-		Stream<Buffer> sourceStream = Streams.fail(new RuntimeException());
+		Stream<Buffer> sourceStream = Stream.fail(new RuntimeException());
 		sourceStream.subscribe(processor);
 
 		subscriber.assertErrorReceived();

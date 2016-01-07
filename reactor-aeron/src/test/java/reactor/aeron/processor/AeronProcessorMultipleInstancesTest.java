@@ -31,7 +31,7 @@ import reactor.core.subscriber.test.TestSubscriber;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Streams;
+import reactor.rx.Stream;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -119,7 +119,7 @@ public class AeronProcessorMultipleInstancesTest {
 	@Test
 	public void testReceiverGetsNextSignals() throws InterruptedException {
 		AeronProcessor myProcessor = createProcessor("myProcessor");
-		Streams.just(Buffer.wrap("Live"))
+		Stream.just(Buffer.wrap("Live"))
 		       .subscribe(myProcessor);
 
 		AeronProcessor otherProcessor = createProcessor("otherProcessor");
@@ -139,7 +139,7 @@ public class AeronProcessorMultipleInstancesTest {
 	@Test
 	public void testSingleSenderTwoReceivers() throws InterruptedException {
 		AeronProcessor server = createProcessor("server");
-		Streams.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
+		Stream.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
 		       .subscribe(server);
 
 		AeronProcessor client1 = createProcessor("client-1");
@@ -177,8 +177,8 @@ public class AeronProcessorMultipleInstancesTest {
 	@Test
 	public void testSingleSenderSendsErrorToTwoReceivers() throws InterruptedException {
 		AeronProcessor server = createProcessor("server");
-		Streams.concat(Streams.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three")),
-				Streams.fail(new RuntimeException("Something went wrong")))
+		Stream.concat(Stream.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three")),
+				Stream.fail(new RuntimeException("Something went wrong")))
 		       .subscribe(server);
 
 		AeronProcessor client1 = createProcessor("client-1");

@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>The processor honours behaviours of both {@link AeronSubscriber} and {@link AeronPublisher}
  * please refer to the corresponding documentation for configuration and implementation details.
  *
- * <p>The processor created via {@link #create(Context)} methods respects the Reactive Streams contract
+ * <p>The processor created via {@link #create(Context)} methods respects the Reactive Stream contract
  * and must not be signalled concurrently on any onXXXX methods.
  * <br/>Nonetheless Reactor allows creating of a processor which can be used by
  * publishers from different threads. In this case the processor should be

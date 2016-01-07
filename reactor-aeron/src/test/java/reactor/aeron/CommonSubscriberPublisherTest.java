@@ -39,7 +39,7 @@ import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Streams;
+import reactor.rx.Stream;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertFalse;
@@ -83,7 +83,7 @@ public abstract class CommonSubscriberPublisherTest {
 	public void testNextSignalIsReceivedByPublisher() throws InterruptedException {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
 
-		Streams.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
+		Stream.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
 		       .subscribe(subscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher"));
@@ -107,7 +107,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 		clientSubscriber.requestUnboundedWithTimeout();
 
-		Streams.<Buffer, Throwable>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
+		Stream.<Buffer, Throwable>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
 		clientSubscriber.assertErrorReceived();
 	}
@@ -122,7 +122,7 @@ public abstract class CommonSubscriberPublisherTest {
 		}));
 
 		final byte[] bytes = new byte[2048];
-		Streams.range(1, 100).map(i -> Buffer.wrap(bytes)).subscribe(subscriber);
+		Stream.range(1, 100).map(i -> Buffer.wrap(bytes)).subscribe(subscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
 

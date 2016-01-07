@@ -24,7 +24,7 @@ import reactor.aeron.support.SignalType;
 import reactor.aeron.support.TestAeronInfra;
 import reactor.core.processor.FluxProcessor;
 import reactor.io.buffer.Buffer;
-import reactor.rx.Streams;
+import reactor.rx.Stream;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -65,7 +65,7 @@ public class UnicastServiceMessageHandlerTest {
 
 	@Test
 	public void testItWorks() throws InterruptedException {
-		Streams.just(1, 2, 3, 4, 5).map(i -> Buffer.wrap("" + i)).subscribe(processor);
+		Stream.just(1, 2, 3, 4, 5).map(i -> Buffer.wrap("" + i)).subscribe(processor);
 
 		String receiverChannel1 = "udp://192.168.1.1:12000";
 		String sessionId1 = receiverChannel1 + "/1/2";
