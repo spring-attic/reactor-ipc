@@ -279,9 +279,7 @@ public class ClientServerHttpTests {
 		);
 
 		return httpClient.get("/data")
-		                 .flatMap(s ->
-			  s.log("client")
-		  )
+		                 .then(s ->  s.log("client").next())
 		                 .as(Stream::from)
 		                 .toList()
 		                 .to(Promise.ready());
