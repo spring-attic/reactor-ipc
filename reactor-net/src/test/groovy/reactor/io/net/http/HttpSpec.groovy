@@ -216,7 +216,7 @@ class HttpSpec extends Specification {
 				.responseHeader("content-type", "text/plain")
 				.writeWith(req.log('server-received')
 				.capacity(1)
-				.observe { serverRes++ }
+				.doOnNext { serverRes++ }
 				.map { it + ' ' + req.param('param') + '!' }
 				.log('server-reply'))
 
@@ -252,7 +252,7 @@ class HttpSpec extends Specification {
 	  //successful handshake, listen for the first returned next replies and pass it downstream
 	  replies
 			  .log('client-received')
-			  .observe { clientRes++ }
+			  .doOnNext { clientRes++ }
 	}
 	.take(1000)
 			.toList()

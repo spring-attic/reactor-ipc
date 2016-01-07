@@ -51,7 +51,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
                 //successful request, listen for replies
                 replies
                         .log('client-received')
-                        .observe { s ->
+                        .doOnNext { s ->
                             replyReceived = s
                         }
             }

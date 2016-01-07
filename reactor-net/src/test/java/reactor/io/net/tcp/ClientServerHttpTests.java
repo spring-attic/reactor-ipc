@@ -247,7 +247,7 @@ public class ClientServerHttpTests {
 	private void setupFakeProtocolListener() throws Exception {
 		broadcaster = Processors.topic();
 		final Processor<List<String>, List<String>> processor = RingBufferWorkProcessor.create(false);
-		Streams.wrap(broadcaster).buffer(5).subscribe(processor);
+		Streams.from(broadcaster).buffer(5).subscribe(processor);
 
 		DummyListCodec codec = new DummyListCodec();
 		httpServer = NetStreams.httpServer(server -> server
@@ -256,7 +256,7 @@ public class ClientServerHttpTests {
 		httpServer.get("/data", (request) -> {
 			request.responseHeaders().removeTransferEncodingChunked();
 			return request.writeWith(
-			  Streams.wrap(processor)
+			  Streams.from(processor)
 				.log("server")
 				.timeout(2, TimeUnit.SECONDS, Streams.empty())
 				.concatWith(Streams.just(new ArrayList<String>()))

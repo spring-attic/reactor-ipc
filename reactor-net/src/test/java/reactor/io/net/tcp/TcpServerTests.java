@@ -400,9 +400,9 @@ public class TcpServerTests {
 			//returning a stream of String from each microbatch merged
 			return
 			  request.writeWith(
-				Streams.wrap(processor)
+				Streams.from(processor)
 				  //split each microbatch data into individual data
-				  .flatMap(Streams::from)
+				  .flatMap(Streams::fromIterable)
 				  .take(5, TimeUnit.SECONDS)
 				  .concatWith(Streams.just("end\n"))
 			  );

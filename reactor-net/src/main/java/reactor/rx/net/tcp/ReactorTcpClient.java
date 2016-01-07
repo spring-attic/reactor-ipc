@@ -88,7 +88,7 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 	 */
 	public Stream<Tuple2<InetSocketAddress, Integer>> start(
 			ReactorChannelHandler<IN, OUT> handler, Reconnect reconnect) {
-		return Streams.wrap(
+		return Streams.from(
 				peer.start(
 				ChannelStream.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 				, reconnect)

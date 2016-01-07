@@ -121,11 +121,11 @@ public class TcpClientTests {
 		);
 
 		client.startAndAwait(conn -> {
-			Streams.wrap(conn.input()).log("conn").consume(s -> {
+			Streams.from(conn.input()).log("conn").consume(s -> {
 				latch.countDown();
 			});
 
-			Streams.wrap(conn.writeWith(Streams.just("Hello World!"))).consume();
+			Streams.from(conn.writeWith(Streams.just("Hello World!"))).consume();
 
 			return Streams.never();
 		});
@@ -369,10 +369,10 @@ public class TcpClientTests {
 			latch.countDown();
 			System.out.println("resp: " + resp);
 
-			return Streams.wrap(resp
+			return Streams.from(resp
 					.writeWith(Streams.just(
 							NettyBuffer.create(new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.GET, "/"))))
-			).observeComplete(d-> latch.countDown());
+			).doOnComplete(()-> latch.countDown());
 		});
 
 

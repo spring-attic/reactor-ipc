@@ -34,7 +34,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
-import reactor.Mono;
 import reactor.Timers;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.processor.RingBufferWorkProcessor;
@@ -264,16 +263,16 @@ public class SmokeTests {
 		processor = RingBufferProcessor.create(false);
 		workProcessor = RingBufferWorkProcessor.create(false);
 		Stream<Buffer> bufferStream = Streams
-		  .wrap(processor)
+		  .from(processor)
 		  .window(windowBatch, 2, TimeUnit.SECONDS)
-		  .observe(d ->
+		  .doOnNext(d ->
 			  windows.getAndIncrement()
 		  )
 		  .flatMap(s -> s
 
 			  .reduce(new Buffer(), Buffer::append)
 		  )
-				.observe(d ->
+				.doOnNext(d ->
 								postReduce.getAndIncrement()
 				)
 		  //.log("log", LogOperator.REQUEST)
@@ -292,17 +291,18 @@ public class SmokeTests {
 			request.addResponseHeader("X-GP-PROTO", "1");
 			request.addResponseHeader("Cache-Control", "no-cache");
 			request.addResponseHeader("Connection", "close");
-			return request.writeWith(bufferStream.observe(d -> integer.getAndIncrement())
+			return request.writeWith(bufferStream.doOnNext(d -> integer.getAndIncrement())
 			                                     .take(takeCount)
-			                                     .observe(d -> integerPostTake.getAndIncrement())
-			                                     .timeout(2, TimeUnit.SECONDS, Streams.<Buffer>empty()
-			                                                                          .observeComplete(p -> System.out.println("timeout after 2 ")))
-			                                     .observe(d -> integerPostTimeout.getAndIncrement()).concatWith(Streams.just(
+			                                     .doOnNext(d -> integerPostTake.getAndIncrement())
+			                                     .timeout(2, TimeUnit.SECONDS, Streams.<Buffer>empty().doOnComplete(() -> System.out.println(
+					                                     "timeout after 2 ")))
+			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Streams.just(
 									GpdistCodec.class.equals(codec.getClass()) ?
 											Buffer.wrap(new byte[0]) : Buffer.wrap("END"))
-			                                                                                                           .observeComplete(d -> integerPostConcat.decrementAndGet()))//END
-							.observe(d -> integerPostConcat.getAndIncrement())
-							.capacity(1L));
+			                                                                                                           .doOnComplete(
+					                                                                                                           () -> integerPostConcat.decrementAndGet()))//END
+			                                     .doOnNext(d -> integerPostConcat.getAndIncrement())
+			                                     .capacity(1L));
 		});
 
 		httpServer.start().get();
@@ -547,26 +547,26 @@ public class SmokeTests {
 				.wrap(processor)
 				.window(windowBatch, 2, TimeUnit.SECONDS)
 				.flatMap(s -> s
-						.observe(d ->
+						.doOnNext(d ->
 										windows.getAndIncrement()
 						)
 						.reduce(new Buffer(), Buffer::append)
-						.observe(d ->
+						.doOnNext(d ->
 										postReduce.getAndIncrement()
 						))
 				.process(workProcessor);
 
 
 	request.writeWith(bufferStream
-//							.observe(d ->
+//							.doOnNext(d ->
 //											integer.getAndIncrement()
 //							)
 							.take(takeCount)
-//							.observe(d ->
+//							.doOnNext(d ->
 //											integerPostTake.getAndIncrement()
 //							)
 							.timeout(2, TimeUnit.SECONDS, Streams.<Buffer>empty())
-//							.observe(d ->
+//							.doOnNext(d ->
 //											integerPostTimeout.getAndIncrement()
 //							)
 									//.concatWith(Streams.just(new Buffer().append("END".getBytes(Charset.forName
@@ -575,16 +575,16 @@ public class SmokeTests {
 							.concatWith(Streams.just(GpdistCodec.class.equals(codec.getClass()) ?  Buffer.wrap(new
 							byte[0]) : Buffer
 							.wrap("END")))//END
-//							.observe(d -> {
+//							.doOnNext(d -> {
 //										if (addToWindowData) {
 //											windowsData.addAll(parseCollection(d.asString()));
 //										}
 //									}
 //							)
-//							.observe(d ->
+//							.doOnNext(d ->
 //											integerPostConcat.getAndIncrement()
 //							)
-//							.observeComplete(no -> {
+//							.doOnComplete(no -> {
 //										integerPostConcat.decrementAndGet();
 //										System.out.println("YYYYY COMPLETE " + Thread.currentThread());
 //									}

@@ -71,8 +71,7 @@ public class PostAndGetTests {
 				.getKey(),
 			  entry.getValue())));
 
-			return channel.writeWith(Streams
-			  .wrap(channel)
+			return channel.writeWith(channel
 			  .take(1)
 			  .log("received")
 			  .flatMap(data -> {

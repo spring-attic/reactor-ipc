@@ -156,7 +156,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 			String url,
 			final ReactorHttpHandler<IN, OUT> handler){
 
-		return Streams.wrap(
+		return Streams.from(
 				peer.request(method, url,
 						HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 				)

@@ -52,7 +52,7 @@ public class NexusPlay {
 		// =========================================================
 
 		FluxProcessor<Integer, Integer> p = Processors.emitter();
-		Stream<Integer> dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
+		Stream<Integer> dispatched = Streams.from(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int i = 0; i < 2; i++) {
@@ -73,7 +73,7 @@ public class NexusPlay {
 		// =========================================================
 
 		p = Processors.emitter();
-		dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
+		dispatched = Streams.from(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
@@ -96,7 +96,7 @@ public class NexusPlay {
 		// =========================================================
 
 		p = Processors.emitter();
-		dispatched = Streams.wrap(p).dispatchOn(Processors.asyncGroup());
+		dispatched = Streams.from(p).dispatchOn(Processors.asyncGroup());
 
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {

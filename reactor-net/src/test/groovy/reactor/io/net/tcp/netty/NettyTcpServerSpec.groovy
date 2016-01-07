@@ -104,7 +104,7 @@ class NettyTcpServerSpec extends Specification {
 		when: "the client/server are prepared"
 			server.start { input ->
 				input.writeWith(
-						Streams.wrap(codec.decode(input))
+						Streams.from(codec.decode(input))
 								.log('serve')
 								.map(codec)
 								.capacity(5l)
@@ -112,7 +112,7 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-				Streams.wrap(codec.decode(input))
+				Streams.from(codec.decode(input))
 						.log('receive')
 						.consume { latch.countDown() }
 
@@ -149,11 +149,11 @@ class NettyTcpServerSpec extends Specification {
 		when: "the client/server are prepared"
 			server.start { input ->
 				input.writeWith(
-						Streams.wrap(codec.decode(input.input()))
+						Streams.from(codec.decode(input.input()))
 						.flatMap {
 					Streams.just(it)
 							.log('flatmap-retry')
-							.observe {
+							.doOnNext {
 						if (i++ < 2) {
 							throw new Exception("test")
 						}
@@ -166,7 +166,7 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-				Streams.wrap(codec.decode(input))
+				Streams.from(codec.decode(input))
 						.log('receive')
 						.consume { latch.countDown() }
 
