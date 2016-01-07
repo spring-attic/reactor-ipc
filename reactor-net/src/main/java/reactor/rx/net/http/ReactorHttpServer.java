@@ -66,16 +66,6 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 		return peer.start(null);
 	}
 
-	/**
-	 * Start this {@literal ReactorPeer}.
-	 * @return a {@link Mono<Void>} that will be complete when the {@link
-	 * ReactivePeer} is started
-	 */
-	public Mono<Void> start(ReactorHttpHandler<IN, OUT> handler) {
-		return peer.start(
-				HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-		);
-	}
 
 	/**
 	 * Shutdown this {@literal ReactorPeer} and complete the returned {@link Mono<Void>}
