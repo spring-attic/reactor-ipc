@@ -7,7 +7,7 @@ ifndef::host-github[:ext-relative: {outfilesuffix}]
 :icons: font
 
 include::gettingstarted.adoc[]
-include::20to21.adoc[]
+include::20to25.adoc[]
 
 [[reactor-net]]
 = *reactor-net*
