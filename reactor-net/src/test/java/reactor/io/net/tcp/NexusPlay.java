@@ -80,7 +80,7 @@ public class NexusPlay {
 					.log("slow",  Level.FINEST, FluxLog.ALL)
 					//.capacity(5)
 					.consume(d ->
-							LockSupport.parkNanos(100_000_000 * (r.nextInt(80) + 1))
+							LockSupport.parkNanos(100_000_000 * (r.nextInt(20) + 1))
 					);
 		}
 
