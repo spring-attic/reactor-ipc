@@ -23,12 +23,6 @@ include::aeron.adoc[]
 [[reactor-codec]]
 = *reactor-codec*
 
-[[reactor-extensions]]
-= *Extensions*
-
-[[reactor-spring]]
-== Spring Support
-include::spring.adoc[]
 
 [[reactor-samples]]
 == Cookbook
