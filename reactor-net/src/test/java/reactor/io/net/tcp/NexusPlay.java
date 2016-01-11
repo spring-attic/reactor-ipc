@@ -21,8 +21,8 @@ import java.util.logging.Level;
 
 import reactor.Processors;
 import reactor.core.processor.FluxProcessor;
-import reactor.core.publisher.FluxLog;
 import reactor.core.subscription.ReactiveSession;
+import reactor.core.support.Logger;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.nexus.Nexus;
 import reactor.rx.Stream;
@@ -56,14 +56,14 @@ public class NexusPlay {
 		//slow subscribers
 		for(int i = 0; i < 2; i++) {
 			dispatched
-					.log("slow",  Level.FINEST, FluxLog.ALL)
+					.log("slow",  Level.FINEST, Logger.ALL)
 					.consume(d ->
 						LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
 					);
 		}
 
 		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, FluxLog.ALL).consume();
+		dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
 
 
 		ReactiveSession<Integer> s1 = p.startSession();
@@ -77,7 +77,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
 			dispatched
-					.log("slow",  Level.FINEST, FluxLog.ALL)
+					.log("slow",  Level.FINEST, Logger.ALL)
 					//.capacity(5)
 					.consume(d ->
 							LockSupport.parkNanos(100_000_000 * (r.nextInt(20) + 1))
@@ -85,7 +85,7 @@ public class NexusPlay {
 		}
 
 		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, FluxLog.ALL).consume();
+		dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
 
 
 		ReactiveSession<Integer> s2 = p.startSession();
@@ -100,7 +100,7 @@ public class NexusPlay {
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
 			dispatched
-					.log("slow",  Level.FINEST, FluxLog.ALL)
+					.log("slow",  Level.FINEST, Logger.ALL)
 					//.capacity(5)
 					.consume(d ->
 							LockSupport.parkNanos(1000_000_000)
