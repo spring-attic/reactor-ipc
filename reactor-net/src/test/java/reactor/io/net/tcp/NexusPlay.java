@@ -51,14 +51,14 @@ public class NexusPlay {
 		// =========================================================
 
 		FluxProcessor<Integer, Integer> p = Processors.emitter();
-		Stream<Integer> dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup());
+		Stream<Integer> dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup("semi-fast",  8192, 4));
 
 		//slow subscribers
 		for(int i = 0; i < 2; i++) {
 			dispatched
-					.log("slow",  Level.FINEST, Logger.ALL)
+					.log("semi-fast",  Level.FINEST, Logger.ALL)
 					.consume(d ->
-						LockSupport.parkNanos(10_000_000 * (r.nextInt(80) + 1))
+						LockSupport.parkNanos(100_000 * (r.nextInt(80) + 1))
 					);
 		}
 
@@ -72,7 +72,7 @@ public class NexusPlay {
 		// =========================================================
 
 		p = Processors.emitter();
-		dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup());
+		dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup("semi-slow", 1024, 4));
 
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
@@ -80,7 +80,7 @@ public class NexusPlay {
 					.log("slow",  Level.FINEST, Logger.ALL)
 					//.capacity(5)
 					.consume(d ->
-							LockSupport.parkNanos(100_000_000 * (r.nextInt(20) + 1))
+							LockSupport.parkNanos(10_000_000 * (r.nextInt(20) + 1))
 					);
 		}
 
@@ -95,7 +95,7 @@ public class NexusPlay {
 		// =========================================================
 
 		p = Processors.emitter();
-		dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup());
+		dispatched = Stream.from(p).dispatchOn(Processors.asyncGroup("slow", 1024, 3));
 
 		//slow subscribers
 		for(int j = 0; j < 3; j++) {
@@ -119,8 +119,8 @@ public class NexusPlay {
 			s3.emit(j);
 			j++;
 			LockSupport.parkNanos(30_000_000);
-//			if(i == 200){
-//				s.failWith(new Exception("LMAO"));
+//			if(j == 200){
+//				s2.failWith(new Exception("AHAH"));
 //				break;
 //			}
 		}
