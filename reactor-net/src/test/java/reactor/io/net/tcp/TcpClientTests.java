@@ -335,7 +335,7 @@ public class TcpClientTests {
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {
 				  allWrites.add(connection.writeBufferWith(Stream.just(Buffer.wrap("a"))
-				    .throttle(750)));
+				    .throttleRequest(750)));
 			  }
 			  return Stream.merge(allWrites);
 		  }
