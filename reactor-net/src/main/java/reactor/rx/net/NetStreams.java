@@ -24,13 +24,13 @@ import reactor.io.net.ReactiveNet;
 import reactor.io.net.Spec;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.HttpServer;
+import reactor.io.net.tcp.TcpClient;
+import reactor.io.net.tcp.TcpServer;
+import reactor.io.net.udp.DatagramServer;
 import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
 import reactor.rx.net.tcp.ReactorTcpClient;
 import reactor.rx.net.tcp.ReactorTcpServer;
-import reactor.io.net.tcp.TcpClient;
-import reactor.io.net.tcp.TcpServer;
-import reactor.io.net.udp.DatagramServer;
 import reactor.rx.net.udp.ReactorDatagramServer;
 
 /**
@@ -56,7 +56,7 @@ import reactor.rx.net.udp.ReactorDatagramServer;
  * //We can also preconfigure global codecs and other custom client/server parameter with the Function signature:
  * NetStreams.tcpServer(spec -> spec.codec(kryoCodec).listen(1235)).start( intput -> {
  *      input.consume(log::info);
- *      return input.writeWith(Streams.period(1l));
+ *      return input.writeWith(Stream.interval(1l));
  * });
  *
  * //Assigning the same codec to a client and a server greatly improve readability and provide for extended type safety.

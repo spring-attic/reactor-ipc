@@ -20,7 +20,6 @@ import reactor.Timers;
 import reactor.core.support.Assert;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.nexus.Nexus;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.HttpServer;
 import reactor.io.net.impl.netty.http.NettyHttpClient;
@@ -28,6 +27,7 @@ import reactor.io.net.impl.netty.http.NettyHttpServer;
 import reactor.io.net.impl.netty.tcp.NettyTcpClient;
 import reactor.io.net.impl.netty.tcp.NettyTcpServer;
 import reactor.io.net.impl.netty.udp.NettyDatagramServer;
+import reactor.io.net.nexus.Nexus;
 import reactor.io.net.tcp.TcpClient;
 import reactor.io.net.tcp.TcpServer;
 import reactor.io.net.udp.DatagramServer;
@@ -54,7 +54,7 @@ import reactor.io.net.udp.DatagramServer;
  * //We can also preconfigure global codecs and other custom client/server parameter with the Function signature:
  * ReactiveNet.tcpServer(spec -> spec.preprocessor(CodecPreprocessor.from(kryoCodec)).listen(1235)).start( intput -> {
  *      input.subscribe(Subscribers.unbounded(log::info));
- *      return input.writeWith(Publishers.period(1l));
+ *      return input.writeWith(Flux.interval(1l));
  * });
  *
  * //Assigning the same codec to a client and a server greatly improve readability and provide for extended type

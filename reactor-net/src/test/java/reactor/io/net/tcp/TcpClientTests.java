@@ -283,7 +283,7 @@ public class TcpClientTests {
 					latch.countDown();
 				});
 
-			  return Stream.timer(1).after().log();
+			  return Stream.delay(1).after().log();
 		  }
 		);
 
@@ -304,7 +304,7 @@ public class TcpClientTests {
 		client.startAndAwait(p -> {
 			  p.on()
 				.readIdle(500, latch::countDown);
-			  return Stream.timer(1).after().log();
+			  return Stream.delay(1).after().log();
 		  }
 		);
 
