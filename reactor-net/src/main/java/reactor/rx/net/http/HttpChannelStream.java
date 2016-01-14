@@ -17,6 +17,7 @@
 package reactor.rx.net.http;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.reactivestreams.Publisher;
 import reactor.Mono;
@@ -25,6 +26,7 @@ import reactor.fn.Function;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.BaseHttpChannel;
 import reactor.io.net.http.HttpChannel;
+import reactor.io.net.http.model.Cookie;
 import reactor.io.net.http.model.HttpHeaders;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Protocol;
@@ -163,8 +165,24 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 		return actual.method();
 	}
 
+	@Override
+	public Map<String, Set<Cookie>> cookies() {
+		return actual.cookies();
+	}
+
+	@Override
+	public HttpChannelStream<IN, OUT> addCookie(String name, Cookie cookie) {
+		actual.addCookie(name, cookie);
+		return this;
+	}
 
 	// RESPONSE contract
+
+	@Override
+	public HttpChannelStream<IN, OUT> addResponseCookie(String name, Cookie cookie) {
+		actual.addResponseCookie(name, cookie);
+		return this;
+	}
 
 	@Override
 	public Status responseStatus(){

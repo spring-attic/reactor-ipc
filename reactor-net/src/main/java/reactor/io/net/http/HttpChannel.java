@@ -16,12 +16,14 @@
 package reactor.io.net.http;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.reactivestreams.Publisher;
 import reactor.Mono;
 import reactor.fn.Function;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
+import reactor.io.net.http.model.Cookie;
 import reactor.io.net.http.model.HttpHeaders;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Protocol;
@@ -61,6 +63,25 @@ public interface HttpChannel<IN, OUT> extends ReactiveChannel<IN, OUT> {
 	 * @return Resolved HTTP request headers
 	 */
 	HttpHeaders headers();
+
+	/**
+	 * @return Resolved HTTP cookies
+	 */
+	Map<String, Set<Cookie>> cookies();
+
+	/**
+	 * add the passed cookie
+	 * @return this
+	 */
+	HttpChannel<IN, OUT> addCookie(String name, Cookie cookie);
+
+
+	/**
+	 * add the passed cookie
+	 * @return this
+	 */
+	HttpChannel<IN, OUT> addResponseCookie(String name, Cookie cookie);
+
 
 	/**
 	 *

@@ -17,6 +17,8 @@
 package reactor.io.net.impl.netty.http;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelFuture;
@@ -37,6 +39,7 @@ import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
+import reactor.io.net.http.model.Cookie;
 import reactor.io.net.impl.netty.NettyBuffer;
 import reactor.io.net.impl.netty.NettyChannel;
 import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
@@ -133,13 +136,21 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
 	private class AutoHeaderNettyHttpChannel extends NettyHttpChannel {
 
+		private final Cookies cookies;
+
 		public AutoHeaderNettyHttpChannel(Object msg) {
 			super(NettyHttpServerHandler.this.tcpStream, (io.netty.handler.codec.http.HttpRequest) msg);
+			this.cookies = Cookies.newServerRequestHolder(headers().delegate());
 		}
 
 		@Override
 		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
 			tcpStream.emitWriter(Flux.just(getNettyResponse()), s);
+		}
+
+		@Override
+		public Map<String, Set<Cookie>> cookies() {
+			return cookies.getCachedCookies();
 		}
 	}
 

@@ -18,6 +18,7 @@ package reactor.io.net.preprocessor;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.Set;
 
 import org.reactivestreams.Publisher;
 import reactor.Flux;
@@ -35,6 +36,7 @@ import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpProcessor;
+import reactor.io.net.http.model.Cookie;
 import reactor.io.net.http.model.HttpHeaders;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Protocol;
@@ -281,6 +283,25 @@ public final class CodecPreprocessor<IN, OUT>
 			this.encoder = encoder;
 			this.channel = channel;
 		}
+
+		@Override
+		public Map<String, Set<Cookie>> cookies() {
+			return channel.cookies();
+		}
+
+		@Override
+		public HttpChannel<IN, OUT> addCookie(String name, Cookie cookie) {
+			channel.addCookie(name, cookie);
+			return this;
+		}
+
+
+		@Override
+		public HttpChannel<IN, OUT> addResponseCookie(String name, Cookie cookie) {
+			channel.addResponseCookie(name, cookie);
+			return this;
+		}
+
 
 		@Override
 		public HttpHeaders headers() {

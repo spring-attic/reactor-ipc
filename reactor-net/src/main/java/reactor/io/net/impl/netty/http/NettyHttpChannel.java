@@ -17,6 +17,8 @@
 package reactor.io.net.impl.netty.http;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.Set;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -29,6 +31,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.Flux;
@@ -37,6 +40,7 @@ import reactor.core.support.ReactiveState;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.BaseHttpChannel;
 import reactor.io.net.http.HttpChannel;
+import reactor.io.net.http.model.Cookie;
 import reactor.io.net.http.model.HttpHeaders;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Protocol;
@@ -71,7 +75,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 		this.nettyResponse = new DefaultHttpResponse(request.getProtocolVersion(), HttpResponseStatus.OK);
 		this.headers = new NettyHttpHeaders(request);
 		this.responseHeaders = new NettyHttpResponseHeaders(this.nettyResponse);
-
+		this.
 		responseHeader(ResponseHeaders.TRANSFER_ENCODING, "chunked");
 	}
 
@@ -242,6 +246,17 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	public boolean isWebsocket() {
 		String isWebsocket = headers.get(HttpHeaders.UPGRADE);
 		return isWebsocket != null && isWebsocket.toLowerCase().equals("websocket");
+	}
+
+	@Override
+	public void doAddCookie(String name, Cookie cookie) {
+		doAddHeader(ResponseHeaders.SET_COOKIE,
+					ServerCookieEncoder.STRICT.encode(new Cookies.NettyWriteCookie(cookie)));
+	}
+	@Override
+	public void doAddResponseCookie(String name, Cookie cookie) {
+		doAddResponseHeader(ResponseHeaders.SET_COOKIE,
+					ServerCookieEncoder.STRICT.encode(new Cookies.NettyWriteCookie(cookie)));
 	}
 
 	@Override

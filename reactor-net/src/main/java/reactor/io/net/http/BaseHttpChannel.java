@@ -28,6 +28,7 @@ import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
+import reactor.io.net.http.model.Cookie;
 import reactor.io.net.http.model.Method;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
@@ -123,7 +124,33 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements React
 		return this;
 	}
 
+	@Override
+	public HttpChannel<IN, OUT> addCookie(String name, Cookie cookie) {
+		if (statusAndHeadersSent == 0) {
+			doAddCookie(name, cookie);
+		}
+		else {
+			throw new IllegalStateException("Status and headers already sent");
+		}
+		return this;
+	}
+
+	protected abstract void doAddCookie(String name, Cookie cookie);
+
 	// RESPONSE contract
+
+	@Override
+	public HttpChannel<IN, OUT> addResponseCookie(String name, Cookie cookie) {
+		if (statusAndHeadersSent == 0) {
+			doAddResponseCookie(name, cookie);
+		}
+		else {
+			throw new IllegalStateException("Status and headers already sent");
+		}
+		return this;
+	}
+
+	protected abstract void doAddResponseCookie(String name, Cookie cookie);
 
 	/**
 	 * Set the response status to an outgoing response

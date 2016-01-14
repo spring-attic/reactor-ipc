@@ -80,7 +80,7 @@ public class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 		if (!handshaker.isHandshakeComplete()) {
 			ctx.pipeline().remove(HttpObjectAggregator.class);
 			handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
-			httpChannel = new NettyHttpChannel(tcpStream, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/")) {
+			httpChannel = new NettyHttpClientHandler.PostHeaderPublisher() {
 				@Override
 				protected void doSubscribeHeaders(Subscriber<? super Void> s) {
 					Flux.<Void>empty().subscribe(s);
