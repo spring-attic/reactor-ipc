@@ -204,7 +204,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 
 	class PostHeaderPublisher extends NettyHttpChannel {
 
-		private final Cookies cookies;
+		private Cookies cookies;
 
 		public PostHeaderPublisher() {
 			super(NettyHttpClientHandler.this.tcpStream,
