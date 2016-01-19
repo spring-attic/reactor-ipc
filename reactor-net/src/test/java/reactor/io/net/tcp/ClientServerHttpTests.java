@@ -29,8 +29,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
+import reactor.core.publisher.ProcessorWorkQueue;
 import reactor.core.publisher.Processors;
-import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timers;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
@@ -246,7 +246,7 @@ public class ClientServerHttpTests {
 
 	private void setupFakeProtocolListener() throws Exception {
 		broadcaster = Processors.topic();
-		final Processor<List<String>, List<String>> processor = WorkQueueProcessor.create(false);
+		final Processor<List<String>, List<String>> processor = ProcessorWorkQueue.create(false);
 		Stream.from(broadcaster)
 		      .buffer(5)
 		      .subscribe(processor);

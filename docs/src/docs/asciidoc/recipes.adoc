@@ -4,7 +4,7 @@ If you made it that far, here a simple non blocking stream to scale up your Kona
 
 [source,java]
 ----
-final Processor<Integer, Integer> keyboardStream = TopicProcessor.create();
+final Processor<Integer, Integer> keyboardStream = ProcessorTopic.create();
 
 NetStreams.<String, String>httpServer(spec -> 
 		spec

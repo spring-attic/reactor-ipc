@@ -31,8 +31,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.ProcessorTopic;
 import reactor.core.publisher.Processors;
-import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Exceptions;
@@ -357,10 +357,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					       String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
 					       log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
 //					if(action.equals("pause") && !arg.isEmpty()){
-//						((EmitterProcessor)Nexus.this.eventStream).pause();
+//						((ProcessorEmitter)Nexus.this.eventStream).pause();
 //					}
 //					else if(action.equals("resume") && !arg.isEmpty()){
-//						((EmitterProcessor)Nexus.this.eventStream).resume();
+//						((ProcessorEmitter)Nexus.this.eventStream).resume();
 //					}
 				       }
 			       }
@@ -381,7 +381,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		if (logExtensionEnabled) {
 			FluxProcessor<Event, Event> p =
-					TopicProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
+					ProcessorTopic.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());

@@ -172,7 +172,7 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 		super.required_mustRequestFromUpstreamForElementsThatHaveBeenRequestedLongAgo();
 	}
 
-	// Disabled due to a TopicProcessor problem when it doesn't send Complete
+	// Disabled due to a ProcessorTopic problem when it doesn't send Complete
 	// once a Publisher completed but no subscribers were attached to the processor
 	@Test(enabled = false)
 	@Override
