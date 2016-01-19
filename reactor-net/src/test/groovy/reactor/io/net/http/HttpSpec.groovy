@@ -16,7 +16,7 @@
 package reactor.io.net.http
 
 import reactor.Mono
-import reactor.core.error.CancelException
+import reactor.core.support.Exceptions
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.Stream
@@ -222,7 +222,7 @@ class HttpSpec extends Specification {
 
 	then: "data was recieved"
 	//the produced reply should be there soon
-	thrown CancelException
+	thrown Exceptions.CancelException
 	errored.await(5, TimeUnit.SECONDS.SECONDS)
 	!content
 

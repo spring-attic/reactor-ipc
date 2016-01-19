@@ -28,7 +28,7 @@ import java.util.concurrent.TimeoutException;
 import org.reactivestreams.Publisher;
 import reactor.Flux;
 import reactor.Mono;
-import reactor.core.error.CancelException;
+import reactor.core.support.Exceptions;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;
 import reactor.fn.Predicate;
@@ -305,7 +305,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 					return channel.writeBufferWith(filePub);
 				}
 				else{
-					return Mono.error(CancelException.get());
+					return Mono.error(Exceptions.CancelException.INSTANCE);
 				}
 			}
 		});

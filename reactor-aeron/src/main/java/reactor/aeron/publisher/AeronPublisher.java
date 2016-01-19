@@ -15,26 +15,26 @@
  */
 package reactor.aeron.publisher;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.error.Exceptions;
-import reactor.core.support.Logger;
 import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
+import reactor.core.support.Exceptions;
+import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.SingleUseExecutor;
 import reactor.core.support.UUIDUtils;
-import reactor.fn.Consumer;
 import reactor.core.timer.Timer;
+import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The publisher part of Reactive Stream over Aeron transport implementation

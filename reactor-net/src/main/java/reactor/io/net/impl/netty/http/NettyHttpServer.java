@@ -28,7 +28,7 @@ import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import reactor.Flux;
 import reactor.Mono;
-import reactor.core.error.Exceptions;
+import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;

@@ -31,11 +31,10 @@ import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.error.CancelException;
-import reactor.core.error.Exceptions;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.rb.disruptor.RingBuffer;
@@ -487,7 +486,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		public void onComplete() {
 			if (!TERMINATED.compareAndSet(this, 0, 1)) {
 				drain();
-				throw CancelException.get();
+				Exceptions.failWithCancel();
 			}
 			drain();
 		}
@@ -662,7 +661,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		public void onNext(final Object w) {
 			super.onNext(w);
 			if (subscription == null) {
-				throw CancelException.get();
+				Exceptions.failWithCancel();
 			}
 			try {
 				ChannelFuture cf = doOnWrite(w, ctx);
@@ -799,7 +798,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		public void onNext(Object w) {
 			super.onNext(w);
 			if (subscription == null) {
-				throw CancelException.get();
+				Exceptions.failWithCancel();
 			}
 			try {
 				ChannelFuture cf = doOnWrite(w, ctx);
@@ -817,7 +816,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			}
 			catch (Throwable t) {
 				onError(Exceptions.addValueAsLastCause(t, w));
-				throw CancelException.get();
+				Exceptions.failWithCancel();
 			}
 		}
 
