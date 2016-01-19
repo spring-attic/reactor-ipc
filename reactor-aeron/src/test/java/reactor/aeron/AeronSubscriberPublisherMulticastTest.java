@@ -17,9 +17,9 @@
 package reactor.aeron;
 
 import org.junit.Test;
-import reactor.Flux;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
 import reactor.io.IO;

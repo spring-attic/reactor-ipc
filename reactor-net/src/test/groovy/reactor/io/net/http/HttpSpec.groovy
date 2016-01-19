@@ -15,7 +15,7 @@
  */
 package reactor.io.net.http
 
-import reactor.Mono
+import reactor.core.publisher.Mono
 import reactor.core.support.Exceptions
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor

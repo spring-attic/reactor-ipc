@@ -31,9 +31,9 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Flux;
-import reactor.Mono;
-import reactor.Subscribers;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.subscriber.Subscribers;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.Assert;
 import reactor.core.support.Logger;
@@ -71,7 +71,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 	 * and the given {@code reactor} to send events. The number of IO threads used by the
 	 * client is configured by the environment's {@code reactor.tcp.ioThreadCount}
 	 * property. In its absence the number of IO threads will be equal to the {@link
-	 * reactor.Processors#DEFAULT_POOL_SIZE number of available processors}. </p> The
+	 * reactor.core.publisher.Processors#DEFAULT_POOL_SIZE number of available processors}. </p> The
 	 * client will connect to the given {@code connectAddress}, configuring its socket
 	 * using the given {@code opts}. The given {@code codec} will be used for encoding and
 	 * decoding of data.

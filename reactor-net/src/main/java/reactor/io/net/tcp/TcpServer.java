@@ -18,8 +18,8 @@ package reactor.io.net.tcp;
 
 import java.net.InetSocketAddress;
 
-import reactor.Mono;
-import reactor.Processors;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Processors;
 import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;

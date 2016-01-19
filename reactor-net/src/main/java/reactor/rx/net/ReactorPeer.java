@@ -16,10 +16,9 @@
 
 package reactor.rx.net;
 
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactivePeer;
-import reactor.rx.Promise;
 
 /**
  * Base functionality needed by all reactor peers

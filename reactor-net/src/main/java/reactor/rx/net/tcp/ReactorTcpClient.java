@@ -19,7 +19,7 @@ package reactor.rx.net.tcp;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;

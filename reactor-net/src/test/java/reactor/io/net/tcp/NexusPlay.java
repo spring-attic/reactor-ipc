@@ -19,8 +19,8 @@ import java.util.Random;
 import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
-import reactor.Processors;
 import reactor.core.publisher.FluxProcessor;
+import reactor.core.publisher.Processors;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Logger;
 import reactor.io.net.ReactiveNet;

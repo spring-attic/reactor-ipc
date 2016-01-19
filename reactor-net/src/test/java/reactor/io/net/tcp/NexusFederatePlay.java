@@ -17,7 +17,7 @@ package reactor.io.net.tcp;
 
 import java.util.concurrent.CountDownLatch;
 
-import reactor.Subscribers;
+import reactor.core.subscriber.Subscribers;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.http.HttpClient;

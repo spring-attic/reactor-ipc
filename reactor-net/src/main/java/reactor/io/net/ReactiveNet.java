@@ -16,8 +16,8 @@
 
 package reactor.io.net;
 
-import reactor.Timers;
 import reactor.core.support.Assert;
+import reactor.core.timer.Timers;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.HttpClient;

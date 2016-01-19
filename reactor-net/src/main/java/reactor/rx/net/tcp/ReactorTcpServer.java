@@ -18,13 +18,12 @@ package reactor.rx.net.tcp;
 
 import java.net.InetSocketAddress;
 
-import reactor.Mono;
-import reactor.rx.net.ChannelStream;
+import reactor.core.publisher.Mono;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
-import reactor.rx.net.ReactorPeer;
 import reactor.io.net.tcp.TcpServer;
-import reactor.rx.Promise;
+import reactor.rx.net.ChannelStream;
+import reactor.rx.net.ReactorPeer;
 
 /**
  * A network-aware client that will publish its connection once available to the {@link ReactiveChannelHandler} passed.

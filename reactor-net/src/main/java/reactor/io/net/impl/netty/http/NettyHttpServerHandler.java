@@ -34,7 +34,7 @@ import io.netty.handler.codec.http.LastHttpContent;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.Flux;
+import reactor.core.publisher.Flux;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;

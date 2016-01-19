@@ -16,13 +16,12 @@
 
 package reactor.rx.net.http;
 
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.fn.Function;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.model.Method;
-import reactor.rx.Stream;
 import reactor.rx.net.ReactorPeer;
 
 /**

@@ -15,16 +15,15 @@
  */
 package reactor.aeron.subscriber;
 
-import reactor.core.support.Logger;
-import reactor.core.support.Logger;
-import reactor.Timers;
-import reactor.aeron.Context;
-import reactor.fn.Consumer;
-import reactor.core.support.ReactiveState.Pausable;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import reactor.aeron.Context;
+import reactor.core.support.Logger;
+import reactor.core.support.ReactiveState.Pausable;
+import reactor.core.timer.Timers;
+import reactor.fn.Consumer;
 
 /**
  * @author Anatoly Kadyshev

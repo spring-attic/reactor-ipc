@@ -19,7 +19,7 @@ package reactor.io.net;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
-import reactor.Flux;
+import reactor.core.publisher.Flux;
 import reactor.core.timer.Timer;
 import reactor.fn.tuple.Tuple2;
 

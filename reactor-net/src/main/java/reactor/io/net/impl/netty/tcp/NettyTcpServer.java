@@ -36,7 +36,7 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Subscriber;
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.core.support.Logger;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;

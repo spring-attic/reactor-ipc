@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Flux;
+import reactor.core.publisher.Flux;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.ReactiveState;

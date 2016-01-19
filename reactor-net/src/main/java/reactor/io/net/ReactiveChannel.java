@@ -19,8 +19,7 @@ package reactor.io.net;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
-import reactor.Flux;
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.io.buffer.Buffer;
 
 /**

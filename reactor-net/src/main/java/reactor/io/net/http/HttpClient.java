@@ -19,8 +19,8 @@ package reactor.io.net.http;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
-import reactor.Flux;
-import reactor.Mono;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;
 import reactor.fn.tuple.Tuple2;

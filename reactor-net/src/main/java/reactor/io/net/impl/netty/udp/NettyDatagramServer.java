@@ -42,7 +42,7 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.NetUtil;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Subscriber;
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;

@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.reactivestreams.Publisher;
-import reactor.Flux;
-import reactor.Mono;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.support.Exceptions;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;

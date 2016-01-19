@@ -41,8 +41,8 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.Flux;
-import reactor.Mono;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.Logger;
 import reactor.core.support.NamedDaemonThreadFactory;
@@ -88,7 +88,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 	 * Creates a new NettyTcpClient that will use the given {@code env} for configuration and the given {@code reactor}
 	 * to send events. The number of IO threads used by the client is configured by the environment's {@code
 	 * reactor.tcp.ioThreadCount} property. In its absence the number of IO threads will be equal to the {@link
-	 * reactor.Processors#DEFAULT_POOL_SIZE number of available processors}. </p> The client will connect to the given
+	 * reactor.core.publisher.Processors#DEFAULT_POOL_SIZE number of available processors}. </p> The client will connect to the given
 	 * {@code connectAddress}, configuring its socket using the given {@code opts}. The given {@code codec} will be used
 	 * for encoding and decoding of data.
 	 * @param timer The configuration timer

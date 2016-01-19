@@ -18,7 +18,7 @@ package reactor.io.codec;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Flux;
+import reactor.core.publisher.Flux;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.support.ReactiveState;
 import reactor.fn.Consumer;

@@ -15,14 +15,14 @@
  */
 package reactor.aeron.publisher;
 
-import reactor.Timers;
+import java.util.concurrent.TimeUnit;
+
 import reactor.aeron.Context;
 import reactor.aeron.support.HeartbeatPublicationFailureException;
 import reactor.core.support.Assert;
-import reactor.fn.Consumer;
 import reactor.core.support.ReactiveState.Pausable;
-
-import java.util.concurrent.TimeUnit;
+import reactor.core.timer.Timers;
+import reactor.fn.Consumer;
 
 /**
  * @author Anatoly Kadyshev

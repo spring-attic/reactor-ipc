@@ -17,8 +17,6 @@
 package reactor.io.net.impl.netty.http;
 
 import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.Set;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -34,7 +32,7 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Flux;
+import reactor.core.publisher.Flux;
 import reactor.core.support.Assert;
 import reactor.core.support.ReactiveState;
 import reactor.io.buffer.Buffer;

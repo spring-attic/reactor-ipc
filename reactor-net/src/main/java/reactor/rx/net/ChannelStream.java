@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.core.support.Logger;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;

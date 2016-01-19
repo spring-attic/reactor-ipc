@@ -20,7 +20,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 
-import reactor.Mono;
+import reactor.core.publisher.Mono;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.udp.DatagramServer;
