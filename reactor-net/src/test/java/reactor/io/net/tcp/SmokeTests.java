@@ -311,7 +311,7 @@ public class SmokeTests {
 
 		Promise<List<String>> content = httpClient.get("/data")
 		                                       .flatMap(Stream::buffer)
-		                                       .to(Promise.ready());
+		                                       .subscribeWith(Promise.ready());
 
 		List<String> res = content.await(20, TimeUnit.SECONDS);
 		httpClient.shutdown().get();

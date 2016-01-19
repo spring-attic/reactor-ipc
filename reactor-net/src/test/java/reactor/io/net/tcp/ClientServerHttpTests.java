@@ -282,7 +282,7 @@ public class ClientServerHttpTests {
 		                 .then(s ->  s.log("client").next())
 		                 .as(Stream::from)
 		                 .toList()
-		                 .to(Promise.ready());
+		                 .subscribeWith(Promise.ready());
 	}
 
 	private List<List<String>> getClientDatas(int threadCount, Sender sender, int count) throws Exception {
