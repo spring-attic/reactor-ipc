@@ -756,7 +756,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				                                                .getBytes("UTF-8"));
 			}
 			catch (UnsupportedEncodingException e) {
-				throw Exceptions.Exceptions.UpstreamException.create(e);
+				Exceptions.fail(e);
+				return null;
 			}
 		}
 	}

@@ -477,7 +477,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		@Override
 		public void onError(Throwable t) {
 			if (!TERMINATED.compareAndSet(this, 0, 1)) {
-				throw Exceptions.Exceptions.UpstreamException.create(t);
+				Exceptions.onErrorDropped(t);
 			}
 			error = t;
 			drain();
