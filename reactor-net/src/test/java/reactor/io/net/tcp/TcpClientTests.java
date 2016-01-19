@@ -283,7 +283,7 @@ public class TcpClientTests {
 					latch.countDown();
 				});
 
-			  return Stream.delay(1).after().log();
+			  return Stream.interval(3).take(1).after().log();
 		  }
 		);
 
@@ -304,14 +304,14 @@ public class TcpClientTests {
 		client.startAndAwait(p -> {
 			  p.on()
 				.readIdle(500, latch::countDown);
-			  return Stream.delay(1).after().log();
+			  return Flux.never();
 		  }
 		);
 
 		Thread.sleep(700);
 		heartbeatServer.close();
 
-		assertTrue(latch.await(5, TimeUnit.SECONDS));
+		assertTrue(latch.await(500, TimeUnit.SECONDS));
 
 		long duration = System.currentTimeMillis() - start;
 
