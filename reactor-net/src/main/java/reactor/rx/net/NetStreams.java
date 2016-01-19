@@ -15,7 +15,7 @@
  */
 package reactor.rx.net;
 
-import reactor.core.publisher.convert.DependencyUtils;
+import reactor.core.converter.DependencyUtils;
 import reactor.core.support.Assert;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;

@@ -22,7 +22,7 @@ import reactor.bus.registry.Registry;
 import reactor.bus.selector.Selector;
 import reactor.bus.selector.Selectors;
 import reactor.bus.selector.UriPathSelector;
-import reactor.core.publisher.convert.DependencyUtils;
+import reactor.core.converter.DependencyUtils;
 import reactor.fn.Function;
 import reactor.fn.Predicate;
 import reactor.io.net.ReactiveChannelHandler;
