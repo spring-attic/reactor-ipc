@@ -43,7 +43,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Flux;
 import reactor.Mono;
-import reactor.core.support.BackpressureUtils;
+import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.Logger;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;

@@ -26,7 +26,7 @@ import reactor.aeron.support.DemandTracker;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.aeron.support.SignalType;
-import reactor.core.support.BackpressureUtils;
+import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;

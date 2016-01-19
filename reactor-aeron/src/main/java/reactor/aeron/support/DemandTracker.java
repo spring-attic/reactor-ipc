@@ -15,7 +15,7 @@
  */
 package reactor.aeron.support;
 
-import reactor.core.support.BackpressureUtils;
+import reactor.core.subscription.BackpressureUtils;
 
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 

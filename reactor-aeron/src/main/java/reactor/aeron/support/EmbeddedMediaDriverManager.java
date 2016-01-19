@@ -17,7 +17,7 @@ package reactor.aeron.support;
 
 import reactor.core.support.Logger;
 import reactor.Timers;
-import reactor.core.support.BackpressureUtils;
+import reactor.core.subscription.BackpressureUtils;
 import reactor.fn.Consumer;
 import reactor.core.timer.Timer;
 import uk.co.real_logic.aeron.Aeron;
