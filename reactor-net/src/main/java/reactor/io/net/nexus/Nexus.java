@@ -281,7 +281,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				}
 				else {
 					log.info("State Monitoring stopping on " + ReactiveStateUtils.getName(o));
-					throw CancelException.INSTANCE;
+					Exceptions.failWithCancel();
 				}
 			}
 		}, _period, TimeUnit.MILLISECONDS);
@@ -406,7 +406,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					}
 					else {
 						log.info("System Monitoring Stopped");
-						throw CancelException.INSTANCE;
+						Exceptions.failWithCancel();
 					}
 				}
 			}, systemStatsPeriod, TimeUnit.MILLISECONDS);
