@@ -41,6 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.reactivestreams.Publisher;
 import reactor.Flux;
+import reactor.Mono;
 import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
@@ -283,7 +284,7 @@ public class TcpClientTests {
 					latch.countDown();
 				});
 
-			  return Stream.interval(3).take(1).after().log();
+			  return Mono.delay(3).after().log();
 		  }
 		);
 
