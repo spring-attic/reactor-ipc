@@ -27,7 +27,7 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.SignalType;
-import reactor.core.processor.FluxProcessor;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
 import reactor.io.buffer.Buffer;

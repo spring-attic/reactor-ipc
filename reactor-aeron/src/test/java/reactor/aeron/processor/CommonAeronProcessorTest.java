@@ -29,11 +29,10 @@ import reactor.Processors;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
-import reactor.core.processor.FluxProcessor;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.io.IO;
 import reactor.io.buffer.Buffer;
-import reactor.rx.Stream;
 import reactor.rx.Stream;
 
 import static org.hamcrest.Matchers.is;

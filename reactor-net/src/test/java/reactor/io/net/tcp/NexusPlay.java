@@ -20,7 +20,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
 import reactor.Processors;
-import reactor.core.processor.FluxProcessor;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Logger;
 import reactor.io.net.ReactiveNet;

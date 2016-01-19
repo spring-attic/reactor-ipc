@@ -31,7 +31,7 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import reactor.Processors;
 import reactor.Timers;
-import reactor.core.processor.RingBufferWorkProcessor;
+import reactor.core.publisher.WorkQueueProcessor;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.preprocessor.CodecPreprocessor;
@@ -246,7 +246,7 @@ public class ClientServerHttpTests {
 
 	private void setupFakeProtocolListener() throws Exception {
 		broadcaster = Processors.topic();
-		final Processor<List<String>, List<String>> processor = RingBufferWorkProcessor.create(false);
+		final Processor<List<String>, List<String>> processor = WorkQueueProcessor.create(false);
 		Stream.from(broadcaster)
 		      .buffer(5)
 		      .subscribe(processor);

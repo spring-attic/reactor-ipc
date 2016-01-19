@@ -15,6 +15,10 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Publisher;
@@ -22,16 +26,12 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Processors;
 import reactor.aeron.support.AeronUtils;
-import reactor.core.processor.FluxProcessor;
-import reactor.core.processor.ProcessorGroup;
-import reactor.core.processor.RingBufferProcessor;
+import reactor.core.publisher.FluxProcessor;
+import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
-
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Is not actually a test but a proof of concept of threading for {@link AeronSubscriber}
@@ -184,7 +184,7 @@ public class SubscriberThreadingPOCTest {
 	@Test
 	public void test() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(32);
-		RingBufferProcessor<Buffer> processor = RingBufferProcessor.create("ringbuffer-sender", 8);
+		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		dataPublisher.subscribe(processor);
 
 		SignalPollerForPOC signalPoller = new SignalPollerForPOC(processor);
@@ -204,7 +204,7 @@ public class SubscriberThreadingPOCTest {
 	@Test
 	public void testCompletedPublisher() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(4);
-		RingBufferProcessor<Buffer> processor = RingBufferProcessor.create("ringbuffer-sender", 8);
+		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		dataPublisher.subscribe(processor);
 
 		SignalPollerForPOC signalPoller = new SignalPollerForPOC(processor);
@@ -227,7 +227,7 @@ public class SubscriberThreadingPOCTest {
 
 		ProcessorGroup<Buffer> group = Processors.asyncGroup();
 		FluxProcessor<Buffer, Buffer> publishOn = group.publishOn();
-		RingBufferProcessor<Buffer> processor = RingBufferProcessor.create("ringbuffer-sender", 8);
+		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		dataPublisher.subscribe(publishOn);
 
 		// by doing so processor is subscribed to publishOn asynchronously

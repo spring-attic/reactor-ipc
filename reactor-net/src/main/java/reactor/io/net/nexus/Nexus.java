@@ -32,9 +32,9 @@ import reactor.Mono;
 import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
-import reactor.core.processor.FluxProcessor;
-import reactor.core.processor.ProcessorGroup;
-import reactor.core.processor.RingBufferProcessor;
+import reactor.core.publisher.FluxProcessor;
+import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;
@@ -381,7 +381,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		if (logExtensionEnabled) {
 			FluxProcessor<Event, Event> p =
-					RingBufferProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
+					TopicProcessor.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());

@@ -22,7 +22,7 @@ import reactor.Timers;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
-import reactor.core.processor.RingBufferProcessor;
+import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
@@ -113,7 +113,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 
 	private final ServiceMessagePoller serviceMessagePoller;
 
-	private final RingBufferProcessor<Buffer> processor;
+	private final TopicProcessor<Buffer> processor;
 
 	public static AeronSubscriber create(Context context) {
 		context.validate();
@@ -141,7 +141,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		}
 
 		this.aeronInfra = context.createAeronInfra();
-		this.processor = createRingBufferProcessor(context, multiPublishers);
+		this.processor = createTopicProcessor(context, multiPublishers);
 		boolean isMulticast = AeronUtils.isMulticastCommunication(context);
 		if (isMulticast) {
 			this.serviceMessageHandler = new MulticastServiceMessageHandler(processor, aeronInfra, context,
@@ -205,11 +205,11 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		return new ServiceMessagePoller(context, aeronInfra, serviceMessageHandler);
 	}
 
-	private RingBufferProcessor<Buffer> createRingBufferProcessor(Context context, boolean multiPublishers) {
+	private TopicProcessor<Buffer> createTopicProcessor(Context context, boolean multiPublishers) {
 		String name = AeronUtils.makeThreadName(context, "signal-sender");
 		return multiPublishers ?
-				RingBufferProcessor.<Buffer>share(name, context.ringBufferSize(), context.autoCancel()) :
-				RingBufferProcessor.<Buffer>create(name, context.ringBufferSize(), context.autoCancel());
+				TopicProcessor.<Buffer>share(name, context.ringBufferSize(), context.autoCancel()) :
+				TopicProcessor.<Buffer>create(name, context.ringBufferSize(), context.autoCancel());
 	}
 
 	public void shutdown() {

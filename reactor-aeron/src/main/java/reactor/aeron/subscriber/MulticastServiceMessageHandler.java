@@ -23,7 +23,7 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.Serializer;
 import reactor.aeron.support.SignalType;
-import reactor.core.processor.FluxProcessor;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.support.Logger;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;

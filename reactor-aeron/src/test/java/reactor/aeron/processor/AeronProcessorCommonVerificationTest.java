@@ -15,6 +15,13 @@
  */
 package reactor.aeron.processor;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
@@ -29,13 +36,6 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.EmbeddedMediaDriverManager;
 import reactor.core.subscriber.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Anatoly Kadyshev
@@ -172,7 +172,7 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 		super.required_mustRequestFromUpstreamForElementsThatHaveBeenRequestedLongAgo();
 	}
 
-	// Disabled due to a RingBufferProcessor problem when it doesn't send Complete
+	// Disabled due to a TopicProcessor problem when it doesn't send Complete
 	// once a Publisher completed but no subscribers were attached to the processor
 	@Test(enabled = false)
 	@Override

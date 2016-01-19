@@ -15,16 +15,16 @@
  */
 package reactor.aeron.processor;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.processor.FluxProcessor;
-import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
+import reactor.core.publisher.FluxProcessor;
+import reactor.core.support.Logger;
 import reactor.io.buffer.Buffer;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A processor which publishes into and subscribes to data from Aeron.<br>
