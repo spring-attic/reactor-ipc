@@ -33,7 +33,7 @@ import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.CancelException;
-import reactor.core.error.ReactorFatalException;
+import reactor.core.error.Exceptions;
 import reactor.core.processor.FluxProcessor;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.processor.RingBufferProcessor;
@@ -756,7 +756,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				                                                .getBytes("UTF-8"));
 			}
 			catch (UnsupportedEncodingException e) {
-				throw ReactorFatalException.create(e);
+				throw Exceptions.Exceptions.UpstreamException.create(e);
 			}
 		}
 	}
@@ -798,7 +798,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 //				Collection<String> removed = lastState.graph.removeTerminatedNodes();
 //
 //				if(removed != null && !removed.isEmpty()){
-//					return Publishers.from(
+//					return Flux.from(
 //							Arrays.asList(lastState, new RemovedGraphEvent(server.getListenAddress().getHostName(), removed)));
 //				}
 

@@ -48,7 +48,7 @@ import reactor.io.net.udp.DatagramServer;
  *
  *    //Push anything from the publisher returned, here a simple Reactor Stream. By default a Buffer is expected
  *    //Will close after write
- *    return connection.writeWith(Publishers.just(Buffer.wrap("hello\n")));
+ *    return connection.writeWith(Flux.just(Buffer.wrap("hello\n")));
  * });
  *
  * //We can also preconfigure global codecs and other custom client/server parameter with the Function signature:
@@ -62,7 +62,7 @@ import reactor.io.net.udp.DatagramServer;
  * ReactiveNet.tcpServer(spec -> spec.preprocessor(CodecPreprocessor.from(kryoCodec)).connect("localhost", 1235)).start(
  * input -> {
  *      input.subscribe(Subscribers.unbounded(log::info));
- *   return input.writeWith(Publishers.just("hello"));
+ *   return input.writeWith(Flux.just("hello"));
  * });
  *
  * }

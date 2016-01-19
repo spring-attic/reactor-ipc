@@ -33,7 +33,6 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
-import reactor.core.error.ReactorFatalException;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
@@ -478,7 +477,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		@Override
 		public void onError(Throwable t) {
 			if (!TERMINATED.compareAndSet(this, 0, 1)) {
-				throw ReactorFatalException.create(t);
+				throw Exceptions.Exceptions.UpstreamException.create(t);
 			}
 			error = t;
 			drain();
