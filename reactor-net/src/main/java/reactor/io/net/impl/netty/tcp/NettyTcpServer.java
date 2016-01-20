@@ -37,8 +37,8 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
+import reactor.core.support.ExecutorUtils;
 import reactor.core.support.Logger;
-import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;
@@ -88,13 +88,13 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements Reactiv
 		int selectThreadCount = DEFAULT_TCP_SELECT_COUNT;
 		int ioThreadCount = DEFAULT_TCP_THREAD_COUNT;
 
-		this.selectorGroup = NettyNativeDetector.newEventLoopGroup(selectThreadCount, new NamedDaemonThreadFactory
+		this.selectorGroup = NettyNativeDetector.newEventLoopGroup(selectThreadCount, ExecutorUtils.newNamedFactory
 		  ("reactor-tcp-select"));
 
 		if (null != nettyOptions && null != nettyOptions.eventLoopGroup()) {
 			this.ioGroup = nettyOptions.eventLoopGroup();
 		} else {
-			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount, new NamedDaemonThreadFactory("reactor-tcp-io"));
+			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory("reactor-tcp-io"));
 		}
 
 		ServerBootstrap _serverBootstrap = new ServerBootstrap()

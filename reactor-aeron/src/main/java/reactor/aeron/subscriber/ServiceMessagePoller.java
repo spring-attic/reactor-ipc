@@ -15,21 +15,21 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.concurrent.ExecutorService;
+
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
+import reactor.core.support.ExecutorUtils;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
-import reactor.core.support.SingleUseExecutor;
 import uk.co.real_logic.aeron.FragmentAssembler;
 import uk.co.real_logic.aeron.Subscription;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 import uk.co.real_logic.aeron.logbuffer.Header;
 import uk.co.real_logic.agrona.DirectBuffer;
 import uk.co.real_logic.agrona.concurrent.IdleStrategy;
-
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author Anatoly Kadyshev
@@ -115,7 +115,7 @@ class ServiceMessagePoller implements Runnable, ReactiveState.Upstream {
 		this.serviceMessageHandler = serviceMessageHandler;
 		this.aeronInfra = aeronInfra;
 		this.serviceRequestSub = aeronInfra.addSubscription(context.senderChannel(), context.serviceRequestStreamId());
-		this.executor = SingleUseExecutor.create(AeronUtils.makeThreadName(context, "service-poller"));
+		this.executor = ExecutorUtils.singleUse("service-poller", null);
 	}
 
 	void start() {

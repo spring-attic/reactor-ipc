@@ -44,8 +44,8 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.subscription.BackpressureUtils;
+import reactor.core.support.ExecutorUtils;
 import reactor.core.support.Logger;
-import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
 import reactor.fn.Consumer;
@@ -116,7 +116,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements Reactiv
 		else {
 			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
 			this.ioGroup =
-					NettyNativeDetector.newEventLoopGroup(ioThreadCount, new NamedDaemonThreadFactory("reactor-tcp-io"));
+					NettyNativeDetector.newEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory("reactor-tcp-io"));
 		}
 
 		Bootstrap _bootstrap = new Bootstrap().group(ioGroup)

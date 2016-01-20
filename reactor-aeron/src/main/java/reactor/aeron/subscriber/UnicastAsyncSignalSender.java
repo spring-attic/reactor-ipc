@@ -30,9 +30,9 @@ import reactor.aeron.support.SignalType;
 import reactor.core.queue.disruptor.RingBuffer;
 import reactor.core.queue.disruptor.Sequence;
 import reactor.core.queue.disruptor.Sequencer;
+import reactor.core.support.ExecutorUtils;
 import reactor.core.support.Logger;
 import reactor.core.support.ReactiveState;
-import reactor.core.support.SingleUseExecutor;
 import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
@@ -109,7 +109,7 @@ public class UnicastAsyncSignalSender implements Runnable {
 
 		this.pollCursor = Sequencer.newSequence(-1L);
 		buffer.addGatingSequence(pollCursor);
-		this.executor = SingleUseExecutor.create("async-signal-sender", null);
+		this.executor = ExecutorUtils.singleUse("async-signal-sender", null);
 	}
 
 	protected SignalSender createSignalSender(AeronInfra aeronInfra, Context context) {

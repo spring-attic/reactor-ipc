@@ -45,8 +45,8 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.Exceptions;
+import reactor.core.support.ExecutorUtils;
 import reactor.core.support.Logger;
-import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -91,9 +91,9 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 			int ioThreadCount = DEFAULT_UDP_THREAD_COUNT;
 			this.ioGroup =
 					options == null || options.protocolFamily() == null ?
-							NettyNativeDetector.newEventLoopGroup(ioThreadCount, new NamedDaemonThreadFactory
+							NettyNativeDetector.newEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory
 									("reactor-udp-io")) :
-							new NioEventLoopGroup(ioThreadCount, new NamedDaemonThreadFactory
+							new NioEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory
 									("reactor-udp-io"));
 		}
 
