@@ -15,8 +15,8 @@
  */
 package reactor.aeron.subscriber;
 
-import reactor.core.support.rb.disruptor.Sequence;
-import reactor.core.support.rb.disruptor.Sequencer;
+import reactor.core.queue.disruptor.Sequence;
+import reactor.core.queue.disruptor.Sequencer;
 import reactor.core.subscription.BackpressureUtils;
 
 /**

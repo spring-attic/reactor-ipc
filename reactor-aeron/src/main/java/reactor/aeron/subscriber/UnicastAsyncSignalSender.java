@@ -15,29 +15,29 @@
  */
 package reactor.aeron.subscriber;
 
-import reactor.core.support.Logger;
-import reactor.aeron.Context;
-import reactor.aeron.support.AeronInfra;
-import reactor.aeron.support.AeronUtils;
-import reactor.aeron.support.SignalPublicationFailedException;
-import reactor.aeron.support.SignalType;
-import reactor.core.support.ReactiveState;
-import reactor.core.support.rb.disruptor.RingBuffer;
-import reactor.core.support.rb.disruptor.Sequence;
-import reactor.core.support.rb.disruptor.Sequencer;
-import reactor.core.support.SingleUseExecutor;
-import reactor.fn.Supplier;
-import reactor.io.buffer.Buffer;
-import uk.co.real_logic.aeron.Publication;
-import uk.co.real_logic.agrona.collections.Int2ObjectHashMap;
-import uk.co.real_logic.agrona.concurrent.IdleStrategy;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import reactor.aeron.Context;
+import reactor.aeron.support.AeronInfra;
+import reactor.aeron.support.AeronUtils;
+import reactor.aeron.support.SignalPublicationFailedException;
+import reactor.aeron.support.SignalType;
+import reactor.core.queue.disruptor.RingBuffer;
+import reactor.core.queue.disruptor.Sequence;
+import reactor.core.queue.disruptor.Sequencer;
+import reactor.core.support.Logger;
+import reactor.core.support.ReactiveState;
+import reactor.core.support.SingleUseExecutor;
+import reactor.fn.Supplier;
+import reactor.io.buffer.Buffer;
+import uk.co.real_logic.aeron.Publication;
+import uk.co.real_logic.agrona.collections.Int2ObjectHashMap;
+import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 
 /**
  * @author Anatoly Kadyshev
