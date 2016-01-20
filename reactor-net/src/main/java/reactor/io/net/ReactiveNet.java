@@ -69,7 +69,8 @@ import reactor.io.net.udp.DatagramServer;
  * </pre>
  * @author Stephane Maldini
  */
-public class ReactiveNet {
+public enum ReactiveNet {
+	;
 
 	public static final int    DEFAULT_PORT         = System.getenv("PORT") != null ?
 			Integer.parseInt(System.getenv("PORT")) : 12012;
@@ -79,9 +80,6 @@ public class ReactiveNet {
 	public static final Class<? extends HttpServer>     DEFAULT_HTTP_SERVER_TYPE;
 	public static final Class<? extends HttpClient>     DEFAULT_HTTP_CLIENT_TYPE;
 	public static final Class<? extends DatagramServer> DEFAULT_UDP_SERVER_TYPE;
-
-	protected ReactiveNet() {
-	}
 
 	// Marker interfaces to avoid complicated generic dance for Java < 8 Users.
 

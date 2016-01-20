@@ -10,10 +10,8 @@ import reactor.aeron.subscriber.AeronSubscriber;
  *
  * @author Anatoly Kadyshev
  */
-public class ReactiveAeron {
-
-	protected ReactiveAeron() {
-	}
+public enum ReactiveAeron {
+	;
 
 	/**
 	 * Creates a new instance of {@link AeronSubscriber}

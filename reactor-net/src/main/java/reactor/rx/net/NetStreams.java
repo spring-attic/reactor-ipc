@@ -70,7 +70,8 @@ import reactor.rx.net.udp.ReactorDatagramServer;
  *
  * @author Stephane Maldini
  */
-public class NetStreams {
+public enum NetStreams {
+	;
 
 	static {
 		if (!DependencyUtils.hasReactorStream()) {
@@ -78,9 +79,6 @@ public class NetStreams {
 					" dependency is missing from the classpath.");
 		}
 
-	}
-
-	private NetStreams() {
 	}
 
 	// TCP
