@@ -15,8 +15,7 @@
  */
 rootProject.name = 'reactor-io'
 
-include 'reactor-io',
-		'reactor-codec',
+include 'reactor-codec',
 		'reactor-net',
 		'reactor-aeron',
 		'docs'
