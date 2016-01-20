@@ -21,7 +21,7 @@ import java.util.logging.Level;
 
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
-import reactor.core.subscription.ReactiveSession;
+import reactor.core.subscriber.ReactiveSession;
 import reactor.core.util.Logger;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.nexus.Nexus;
