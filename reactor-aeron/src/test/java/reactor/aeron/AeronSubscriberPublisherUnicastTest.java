@@ -61,7 +61,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client1.request(3);
 
-		client1.assertNextSignals("1", "2", "3");
+		client1.assertNextSignalsEqual("1", "2", "3");
 
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client1).toString());
@@ -74,7 +74,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client2.request(6);
 
-		client2.assertNextSignals("1", "2", "3", "4", "5", "6");
+		client2.assertNextSignalsEqual("1", "2", "3", "4", "5", "6");
 
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client2).toString());
@@ -88,7 +88,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		System.out.println(ReactiveStateUtils.scan(client1).toString());
 
 		client1.request(3);
-		client1.assertNextSignals("4", "5", "6");
+		client1.assertNextSignalsEqual("4", "5", "6");
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 
 		//TODO: A temp work-around
@@ -109,7 +109,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		IO.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
-		client.assertNextSignals("1", "2", "3");
+		client.assertNextSignalsEqual("1", "2", "3");
 
 		client.cancel();
 
@@ -122,7 +122,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		Thread.sleep(1000);
 
 		client2.request(6);
-		client2.assertNextSignals("1", "2", "3", "4", "5", "6");
+		client2.assertNextSignalsEqual("1", "2", "3", "4", "5", "6");
 
 		// A temporary workaround
 		client2.request(1);
@@ -142,7 +142,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		IO.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
-		client.assertNextSignals("1", "2", "3");
+		client.assertNextSignalsEqual("1", "2", "3");
 
 		client.cancel();
 

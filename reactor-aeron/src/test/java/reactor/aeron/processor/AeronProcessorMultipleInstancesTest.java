@@ -130,7 +130,7 @@ public class AeronProcessorMultipleInstancesTest {
 		  .subscribe(mySubscriber);
 		mySubscriber.requestUnboundedWithTimeout();
 
-		mySubscriber.assertNextSignals("Live", "Glory");
+		mySubscriber.assertNextSignalsEqual("Live", "Glory");
 		mySubscriber.assertCompleteReceived();
 
 		otherProcessor.onComplete();
@@ -151,21 +151,21 @@ public class AeronProcessorMultipleInstancesTest {
 		IO.bufferToString(client2).subscribe(subscriber2);
 
 		subscriber1.request(1);
-		subscriber1.assertNextSignals("One");
+		subscriber1.assertNextSignalsEqual("One");
 		subscriber2.assertNumNextSignalsReceived(0);
 
 		subscriber1.request(1);
-		subscriber1.assertNextSignals("One", "Two");
+		subscriber1.assertNextSignalsEqual("One", "Two");
 		subscriber2.assertNumNextSignalsReceived(0);
 
 		subscriber2.request(1);
-		subscriber1.assertNextSignals("One", "Two");
-		subscriber2.assertNextSignals("One");
+		subscriber1.assertNextSignalsEqual("One", "Two");
+		subscriber2.assertNextSignalsEqual("One");
 
 		subscriber1.request(1);
 		subscriber2.request(2);
-		subscriber1.assertNextSignals("One", "Two", "Three");
-		subscriber2.assertNextSignals("One", "Two", "Three");
+		subscriber1.assertNextSignalsEqual("One", "Two", "Three");
+		subscriber2.assertNextSignalsEqual("One", "Two", "Three");
 
 		client1.onComplete();
 		client2.onComplete();
@@ -190,12 +190,12 @@ public class AeronProcessorMultipleInstancesTest {
 		IO.bufferToString(client2).subscribe(subscriber2);
 
 		subscriber1.request(1);
-		subscriber1.assertNextSignals("One");
+		subscriber1.assertNextSignalsEqual("One");
 		subscriber2.assertNumNextSignalsReceived(0);
 
 		subscriber1.request(1);
 
-		subscriber1.assertNextSignals("One", "Two");
+		subscriber1.assertNextSignalsEqual("One", "Two");
 		subscriber2.assertNumNextSignalsReceived(0);
 
 		subscriber1.request(1);

@@ -20,6 +20,7 @@ import java.util.concurrent.CountDownLatch;
 import reactor.core.subscriber.Subscribers;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
+import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.nexus.Nexus;
 
@@ -44,7 +45,7 @@ public class NexusFederatePlay {
 		HttpClient<Buffer, Buffer> client = ReactiveNet.httpClient();
 		client
 		           .ws("ws://localhost:12014/nexus/stream")
-				   .subscribe(Subscribers.consumer( ch ->
+				   .subscribe(Subscribers.consumer( (HttpChannel<?, ?> ch) ->
 						   ch.input().subscribe(Subscribers.consumer(System.out::println))
 				   ));
 

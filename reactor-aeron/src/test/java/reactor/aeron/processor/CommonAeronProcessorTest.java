@@ -88,11 +88,11 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Harder"),
 				Buffer.wrap("Extra")).subscribe(processor);
 
-		subscriber.assertNextSignals("Live", "Hard", "Die", "Harder");
+		subscriber.assertNextSignalsEqual("Live", "Hard", "Die", "Harder");
 
 		subscriber.request(1);
 
-		subscriber.assertNextSignals("Extra");
+		subscriber.assertNextSignalsEqual("Extra");
 
 		//FIXME: Remove this work-around for bounded Stream.just not sending Complete signal
 		subscriber.request(1);
@@ -111,13 +111,13 @@ public abstract class CommonAeronProcessorTest {
 		IO.bufferToString(processor).subscribe(subscriber);
 
 		subscriber.request(1);
-		subscriber.assertNextSignals("One");
+		subscriber.assertNextSignalsEqual("One");
 
 		subscriber.request(1);
-		subscriber.assertNextSignals("Two");
+		subscriber.assertNextSignalsEqual("Two");
 
 		subscriber.request(1);
-		subscriber.assertNextSignals("Three");
+		subscriber.assertNextSignalsEqual("Three");
 
 		//FIXME: Remove this work-around for bounded Stream.just not sending Complete signal
 		subscriber.request(1);
@@ -156,8 +156,8 @@ public abstract class CommonAeronProcessorTest {
 		subscriber2.requestUnboundedWithTimeout();
 
 
-		subscriber1.assertNextSignals("Live", "Hard", "Die", "Harder");
-		subscriber2.assertNextSignals("Live", "Hard", "Die", "Harder");
+		subscriber1.assertNextSignalsEqual("Live", "Hard", "Die", "Harder");
+		subscriber2.assertNextSignalsEqual("Live", "Hard", "Die", "Harder");
 		subscriber1.assertCompleteReceived();
 		subscriber2.assertCompleteReceived();
 	}
@@ -232,7 +232,7 @@ public abstract class CommonAeronProcessorTest {
 
 		processor.onNext(Buffer.wrap("Hello"));
 
-		client.assertNextSignals("Hello");
+		client.assertNextSignalsEqual("Hello");
 		client.cancelSubscription();
 
 		assertTrue("Subscription wasn't cancelled",

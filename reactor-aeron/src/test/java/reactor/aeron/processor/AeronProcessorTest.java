@@ -15,6 +15,8 @@
  */
 package reactor.aeron.processor;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,8 +31,6 @@ import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
-
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 
@@ -96,7 +96,7 @@ public class AeronProcessorTest {
 			IO.bufferToString(processor).subscribe(subscriber);
 			subscriber.requestUnboundedWithTimeout();
 
-			subscriber.assertNextSignals("Live");
+			subscriber.assertNextSignalsEqual("Live");
 			subscriber.assertCompleteReceived();
 
 			TestSubscriber.waitFor(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
@@ -126,7 +126,7 @@ public class AeronProcessorTest {
 		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
-		subscriber.assertNextSignals("Live");
+		subscriber.assertNextSignalsEqual("Live");
 		subscriber.assertCompleteReceived();
 	}
 
@@ -142,7 +142,7 @@ public class AeronProcessorTest {
 		IO.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
-		subscriber.assertNextSignals("Live");
+		subscriber.assertNextSignalsEqual("Live");
 		subscriber.assertCompleteReceived();
 	}
 

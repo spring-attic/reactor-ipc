@@ -41,9 +41,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
 
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Anatoly Kadyshev
@@ -93,7 +91,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 		clientSubscriber.requestUnboundedWithTimeout();
 
-		clientSubscriber.assertNextSignals("One", "Two", "Three");
+		clientSubscriber.assertNextSignalsEqual("One", "Two", "Three");
 		clientSubscriber.assertCompleteReceived();
 	}
 
