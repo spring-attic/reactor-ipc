@@ -33,6 +33,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.queue.RingBuffer;
 import reactor.core.queue.Sequencer;
+import reactor.core.queue.Slot;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.subscription.EmptySubscription;
@@ -350,7 +351,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 				AtomicIntegerFieldUpdater.newUpdater(ChannelInputSubscriber.class, "running");
 
 		Sequence pollCursor;
-		volatile Throwable error;
+		volatile Throwable                error;
 		volatile RingBuffer<Slot<Buffer>> readBackpressureBuffer;
 
 		final int bufferSize;
