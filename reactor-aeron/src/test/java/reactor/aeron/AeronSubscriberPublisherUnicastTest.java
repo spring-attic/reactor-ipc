@@ -26,7 +26,7 @@ import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
-import reactor.core.support.ReactiveStateUtils;
+import reactor.core.util.ReactiveStateUtils;
 import reactor.io.IO;
 import reactor.io.net.tcp.support.SocketUtils;
 

@@ -15,14 +15,14 @@
  */
 package reactor.io.net.tcp.support;
 
-import reactor.core.support.Assert;
-
-import javax.net.ServerSocketFactory;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import javax.net.ServerSocketFactory;
+
+import reactor.core.util.Assert;
 
 /**
  * NOTE: This code is a copy of that available in the Spring Framework.
@@ -251,7 +251,7 @@ public final class SocketUtils {
 	}
 
 
-	private static enum SocketType {
+	private enum SocketType {
 
 		TCP {
 			@Override

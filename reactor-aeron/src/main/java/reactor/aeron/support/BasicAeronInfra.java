@@ -15,15 +15,15 @@
  */
 package reactor.aeron.support;
 
-import reactor.core.support.Logger;
+import java.util.concurrent.TimeUnit;
+
 import reactor.aeron.Context;
+import reactor.core.util.Logger;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.Subscription;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.concurrent.IdleStrategy;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for creating Aeron subscriptions and publications and

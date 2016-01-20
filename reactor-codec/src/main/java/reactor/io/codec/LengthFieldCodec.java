@@ -16,12 +16,12 @@
 
 package reactor.io.codec;
 
-import reactor.core.support.Assert;
+import java.nio.ByteBuffer;
+
+import reactor.core.util.Assert;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
-
-import java.nio.ByteBuffer;
 
 /**
  * A codec that uses a length-field at the start of each chunk to denote the chunk's size.

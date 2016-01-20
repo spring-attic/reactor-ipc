@@ -15,10 +15,11 @@
  */
 package reactor.aeron.publisher;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import reactor.core.support.Logger;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronTestUtils;
@@ -26,8 +27,6 @@ import reactor.aeron.support.TestAeronInfra;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.test.TestSubscriber;
 import reactor.io.IO;
-
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 

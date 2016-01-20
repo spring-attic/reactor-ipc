@@ -15,7 +15,7 @@
  */
 package reactor.aeron.support;
 
-import reactor.core.support.Logger;
+import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 
 

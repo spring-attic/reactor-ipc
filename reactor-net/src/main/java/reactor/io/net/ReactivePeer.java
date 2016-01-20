@@ -19,10 +19,10 @@ package reactor.io.net;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import reactor.core.publisher.Mono;
-import reactor.core.support.Assert;
-import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.util.Assert;
+import reactor.core.util.ReactiveState;
 import reactor.fn.Function;
 
 /**

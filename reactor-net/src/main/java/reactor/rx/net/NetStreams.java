@@ -16,7 +16,7 @@
 package reactor.rx.net;
 
 import reactor.core.converter.DependencyUtils;
-import reactor.core.support.Assert;
+import reactor.core.util.Assert;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;

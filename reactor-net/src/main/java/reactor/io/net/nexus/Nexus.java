@@ -35,14 +35,14 @@ import reactor.core.publisher.ProcessorTopic;
 import reactor.core.publisher.Processors;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.subscription.ReactiveSession;
-import reactor.core.support.Exceptions;
-import reactor.core.support.Logger;
-import reactor.core.support.ReactiveState;
-import reactor.core.support.ReactiveStateUtils;
-import reactor.core.support.WaitStrategy;
-import reactor.core.support.internal.PlatformDependent;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.util.Exceptions;
+import reactor.core.util.Logger;
+import reactor.core.util.ReactiveState;
+import reactor.core.util.ReactiveStateUtils;
+import reactor.core.util.WaitStrategy;
+import reactor.core.util.internal.PlatformDependent;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.fn.Supplier;
@@ -56,7 +56,7 @@ import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.HttpServer;
 import reactor.io.net.impl.netty.http.NettyHttpServer;
 
-import static reactor.core.support.ReactiveStateUtils.property;
+import static reactor.core.util.ReactiveStateUtils.property;
 
 /**
  * @author Stephane Maldini

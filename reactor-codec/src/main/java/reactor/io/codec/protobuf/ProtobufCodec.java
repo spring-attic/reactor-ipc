@@ -16,14 +16,13 @@
 
 package reactor.io.codec.protobuf;
 
-import com.google.protobuf.Message;
-import reactor.core.support.Assert;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
-import reactor.io.codec.SerializationCodec;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.google.protobuf.Message;
+import reactor.core.util.Assert;
+import reactor.fn.Function;
+import reactor.io.codec.SerializationCodec;
 
 /**
  * @author Jon Brisbin

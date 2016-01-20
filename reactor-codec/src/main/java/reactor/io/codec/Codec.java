@@ -20,7 +20,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.SubscriberBarrier;
-import reactor.core.support.ReactiveState;
+import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.fn.Supplier;

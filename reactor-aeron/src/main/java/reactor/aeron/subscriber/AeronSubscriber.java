@@ -23,10 +23,10 @@ import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.core.publisher.ProcessorTopic;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.support.Logger;
-import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.util.Logger;
+import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 

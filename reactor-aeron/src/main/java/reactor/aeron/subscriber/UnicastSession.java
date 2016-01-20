@@ -17,7 +17,7 @@ package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscription;
 import reactor.aeron.support.DemandTracker;
-import reactor.core.support.ReactiveState;
+import reactor.core.util.ReactiveState;
 import uk.co.real_logic.aeron.Publication;
 
 /**

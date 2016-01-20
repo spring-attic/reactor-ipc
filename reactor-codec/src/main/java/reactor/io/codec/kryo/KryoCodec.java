@@ -19,10 +19,8 @@ package reactor.io.codec.kryo;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
 import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
-import reactor.core.support.ReactiveState;
-import reactor.fn.Consumer;
+import reactor.core.util.ReactiveState;
 import reactor.fn.Function;
-import reactor.io.buffer.Buffer;
 import reactor.io.codec.SerializationCodec;
 
 /**

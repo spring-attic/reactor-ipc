@@ -17,7 +17,7 @@ package reactor.aeron.publisher;
 
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.support.ReactiveState;
+import reactor.core.util.ReactiveState;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;

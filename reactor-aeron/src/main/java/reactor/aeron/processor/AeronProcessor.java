@@ -23,7 +23,7 @@ import reactor.aeron.Context;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.support.Logger;
+import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 
 /**

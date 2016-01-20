@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import reactor.core.support.Assert;
+import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
 import reactor.io.codec.BufferCodec;

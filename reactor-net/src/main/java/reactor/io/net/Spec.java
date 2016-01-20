@@ -24,9 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import reactor.core.support.Assert;
-import reactor.fn.Supplier;
 import reactor.core.timer.Timer;
+import reactor.core.util.Assert;
+import reactor.fn.Supplier;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
@@ -53,7 +53,7 @@ public interface Spec {
 	//
 	//   Client and Server Specifications
 	//
-	public abstract class PeerSpec<IN, OUT,
+	abstract class PeerSpec<IN, OUT,
 	  CONN extends ReactiveChannel<IN, OUT>,
 	  S extends PeerSpec<IN, OUT, CONN, S, N>,
 	  N extends ReactivePeer<IN, OUT, CONN>>
@@ -151,7 +151,7 @@ public interface Spec {
 	 * @author Jon Brisbin
 	 * @author Stephane Maldini
 	 */
-	public class TcpClientSpec<IN, OUT> implements Supplier<TcpClient<IN, OUT>> {
+	class TcpClientSpec<IN, OUT> implements Supplier<TcpClient<IN, OUT>> {
 
 		private final Constructor<TcpClient> clientImplConstructor;
 
@@ -289,7 +289,7 @@ public interface Spec {
 	 * @author Jon Brisbin
 	 * @author Stephane Maldini
 	 */
-	public class TcpServerSpec<IN, OUT>
+	class TcpServerSpec<IN, OUT>
 	  extends PeerSpec<IN, OUT, ReactiveChannel<IN, OUT>, TcpServerSpec<IN, OUT>, TcpServer<IN, OUT>> {
 
 		private final Constructor<? extends TcpServer> serverImplConstructor;
@@ -427,7 +427,7 @@ public interface Spec {
 	 * @author Jon Brisbin
 	 * @author Stephane Maldini
 	 */
-	public 	class HttpServerSpec<IN, OUT>
+	class HttpServerSpec<IN, OUT>
 	  implements Supplier<HttpServer<IN, OUT>> {
 
 		private final Constructor<? extends HttpServer> serverImplConstructor;
@@ -573,7 +573,7 @@ public interface Spec {
 	 * @param <OUT> The type that will be sent by the client
 	 * @author Stephane Maldini
 	 */
-	public class HttpClientSpec<IN, OUT> implements Supplier<HttpClient<IN, OUT>> {
+	class HttpClientSpec<IN, OUT> implements Supplier<HttpClient<IN, OUT>> {
 
 		private final Constructor<HttpClient> clientImplConstructor;
 
@@ -705,7 +705,7 @@ public interface Spec {
 	/**
 	 * A helper class for configure a new {@code Reconnect}.
 	 */
-	public class IncrementalBackoffReconnect implements Supplier<Reconnect> {
+	class IncrementalBackoffReconnect implements Supplier<Reconnect> {
 
 		public static final long DEFAULT_INTERVAL = 5000;
 

@@ -16,7 +16,7 @@
 
 package reactor.io.net.config;
 
-import reactor.core.support.ReactiveState;
+import reactor.core.util.ReactiveState;
 import reactor.io.buffer.Buffer;
 
 /**

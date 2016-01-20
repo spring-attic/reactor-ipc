@@ -16,14 +16,14 @@
 
 package reactor.io.codec;
 
-import reactor.core.support.Logger;
-import reactor.core.support.Assert;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import reactor.core.util.Assert;
+import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract base class for {@code Codec Codecs} that perform serialization of objects. Optionally handles writing class

@@ -15,7 +15,7 @@
  */
 package reactor.io.net.http.model;
 
-import reactor.core.support.Assert;
+import reactor.core.util.Assert;
 
 /**
  * A Model representation of supported HTTP Methods
@@ -60,11 +60,8 @@ public class Method {
 
 		Method method = (Method) o;
 
-		if (!name.equals(method.name)) {
-			return false;
-		}
+		return name.equals(method.name);
 
-		return true;
 	}
 
 	@Override

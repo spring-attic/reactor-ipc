@@ -28,8 +28,8 @@ import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.SignalType;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.support.Logger;
-import reactor.core.support.ReactiveState;
+import reactor.core.util.Logger;
+import reactor.core.util.ReactiveState;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 

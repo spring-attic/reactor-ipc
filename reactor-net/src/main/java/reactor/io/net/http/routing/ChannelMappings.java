@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.reactivestreams.Publisher;
 import reactor.core.converter.DependencyUtils;
-import reactor.core.support.Assert;
+import reactor.core.util.Assert;
 import reactor.fn.Function;
 import reactor.fn.Predicate;
 import reactor.io.net.ReactiveChannelHandler;

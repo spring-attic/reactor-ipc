@@ -31,15 +31,15 @@ import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.queue.disruptor.RingBuffer;
-import reactor.core.queue.disruptor.Sequence;
-import reactor.core.queue.disruptor.Sequencer;
+import reactor.core.queue.RingBuffer;
+import reactor.core.queue.Sequencer;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.support.Exceptions;
-import reactor.core.support.Logger;
-import reactor.core.support.ReactiveState;
+import reactor.core.util.Exceptions;
+import reactor.core.util.Logger;
+import reactor.core.util.ReactiveState;
+import reactor.core.util.Sequence;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -351,7 +351,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		Sequence pollCursor;
 		volatile Throwable error;
-		volatile RingBuffer<RingBuffer.Slot<Buffer>> readBackpressureBuffer;
+		volatile RingBuffer<Slot<Buffer>> readBackpressureBuffer;
 
 		final int bufferSize;
 
@@ -451,7 +451,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 					}
 				}
 				else{
-					RingBuffer<RingBuffer.Slot<Buffer>> queue = getReadBackpressureBuffer();
+					RingBuffer<Slot<Buffer>> queue = getReadBackpressureBuffer();
 					long n = queue.next();
 					queue.get(n).value = bytes;
 					queue.publish(n);
@@ -461,7 +461,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 				}
 			}
 			else {
-				RingBuffer<RingBuffer.Slot<Buffer>> queue = getReadBackpressureBuffer();
+				RingBuffer<Slot<Buffer>> queue = getReadBackpressureBuffer();
 				long n = queue.next();
 				queue.get(n).value = bytes;
 				queue.publish(n);
@@ -508,14 +508,14 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			final Subscriber<? super Buffer> child = this.inputSubscriber;
 			for (; ; ) {
 				long demand = requested;
-				RingBuffer<RingBuffer.Slot<Buffer>> queue;
+				RingBuffer<Slot<Buffer>> queue;
 				if (demand != 0) {
 					long remaining = demand;
 					queue = readBackpressureBuffer;
 					if (queue != null) {
 
 						long polled = -1;
-						RingBuffer.Slot<Buffer> holder;
+						Slot<Buffer> holder;
 						while (polled <= queue.getCursor() && (demand == Long.MAX_VALUE || remaining-- > 0)) {
 
 							if(subscription == null){
@@ -555,8 +555,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 
 		@SuppressWarnings("unchecked")
-		RingBuffer<RingBuffer.Slot<Buffer>> getReadBackpressureBuffer() {
-			RingBuffer<RingBuffer.Slot<Buffer>> q = readBackpressureBuffer;
+		RingBuffer<Slot<Buffer>> getReadBackpressureBuffer() {
+			RingBuffer<Slot<Buffer>> q = readBackpressureBuffer;
 			if (q == null) {
 				q = RingBuffer.createSingleProducer(bufferSize);
 				q.addGatingSequence(pollCursor = Sequencer.newSequence(-1L));
