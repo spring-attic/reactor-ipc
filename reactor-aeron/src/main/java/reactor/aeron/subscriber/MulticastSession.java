@@ -16,7 +16,7 @@
 package reactor.aeron.subscriber;
 
 import reactor.core.queue.Sequencer;
-import reactor.core.subscription.BackpressureUtils;
+import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Sequence;
 
 /**

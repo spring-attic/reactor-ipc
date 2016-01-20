@@ -15,9 +15,9 @@
  */
 package reactor.aeron.support;
 
-import reactor.core.subscription.BackpressureUtils;
-
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
+import reactor.core.util.BackpressureUtils;
 
 /**
  * Tracks the number of requested items.

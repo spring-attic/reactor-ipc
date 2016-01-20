@@ -25,7 +25,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.SubscriberBarrier;
-import reactor.core.subscription.BackpressureUtils;
+import reactor.core.util.BackpressureUtils;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
