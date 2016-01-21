@@ -27,7 +27,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
 import reactor.core.util.ReactiveStateUtils;
-import reactor.io.IO;
+import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 
 import static org.junit.Assert.assertTrue;
@@ -56,7 +56,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 						.receiverPort(SocketUtils.findAvailableUdpPort()));
 
 		DataTestSubscriber<String>client1 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher1).subscribe(client1);
+		Buffer.bufferToString(publisher1).subscribe(client1);
 
 
 		client1.request(3);
@@ -69,7 +69,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 
 		DataTestSubscriber<String>client2 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher2).subscribe(client2);
+		Buffer.bufferToString(publisher2).subscribe(client2);
 
 
 		client2.request(6);
@@ -106,7 +106,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
 		DataTestSubscriber<String>client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 
-		IO.bufferToString(publisher).subscribe(client);
+		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
 		client.assertNextSignalsEqual("1", "2", "3");
@@ -117,7 +117,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 
 		DataTestSubscriber<String> client2 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher).subscribe(client2);
+		Buffer.bufferToString(publisher).subscribe(client2);
 
 		Thread.sleep(1000);
 
@@ -139,7 +139,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(true));
 		DataTestSubscriber<String>client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 
-		IO.bufferToString(publisher).subscribe(client);
+		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
 		client.assertNextSignalsEqual("1", "2", "3");
@@ -188,7 +188,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(true));
 		HangingOnCompleteSubscriber client = new HangingOnCompleteSubscriber();
-		IO.bufferToString(publisher).subscribe(client);
+		Buffer.bufferToString(publisher).subscribe(client);
 
 		assertTrue(client.completeReceivedLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
 
@@ -196,7 +196,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 				createContext("publisher2").autoCancel(true).streamId(10).errorStreamId(11));
 
 		TestSubscriber<String> client2 = TestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher2).subscribe(client2);
+		Buffer.bufferToString(publisher2).subscribe(client2);
 
 		client2.request(3 + 1);
 

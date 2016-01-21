@@ -25,7 +25,6 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
-import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
@@ -93,7 +92,7 @@ public class AeronProcessorTest {
 					.subscribe(processor);
 
 			DataTestSubscriber<String>subscriber = createTestSubscriber();
-			IO.bufferToString(processor).subscribe(subscriber);
+			Buffer.bufferToString(processor).subscribe(subscriber);
 			subscriber.requestUnboundedWithTimeout();
 
 			subscriber.assertNextSignalsEqual("Live");
@@ -123,7 +122,7 @@ public class AeronProcessorTest {
 				.subscribe(processor);
 
 		DataTestSubscriber<String>subscriber = createTestSubscriber();
-		IO.bufferToString(processor).subscribe(subscriber);
+		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		subscriber.assertNextSignalsEqual("Live");
@@ -139,7 +138,7 @@ public class AeronProcessorTest {
 				.subscribe(processor);
 
 		DataTestSubscriber<String>subscriber = createTestSubscriber();
-		IO.bufferToString(processor).subscribe(subscriber);
+		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		subscriber.assertNextSignalsEqual("Live");

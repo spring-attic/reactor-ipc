@@ -32,7 +32,6 @@ import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
 import reactor.fn.Function;
 import reactor.fn.Predicate;
-import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
@@ -234,7 +233,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 */
 	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> path, final String filepath,
 			final Function<HttpChannel<IN, OUT>, HttpChannel<IN, OUT>> interceptor) {
-		final Publisher<Buffer> file = IO.readFile(filepath);
+		final Publisher<Buffer> file = Buffer.readFile(filepath);
 		route(path, new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
@@ -296,7 +295,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 				}
 
 				if(Files.isReadable(Paths.get(directory + strippedPrefix))) {
-					Publisher<Buffer> filePub = IO.readFile(directory + strippedPrefix);
+					Publisher<Buffer> filePub = Buffer.readFile(directory + strippedPrefix);
 
 					if (interceptor != null) {
 						return interceptor.apply(channel)

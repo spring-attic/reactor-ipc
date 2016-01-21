@@ -22,7 +22,7 @@ import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
-import reactor.io.IO;
+import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 
 /**
@@ -47,7 +47,7 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
 		TestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher).subscribe(client);
+		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
 
@@ -58,7 +58,7 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 		Thread.sleep(3000);
 
 		DataTestSubscriber<String> client2 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher)
+		Buffer.bufferToString(publisher)
 		  .subscribe(client2);
 
 		Thread.sleep(1000);

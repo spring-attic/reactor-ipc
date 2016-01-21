@@ -26,7 +26,7 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.TestAeronInfra;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.test.TestSubscriber;
-import reactor.io.IO;
+import reactor.io.buffer.Buffer;
 
 import static org.junit.Assert.assertTrue;
 
@@ -72,7 +72,7 @@ public class AeronPublisherTest {
 		AeronPublisher publisher = AeronPublisher.create(context);
 
 		TestSubscriber<String> subscriber = TestSubscriber.createWithTimeoutSecs(1);
-		IO.bufferToString(publisher).subscribe(subscriber);
+		Buffer.bufferToString(publisher).subscribe(subscriber);
 
 		publisher.shutdown();
 	}
@@ -87,7 +87,7 @@ public class AeronPublisherTest {
 		AeronPublisher publisher = AeronPublisher.create(context);
 
 		TestSubscriber<String> subscriber = TestSubscriber.createWithTimeoutSecs(1);
-		IO.bufferToString(publisher).subscribe(subscriber);
+		Buffer.bufferToString(publisher).subscribe(subscriber);
 
 		TestSubscriber.waitFor(2, "publisher didn't terminate due to heartbeat loss", publisher::isTerminated);
 	}

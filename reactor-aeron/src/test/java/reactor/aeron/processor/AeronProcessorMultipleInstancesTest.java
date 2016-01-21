@@ -28,7 +28,6 @@ import reactor.aeron.support.EmbeddedMediaDriverManager;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
-import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
@@ -71,13 +70,13 @@ public class AeronProcessorMultipleInstancesTest {
 	public void test_OtherProcessor_Error_Shutdowns_Mine() throws InterruptedException {
 		AeronProcessor myProcessor = createProcessor("myProcessor");
 		TestSubscriber<String> mySubscriber = createTestSubscriber();
-		IO.bufferToString(myProcessor)
+		Buffer.bufferToString(myProcessor)
 		  .subscribe(mySubscriber);
 		mySubscriber.requestUnboundedWithTimeout();
 
 		AeronProcessor otherProcessor = createProcessor("otherProcessor");
 		TestSubscriber<String> otherSubscriber = createTestSubscriber();
-		IO.bufferToString(otherProcessor)
+		Buffer.bufferToString(otherProcessor)
 		  .subscribe(otherSubscriber);
 		otherSubscriber.requestUnboundedWithTimeout();
 
@@ -96,13 +95,13 @@ public class AeronProcessorMultipleInstancesTest {
 	public void test_OtherProcessor_Complete_DoesNotShutdown_Mine() throws InterruptedException {
 		AeronProcessor myProcessor = createProcessor("myProcessor");
 		TestSubscriber<String> mySubscriber = createTestSubscriber();
-		IO.bufferToString(myProcessor)
+		Buffer.bufferToString(myProcessor)
 		  .subscribe(mySubscriber);
 		mySubscriber.requestUnboundedWithTimeout();
 
 		AeronProcessor otherProcessor = createProcessor("otherProcessor");
 		TestSubscriber<String> otherSubscriber = createTestSubscriber();
-		IO.bufferToString(otherProcessor)
+		Buffer.bufferToString(otherProcessor)
 		  .subscribe(otherSubscriber);
 		otherSubscriber.requestUnboundedWithTimeout();
 
@@ -126,7 +125,7 @@ public class AeronProcessorMultipleInstancesTest {
 		otherProcessor.onNext(Buffer.wrap("Glory"));
 
 		DataTestSubscriber<String> mySubscriber = createTestSubscriber();
-		IO.bufferToString(myProcessor)
+		Buffer.bufferToString(myProcessor)
 		  .subscribe(mySubscriber);
 		mySubscriber.requestUnboundedWithTimeout();
 
@@ -144,11 +143,11 @@ public class AeronProcessorMultipleInstancesTest {
 
 		AeronProcessor client1 = createProcessor("client-1");
 		DataTestSubscriber<String> subscriber1 = createTestSubscriber();
-		IO.bufferToString(client1).subscribe(subscriber1);
+		Buffer.bufferToString(client1).subscribe(subscriber1);
 
 		AeronProcessor client2 = createProcessor("client-2");
 		DataTestSubscriber<String> subscriber2 = createTestSubscriber();
-		IO.bufferToString(client2).subscribe(subscriber2);
+		Buffer.bufferToString(client2).subscribe(subscriber2);
 
 		subscriber1.request(1);
 		subscriber1.assertNextSignalsEqual("One");
@@ -183,11 +182,11 @@ public class AeronProcessorMultipleInstancesTest {
 
 		AeronProcessor client1 = createProcessor("client-1");
 		DataTestSubscriber<String> subscriber1 = createTestSubscriber();
-		IO.bufferToString(client1).subscribe(subscriber1);
+		Buffer.bufferToString(client1).subscribe(subscriber1);
 
 		AeronProcessor client2 = createProcessor("client-2");
 		TestSubscriber<String> subscriber2 = createTestSubscriber();
-		IO.bufferToString(client2).subscribe(subscriber2);
+		Buffer.bufferToString(client2).subscribe(subscriber2);
 
 		subscriber1.request(1);
 		subscriber1.assertNextSignalsEqual("One");

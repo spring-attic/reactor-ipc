@@ -36,7 +36,6 @@ import reactor.aeron.support.SignalPublicationFailedException;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.test.DataTestSubscriber;
-import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
@@ -87,7 +86,7 @@ public abstract class CommonSubscriberPublisherTest {
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher"));
 
 		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher).subscribe(clientSubscriber);
+		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
 		clientSubscriber.requestUnboundedWithTimeout();
 
@@ -101,7 +100,7 @@ public abstract class CommonSubscriberPublisherTest {
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher"));
 
 		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher).subscribe(clientSubscriber);
+		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
 		clientSubscriber.requestUnboundedWithTimeout();
 
@@ -180,11 +179,11 @@ public abstract class CommonSubscriberPublisherTest {
 		TestPublisher valuePublisher = new TestPublisher();
 
 		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber").autoCancel(true));
-		IO.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
+		Buffer.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(true));
 		DataTestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher).subscribe(client);
+		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.requestWithTimeout(1);
 		client.cancel();
@@ -198,11 +197,11 @@ public abstract class CommonSubscriberPublisherTest {
 		TestPublisher valuePublisher = new TestPublisher();
 
 		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber").autoCancel(false));
-		IO.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
+		Buffer.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
 		DataTestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-		IO.bufferToString(publisher).subscribe(client);
+		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.requestWithTimeout(1);
 		client.cancel();

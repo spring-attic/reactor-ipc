@@ -31,7 +31,6 @@ import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.subscriber.test.DataTestSubscriber;
-import reactor.io.IO;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
 
@@ -79,7 +78,7 @@ public abstract class CommonAeronProcessorTest {
 	public void testNextSignalIsReceived() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
 		DataTestSubscriber<String> subscriber = createTestSubscriber();
-		IO.bufferToString(processor).subscribe(subscriber);
+		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(4);
 
 		Stream.just(Buffer.wrap("Live"),
@@ -108,7 +107,7 @@ public abstract class CommonAeronProcessorTest {
 				.subscribe(processor);
 
 		DataTestSubscriber<String> subscriber = createTestSubscriber();
-		IO.bufferToString(processor).subscribe(subscriber);
+		Buffer.bufferToString(processor).subscribe(subscriber);
 
 		subscriber.request(1);
 		subscriber.assertNextSignalsEqual("One");
@@ -147,10 +146,10 @@ public abstract class CommonAeronProcessorTest {
 		processor.subscribe(emitter);
 
 		DataTestSubscriber<String> subscriber1 = createTestSubscriber();
-		IO.bufferToString(emitter).subscribe(subscriber1);
+		Buffer.bufferToString(emitter).subscribe(subscriber1);
 
 		DataTestSubscriber<String> subscriber2 = createTestSubscriber();
-		IO.bufferToString(emitter).subscribe(subscriber2);
+		Buffer.bufferToString(emitter).subscribe(subscriber2);
 
 		subscriber1.requestUnboundedWithTimeout();
 		subscriber2.requestUnboundedWithTimeout();
@@ -174,7 +173,7 @@ public abstract class CommonAeronProcessorTest {
 				.subscribe(processor);
 
 		DataTestSubscriber<String> subscriber = createTestSubscriber();
-		IO.bufferToString(processor).subscribe(subscriber);
+		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		subscriber.assertErrorReceived();
@@ -188,7 +187,7 @@ public abstract class CommonAeronProcessorTest {
 		AeronProcessor processor = AeronProcessor.create(createContext());
 
 		DataTestSubscriber<String> subscriber = createTestSubscriber();
-		IO.bufferToString(processor).subscribe(subscriber);
+		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.requestUnboundedWithTimeout();
 
 		Stream<Buffer> sourceStream = Stream.fail(new RuntimeException());
@@ -227,7 +226,7 @@ public abstract class CommonAeronProcessorTest {
 
 		DataTestSubscriber<String> client = createTestSubscriber();
 
-		IO.bufferToString(processor).subscribe(client);
+		Buffer.bufferToString(processor).subscribe(client);
 		client.requestUnboundedWithTimeout();
 
 		processor.onNext(Buffer.wrap("Hello"));
