@@ -184,6 +184,14 @@ configurations.all {
   resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
+project('reactor-io') {
+  description = 'Reactive IO Buffer and Contracts'
+
+  dependencies {
+	compile "io.projectreactor:reactor-core:$reactorVersion"
+  }
+}
+
 project('reactor-net') {
 	description = 'Reactor TCP components'
 
@@ -198,7 +206,7 @@ project('reactor-net') {
 	]
 
 	dependencies {
-		compile "io.projectreactor:reactor-core:$reactorVersion"
+		compile project("reactor-io")
 
 		//Improved Http routing
 		optional("io.projectreactor:reactor-bus:$reactorVersion") {
@@ -234,7 +242,7 @@ project('reactor-codec') {
 	description = 'Codec families'
 
 	dependencies {
-		compile "io.projectreactor:reactor-core:$reactorVersion"
+	  	compile project("reactor-io")
 
 		// JSON handling
 		optional "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
@@ -250,7 +258,7 @@ project('reactor-aeron') {
 	description = 'Integration of Aeron library with reactor'
 
 	dependencies {
-		compile "io.projectreactor:reactor-core:$reactorVersion"
+	  	compile project("reactor-io")
 
 		compile "uk.co.real-logic:aeron-driver:$aeronVersion",
 				"uk.co.real-logic:aeron-client:$aeronVersion"

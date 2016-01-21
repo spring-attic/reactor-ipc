@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'reactor-io'
+rootProject.name = 'reactor-io-root'
 
-include 'reactor-codec',
+include 'reactor-io',
+		'reactor-codec',
 		'reactor-net',
 		'reactor-aeron',
 		'docs'
