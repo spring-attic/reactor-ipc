@@ -9,6 +9,10 @@ ifndef::host-github[:ext-relative: {outfilesuffix}]
 include::gettingstarted.adoc[]
 include::20to25.adoc[]
 
+[[reactor-io]]
+= *reactor-io*
+include::core-bytebuffer.adoc[]
+
 [[reactor-net]]
 = *reactor-net*
 include::net.adoc[]
@@ -22,6 +26,7 @@ include::aeron.adoc[]
 
 [[reactor-codec]]
 = *reactor-codec*
+include::core-codec.adoc[]
 
 
 [[reactor-samples]]
