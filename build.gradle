@@ -187,6 +187,9 @@ configurations.all {
 project('reactor-io') {
   description = 'Reactive IO Buffer and Contracts'
 
+  apply plugin: 'osgi'
+  apply plugin: 'groovy'
+
   dependencies {
 	compile "io.projectreactor:reactor-core:$reactorVersion"
   }
@@ -206,7 +209,7 @@ project('reactor-net') {
 	]
 
 	dependencies {
-		compile project("reactor-io")
+		compile project(":reactor-io")
 
 		//Improved Http routing
 		optional("io.projectreactor:reactor-bus:$reactorVersion") {
@@ -242,7 +245,7 @@ project('reactor-codec') {
 	description = 'Codec families'
 
 	dependencies {
-	  	compile project("reactor-io")
+	  	compile project(":reactor-io")
 
 		// JSON handling
 		optional "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
@@ -258,7 +261,7 @@ project('reactor-aeron') {
 	description = 'Integration of Aeron library with reactor'
 
 	dependencies {
-	  	compile project("reactor-io")
+	  	compile project(":reactor-io")
 
 		compile "uk.co.real-logic:aeron-driver:$aeronVersion",
 				"uk.co.real-logic:aeron-client:$aeronVersion"
