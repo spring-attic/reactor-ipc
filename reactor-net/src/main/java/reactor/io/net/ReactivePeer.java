@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.trait.Completable;
 import reactor.core.util.Assert;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Function;
 
 /**
@@ -33,7 +33,7 @@ import reactor.fn.Function;
  * @author Stephane Maldini
  */
 public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT>>
-		implements ReactiveState.ActiveUpstream {
+		implements Completable {
 
 	private final   Timer         defaultTimer;
 	private final   long          defaultPrefetch;
@@ -172,6 +172,11 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 	@Override
 	public boolean isTerminated() {
 		return !started.get();
+	}
+
+	@Override
+	public Object upstream() {
+		return null;
 	}
 
 	private final class PreprocessedReactivePeer<NEWIN, NEWOUT, NEWCONN extends ReactiveChannel<NEWIN, NEWOUT>>

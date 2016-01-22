@@ -31,7 +31,7 @@ import reactor.core.queue.RingBuffer;
 import reactor.core.queue.Sequencer;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
+import reactor.core.util.PlatformDependent;
 import reactor.core.util.Sequence;
 import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
@@ -105,7 +105,7 @@ public class UnicastAsyncSignalSender implements Runnable {
 			public Slot get() {
 				return new Slot();
 			}
-		}, ReactiveState.MEDIUM_BUFFER_SIZE);
+		}, PlatformDependent.MEDIUM_BUFFER_SIZE);
 
 		this.pollCursor = Sequencer.newSequence(-1L);
 		buffer.addGatingSequence(pollCursor);

@@ -26,10 +26,15 @@ import reactor.aeron.support.DemandTracker;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.aeron.support.SignalType;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Introspectable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
+import reactor.core.trait.SubscribableMany;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.FragmentAssembler;
@@ -42,9 +47,9 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 /**
  * Signals receiver functionality which polls for signals sent by senders
  */
-public class SignalPoller implements org.reactivestreams.Subscription, Runnable, ReactiveState.Downstream,
-                                     ReactiveState.DownstreamDemand, ReactiveState.ActiveUpstream,
-                                     ReactiveState.ActiveDownstream, ReactiveState.LinkedDownstreams, ReactiveState.Inner {
+public class SignalPoller implements org.reactivestreams.Subscription, Runnable, Publishable,
+                                     Requestable, Completable,
+                                     Cancellable, SubscribableMany, Introspectable {
 
 	private static final Logger logger = Logger.getLogger(SignalPoller.class);
 
@@ -173,6 +178,21 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
 		public boolean isCompleteReceived() {
 			return completeReceived;
 		}
+	}
+
+	@Override
+	public int getMode() {
+		return INNER;
+	}
+
+	@Override
+	public String getName() {
+		return SignalPoller.class.getSimpleName();
+	}
+
+	@Override
+	public Object upstream() {
+		return null;
 	}
 
 	/**

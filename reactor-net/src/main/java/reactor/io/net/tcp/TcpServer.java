@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Introspectable;
 import reactor.fn.Function;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
@@ -38,7 +38,7 @@ import reactor.io.net.config.SslOptions;
  * @author Stephane Maldini
  */
 public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ReactiveChannel<IN, OUT>>
-		implements ReactiveState.Named {
+		implements Introspectable {
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.selectThreadCount",
@@ -95,6 +95,11 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ReactiveC
 	@Override
 	public String getName() {
 		return "TcpServer:" + getListenAddress().toString();
+	}
+
+	@Override
+	public int getMode() {
+		return 0;
 	}
 
 	private final class PreprocessedTcpServer<NEWIN, NEWOUT, NEWCONN extends ReactiveChannel<NEWIN, NEWOUT>>

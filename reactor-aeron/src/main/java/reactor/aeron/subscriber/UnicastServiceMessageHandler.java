@@ -28,8 +28,8 @@ import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.SignalType;
 import reactor.core.publisher.FluxProcessor;
+import reactor.core.trait.SubscribableMany;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
@@ -38,7 +38,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class UnicastServiceMessageHandler implements ServiceMessageHandler, ReactiveState.LinkedDownstreams {
+public class UnicastServiceMessageHandler implements ServiceMessageHandler, SubscribableMany {
 
 	private static final Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
 

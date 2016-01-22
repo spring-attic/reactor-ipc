@@ -104,7 +104,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 		clientSubscriber.requestUnboundedWithTimeout();
 
-		Stream.<Buffer, Throwable>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
+		Stream.<Buffer>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
 		clientSubscriber.assertErrorReceived();
 	}

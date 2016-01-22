@@ -35,10 +35,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
+import reactor.core.trait.Connectable;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
@@ -58,7 +58,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpClient;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements ReactiveState.FeedbackLoop {
+public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Connectable {
 
 	private final static Logger log = Logger.getLogger(NettyHttpClient.class);
 
@@ -150,12 +150,12 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements React
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return client;
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return client;
 	}
 

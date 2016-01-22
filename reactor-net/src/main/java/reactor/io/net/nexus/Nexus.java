@@ -37,10 +37,11 @@ import reactor.core.subscriber.ReactiveSession;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Introspectable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
-import reactor.core.util.ReactiveState;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.core.util.WaitStrategy;
 import reactor.fn.Consumer;
@@ -63,7 +64,7 @@ import static reactor.core.util.ReactiveStateUtils.property;
  * @since 2.5
  */
 public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>
-		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, ReactiveState.FeedbackLoop {
+		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, Connectable {
 
 	private static final Logger log            = Logger.getLogger(Nexus.class);
 	private static final String API_STREAM_URL = "/nexus/stream";
@@ -429,12 +430,12 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return eventStream;
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return server;
 	}
 
@@ -789,7 +790,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		}
 	}
 
-	private class LastGraphStateMap implements Function<Event, Event>, ReactiveState.Named {
+	private class LastGraphStateMap implements Function<Event, Event>, Introspectable {
 
 		@Override
 		public Event apply(Event event) {
@@ -810,6 +811,11 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		@Override
 		public String getName() {
 			return "ScanIfGraphEvent";
+		}
+
+		@Override
+		public int getMode() {
+			return 0;
 		}
 	}
 

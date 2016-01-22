@@ -36,8 +36,10 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.EmptySubscription;
-import reactor.core.util.ReactiveState;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
@@ -50,8 +52,7 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
 public class NettyChannel
 		extends Flux<Buffer>
 		implements ReactiveChannel<Buffer, Buffer>,
-		           ReactiveState.Named,
-		           ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
+		           Connectable, Completable {
 
 	private final Channel ioChannel;
 	private final long    prefetch;
@@ -77,7 +78,7 @@ public class NettyChannel
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		NettyChannelHandlerBridge bridge = ioChannel.pipeline().get(NettyChannelHandlerBridge.class);
 		if(bridge != null){
 			return bridge.downstream();
@@ -86,7 +87,7 @@ public class NettyChannel
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		Channel parent = ioChannel.parent();
 		SocketAddress remote = ioChannel.remoteAddress();
 		SocketAddress local = ioChannel.localAddress();
@@ -235,6 +236,11 @@ public class NettyChannel
 		}
 	}
 
+	@Override
+	public Object upstream() {
+		return null;
+	}
+
 	public static class FuturePublisher<C extends Future> extends Mono<Void> {
 
 		protected final C future;
@@ -312,7 +318,7 @@ public class NettyChannel
 		}
 	}
 
-	private class PostWritePublisher extends Mono<Void> implements Upstream, FeedbackLoop {
+	private class PostWritePublisher extends Mono<Void> implements Subscribable, Connectable {
 
 		private final Publisher<? extends Buffer> dataStream;
 
@@ -336,12 +342,12 @@ public class NettyChannel
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return NettyChannel.this;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return NettyChannel.this;
 		}
 	}

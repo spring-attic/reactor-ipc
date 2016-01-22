@@ -21,9 +21,9 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import uk.co.real_logic.aeron.FragmentAssembler;
 import uk.co.real_logic.aeron.Subscription;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
@@ -34,7 +34,7 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 /**
  * @author Anatoly Kadyshev
  */
-class ServiceMessagePoller implements Runnable, ReactiveState.Upstream {
+class ServiceMessagePoller implements Runnable, Subscribable {
 
 	private static final Logger logger = Logger.getLogger(ServiceMessagePoller.class);
 

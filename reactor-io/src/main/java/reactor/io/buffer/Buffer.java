@@ -39,9 +39,10 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.SubscriberWithContext;
+import reactor.core.trait.Recyclable;
 import reactor.core.util.Assert;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
+import reactor.core.util.PlatformDependent;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.fn.Supplier;
@@ -54,7 +55,7 @@ import reactor.fn.Supplier;
  *
  * @author Stephane Maldini
  */
-public class Buffer implements ReactiveState.Recyclable,
+public class Buffer implements Recyclable,
                                Comparable<Buffer>,
                                Iterable<Byte>,
                                ReadableByteChannel,
@@ -90,7 +91,7 @@ public class Buffer implements ReactiveState.Recyclable,
 
 	/**
 	 * Transform a {@link ReadableByteChannel} into a {@link Publisher} of {@link Buffer} with a max chunk size of
-	 * {@link ReactiveState#SMALL_IO_BUFFER_SIZE}.
+	 * {@link PlatformDependent#SMALL_IO_BUFFER_SIZE}.
 	 * <p>
 	 * Complete when channel read is negative. The read sequence is unique per subscriber.
 	 *
@@ -124,7 +125,7 @@ public class Buffer implements ReactiveState.Recyclable,
 
 	/**
 	 * Read bytes as {@link Buffer} from file specified by the {@link Path} argument with a max chunk size of
-	 * {@link ReactiveState#SMALL_IO_BUFFER_SIZE}.
+	 * {@link PlatformDependent#SMALL_IO_BUFFER_SIZE}.
 	 * <p>
 	 * Complete when channel read is negative. The read sequence is unique per subscriber.
 	 *
@@ -150,7 +151,7 @@ public class Buffer implements ReactiveState.Recyclable,
 
 	/**
 	 * Read bytes as {@link Buffer} from file specified by the {@link Path} argument with a max chunk size of
-	 * {@link ReactiveState#SMALL_IO_BUFFER_SIZE}.
+	 * {@link PlatformDependent#SMALL_IO_BUFFER_SIZE}.
 	 * <p>
 	 * Complete when channel read is negative. The read sequence is unique per subscriber.
 	 *
@@ -188,7 +189,7 @@ public class Buffer implements ReactiveState.Recyclable,
 	}
 
 	private static final ChannelCloseConsumer channelCloseConsumer       = new ChannelCloseConsumer();
-	private static final ChannelReadConsumer  defaultChannelReadConsumer = new ChannelReadConsumer(ReactiveState
+	private static final ChannelReadConsumer  defaultChannelReadConsumer = new ChannelReadConsumer(PlatformDependent
 			.SMALL_IO_BUFFER_SIZE * 8);
 
 	/**
@@ -295,10 +296,10 @@ public class Buffer implements ReactiveState.Recyclable,
 	 */
 	public Buffer(int atLeast, boolean fixed) {
 		if (fixed) {
-			if (atLeast <= ReactiveState.MAX_IO_BUFFER_SIZE) {
+			if (atLeast <= PlatformDependent.MAX_IO_BUFFER_SIZE) {
 				this.buffer = ByteBuffer.allocate(atLeast);
 			} else {
-				throw new IllegalArgumentException("Requested buffer size exceeds maximum allowed (" + ReactiveState.MAX_IO_BUFFER_SIZE
+				throw new IllegalArgumentException("Requested buffer size exceeds maximum allowed (" + PlatformDependent.MAX_IO_BUFFER_SIZE
 				  + ")");
 			}
 		} else {
@@ -570,7 +571,7 @@ public class Buffer implements ReactiveState.Recyclable,
 	 * @return The current capacity.
 	 */
 	public int capacity() {
-		return (null == buffer ? ReactiveState.SMALL_IO_BUFFER_SIZE : buffer.capacity());
+		return (null == buffer ? PlatformDependent.SMALL_IO_BUFFER_SIZE : buffer.capacity());
 	}
 
 	/**
@@ -580,7 +581,7 @@ public class Buffer implements ReactiveState.Recyclable,
 	 * @return The number of bytes available in this {@literal Buffer}.
 	 */
 	public int remaining() {
-		return (null == buffer ? ReactiveState.SMALL_IO_BUFFER_SIZE : buffer.remaining());
+		return (null == buffer ? PlatformDependent.SMALL_IO_BUFFER_SIZE : buffer.remaining());
 	}
 
 	/**
@@ -1478,7 +1479,7 @@ public class Buffer implements ReactiveState.Recyclable,
 
 	private synchronized void ensureCapacity(int atLeast) {
 		if (null == buffer) {
-			buffer = ByteBuffer.allocate(Math.max(atLeast, ReactiveState.SMALL_IO_BUFFER_SIZE));
+			buffer = ByteBuffer.allocate(Math.max(atLeast, PlatformDependent.SMALL_IO_BUFFER_SIZE));
 			return;
 		}
 		int pos = buffer.position();
@@ -1490,7 +1491,7 @@ public class Buffer implements ReactiveState.Recyclable,
 				expand(neededCapacity - cap);
 			}
 			buffer.limit(Math.max(neededCapacity, buffer.limit()));
-		} else if (pos + ReactiveState.SMALL_IO_BUFFER_SIZE > ReactiveState.MAX_IO_BUFFER_SIZE) {
+		} else if (pos + PlatformDependent.SMALL_IO_BUFFER_SIZE > PlatformDependent.MAX_IO_BUFFER_SIZE) {
 			throw new BufferOverflowException();
 		}
 	}

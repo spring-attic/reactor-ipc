@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Introspectable;
 import reactor.fn.Function;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.net.Preprocessor;
@@ -43,7 +43,7 @@ import reactor.io.net.config.SslOptions;
  */
 public abstract class TcpClient<IN, OUT>
 		extends ReactiveClient<IN, OUT, ReactiveChannel<IN, OUT>>
-		implements ReactiveState.Named {
+		implements Introspectable {
 
 	private final InetSocketAddress   connectAddress;
 	private final ClientSocketOptions options;
@@ -89,6 +89,11 @@ public abstract class TcpClient<IN, OUT>
 	@Override
 	public String getName() {
 		return "TcpClient:"+getConnectAddress().toString();
+	}
+
+	@Override
+	public int getMode() {
+		return 0;
 	}
 
 	@Override

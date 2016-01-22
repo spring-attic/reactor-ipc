@@ -44,10 +44,10 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
+import reactor.core.trait.SubscribableMany;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
 import reactor.fn.tuple.Tuple;
@@ -71,7 +71,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements ReactiveState.LinkedDownstreams {
+public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements SubscribableMany {
 
 	private static final Logger log = Logger.getLogger(NettyTcpClient.class);
 

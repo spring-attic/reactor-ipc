@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
 import reactor.core.timer.Timers;
+import reactor.core.trait.Pausable;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState.Pausable;
 import reactor.fn.Consumer;
 
 /**

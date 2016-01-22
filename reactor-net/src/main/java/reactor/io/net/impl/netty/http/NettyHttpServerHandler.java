@@ -36,6 +36,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.trait.Completable;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -154,7 +155,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 	}
 
-	private class CloseSubscriber extends BaseSubscriber<Void> implements ActiveUpstream {
+	private class CloseSubscriber extends BaseSubscriber<Void> implements Completable {
 
 		private final ChannelHandlerContext ctx;
 		Subscription subscription;
@@ -194,6 +195,11 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		@Override
 		public boolean isTerminated() {
 			return !ctx.channel().isOpen();
+		}
+
+		@Override
+		public Object upstream() {
+			return subscription;
 		}
 
 		@Override

@@ -35,11 +35,18 @@ import reactor.core.queue.RingBuffer;
 import reactor.core.queue.Sequencer;
 import reactor.core.queue.Slot;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Introspectable;
+import reactor.core.trait.Prefetchable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import reactor.core.util.Sequence;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -54,8 +61,8 @@ import reactor.io.net.impl.netty.NettyChannel;
  * @author Stephane Maldini
  */
 public class NettyChannelHandlerBridge extends ChannelDuplexHandler
-		implements ReactiveState.Named, ReactiveState.FeedbackLoop, ReactiveState.Downstream, ReactiveState
-		.ActiveUpstream , ReactiveState.Inner{
+		implements Introspectable, Connectable, Publishable,
+		           Completable  {
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandlerBridge.class);
 
@@ -182,12 +189,12 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return reactorNettyChannel;
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return null;
 	}
 
@@ -234,12 +241,22 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	}
 
 	@Override
+	public int getMode() {
+		return INNER;
+	}
+
+	@Override
+	public Object upstream() {
+		return null;
+	}
+
+	@Override
 	public void write(final ChannelHandlerContext ctx, Object msg, final ChannelPromise promise) throws Exception {
 		if (msg instanceof Publisher) {
 			CHANNEL_REF.incrementAndGet(this);
 
 			@SuppressWarnings("unchecked") Publisher<?> data = (Publisher<?>) msg;
-			final long capacity = msg instanceof Bounded ? ((Bounded) data).getCapacity() : Long.MAX_VALUE;
+			final long capacity = msg instanceof Backpressurable ? ((Backpressurable) data).getCapacity() : Long.MAX_VALUE;
 
 			if (capacity == Long.MAX_VALUE) {
 				data.subscribe(new FlushOnTerminateSubscriber(ctx, promise));
@@ -329,7 +346,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandlerBridge}
 	 */
 	public static final class ChannelInputSubscriber implements Subscription, Subscriber<Buffer>
-	, Bounded, DownstreamDemand, ActiveUpstream, Buffering, Downstream, ActiveDownstream {
+	, Requestable, Completable, Backpressurable, Publishable, Cancellable {
 
 		private final Subscriber<? super Buffer> inputSubscriber;
 
@@ -362,6 +379,11 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			}
 			this.inputSubscriber = inputSubscriber;
 			this.bufferSize = (int) Math.min(Math.max(bufferSize, 32), 128);
+		}
+
+		@Override
+		public Object upstream() {
+			return null;
 		}
 
 		@Override
@@ -410,7 +432,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public boolean isTerminated() {
-			return terminated == 1 && (readBackpressureBuffer == null || readBackpressureBuffer.pending() == 0);
+			return terminated == 1 && (readBackpressureBuffer == null || readBackpressureBuffer.getPending() == 0);
 		}
 
 		@Override
@@ -419,8 +441,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 
 		@Override
-		public long pending() {
-			return readBackpressureBuffer == null ? -1 : readBackpressureBuffer.pending();
+		public long getPending() {
+			return readBackpressureBuffer == null ? -1 : readBackpressureBuffer.getPending();
 		}
 
 		@Override
@@ -494,7 +516,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		boolean shouldReadMore() {
 			return requested > 0 ||
-					(readBackpressureBuffer != null && readBackpressureBuffer.pending() < bufferSize / 2);
+					(readBackpressureBuffer != null && readBackpressureBuffer.getPending() < bufferSize / 2);
 		}
 
 		void drain(){
@@ -538,7 +560,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 					}
 				}
 				queue = readBackpressureBuffer;
-				if((queue == null || queue.pending() == 0) && terminated == 1){
+				if((queue == null || queue.getPending() == 0) && terminated == 1){
 					if(error != null){
 						inputSubscriber.onError(error);
 					}
@@ -612,7 +634,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	}
 
 	private class FlushOnTerminateSubscriber extends BaseSubscriber<Object>
-			implements ChannelFutureListener, ReactiveState.FeedbackLoop {
+			implements ChannelFutureListener, Connectable {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -636,12 +658,12 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return NettyChannelHandlerBridge.this;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 
@@ -715,8 +737,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 	private class FlushOnCapacitySubscriber extends BaseSubscriber<Object>
 			implements Runnable,
-			           ChannelFutureListener, FeedbackLoop, Buffering, ActiveUpstream,
-			           ActiveDownstream, UpstreamDemand{
+			           ChannelFutureListener, Connectable, Backpressurable, Completable,
+			           Cancellable, Prefetchable {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -748,7 +770,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			return ctx.channel().isWritable() ? written : capacity;
 		}
 
@@ -773,12 +795,12 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return NettyChannelHandlerBridge.this;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 
@@ -867,6 +889,16 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			if (++written == capacity) {
 				ctx.flush();
 			}
+		}
+
+		@Override
+		public long limit() {
+			return 0;
+		}
+
+		@Override
+		public Object upstream() {
+			return subscription;
 		}
 
 		@Override

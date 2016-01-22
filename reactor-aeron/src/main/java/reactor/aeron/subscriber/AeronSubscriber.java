@@ -25,8 +25,10 @@ import reactor.core.publisher.ProcessorTopic;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
@@ -97,7 +99,7 @@ import reactor.io.buffer.Buffer;
  * @since 2.5
  */
 public class AeronSubscriber extends BaseSubscriber<Buffer>
-		implements ReactiveState.ActiveUpstream, ReactiveState.Upstream, ReactiveState.FeedbackLoop {
+		implements Completable, Subscribable, Connectable {
 
 	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
 
@@ -256,7 +258,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		return alive.get();
 	}
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return serviceMessageHandler;
 	}
 
@@ -266,7 +268,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return serviceMessagePoller;
 	}
 }

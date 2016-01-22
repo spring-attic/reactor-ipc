@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc., Inc. All Rights Reserved.
+ * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 
 package reactor.io.buffer
 
-import reactor.core.util.ReactiveState
 import spock.lang.Specification
 
 import java.nio.BufferOverflowException
@@ -414,7 +413,7 @@ class BufferSpec extends Specification {
 			def copy = buffer.copy()
 
 		then: "a new Buffer is created on a copy"
-			copy.capacity() == ReactiveState.SMALL_IO_BUFFER_SIZE
+			copy.capacity() == PlatformDependent.SMALL_IO_BUFFER_SIZE
 			copy.asString() == "Hello World!"
 	}
 

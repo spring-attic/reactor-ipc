@@ -17,7 +17,8 @@ package reactor.aeron.publisher;
 
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;
@@ -28,7 +29,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveState.FeedbackLoop {
+public class ServiceMessageSender implements Publishable, Connectable {
 
 	private final Publication serviceRequestPub;
 
@@ -157,12 +158,12 @@ public class ServiceMessageSender implements ReactiveState.Downstream, ReactiveS
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return null;
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return parent;
 	}
 

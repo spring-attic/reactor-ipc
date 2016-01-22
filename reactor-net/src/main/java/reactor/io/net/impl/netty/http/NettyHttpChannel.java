@@ -33,8 +33,9 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
 import reactor.core.util.Assert;
-import reactor.core.util.ReactiveState;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.BaseHttpChannel;
 import reactor.io.net.http.HttpChannel;
@@ -54,7 +55,7 @@ import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
  * @author Stephane Maldini
  */
 public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
-		implements Publisher<Buffer>, ReactiveState.FeedbackLoop, ReactiveState.ActiveUpstream {
+		implements Publisher<Buffer>, Connectable, Completable {
 
 	private static final FullHttpResponse CONTINUE =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
@@ -83,12 +84,12 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	}
 
 	@Override
-	public final Object delegateInput() {
+	public final Object connectedInput() {
 		return tcpStream;
 	}
 
 	@Override
-	public final Object delegateOutput() {
+	public final Object connectedOutput() {
 		return tcpStream;
 	}
 
@@ -286,5 +287,10 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 	public HttpChannel<Buffer, Buffer> keepAlive(boolean keepAlive) {
 		responseHeaders.keepAlive(keepAlive);
 		return this;
+	}
+
+	@Override
+	public Object upstream() {
+		return null;
 	}
 }

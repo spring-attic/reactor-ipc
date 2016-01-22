@@ -24,8 +24,11 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Introspectable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.EmptySubscription;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.model.Cookie;
@@ -40,7 +43,7 @@ import reactor.io.net.http.model.Transfer;
  * @author Sebastien Deleuze
  * @author Stephane maldini
  */
-public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements ReactiveState.Named, HttpChannel<IN,OUT> {
+public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Introspectable, HttpChannel<IN,OUT> {
 
 	private volatile int statusAndHeadersSent = 0;
 	private Function<? super String, Map<String, Object>> paramsResolver;
@@ -260,8 +263,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements React
 		return new PostWritePublisher(source);
 	}
 
-	private class PostWritePublisher extends Mono<Void> implements
-	                                            Upstream, FeedbackLoop {
+	private class PostWritePublisher extends Mono<Void> implements Subscribable, Connectable {
 
 		private final Publisher<? extends OUT> source;
 
@@ -285,16 +287,16 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements React
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return BaseHttpChannel.this;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return BaseHttpChannel.this;
 		}
 
-		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Upstream, Downstream {
+		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Subscribable, Publishable {
 
 			private final Subscriber<? super Void> s;
 			private Subscription subscription;
@@ -338,7 +340,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements React
 		}
 	}
 
-	private class PostHeaderWritePublisher extends Mono<Void> implements FeedbackLoop{
+	private class PostHeaderWritePublisher extends Mono<Void> implements Connectable{
 
 		@Override
 		public void subscribe(Subscriber<? super Void> s) {
@@ -351,17 +353,17 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements React
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return BaseHttpChannel.this;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return BaseHttpChannel.this;
 		}
 	}
 
-	private class PostBufferWritePublisher extends Mono<Void> implements Upstream, FeedbackLoop {
+	private class PostBufferWritePublisher extends Mono<Void> implements Subscribable, Connectable {
 
 		private final Publisher<? extends Buffer> dataStream;
 
@@ -380,12 +382,12 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements React
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return BaseHttpChannel.this;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return BaseHttpChannel.this;
 		}
 
@@ -394,7 +396,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements React
 			return dataStream;
 		}
 
-		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Downstream, Upstream {
+		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Publishable, Subscribable {
 
 			private final Subscriber<? super Void> s;
 			private Subscription subscription;

@@ -29,9 +29,9 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
+import reactor.core.trait.Connectable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.ReactiveState;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
@@ -47,7 +47,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpServer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements ReactiveState.FeedbackLoop{
+public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Connectable{
 
 	private static final Logger log = Logger.getLogger(NettyHttpServer.class);
 
@@ -147,12 +147,12 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements React
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return server;
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return server;
 	}
 

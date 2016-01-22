@@ -17,13 +17,14 @@ package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscription;
 import reactor.aeron.support.DemandTracker;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Introspectable;
+import reactor.core.trait.Publishable;
 import uk.co.real_logic.aeron.Publication;
 
 /**
  * @author Anatoly Kadyshev
  */
-class UnicastSession implements Session, ReactiveState.Inner, ReactiveState.Downstream {
+class UnicastSession implements Session, Introspectable, Publishable {
 
 	private static int nextSessionUid = 0;
 
@@ -62,6 +63,16 @@ class UnicastSession implements Session, ReactiveState.Inner, ReactiveState.Down
 				+ "sessionId=" + sessionId
 				+ ", lastHeartbeatTimeNs=" + lastHeartbeatTimeNs
 				+ "]";
+	}
+
+	@Override
+	public int getMode() {
+		return INNER;
+	}
+
+	@Override
+	public String getName() {
+		return sessionId;
 	}
 
 	/**
