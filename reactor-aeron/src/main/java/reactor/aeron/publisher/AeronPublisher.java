@@ -37,7 +37,7 @@ import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 
 /**
- * The publisher part of Reactive Stream over Aeron transport implementation
+ * The publisher part of Reactive Streams over Aeron transport implementation
  * used for receiving signals sent over Aeron from {@link reactor.aeron.subscriber.AeronSubscriber}
  * and configured via fields of {@link Context}.
  * <br/>The publisher supports both unicast and multicast modes of {@link reactor.aeron.subscriber.AeronSubscriber}
@@ -58,6 +58,22 @@ import uk.co.real_logic.aeron.Publication;
  *     AeronPublisher publisher = AeronPublisher.create(new Context()
  *         .name("publisher").senderChannel("udp://serverbox:12000).receiverChannel("udp://clientbox:12001"));
  * </pre>
+ *
+ * Communication with the subscriber is performed within a session identified by SessionId.
+ * A subscriber instance supports several independent publishers connecting to it and
+ * tracks demand of each publisher separately per session.
+ *
+ * <p/>
+ * Technical implementation details.
+ *
+ * <p/>For unicast communication SessionId has the following format:
+ * <tt>receiverChannel/streamId/errorStreamId</tt>
+ * <br/>e.g.: <tt>udp://clientbox:12001/1/2</tt>
+ *
+ * <p/>For multicast communication SessionId has the the following format:
+ * <tt>uuid</tt>
+ * <br/>where <tt>uuid</tt> is a unique id of a publisher on the network.
+ * <br/>e.g.: <tt>50f50900-c1b7-11e5-730c-8c6851c29e9d</tt>
  *
  * @author Anatoly Kadyshev
  * @since 2.5
@@ -86,7 +102,7 @@ public class AeronPublisher implements Publisher<Buffer>, Subscribable {
 
 	private final ServiceMessageSender serviceMessageSender;
 
-	private volatile AtomicBoolean subscribed = new AtomicBoolean(false);
+	private final AtomicBoolean subscribed = new AtomicBoolean(false);
 
 	private volatile SignalPoller signalPoller;
 

@@ -26,6 +26,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
+import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.publisher.FluxProcessor;
@@ -236,6 +237,31 @@ public abstract class CommonAeronProcessorTest {
 
 		assertTrue("Subscription wasn't cancelled",
 				subscriptionCancelledLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void testPublisherConnectsToProcessor() throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+
+		Stream.just(
+				Buffer.wrap("Live"))
+				.subscribe(processor);
+
+		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		Buffer.bufferToString(processor).subscribe(subscriber);
+
+		AeronPublisher remotePublisher = AeronPublisher.create(createContext());
+		DataTestSubscriber<String> remoteSubscriber = createTestSubscriber();
+		Buffer.bufferToString(remotePublisher).subscribe(remoteSubscriber);
+
+		subscriber.requestWithTimeout(1);
+		remoteSubscriber.requestWithTimeout(1);
+
+		subscriber.assertNextSignalsEqual("Live");
+		subscriber.assertCompleteReceived();
+
+		remoteSubscriber.assertNextSignalsEqual("Live");
+		remoteSubscriber.assertCompleteReceived();
 	}
 
 }
