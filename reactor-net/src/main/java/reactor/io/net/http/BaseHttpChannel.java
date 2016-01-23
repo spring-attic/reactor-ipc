@@ -263,7 +263,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 		return new PostWritePublisher(source);
 	}
 
-	private class PostWritePublisher extends Mono<Void> implements Subscribable, Connectable {
+	private class PostWritePublisher extends Mono<Void> implements Publishable, Connectable {
 
 		private final Publisher<? extends OUT> source;
 
@@ -296,7 +296,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 			return BaseHttpChannel.this;
 		}
 
-		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Subscribable, Publishable {
+		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Publishable, Subscribable {
 
 			private final Subscriber<? super Void> s;
 			private Subscription subscription;
@@ -363,7 +363,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 		}
 	}
 
-	private class PostBufferWritePublisher extends Mono<Void> implements Subscribable, Connectable {
+	private class PostBufferWritePublisher extends Mono<Void> implements Publishable, Connectable {
 
 		private final Publisher<? extends Buffer> dataStream;
 
@@ -396,7 +396,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 			return dataStream;
 		}
 
-		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Publishable, Subscribable {
+		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Subscribable, Publishable {
 
 			private final Subscriber<? super Void> s;
 			private Subscription subscription;

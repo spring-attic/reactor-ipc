@@ -41,8 +41,8 @@ import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
 import reactor.core.trait.Introspectable;
 import reactor.core.trait.Prefetchable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -61,7 +61,7 @@ import reactor.io.net.impl.netty.NettyChannel;
  * @author Stephane Maldini
  */
 public class NettyChannelHandlerBridge extends ChannelDuplexHandler
-		implements Introspectable, Connectable, Publishable,
+		implements Introspectable, Connectable, Subscribable,
 		           Completable  {
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandlerBridge.class);
@@ -346,7 +346,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandlerBridge}
 	 */
 	public static final class ChannelInputSubscriber implements Subscription, Subscriber<Buffer>
-	, Requestable, Completable, Backpressurable, Publishable, Cancellable {
+	, Requestable, Completable, Backpressurable, Subscribable, Cancellable {
 
 		private final Subscriber<? super Buffer> inputSubscriber;
 

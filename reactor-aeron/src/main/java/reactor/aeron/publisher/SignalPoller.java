@@ -29,8 +29,8 @@ import reactor.aeron.support.SignalType;
 import reactor.core.trait.Cancellable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Introspectable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.trait.SubscribableMany;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
@@ -47,7 +47,7 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 /**
  * Signals receiver functionality which polls for signals sent by senders
  */
-public class SignalPoller implements org.reactivestreams.Subscription, Runnable, Publishable,
+public class SignalPoller implements org.reactivestreams.Subscription, Runnable, Subscribable,
                                      Requestable, Completable,
                                      Cancellable, SubscribableMany, Introspectable {
 

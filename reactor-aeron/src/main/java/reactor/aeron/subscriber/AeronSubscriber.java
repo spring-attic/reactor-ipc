@@ -27,7 +27,7 @@ import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
@@ -99,7 +99,7 @@ import reactor.io.buffer.Buffer;
  * @since 2.5
  */
 public class AeronSubscriber extends BaseSubscriber<Buffer>
-		implements Completable, Subscribable, Connectable {
+		implements Completable, Publishable, Connectable {
 
 	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
 

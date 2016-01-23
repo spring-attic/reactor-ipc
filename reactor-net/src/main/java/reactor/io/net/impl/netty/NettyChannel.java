@@ -38,7 +38,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
@@ -318,7 +318,7 @@ public class NettyChannel
 		}
 	}
 
-	private class PostWritePublisher extends Mono<Void> implements Subscribable, Connectable {
+	private class PostWritePublisher extends Mono<Void> implements Publishable, Connectable {
 
 		private final Publisher<? extends Buffer> dataStream;
 

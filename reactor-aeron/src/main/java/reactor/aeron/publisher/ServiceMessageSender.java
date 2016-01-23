@@ -18,7 +18,7 @@ package reactor.aeron.publisher;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;
@@ -29,7 +29,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class ServiceMessageSender implements Publishable, Connectable {
+public class ServiceMessageSender implements Subscribable, Connectable {
 
 	private final Publication serviceRequestPub;
 

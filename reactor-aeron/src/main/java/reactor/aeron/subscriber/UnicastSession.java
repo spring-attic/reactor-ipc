@@ -18,13 +18,13 @@ package reactor.aeron.subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.support.DemandTracker;
 import reactor.core.trait.Introspectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import uk.co.real_logic.aeron.Publication;
 
 /**
  * @author Anatoly Kadyshev
  */
-class UnicastSession implements Session, Introspectable, Publishable {
+class UnicastSession implements Session, Introspectable, Subscribable {
 
 	private static int nextSessionUid = 0;
 
