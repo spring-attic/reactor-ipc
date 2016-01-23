@@ -98,6 +98,16 @@ AeronSubscriber subscriber = AeronSubscriber.create(new Context()
     .senderChannel("udp://serverbox:12000"));
 ----
 
+==== Multiple sessions support for unicast
+
+AeronSubscriber supports connections from several remote AeronPublishers launched
+with different `Context.receiverChannel`.
+Each AeronPublisher communicates with AeronSubscriber within its own session.
+The demand is tracked by the subscriber per session.
+A slow AeronPublisher connected to AeronSubscriber will eventually block a fast consuming one.
+For the M1 a unicast session between AeronSubscriber and AeronPublisher requires a thread which is about
+to change in a following release.
+
 ==== Multicast sending mode
 
 To configure AeronSubscriber in multicast mode set field 'Context.receiverChannel' to a multicast Aeron channel.
@@ -111,6 +121,20 @@ AeronSubscriber subscriber = AeronSubscriber.create(new Context()
     .senderChannel("udp://serverbox:12000")
     .receiverChannel("udp://239.1.1.1:12001"));
 ----
+
+==== Multiple sessions support for multicast
+
+As in case of unicast AeronSubscriber supports multiple sessions in multicast mode as well.
+In multicast mode all sessions between an instance of AeronSubscriber and AeronPublishers
+are handled in a single thread.
+
+A slow AeronPublisher connected to AeronSubscriber will eventually backpressure the subscriber
+and as a result a fast consuming publisher will block.
+
+A single request for signals to upstream subscription of AeronSubscriber is made for
+`Context.multicastUpstreamRequest`. Once signals are requested from the upstream they
+are send into Aeron to all connected publishers and each publisher demand adjusted within its
+session.
 
 === AeronPublisher as client
 
@@ -163,6 +187,28 @@ AeronPublisher publisher = AeronPublisher.create(new Context()
     .senderChannel("udp://serverbox:12000")
     .receiverChannel("udp://239.1.1.1:12001"));
 ----
+
+=== Heartbeats
+
+AeronPublisher sends heartbeats to the instance of AeronSubscriber it is connected to
+every `Context.heartbeatIntervalMillis' milliseconds. When the subscriber doesn't receive
+any heartbeat from the publisher during the heartbeat interval * 1.5 it considers the session
+with the publisher disconnected.
+
+When the publisher can't publish a heartbeat to the subscriber `Context.maxHeartbeatPublicationFailures`
+times in a row then it shuts itself down.
+
+=== Auto-cancel functionality
+
+Both AeronSubscriber and AeronPublisher support auto-cancel functionality.
+
+When AeronSubscriber is created with `Context.autoCancel` set to true
+it terminates its upstream subscription when the last publisher disconnects.
+
+When AeronPublisher is created with `Context.autoCancel` set to true
+it shuts itself down when its subscriber is terminated as it expects the
+corresponding subscriber instance it's connecting to to operate in auto-cancel
+mode as well.
 
 === Handling errors
 
