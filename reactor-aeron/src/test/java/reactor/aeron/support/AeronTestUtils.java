@@ -16,6 +16,7 @@
 package reactor.aeron.support;
 
 import reactor.core.subscriber.test.TestSubscriber;
+import reactor.io.net.tcp.support.SocketUtils;
 import uk.co.real_logic.aeron.driver.Configuration;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 import uk.co.real_logic.aeron.driver.ThreadingMode;
@@ -45,6 +46,10 @@ public class AeronTestUtils {
 	public static void awaitMediaDriverIsTerminated(int timeoutSecs) throws InterruptedException {
 		TestSubscriber.waitFor(timeoutSecs, "Aeron hasn't been shutdown properly",
 				() -> EmbeddedMediaDriverManager.getInstance().isTerminated());
+	}
+
+	public static String availableLocalhostChannel() {
+		return "udp://localhost:" + SocketUtils.findAvailableUdpPort();
 	}
 
 }

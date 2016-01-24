@@ -16,14 +16,11 @@
 package reactor.aeron.processor;
 
 import reactor.aeron.Context;
-import reactor.io.net.tcp.support.SocketUtils;
 
 /**
  * @author Anatoly Kadyshev
  */
 public class AeronProcessorMulticastTest extends CommonAeronProcessorTest {
-
-	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
 
 	@Override
 	protected Context createContext() {

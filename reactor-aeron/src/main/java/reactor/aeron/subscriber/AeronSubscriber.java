@@ -33,7 +33,7 @@ import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
 /**
- * The subscriber part of Reactive Stream over Aeron transport implementation
+ * The subscriber part of Reactive Streams over Aeron transport implementation
  * used to pass signals to publishers {@link reactor.aeron.publisher.AeronPublisher} over Aeron
  * and configured via fields of {@link Context}.
  *
@@ -118,12 +118,10 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 	private final ProcessorTopic<Buffer> processor;
 
 	public static AeronSubscriber create(Context context) {
-		context.validate();
 		return new AeronSubscriber(context, false);
 	}
 
 	public static AeronSubscriber share(Context context) {
-		context.validate();
 		return new AeronSubscriber(context, true);
 	}
 
@@ -131,6 +129,9 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 						   boolean multiPublishers,
 			Runnable shutdownTask,
 			Runnable onTerminateTask) {
+
+		context.validate();
+
 		this.onTerminateTask = onTerminateTask;
 
 		if (shutdownTask == null) {

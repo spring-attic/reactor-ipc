@@ -58,6 +58,8 @@ public class AeronPublisherTest {
 			}
 		};
 		context.name("test");
+		context.senderChannel("udp://localhost:12000");
+		context.receiverChannel("udp://localhost:12001");
 	}
 
 	@After

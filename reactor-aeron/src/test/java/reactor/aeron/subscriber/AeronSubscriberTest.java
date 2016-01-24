@@ -21,7 +21,6 @@ import org.junit.Test;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
-import reactor.io.net.tcp.support.SocketUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -52,11 +51,9 @@ public class AeronSubscriberTest {
 
 	@Test
 	public void testShutdown() {
-		final int senderPort = SocketUtils.findAvailableUdpPort();
-
 		AeronSubscriber subscriber = AeronSubscriber.create(new Context()
 				.name("publisher")
-				.senderPort(senderPort));
+				.senderChannel(AeronTestUtils.availableLocalhostChannel()));
 
 		subscriber.shutdown();
 	}

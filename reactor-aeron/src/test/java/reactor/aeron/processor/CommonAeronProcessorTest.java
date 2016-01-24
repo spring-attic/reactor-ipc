@@ -48,6 +48,8 @@ public abstract class CommonAeronProcessorTest {
 
 	private ThreadSnapshot threadSnapshot;
 
+	protected String CHANNEL = AeronTestUtils.availableLocalhostChannel();
+
 	@Before
 	public void doSetup() {
 		threadSnapshot = new ThreadSnapshot().take();
@@ -65,8 +67,7 @@ public abstract class CommonAeronProcessorTest {
 
 	protected Context createContext() {
 		return new Context()
-				.autoCancel(false)
-				.publicationRetryMillis(1000)
+				.senderChannel(CHANNEL)
 				.errorConsumer(Throwable::printStackTrace);
 	}
 
@@ -93,9 +94,6 @@ public abstract class CommonAeronProcessorTest {
 		subscriber.request(1);
 
 		subscriber.assertNextSignalsEqual("Extra");
-
-		//FIXME: Remove this work-around for bounded Stream.just not sending Complete signal
-		subscriber.request(1);
 	}
 
 	@Test
@@ -118,10 +116,6 @@ public abstract class CommonAeronProcessorTest {
 
 		subscriber.request(1);
 		subscriber.assertNextSignalsEqual("Three");
-
-		//FIXME: Remove this work-around for bounded Stream.just not sending Complete signal
-		subscriber.request(1);
-
 		subscriber.assertCompleteReceived();
 	}
 

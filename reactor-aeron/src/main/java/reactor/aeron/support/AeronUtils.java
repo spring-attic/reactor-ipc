@@ -39,8 +39,9 @@ public class AeronUtils {
 	}
 
 	public static boolean isMulticastCommunication(Context context) {
-		return UdpChannel.parse(context.receiverChannel()).isMulticast() ||
-				context.senderChannel().equals(context.receiverChannel());
+		String receiverChannel = context.receiverChannel();
+		return receiverChannel != null && UdpChannel.parse(receiverChannel).isMulticast() ||
+				context.senderChannel().equals(receiverChannel);
 	}
 
 	public static boolean isUnicastChannel(String channel) {

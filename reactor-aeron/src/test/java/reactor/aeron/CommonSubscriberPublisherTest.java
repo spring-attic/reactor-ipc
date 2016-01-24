@@ -37,7 +37,6 @@ import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
 
 import static org.junit.Assert.*;
@@ -49,7 +48,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 	public static final int TIMEOUT_SECS = 5;
 
-	final int senderPort = SocketUtils.findAvailableUdpPort();
+	final String senderChannel = AeronTestUtils.availableLocalhostChannel();
 
 	private ThreadSnapshot threadSnapshot;
 

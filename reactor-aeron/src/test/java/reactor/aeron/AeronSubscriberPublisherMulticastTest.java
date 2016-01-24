@@ -19,18 +19,18 @@ package reactor.aeron;
 import org.junit.Test;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
+import reactor.aeron.support.AeronTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.test.DataTestSubscriber;
 import reactor.core.subscriber.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.tcp.support.SocketUtils;
 
 /**
  * @author Anatoly Kadyshev
  */
 public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPublisherTest {
 
-	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
+	private String CHANNEL = AeronTestUtils.availableLocalhostChannel();
 
 	@Override
 	protected Context createContext(String name) {

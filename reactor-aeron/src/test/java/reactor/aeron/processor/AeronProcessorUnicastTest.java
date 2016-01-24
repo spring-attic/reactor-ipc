@@ -16,7 +16,7 @@
 package reactor.aeron.processor;
 
 import reactor.aeron.Context;
-import reactor.io.net.tcp.support.SocketUtils;
+import reactor.aeron.support.AeronTestUtils;
 
 /**
  * @author Anatoly Kadyshev
@@ -27,7 +27,7 @@ public class AeronProcessorUnicastTest extends CommonAeronProcessorTest {
 	protected Context createContext() {
 		return super.createContext()
 				.name("unicast")
-				.receiverPort(SocketUtils.findAvailableUdpPort());
+				.receiverChannel(AeronTestUtils.availableLocalhostChannel());
 	}
 
 }

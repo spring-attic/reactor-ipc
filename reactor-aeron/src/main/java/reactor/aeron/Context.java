@@ -15,8 +15,6 @@
  */
 package reactor.aeron;
 
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -44,10 +42,6 @@ import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
  */
 public class Context {
 
-	public static final int DEFAULT_SENDER_PORT = 12000;
-
-	public static final int DEFAULT_RECEIVER_PORT = 12001;
-
 	public static final int DEFAULT_SIGNAL_STREAM_ID = 1;
 
 	/**
@@ -61,9 +55,9 @@ public class Context {
 	 */
 	private boolean autoCancel;
 
-	private String senderChannel = createSenderChannelForPort(DEFAULT_SENDER_PORT);
+	private String senderChannel;
 
-	private String receiverChannel = createReceiverChannelForPort(DEFAULT_RECEIVER_PORT);
+	private String receiverChannel;
 
 	/**
 	 * Aeron StreamId used by the signals sender to publish Next and
@@ -132,22 +126,6 @@ public class Context {
 	 */
 	private int maxHeartbeatPublicationFailures = 2;
 
-	private static String createSenderChannelForPort(int port) {
-		return "udp://localhost:" + port;
-	}
-
-	private static String createReceiverChannelForPort(int port) {
-		return "udp://" + getLocalHostIPAddress() + ":" + port;
-	}
-
-	public static String getLocalHostIPAddress() {
-		try {
-			return Inet4Address.getLocalHost().getHostAddress();
-		} catch (UnknownHostException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public Context name(String name) {
 		this.name = name;
 		return this;
@@ -158,20 +136,10 @@ public class Context {
 		return this;
 	}
 
-	public Context senderPort(int senderPort) {
-		this.senderChannel = createSenderChannelForPort(senderPort);
-		return this;
-	}
-
 	public Context senderChannel(String senderChannel) {
 		Assert.isTrue(AeronUtils.isUnicastChannel(senderChannel), "senderChannel should be a unicast channel");
 
 		this.senderChannel = senderChannel;
-		return this;
-	}
-
-	public Context receiverPort(int receiverPort) {
-		this.receiverChannel = createReceiverChannelForPort(receiverPort);
 		return this;
 	}
 
@@ -228,6 +196,8 @@ public class Context {
 	}
 
 	public void validate() {
+		Assert.notNull(senderChannel, "'senderChannel' should be provided");
+
 		Set<Integer> streamIdsSet = new HashSet<>();
 		streamIdsSet.add(streamId);
 		streamIdsSet.add(errorStreamId);

@@ -28,6 +28,7 @@ import reactor.aeron.support.ServiceMessageType;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
 import reactor.core.trait.Subscribable;
+import reactor.core.util.Assert;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
@@ -109,13 +110,15 @@ public class AeronPublisher implements Publisher<Buffer>, Subscribable {
 	private final String sessionId;
 
 	public static AeronPublisher create(Context context) {
-		context.validate();
 		return new AeronPublisher(context);
 	}
 
 	public AeronPublisher(Context context,
 						  Runnable shutdownTask,
 						  Runnable onTerminateTask) {
+
+		Assert.notNull(context.receiverChannel(), "'receiverChannel' should be provided");
+		context.validate();
 
 		if (shutdownTask == null) {
 			shutdownTask = new Runnable() {
