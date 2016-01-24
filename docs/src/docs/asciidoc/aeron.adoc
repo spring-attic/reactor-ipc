@@ -161,6 +161,37 @@ When publication fails the corresponding exception is reported into `errorConsum
 AeronPublisher requires both `Context.senderChannel` and `Context.receiverChannel` to be set.
 `Context.senderChannel` should be set to the same value which was specified for the corresponding `AeronSubscriber`.
 
+==== AeronProcessor
+
+We introduced a reactive processor implementation as AeronProcessor.
+The main feature of the processor is that it not only provides signals for its local subscribers
+but also allows remote instances of AeronPublisher to connect and request signals for both
+multicast and unicast modes of operation.
+
+.An example of AeronProcessor usage
+[source,java]
+----
+// Code run on a server machine with name serverbox:
+
+AeronProcessor processor = ReactiveAeron.aeronProcessor(new Context()
+    .senderChannel("udp://serverbox:12000"));
+
+Subscriber subscriber = createSubscriber();
+
+processor.subscribe(subscriber);
+
+
+// Code run on a client machine with name clientbox:
+
+AeronPublisher publisher = ReactiveAeron.aeronPublisher(new Context()
+    .senderChannel("udp://serverbox:12000")
+    .receiverChannel("udp://clientbox:12001"));
+
+Subscriber subscriber = createSubscriber();
+
+publisher.subscribe(subscriber);
+----
+
 ==== Unicast receiving mode
 
 To connect to AeronSubscriber started in unicast sending mode it's required to set `Context.receiverChannel` to a value
