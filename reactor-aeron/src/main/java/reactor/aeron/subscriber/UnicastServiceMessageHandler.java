@@ -197,21 +197,32 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Subs
 
 	private UnicastSession createSession(String sessionId) {
 		Matcher matcher = SESSION_ID_PATTERN.matcher(sessionId);
-		int streamId;
-		int errorStreamId;
-		String receiverChannel;
 		if (matcher.matches()) {
-			receiverChannel = matcher.group(1);
-			streamId = Integer.parseInt(matcher.group(2));
-			errorStreamId = Integer.parseInt(matcher.group(3));
+			String receiverChannel = matcher.group(1);
+			if (!validateReceiverChannel(receiverChannel)) {
+				throw new IllegalArgumentException("Invalid unicast receiver channel: " + receiverChannel);
+			}
+
+			int streamId = Integer.parseInt(matcher.group(2));
+			int errorStreamId = Integer.parseInt(matcher.group(3));
+
+			return new UnicastSession(
+					sessionId,
+					aeronInfra.addPublication(receiverChannel, streamId),
+					aeronInfra.addPublication(receiverChannel, errorStreamId));
 		} else {
 			throw new IllegalArgumentException("Malformed unicast sessionId: " + sessionId);
 		}
+	}
 
-		return new UnicastSession(
-				sessionId,
-				aeronInfra.addPublication(receiverChannel, streamId),
-				aeronInfra.addPublication(receiverChannel, errorStreamId));
+	private boolean validateReceiverChannel(String receiverChannel) {
+		boolean result;
+		try {
+			result = AeronUtils.isUnicastChannel(receiverChannel);
+		} catch (Exception ex) {
+			result = false;
+		}
+		return result;
 	}
 
 	private void cancel(UnicastSession session) {

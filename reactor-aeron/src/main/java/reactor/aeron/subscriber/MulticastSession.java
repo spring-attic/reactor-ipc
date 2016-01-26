@@ -19,6 +19,8 @@ import reactor.core.queue.Sequencer;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Sequence;
 
+import java.util.UUID;
+
 /**
  * @author Anatoly Kadyshev
  */
@@ -34,6 +36,12 @@ class MulticastSession implements Session {
 	private volatile long lastHeartbeatTimeNs;
 
 	MulticastSession(String sessionId, long sequence) {
+		try {
+			UUID.fromString(sessionId);
+		} catch (Exception ex) {
+			throw new IllegalArgumentException("Multicast sessionId is invalid: " + sessionId);
+		}
+
 		this.sessionId = sessionId;
 		this.sequence = Sequencer.newSequence(sequence);
 	}

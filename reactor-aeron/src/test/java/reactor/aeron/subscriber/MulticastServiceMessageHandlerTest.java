@@ -15,6 +15,7 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -93,22 +94,24 @@ public class MulticastServiceMessageHandlerTest {
 		final Stepper second = new Stepper();
 		Runnable flow2 = () -> {
 			try {
+				String sessionId1 = UUID.randomUUID().toString();
+				String sessionId2 = UUID.randomUUID().toString();
 
 				second.reached(0);
 
-				requestHandler.handleMore("session-1", 1);
+				requestHandler.handleMore(sessionId1, 1);
 
 				second.reached(1);
 
-				requestHandler.handleMore("session-1", 1);
+				requestHandler.handleMore(sessionId1, 1);
 
 				second.reached(2);
 
-				requestHandler.handleMore("session-2", 1);
+				requestHandler.handleMore(sessionId2, 1);
 
 				second.reached(3);
 
-				requestHandler.handleMore("session-1", 1);
+				requestHandler.handleMore(sessionId1, 1);
 
 				second.reached(4);
 
