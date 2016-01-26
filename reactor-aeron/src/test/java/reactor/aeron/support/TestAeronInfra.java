@@ -17,7 +17,7 @@ package reactor.aeron.support;
 
 import org.mockito.Mockito;
 import reactor.aeron.subscriber.SignalSender;
-import reactor.core.subscriber.test.TestSubscriber;
+import reactor.core.test.TestSubscriber;
 import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
@@ -152,7 +152,7 @@ public class TestAeronInfra implements AeronInfra {
 	}
 
 	public void waitNextSignalIsPublished(String key, int numExpectedSignals) throws InterruptedException {
-		TestSubscriber.waitFor(500, "No signals were published", new Supplier<Boolean>() {
+		TestSubscriber.await(500, "No signals were published", new Supplier<Boolean>() {
 			@Override
 			public Boolean get() {
 				SignalData signalData = getSignalDataByKey(key);

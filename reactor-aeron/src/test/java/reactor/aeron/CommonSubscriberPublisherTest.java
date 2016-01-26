@@ -35,7 +35,7 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.SignalPublicationFailedException;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.subscriber.test.DataTestSubscriber;
+import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
 
@@ -46,7 +46,7 @@ import static org.junit.Assert.*;
  */
 public abstract class CommonSubscriberPublisherTest {
 
-	public static final int TIMEOUT_SECS = 5;
+	public static final long TIMEOUT_SECS = 5L;
 
 	final String senderChannel = AeronTestUtils.availableLocalhostChannel();
 
@@ -84,13 +84,11 @@ public abstract class CommonSubscriberPublisherTest {
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher"));
 
-		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		TestSubscriber<String> clientSubscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
-		clientSubscriber.requestUnboundedWithTimeout();
 
-		clientSubscriber.assertNextSignalsEqual("One", "Two", "Three");
-		clientSubscriber.assertCompleteReceived();
+		clientSubscriber.awaitAndAssertValues("One", "Two", "Three").assertComplete();
 	}
 
 	@Test
@@ -98,14 +96,13 @@ public abstract class CommonSubscriberPublisherTest {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher"));
 
-		DataTestSubscriber<String> clientSubscriber = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		TestSubscriber<String> clientSubscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
-		clientSubscriber.requestUnboundedWithTimeout();
 
 		Stream.<Buffer>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
-		clientSubscriber.assertErrorReceived();
+		clientSubscriber.await().assertError();
 	}
 
 	@Test
@@ -181,14 +178,15 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(true));
-		DataTestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		TestSubscriber<String> client = new TestSubscriber<String>(0);
 		Buffer.bufferToString(publisher).subscribe(client);
 
-		client.requestWithTimeout(1);
+		client.request(1);
+		client.awaitAndAssertValueCount(1);
 		client.cancel();
 
 
-		assertTrue(valuePublisher.awaitCancelled(TIMEOUT_SECS));
+		assertTrue(valuePublisher.awaitCancelled((int) TIMEOUT_SECS));
 	}
 
 	@Test
@@ -199,10 +197,11 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
-		DataTestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		TestSubscriber<String> client = new TestSubscriber<String>(0);
 		Buffer.bufferToString(publisher).subscribe(client);
 
-		client.requestWithTimeout(1);
+		client.request(1);
+		client.awaitAndAssertValueCount(1);
 		client.cancel();
 
 

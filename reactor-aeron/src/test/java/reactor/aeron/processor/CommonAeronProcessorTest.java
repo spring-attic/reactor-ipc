@@ -31,7 +31,7 @@ import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
-import reactor.core.subscriber.test.DataTestSubscriber;
+import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
 
@@ -71,15 +71,11 @@ public abstract class CommonAeronProcessorTest {
 				.errorConsumer(Throwable::printStackTrace);
 	}
 
-	protected DataTestSubscriber<String> createTestSubscriber() {
-		return DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
-	}
-
 
 	@Test
 	public void testNextSignalIsReceived() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
-		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
 		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(4);
 
@@ -89,11 +85,11 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Harder"),
 				Buffer.wrap("Extra")).subscribe(processor);
 
-		subscriber.assertNextSignalsEqual("Live", "Hard", "Die", "Harder");
+		subscriber.awaitAndAssertValues("Live", "Hard", "Die", "Harder");
 
 		subscriber.request(1);
 
-		subscriber.assertNextSignalsEqual("Extra");
+		subscriber.awaitAndAssertValues("Extra");
 	}
 
 	@Test
@@ -105,18 +101,17 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Three"))
 				.subscribe(processor);
 
-		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
 		Buffer.bufferToString(processor).subscribe(subscriber);
 
 		subscriber.request(1);
-		subscriber.assertNextSignalsEqual("One");
+		subscriber.awaitAndAssertValues("One");
 
 		subscriber.request(1);
-		subscriber.assertNextSignalsEqual("Two");
+		subscriber.awaitAndAssertValues("Two");
 
 		subscriber.request(1);
-		subscriber.assertNextSignalsEqual("Three");
-		subscriber.assertCompleteReceived();
+		subscriber.awaitAndAssertValues("Three").assertComplete();
 	}
 
 	@Test
@@ -140,20 +135,14 @@ public abstract class CommonAeronProcessorTest {
 		FluxProcessor<Buffer, Buffer> emitter = Processors.emitter();
 		processor.subscribe(emitter);
 
-		DataTestSubscriber<String> subscriber1 = createTestSubscriber();
+		TestSubscriber<String> subscriber1 = new TestSubscriber<String>();
 		Buffer.bufferToString(emitter).subscribe(subscriber1);
 
-		DataTestSubscriber<String> subscriber2 = createTestSubscriber();
+		TestSubscriber<String> subscriber2 = new TestSubscriber<String>();
 		Buffer.bufferToString(emitter).subscribe(subscriber2);
 
-		subscriber1.requestUnboundedWithTimeout();
-		subscriber2.requestUnboundedWithTimeout();
-
-
-		subscriber1.assertNextSignalsEqual("Live", "Hard", "Die", "Harder");
-		subscriber2.assertNextSignalsEqual("Live", "Hard", "Die", "Harder");
-		subscriber1.assertCompleteReceived();
-		subscriber2.assertCompleteReceived();
+		subscriber1.awaitAndAssertValues("Live", "Hard", "Die", "Harder").assertComplete();
+		subscriber2.awaitAndAssertValues("Live", "Hard", "Die", "Harder").assertComplete();
 	}
 
 	@Test
@@ -167,31 +156,23 @@ public abstract class CommonAeronProcessorTest {
 				Stream.fail(new RuntimeException("Something went wrong")))
 				.subscribe(processor);
 
-		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		TestSubscriber<String> subscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(processor).subscribe(subscriber);
-		subscriber.requestUnboundedWithTimeout();
 
-		subscriber.assertErrorReceived();
-
-		Throwable throwable = subscriber.getLastErrorSignal();
-		assertThat(throwable.getMessage(), is("Something went wrong"));
+		subscriber.await(TIMEOUT_SECS).assertErrorWith(t -> assertThat(t.getMessage(), is("Something went wrong")));
 	}
 
 	@Test
 	public void testExceptionWithNullMessageIsHandled() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
 
-		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		TestSubscriber<String> subscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(processor).subscribe(subscriber);
-		subscriber.requestUnboundedWithTimeout();
 
 		Stream<Buffer> sourceStream = Stream.fail(new RuntimeException());
 		sourceStream.subscribe(processor);
 
-		subscriber.assertErrorReceived();
-
-		Throwable throwable = subscriber.getLastErrorSignal();
-		assertThat(throwable.getMessage(), is(""));
+		subscriber.await(TIMEOUT_SECS).assertErrorWith(t -> assertThat(t.getMessage(), is("")));
 	}
 
 	@Test
@@ -219,15 +200,13 @@ public abstract class CommonAeronProcessorTest {
 		};
 		dataPublisher.subscribe(processor);
 
-		DataTestSubscriber<String> client = createTestSubscriber();
+		TestSubscriber<String> client = new TestSubscriber<String>();
 
 		Buffer.bufferToString(processor).subscribe(client);
-		client.requestUnboundedWithTimeout();
 
 		processor.onNext(Buffer.wrap("Hello"));
 
-		client.assertNextSignalsEqual("Hello");
-		client.cancelSubscription();
+		client.awaitAndAssertValues("Hello").cancel();
 
 		assertTrue("Subscription wasn't cancelled",
 				subscriptionCancelledLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
@@ -241,21 +220,19 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
-		DataTestSubscriber<String> subscriber = createTestSubscriber();
+		TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
 		Buffer.bufferToString(processor).subscribe(subscriber);
 
 		AeronPublisher remotePublisher = AeronPublisher.create(createContext());
-		DataTestSubscriber<String> remoteSubscriber = createTestSubscriber();
+		TestSubscriber<String> remoteSubscriber = new TestSubscriber<String>(0);
 		Buffer.bufferToString(remotePublisher).subscribe(remoteSubscriber);
 
-		subscriber.requestWithTimeout(1);
-		remoteSubscriber.requestWithTimeout(1);
+		subscriber.request(1);
+		remoteSubscriber.request(1);
 
-		subscriber.assertNextSignalsEqual("Live");
-		subscriber.assertCompleteReceived();
+		subscriber.awaitAndAssertValues("Live").assertComplete();
 
-		remoteSubscriber.assertNextSignalsEqual("Live");
-		remoteSubscriber.assertCompleteReceived();
+		remoteSubscriber.awaitAndAssertValues("Live").assertComplete();
 	}
 
 }

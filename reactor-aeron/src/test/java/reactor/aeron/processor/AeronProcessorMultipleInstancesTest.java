@@ -26,8 +26,7 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.EmbeddedMediaDriverManager;
 import reactor.aeron.support.ThreadSnapshot;
-import reactor.core.subscriber.test.DataTestSubscriber;
-import reactor.core.subscriber.test.TestSubscriber;
+import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
@@ -44,7 +43,7 @@ import static org.junit.Assert.assertTrue;
 @Ignore
 public class AeronProcessorMultipleInstancesTest {
 
-	private static final int TIMEOUT_SECS = 5;
+	private static final long TIMEOUT_SECS = 5L;
 
 	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
 
@@ -69,50 +68,46 @@ public class AeronProcessorMultipleInstancesTest {
 	@Test
 	public void test_OtherProcessor_Error_Shutdowns_Mine() throws InterruptedException {
 		AeronProcessor myProcessor = createProcessor("myProcessor");
-		TestSubscriber<String> mySubscriber = createTestSubscriber();
+		TestSubscriber<String> mySubscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(myProcessor)
 		  .subscribe(mySubscriber);
-		mySubscriber.requestUnboundedWithTimeout();
 
 		AeronProcessor otherProcessor = createProcessor("otherProcessor");
-		TestSubscriber<String> otherSubscriber = createTestSubscriber();
+		TestSubscriber<String> otherSubscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(otherProcessor)
 		  .subscribe(otherSubscriber);
-		otherSubscriber.requestUnboundedWithTimeout();
 
 		otherProcessor.onError(new RuntimeException("Bah"));
 
-		mySubscriber.assertErrorReceived();
-		otherSubscriber.assertErrorReceived();
+		mySubscriber.await(TIMEOUT_SECS).assertError();
+		otherSubscriber.await(TIMEOUT_SECS).assertError();
 
-		TestSubscriber.waitFor(TIMEOUT_SECS, "otherProcessor is still alive", () -> !otherProcessor.alive());
+		TestSubscriber.await(TIMEOUT_SECS, "otherProcessor is still alive", () -> !otherProcessor.alive());
 
-		TestSubscriber.waitFor(TIMEOUT_SECS, "myProcessor is still alive", () -> !myProcessor.alive());
+		TestSubscriber.await(TIMEOUT_SECS, "myProcessor is still alive", () -> !myProcessor.alive());
 
 	}
 
 	@Test
 	public void test_OtherProcessor_Complete_DoesNotShutdown_Mine() throws InterruptedException {
 		AeronProcessor myProcessor = createProcessor("myProcessor");
-		TestSubscriber<String> mySubscriber = createTestSubscriber();
+		TestSubscriber<String> mySubscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(myProcessor)
 		  .subscribe(mySubscriber);
-		mySubscriber.requestUnboundedWithTimeout();
 
 		AeronProcessor otherProcessor = createProcessor("otherProcessor");
-		TestSubscriber<String> otherSubscriber = createTestSubscriber();
+		TestSubscriber<String> otherSubscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(otherProcessor)
 		  .subscribe(otherSubscriber);
-		otherSubscriber.requestUnboundedWithTimeout();
 
 		otherProcessor.onComplete();
 
-		otherSubscriber.assertCompleteReceived();
-		mySubscriber.assertNoCompleteReceived();
+		otherSubscriber.await().assertComplete();
+		mySubscriber.assertNotComplete();
 
 		myProcessor.onComplete();
 
-		mySubscriber.assertCompleteReceived();
+		mySubscriber.await().assertComplete();
 	}
 
 	@Test
@@ -124,13 +119,11 @@ public class AeronProcessorMultipleInstancesTest {
 		AeronProcessor otherProcessor = createProcessor("otherProcessor");
 		otherProcessor.onNext(Buffer.wrap("Glory"));
 
-		DataTestSubscriber<String> mySubscriber = createTestSubscriber();
+		TestSubscriber<String> mySubscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(myProcessor)
 		  .subscribe(mySubscriber);
-		mySubscriber.requestUnboundedWithTimeout();
 
-		mySubscriber.assertNextSignalsEqual("Live", "Glory");
-		mySubscriber.assertCompleteReceived();
+		mySubscriber.awaitAndAssertValues("Live", "Glory").assertComplete();
 
 		otherProcessor.onComplete();
 	}
@@ -142,35 +135,35 @@ public class AeronProcessorMultipleInstancesTest {
 		       .subscribe(server);
 
 		AeronProcessor client1 = createProcessor("client-1");
-		DataTestSubscriber<String> subscriber1 = createTestSubscriber();
+		TestSubscriber<String> subscriber1 = new TestSubscriber<String>(0);
 		Buffer.bufferToString(client1).subscribe(subscriber1);
 
 		AeronProcessor client2 = createProcessor("client-2");
-		DataTestSubscriber<String> subscriber2 = createTestSubscriber();
+		TestSubscriber<String> subscriber2 = new TestSubscriber<String>(0);
 		Buffer.bufferToString(client2).subscribe(subscriber2);
 
 		subscriber1.request(1);
-		subscriber1.assertNextSignalsEqual("One");
-		subscriber2.assertNumNextSignalsReceived(0);
+		subscriber1.awaitAndAssertValues("One");
+		subscriber2.assertValueCount(0);
 
 		subscriber1.request(1);
-		subscriber1.assertNextSignalsEqual("One", "Two");
-		subscriber2.assertNumNextSignalsReceived(0);
+		subscriber1.awaitAndAssertValues("One", "Two");
+		subscriber2.assertValueCount(0);
 
 		subscriber2.request(1);
-		subscriber1.assertNextSignalsEqual("One", "Two");
-		subscriber2.assertNextSignalsEqual("One");
+		subscriber1.awaitAndAssertValues("One", "Two");
+		subscriber2.awaitAndAssertValues("One");
 
 		subscriber1.request(1);
 		subscriber2.request(2);
-		subscriber1.assertNextSignalsEqual("One", "Two", "Three");
-		subscriber2.assertNextSignalsEqual("One", "Two", "Three");
+		subscriber1.awaitAndAssertValues("One", "Two", "Three");
+		subscriber2.awaitAndAssertValues("One", "Two", "Three");
 
 		client1.onComplete();
 		client2.onComplete();
 
-		subscriber1.assertCompleteReceived();
-		subscriber2.assertCompleteReceived();
+		subscriber1.await(TIMEOUT_SECS).assertComplete();
+		subscriber2.await(TIMEOUT_SECS).assertComplete();
 	}
 
 	@Test
@@ -181,26 +174,26 @@ public class AeronProcessorMultipleInstancesTest {
 		       .subscribe(server);
 
 		AeronProcessor client1 = createProcessor("client-1");
-		DataTestSubscriber<String> subscriber1 = createTestSubscriber();
+		TestSubscriber<String> subscriber1 = new TestSubscriber<String>(0);
 		Buffer.bufferToString(client1).subscribe(subscriber1);
 
 		AeronProcessor client2 = createProcessor("client-2");
-		TestSubscriber<String> subscriber2 = createTestSubscriber();
+		TestSubscriber<String> subscriber2 = new TestSubscriber<String>(0);
 		Buffer.bufferToString(client2).subscribe(subscriber2);
 
 		subscriber1.request(1);
-		subscriber1.assertNextSignalsEqual("One");
-		subscriber2.assertNumNextSignalsReceived(0);
+		subscriber1.awaitAndAssertValues("One");
+		subscriber2.assertValueCount(0);
 
 		subscriber1.request(1);
 
-		subscriber1.assertNextSignalsEqual("One", "Two");
-		subscriber2.assertNumNextSignalsReceived(0);
+		subscriber1.awaitAndAssertValues("One", "Two");
+		subscriber2.assertValueCount(0);
 
 		subscriber1.request(1);
 
-		subscriber1.assertErrorReceived();
-		subscriber2.assertErrorReceived();
+		subscriber1.await(TIMEOUT_SECS).assertError();
+		subscriber2.await(TIMEOUT_SECS).assertError();
 	}
 
 	private AeronProcessor createProcessor(String name) {
@@ -208,10 +201,6 @@ public class AeronProcessorMultipleInstancesTest {
 		                                         .autoCancel(false)
 		                                         .senderChannel(CHANNEL)
 		                                         .receiverChannel(CHANNEL));
-	}
-
-	private DataTestSubscriber<String> createTestSubscriber() {
-		return DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 	}
 
 }

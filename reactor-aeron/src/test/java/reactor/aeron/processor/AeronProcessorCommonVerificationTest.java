@@ -34,13 +34,13 @@ import org.testng.annotations.Test;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.EmbeddedMediaDriverManager;
-import reactor.core.subscriber.test.TestSubscriber;
+import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 
 /**
  * @author Anatoly Kadyshev
  */
-@org.testng.annotations.Test
+@Test
 public abstract class AeronProcessorCommonVerificationTest extends IdentityProcessorVerification<Buffer> {
 
 	private final List<AeronProcessor> processors = new ArrayList<>();
@@ -79,10 +79,10 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 
 				for (AeronProcessor processor: processors) {
 					processor.shutdown();
-					TestSubscriber.waitFor(5, "processor didn't terminate", processor::isTerminated);
+					TestSubscriber.await(5L, "processor didn't terminate", processor::isTerminated);
 				}
 
-				TestSubscriber.waitFor(5, "Embedded Media driver wasn't shutdown properly",
+				TestSubscriber.await(5L, "Embedded Media driver wasn't shutdown properly",
 						() -> driverManager.getCounter() == 0);
 			}
 		}

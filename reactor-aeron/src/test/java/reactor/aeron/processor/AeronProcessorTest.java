@@ -23,8 +23,7 @@ import org.junit.Test;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
-import reactor.core.subscriber.test.DataTestSubscriber;
-import reactor.core.subscriber.test.TestSubscriber;
+import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Stream;
@@ -38,7 +37,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class AeronProcessorTest {
 
-	protected final int TIMEOUT_SECS = 5;
+	protected final long TIMEOUT_SECS = 5L;
 
 	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
 
@@ -58,18 +57,14 @@ public class AeronProcessorTest {
 		if (processor != null) {
 			processor.shutdown();
 
-			TestSubscriber.waitFor(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
+			TestSubscriber.await(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
 					() -> processor.isTerminated());
 		}
 
-		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
+		AeronTestUtils.awaitMediaDriverIsTerminated((int) TIMEOUT_SECS);
 
 		assertTrue(threadSnapshot.takeAndCompare(new String[] {"hash", "global"},
 				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
-	}
-
-	protected DataTestSubscriber<String>createTestSubscriber() {
-		return DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
 	}
 
 	@Test
@@ -91,14 +86,13 @@ public class AeronProcessorTest {
 					Buffer.wrap("Live"))
 					.subscribe(processor);
 
-			DataTestSubscriber<String>subscriber = createTestSubscriber();
+			TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
 			Buffer.bufferToString(processor).subscribe(subscriber);
-			subscriber.requestUnboundedWithTimeout();
+			subscriber.request(1);
 
-			subscriber.assertNextSignalsEqual("Live");
-			subscriber.assertCompleteReceived();
+			subscriber.awaitAndAssertValues("Live").assertComplete();
 
-			TestSubscriber.waitFor(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
+			TestSubscriber.await(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
 					processor::isTerminated);
 		} finally {
 			aeron.close();
@@ -121,12 +115,11 @@ public class AeronProcessorTest {
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
-		DataTestSubscriber<String>subscriber = createTestSubscriber();
+		TestSubscriber<String>subscriber = new TestSubscriber<String>(0);
 		Buffer.bufferToString(processor).subscribe(subscriber);
-		subscriber.requestUnboundedWithTimeout();
+		subscriber.request(1);
 
-		subscriber.assertNextSignalsEqual("Live");
-		subscriber.assertCompleteReceived();
+		subscriber.awaitAndAssertValues("Live").assertComplete();
 	}
 
 	@Test
@@ -137,12 +130,11 @@ public class AeronProcessorTest {
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
-		DataTestSubscriber<String>subscriber = createTestSubscriber();
+		TestSubscriber<String>subscriber = new TestSubscriber<String>(0);
 		Buffer.bufferToString(processor).subscribe(subscriber);
-		subscriber.requestUnboundedWithTimeout();
+		subscriber.request(1);
 
-		subscriber.assertNextSignalsEqual("Live");
-		subscriber.assertCompleteReceived();
+		subscriber.awaitAndAssertValues("Live").assertComplete();
 	}
 
 	protected Context createAeronContext() {

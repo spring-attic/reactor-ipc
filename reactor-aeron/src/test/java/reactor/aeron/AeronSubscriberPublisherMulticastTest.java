@@ -21,8 +21,7 @@ import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.core.publisher.Flux;
-import reactor.core.subscriber.test.DataTestSubscriber;
-import reactor.core.subscriber.test.TestSubscriber;
+import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 
 /**
@@ -46,18 +45,18 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 		    .subscribe(subscriber);
 
 		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
-		TestSubscriber<String> client = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		TestSubscriber<String> client = new TestSubscriber<String>(0);
 		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
 
-		client.assertNumNextSignalsReceived(3);
+		client.awaitAndAssertValueCount(3);
 
 		client.cancel();
 
 		Thread.sleep(3000);
 
-		DataTestSubscriber<String> client2 = DataTestSubscriber.createWithTimeoutSecs(TIMEOUT_SECS);
+		TestSubscriber<String> client2 = new TestSubscriber<String>(0);
 		Buffer.bufferToString(publisher)
 		  .subscribe(client2);
 
@@ -65,15 +64,15 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 
 		client2.request(6);
 
-		client2.assertNumNextSignalsReceived(6);
+		client2.awaitAndAssertValueCount(6);
 
 		client2.cancel();
 
 		subscriber.shutdown();
 		publisher.shutdown();
 
-		TestSubscriber.waitFor(TIMEOUT_SECS, "Subscriber wasn't terminated", subscriber::isTerminated);
-		TestSubscriber.waitFor(TIMEOUT_SECS, "Publisher wasn't terminated", publisher::isTerminated);
+		TestSubscriber.await(TIMEOUT_SECS, "Subscriber wasn't terminated", subscriber::isTerminated);
+		TestSubscriber.await(TIMEOUT_SECS, "Publisher wasn't terminated", publisher::isTerminated);
 	}
 
 }
