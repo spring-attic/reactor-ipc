@@ -75,6 +75,7 @@ public class NettyHttpHeaders implements HttpHeaders {
 
 	@Override
 	public HttpHeaders removeTransferEncodingChunked() {
+		io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChunked(nettyRequest);
 		return this;
 	}
 
@@ -92,6 +93,7 @@ public class NettyHttpHeaders implements HttpHeaders {
 
 	@Override
 	public HttpHeaders contentLength(long length) {
+		io.netty.handler.codec.http.HttpHeaders.setContentLength(nettyRequest, length);
 		return this;
 	}
 
