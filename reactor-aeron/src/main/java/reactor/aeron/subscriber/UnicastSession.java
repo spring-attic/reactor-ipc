@@ -17,8 +17,8 @@ package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscription;
 import reactor.aeron.support.DemandTracker;
-import reactor.core.trait.Introspectable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Introspectable;
 import uk.co.real_logic.aeron.Publication;
 
 /**

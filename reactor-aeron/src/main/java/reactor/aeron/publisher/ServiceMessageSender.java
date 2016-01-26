@@ -17,8 +17,8 @@ package reactor.aeron.publisher;
 
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.trait.Connectable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Connectable;
+import reactor.core.graph.Subscribable;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;

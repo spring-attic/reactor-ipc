@@ -20,8 +20,8 @@ import java.net.InetSocketAddress;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
-import reactor.core.trait.Introspectable;
 import reactor.fn.Function;
 import reactor.fn.tuple.Tuple2;
 import reactor.io.net.Preprocessor;

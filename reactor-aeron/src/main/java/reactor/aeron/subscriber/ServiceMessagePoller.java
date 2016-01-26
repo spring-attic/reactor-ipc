@@ -21,7 +21,7 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.trait.Publishable;
+import reactor.core.graph.Publishable;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import uk.co.real_logic.aeron.FragmentAssembler;
