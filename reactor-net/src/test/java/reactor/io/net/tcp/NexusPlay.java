@@ -44,7 +44,7 @@ public class NexusPlay {
 		//ReactiveStateUtils.scan(o).toString()
 
 		//SAMPLE streams to monitor
-		//nexus.monitor(nexus);
+		nexus.monitor(nexus);
 
 		Random r = new Random();
 
