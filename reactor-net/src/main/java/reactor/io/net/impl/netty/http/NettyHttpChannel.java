@@ -276,6 +276,7 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 
 	void setNettyResponse(HttpResponse nettyResponse) {
 		this.nettyResponse = nettyResponse;
+		this.responseHeaders = new NettyHttpResponseHeaders(this.nettyResponse);
 	}
 
 	@Override
