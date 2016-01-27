@@ -235,11 +235,6 @@ public class NettyChannel
 		}
 	}
 
-	@Override
-	public Object upstream() {
-		return null;
-	}
-
 	public static class FuturePublisher<C extends Future> extends Mono<Void> {
 
 		protected final C future;

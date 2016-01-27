@@ -33,6 +33,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.queue.RingBuffer;
 import reactor.core.queue.Sequencer;
 import reactor.core.queue.Slot;
@@ -246,11 +247,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	}
 
 	@Override
-	public Object upstream() {
-		return null;
-	}
-
-	@Override
 	public void write(final ChannelHandlerContext ctx, Object msg, final ChannelPromise promise) throws Exception {
 		if (msg instanceof Publisher) {
 			CHANNEL_REF.incrementAndGet(this);
@@ -379,11 +375,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			}
 			this.inputSubscriber = inputSubscriber;
 			this.bufferSize = (int) Math.min(Math.max(bufferSize, 32), 128);
-		}
-
-		@Override
-		public Object upstream() {
-			return null;
 		}
 
 		@Override
@@ -738,7 +729,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	private class FlushOnCapacitySubscriber extends BaseSubscriber<Object>
 			implements Runnable,
 			           ChannelFutureListener, Loopback, Backpressurable, Completable,
-			           Cancellable, Prefetchable {
+			           Cancellable, Receiver, Prefetchable {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;

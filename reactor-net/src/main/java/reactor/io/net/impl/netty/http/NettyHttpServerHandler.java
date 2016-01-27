@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.LastHttpContent;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
@@ -155,7 +156,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 	}
 
-	private class CloseSubscriber extends BaseSubscriber<Void> implements Completable {
+	private class CloseSubscriber extends BaseSubscriber<Void> implements Receiver, Completable {
 
 		private final ChannelHandlerContext ctx;
 		Subscription subscription;

@@ -174,11 +174,6 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 		return !started.get();
 	}
 
-	@Override
-	public Object upstream() {
-		return null;
-	}
-
 	private final class PreprocessedReactivePeer<NEWIN, NEWOUT, NEWCONN extends ReactiveChannel<NEWIN, NEWOUT>>
 			extends ReactivePeer<NEWIN, NEWOUT, NEWCONN> {
 

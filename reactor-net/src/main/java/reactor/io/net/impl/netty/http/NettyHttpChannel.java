@@ -289,8 +289,4 @@ public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
 		return this;
 	}
 
-	@Override
-	public Object upstream() {
-		return null;
-	}
 }

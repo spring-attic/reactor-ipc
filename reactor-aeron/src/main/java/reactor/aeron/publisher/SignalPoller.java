@@ -190,11 +190,6 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
 		return SignalPoller.class.getSimpleName();
 	}
 
-	@Override
-	public Object upstream() {
-		return null;
-	}
-
 	/**
 	 * Handler for Error signals
 	 */
