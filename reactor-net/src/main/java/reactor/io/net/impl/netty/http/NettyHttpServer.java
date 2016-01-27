@@ -26,7 +26,7 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
@@ -47,7 +47,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpServer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Connectable{
+public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Loopback {
 
 	private static final Logger log = Logger.getLogger(NettyHttpServer.class);
 

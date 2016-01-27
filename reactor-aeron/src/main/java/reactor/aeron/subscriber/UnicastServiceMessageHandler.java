@@ -27,7 +27,7 @@ import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.SignalType;
-import reactor.core.graph.SubscribableMany;
+import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
@@ -38,7 +38,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class UnicastServiceMessageHandler implements ServiceMessageHandler, SubscribableMany {
+public class UnicastServiceMessageHandler implements ServiceMessageHandler, MultiProducer {
 
 	private static final Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
 

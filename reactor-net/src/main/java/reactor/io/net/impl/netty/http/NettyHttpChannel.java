@@ -32,7 +32,7 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.state.Completable;
 import reactor.core.util.Assert;
@@ -55,7 +55,7 @@ import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
  * @author Stephane Maldini
  */
 public abstract class NettyHttpChannel extends BaseHttpChannel<Buffer, Buffer>
-		implements Publisher<Buffer>, Connectable, Completable {
+		implements Publisher<Buffer>, Loopback, Completable {
 
 	private static final FullHttpResponse CONTINUE =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);

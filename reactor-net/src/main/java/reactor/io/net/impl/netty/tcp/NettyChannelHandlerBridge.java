@@ -31,8 +31,8 @@ import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.queue.RingBuffer;
 import reactor.core.queue.Sequencer;
 import reactor.core.queue.Slot;
@@ -61,7 +61,7 @@ import reactor.io.net.impl.netty.NettyChannel;
  * @author Stephane Maldini
  */
 public class NettyChannelHandlerBridge extends ChannelDuplexHandler
-		implements Introspectable, Connectable, Subscribable,
+		implements Introspectable, Loopback, Producer,
 		           Completable  {
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandlerBridge.class);
@@ -346,7 +346,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandlerBridge}
 	 */
 	public static final class ChannelInputSubscriber implements Subscription, Subscriber<Buffer>
-	, Requestable, Completable, Backpressurable, Subscribable, Cancellable {
+	, Requestable, Completable, Backpressurable, Producer, Cancellable {
 
 		private final Subscriber<? super Buffer> inputSubscriber;
 
@@ -634,7 +634,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	}
 
 	private class FlushOnTerminateSubscriber extends BaseSubscriber<Object>
-			implements ChannelFutureListener, Connectable {
+			implements ChannelFutureListener, Loopback {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -737,7 +737,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 	private class FlushOnCapacitySubscriber extends BaseSubscriber<Object>
 			implements Runnable,
-			           ChannelFutureListener, Connectable, Backpressurable, Completable,
+			           ChannelFutureListener, Loopback, Backpressurable, Completable,
 			           Cancellable, Prefetchable {
 
 		private final ChannelHandlerContext ctx;

@@ -21,8 +21,8 @@ import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
 import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.ProcessorTopic;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
@@ -99,7 +99,7 @@ import reactor.io.buffer.Buffer;
  * @since 2.5
  */
 public class AeronSubscriber extends BaseSubscriber<Buffer>
-		implements Completable, Publishable, Connectable {
+		implements Completable, Receiver, Loopback {
 
 	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
 

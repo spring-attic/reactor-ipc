@@ -34,8 +34,8 @@ import io.netty.util.concurrent.GenericFutureListener;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
@@ -51,8 +51,7 @@ import reactor.io.net.impl.netty.tcp.NettyChannelHandlerBridge;
  */
 public class NettyChannel
 		extends Flux<Buffer>
-		implements ReactiveChannel<Buffer, Buffer>,
-		           Connectable, Completable {
+		implements ReactiveChannel<Buffer, Buffer>, Loopback, Completable {
 
 	private final Channel ioChannel;
 	private final long    prefetch;
@@ -318,7 +317,7 @@ public class NettyChannel
 		}
 	}
 
-	private class PostWritePublisher extends Mono<Void> implements Publishable, Connectable {
+	private class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
 
 		private final Publisher<? extends Buffer> dataStream;
 

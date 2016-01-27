@@ -17,8 +17,8 @@ package reactor.aeron.publisher;
 
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;
@@ -29,7 +29,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class ServiceMessageSender implements Subscribable, Connectable {
+public class ServiceMessageSender implements Producer, Loopback {
 
 	private final Publication serviceRequestPub;
 

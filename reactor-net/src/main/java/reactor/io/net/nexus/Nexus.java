@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.logging.Level;
 
 import org.reactivestreams.Publisher;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
@@ -64,7 +64,7 @@ import static reactor.core.util.ReactiveStateUtils.property;
  * @since 2.5
  */
 public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>
-		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, Connectable {
+		implements ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, Loopback {
 
 	private static final Logger log            = Logger.getLogger(Nexus.class);
 	private static final String API_STREAM_URL = "/nexus/stream";

@@ -22,9 +22,9 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Publishable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Receiver;
+import reactor.core.flow.Producer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Introspectable;
@@ -263,7 +263,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 		return new PostWritePublisher(source);
 	}
 
-	private class PostWritePublisher extends Mono<Void> implements Publishable, Connectable {
+	private class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
 
 		private final Publisher<? extends OUT> source;
 
@@ -296,7 +296,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 			return BaseHttpChannel.this;
 		}
 
-		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Publishable, Subscribable {
+		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Receiver, Producer {
 
 			private final Subscriber<? super Void> s;
 			private Subscription subscription;
@@ -340,7 +340,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 		}
 	}
 
-	private class PostHeaderWritePublisher extends Mono<Void> implements Connectable{
+	private class PostHeaderWritePublisher extends Mono<Void> implements Loopback {
 
 		@Override
 		public void subscribe(Subscriber<? super Void> s) {
@@ -363,7 +363,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 		}
 	}
 
-	private class PostBufferWritePublisher extends Mono<Void> implements Publishable, Connectable {
+	private class PostBufferWritePublisher extends Mono<Void> implements Receiver, Loopback {
 
 		private final Publisher<? extends Buffer> dataStream;
 
@@ -396,7 +396,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 			return dataStream;
 		}
 
-		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Subscribable, Publishable {
+		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Producer, Receiver {
 
 			private final Subscriber<? super Void> s;
 			private Subscription subscription;

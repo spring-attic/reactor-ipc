@@ -41,7 +41,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.SubscribableMany;
+import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
@@ -71,7 +71,7 @@ import reactor.io.net.tcp.ssl.SSLEngineSupplier;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements SubscribableMany {
+public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiProducer {
 
 	private static final Logger log = Logger.getLogger(NettyTcpClient.class);
 

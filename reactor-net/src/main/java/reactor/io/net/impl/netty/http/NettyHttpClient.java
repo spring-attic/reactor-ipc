@@ -31,7 +31,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.subscriber.Subscribers;
@@ -58,7 +58,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpClient;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Connectable {
+public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopback {
 
 	private final static Logger log = Logger.getLogger(NettyHttpClient.class);
 

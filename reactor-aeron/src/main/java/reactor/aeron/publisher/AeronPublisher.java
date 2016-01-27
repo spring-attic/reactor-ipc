@@ -25,7 +25,7 @@ import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Producer;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
 import reactor.core.util.Assert;
@@ -79,7 +79,7 @@ import uk.co.real_logic.aeron.Publication;
  * @author Anatoly Kadyshev
  * @since 2.5
  */
-public class AeronPublisher implements Publisher<Buffer>, Subscribable {
+public class AeronPublisher implements Publisher<Buffer>, Producer {
 
 	private static final Logger logger = Logger.getLogger(AeronPublisher.class);
 

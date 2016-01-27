@@ -26,8 +26,8 @@ import reactor.aeron.support.DemandTracker;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.aeron.support.SignalType;
-import reactor.core.graph.Subscribable;
-import reactor.core.graph.SubscribableMany;
+import reactor.core.flow.Producer;
+import reactor.core.flow.MultiProducer;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Introspectable;
@@ -47,9 +47,9 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 /**
  * Signals receiver functionality which polls for signals sent by senders
  */
-public class SignalPoller implements org.reactivestreams.Subscription, Runnable, Subscribable,
+public class SignalPoller implements org.reactivestreams.Subscription, Runnable, Producer,
                                      Requestable, Completable,
-                                     Cancellable, SubscribableMany, Introspectable {
+                                     Cancellable, MultiProducer, Introspectable {
 
 	private static final Logger logger = Logger.getLogger(SignalPoller.class);
 
