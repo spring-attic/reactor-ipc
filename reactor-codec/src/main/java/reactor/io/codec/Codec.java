@@ -18,7 +18,9 @@ package reactor.io.codec;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
+import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.fn.Consumer;
@@ -254,7 +256,39 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private class DecoderOperator extends Flux.FluxBarrier<SRC, IN>{
+	protected abstract static class CodecSource<I, O> extends Flux<O> implements Backpressurable, Receiver {
+		protected final Publisher<? extends I> source;
+
+		public CodecSource(Publisher<? extends I> source) {
+			this.source = source;
+		}
+
+		@Override
+		public long getCapacity() {
+			return Backpressurable.class.isAssignableFrom(source.getClass()) ?
+					((Backpressurable) source).getCapacity() :
+					Long.MAX_VALUE;
+		}
+
+		@Override
+		public long getPending() {
+			return -1L;
+		}
+
+		@Override
+		public String toString() {
+			return "{" +
+					" codec : \"" + getName() + "\" " +
+					'}';
+		}
+
+		@Override
+		public final Publisher<? extends I> upstream() {
+			return source;
+		}
+	}
+
+	private class DecoderOperator extends CodecSource<SRC, IN> {
 
 		public DecoderOperator(Publisher<? extends SRC> source) {
 			super(source);
@@ -266,7 +300,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private class EncoderOperator extends Flux.FluxBarrier<OUT, SRC> {
+	private class EncoderOperator extends CodecSource<OUT, SRC> {
 
 		public EncoderOperator(Publisher<? extends OUT> source) {
 			super(source);

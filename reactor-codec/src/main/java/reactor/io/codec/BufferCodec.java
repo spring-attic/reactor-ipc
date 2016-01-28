@@ -308,7 +308,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 		}
 	}
 
-	private class BufferDecoderOperator extends Flux.FluxBarrier<Buffer, IN> {
+	private class BufferDecoderOperator extends CodecSource<Buffer, IN> {
 
 		public BufferDecoderOperator(Publisher<? extends Buffer> source) {
 			super(source);
