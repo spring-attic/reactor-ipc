@@ -278,7 +278,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 	}
 
 	@Override
-	public long downstreamsCount() {
+	public long downstreamCount() {
 		return sessionTracker.getSessionCounter();
 	}
 

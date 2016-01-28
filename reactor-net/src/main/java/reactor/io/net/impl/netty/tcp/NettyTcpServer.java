@@ -147,7 +147,7 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 	}
 
 	@Override
-	public long downstreamsCount() {
+	public long downstreamCount() {
 		return channelGroup == null ? -1 : channelGroup.size();
 	}
 

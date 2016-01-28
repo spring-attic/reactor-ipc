@@ -180,7 +180,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 	}
 
 	@Override
-	public long downstreamsCount() {
+	public long downstreamCount() {
 		return channelGroup == null ? -1 : channelGroup.size();
 	}
 

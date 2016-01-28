@@ -26,8 +26,8 @@ import reactor.aeron.support.DemandTracker;
 import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.aeron.support.SignalType;
-import reactor.core.flow.Producer;
 import reactor.core.flow.MultiProducer;
+import reactor.core.flow.Producer;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Introspectable;
@@ -337,7 +337,7 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
 	}
 
 	@Override
-	public long downstreamsCount() {
+	public long downstreamCount() {
 		return running ? 2 : 0;
 	}
 
