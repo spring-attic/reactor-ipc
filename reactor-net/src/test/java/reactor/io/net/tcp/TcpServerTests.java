@@ -38,6 +38,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
 import reactor.core.publisher.ProcessorWorkQueue;
+import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
