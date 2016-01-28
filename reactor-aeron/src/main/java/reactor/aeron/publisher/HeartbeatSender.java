@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import reactor.aeron.Context;
 import reactor.aeron.support.HeartbeatPublicationFailureException;
 import reactor.core.state.Pausable;
+import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
 import reactor.fn.Consumer;
 

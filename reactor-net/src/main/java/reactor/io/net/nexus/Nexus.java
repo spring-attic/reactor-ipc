@@ -127,7 +127,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.group = Processors.asyncGroup("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
 			@Override
 			public WaitStrategy get() {
-				return new WaitStrategy.Blocking();
+				return WaitStrategy.blocking();
 			}
 		});
 
@@ -139,7 +139,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.cannons = cannons.startSession();
 
 		lastState = new GraphEvent(server.getListenAddress()
-		                                 .toString(), ReactiveStateUtils.newGraph());
+		                                 .toString(), ReactiveStateUtils.createGraph());
 
 		lastSystemState = new SystemEvent(server.getListenAddress()
 		                                        .toString());
@@ -381,7 +381,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		if (logExtensionEnabled) {
 			FluxProcessor<Event, Event> p =
-					ProcessorTopic.share("nexus-log-sink", 256, new WaitStrategy.Blocking());
+					ProcessorTopic.share("nexus-log-sink", 256, WaitStrategy.blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startSession());
