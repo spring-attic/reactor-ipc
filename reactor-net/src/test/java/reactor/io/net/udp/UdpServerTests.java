@@ -25,7 +25,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.io.net.config.ServerSocketOptions;
@@ -151,7 +150,7 @@ public class UdpServerTests {
 			servers.add(server);
 		}
 
-		for (int i = 0; i < Processors.DEFAULT_POOL_SIZE; i++) {
+		for (int i = 0; i < ProcessorGroup.DEFAULT_POOL_SIZE; i++) {
 			threadPool.submit(() -> {
 				try {
 					MulticastSocket multicast = new MulticastSocket();

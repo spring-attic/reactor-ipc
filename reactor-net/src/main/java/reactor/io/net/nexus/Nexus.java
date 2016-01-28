@@ -32,7 +32,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
-import reactor.core.publisher.Processors;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SignalEmitter;
@@ -124,7 +123,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.eventStream = Processors.emitter(false);
 		this.lastStateMerge = new LastGraphStateMap();
 		this.timer = Timer.create("nexus-poller");
-		this.group = Processors.asyncGroup("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
+		this.group = ProcessorGroup.async("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
 			@Override
 			public WaitStrategy get() {
 				return WaitStrategy.blocking();

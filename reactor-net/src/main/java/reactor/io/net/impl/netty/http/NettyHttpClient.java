@@ -71,7 +71,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	 * and the given {@code reactor} to send events. The number of IO threads used by the
 	 * client is configured by the environment's {@code reactor.tcp.ioThreadCount}
 	 * property. In its absence the number of IO threads will be equal to the {@link
-	 * reactor.core.publisher.Processors#DEFAULT_POOL_SIZE number of available processors}. </p> The
+	 * reactor.core.publisher.ProcessorGroup#DEFAULT_POOL_SIZE number of available processors}. </p> The
 	 * client will connect to the given {@code connectAddress}, configuring its socket
 	 * using the given {@code opts}. The given {@code codec} will be used for encoding and
 	 * decoding of data.

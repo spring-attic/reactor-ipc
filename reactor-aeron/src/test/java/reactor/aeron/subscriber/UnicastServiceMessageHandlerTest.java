@@ -22,7 +22,6 @@ import reactor.aeron.Context;
 import reactor.aeron.support.SignalType;
 import reactor.aeron.support.TestAeronInfra;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.Processors;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
 

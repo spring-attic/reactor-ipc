@@ -30,7 +30,6 @@ import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.Processors;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
