@@ -27,7 +27,6 @@ import reactor.aeron.support.ServiceMessagePublicationFailedException;
 import reactor.aeron.support.ServiceMessageType;
 import reactor.core.flow.Producer;
 import reactor.core.timer.Timer;
-import reactor.core.timer.Timers;
 import reactor.core.util.Assert;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
@@ -172,7 +171,8 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 	@Override
 	public void subscribe(Subscriber<? super Buffer> subscriber) {
 		if (subscriber == null) {
-			throw Exceptions.spec_2_13_exception();
+			Exceptions.argumentIsNullException();
+			return;
 		}
 
 		if (!subscribed.compareAndSet(false, true)) {
@@ -221,7 +221,7 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 	public void shutdown() {
 		if (alive.compareAndSet(true, false)) {
 			// Doing a shutdown via timer to avoid shutting down Aeron in its thread
-			final Timer globalTimer = Timers.global();
+			final Timer globalTimer = Timer.global();
 			globalTimer.submit(new Consumer<Long>() {
 				@Override
 				public void accept(Long value) {

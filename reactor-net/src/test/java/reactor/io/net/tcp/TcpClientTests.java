@@ -44,7 +44,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Processors;
 import reactor.core.subscriber.Subscribers;
-import reactor.core.timer.Timers;
 import reactor.core.util.PlatformDependent;
 import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple;
@@ -83,7 +82,7 @@ public class TcpClientTests {
 
 	@Before
 	public void setup() {
-		Timers.global();
+		Timer.global();
 
 		echoServerPort = SocketUtils.findAvailableTcpPort();
 		echoServer = new EchoServer(echoServerPort);
@@ -118,7 +117,7 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(1);
 
 		TcpClient<String, String> client = ReactiveNet.tcpClient(s ->
-			s.timer(Timers.global()).preprocessor(CodecPreprocessor.string()).connect("localhost", echoServerPort)
+			s.timer(Timer.global()).preprocessor(CodecPreprocessor.string()).connect("localhost", echoServerPort)
 		);
 
 		client.startAndAwait(conn -> {

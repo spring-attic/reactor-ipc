@@ -27,7 +27,6 @@ import reactor.core.publisher.ProcessorTopic;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.timer.Timer;
-import reactor.core.timer.Timers;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
@@ -218,7 +217,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 	public void shutdown() {
 		if (alive.compareAndSet(true, false)) {
 			// Doing a shutdown via globalTimer to avoid shutting down Aeron in its thread
-			final Timer globalTimer = Timers.global();
+			final Timer globalTimer = Timer.global();
 			globalTimer.submit(new Consumer<Long>() {
 				@Override
 				public void accept(Long aLong) {

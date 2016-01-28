@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.timer.Timer;
-import reactor.core.timer.Timers;
 import reactor.core.util.Assert;
 import reactor.fn.Function;
 
@@ -44,7 +43,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ReactiveChannel<IN, OUT
 	}
 
 	protected ReactivePeer(Timer defaultTimer, long prefetch) {
-		this.defaultTimer = defaultTimer == null && Timers.hasGlobal() ? Timers.global() :
+		this.defaultTimer = defaultTimer == null && Timer.hasGlobal() ? Timer.global() :
 				defaultTimer;
 		this.defaultPrefetch = prefetch > 0 ? prefetch : Long.MAX_VALUE;
 		this.started = new AtomicBoolean();

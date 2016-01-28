@@ -38,7 +38,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
 import reactor.core.publisher.ProcessorWorkQueue;
-import reactor.core.timer.Timers;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
@@ -84,7 +83,7 @@ public class TcpServerTests {
 
 	@Before
 	public void loadEnv() {
-		Timers.global();
+		Timer.global();
 		latch = new CountDownLatch(msgs * threads);
 		threadPool = Executors.newCachedThreadPool();
 	}
@@ -92,7 +91,7 @@ public class TcpServerTests {
 	@After
 	public void cleanup() {
 		threadPool.shutdownNow();
-		Timers.unregisterGlobal();
+		Timer.unregisterGlobal();
 	}
 
 	@Test

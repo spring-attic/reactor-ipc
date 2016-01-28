@@ -36,7 +36,6 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import reactor.core.publisher.ProcessorTopic;
 import reactor.core.publisher.ProcessorWorkQueue;
-import reactor.core.timer.Timers;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.ReactiveNet;
@@ -102,7 +101,7 @@ public class SmokeTests {
 
 	@Before
 	public void loadEnv() throws Exception {
-		Timers.global();
+		Timer.global();
 		setupFakeProtocolListener();
 	}
 
@@ -110,7 +109,7 @@ public class SmokeTests {
 	public void clean() throws Exception {
 		processor.onComplete();
 		httpServer.shutdown().get();
-		Timers.unregisterGlobal();
+		Timer.unregisterGlobal();
 	}
 
 	public Sender newSender() {

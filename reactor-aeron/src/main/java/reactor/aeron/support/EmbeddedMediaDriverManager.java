@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import reactor.core.timer.Timer;
-import reactor.core.timer.Timers;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
@@ -180,7 +179,7 @@ public class EmbeddedMediaDriverManager {
 		if (driver != null) {
 			aeron.close();
 
-			Timer timer = Timers.global();
+			Timer timer = Timer.global();
 			timer.submit(new RetryShutdownTask(timer), retryShutdownMillis, TimeUnit.MILLISECONDS);
 		}
 	}

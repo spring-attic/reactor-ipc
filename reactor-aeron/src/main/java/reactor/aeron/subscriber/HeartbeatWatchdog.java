@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
 import reactor.core.state.Pausable;
-import reactor.core.timer.Timers;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 
@@ -75,7 +74,7 @@ public class HeartbeatWatchdog {
 	}
 
 	public void start() {
-		this.pausable = Timers.global().schedule(sessionReaper, (heartbeatTimeoutNs * 3) / 2, TimeUnit.NANOSECONDS);
+		this.pausable = Timer.global().schedule(sessionReaper, (heartbeatTimeoutNs * 3) / 2, TimeUnit.NANOSECONDS);
 
 		logger.debug("HeartbeatWatchdog started");
 	}

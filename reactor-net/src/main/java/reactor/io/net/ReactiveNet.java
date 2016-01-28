@@ -16,7 +16,6 @@
 
 package reactor.io.net;
 
-import reactor.core.timer.Timers;
 import reactor.core.util.Assert;
 import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
@@ -192,7 +191,7 @@ public enum ReactiveNet {
 		return tcpServer(new Function<Spec.TcpServerSpec<Buffer, Buffer>, Spec.TcpServerSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.TcpServerSpec<Buffer, Buffer> apply(Spec.TcpServerSpec<Buffer, Buffer> serverSpec) {
-				serverSpec.timer(Timers.globalOrNull());
+				serverSpec.timer(Timer.globalOrNull());
 				return serverSpec.listen(bindAddress, port);
 			}
 		});
@@ -335,7 +334,7 @@ public enum ReactiveNet {
 		return tcpClient(new Function<Spec.TcpClientSpec<Buffer, Buffer>, Spec.TcpClientSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.TcpClientSpec<Buffer, Buffer> apply(Spec.TcpClientSpec<Buffer, Buffer> clientSpec) {
-				clientSpec.timer(Timers.globalOrNull());
+				clientSpec.timer(Timer.globalOrNull());
 				return clientSpec.connect(bindAddress, port);
 			}
 		});
@@ -428,7 +427,7 @@ public enum ReactiveNet {
 		return httpServer(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.HttpServerSpec<Buffer, Buffer> apply(Spec.HttpServerSpec<Buffer, Buffer> serverSpec) {
-				serverSpec.timer(Timers.globalOrNull());
+				serverSpec.timer(Timer.globalOrNull());
 				return serverSpec.listen(bindAddress, port);
 			}
 		});
@@ -465,7 +464,7 @@ public enum ReactiveNet {
 		return httpClient(new Function<Spec.HttpClientSpec<Buffer, Buffer>, Spec.HttpClientSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.HttpClientSpec<Buffer, Buffer> apply(Spec.HttpClientSpec<Buffer, Buffer> clientSpec) {
-				clientSpec.timer(Timers.globalOrNull());
+				clientSpec.timer(Timer.globalOrNull());
 				return clientSpec;
 			}
 		});
@@ -600,7 +599,7 @@ public enum ReactiveNet {
 		return udpServer(new Function<Spec.DatagramServerSpec<Buffer, Buffer>, Spec.DatagramServerSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.DatagramServerSpec<Buffer, Buffer> apply(Spec.DatagramServerSpec<Buffer, Buffer> serverSpec) {
-				serverSpec.timer(Timers.globalOrNull());
+				serverSpec.timer(Timer.globalOrNull());
 				return serverSpec.listen(bindAddress, port);
 			}
 		});
@@ -735,7 +734,7 @@ public enum ReactiveNet {
 		return nexus(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
 			@Override
 			public Spec.HttpServerSpec<Buffer, Buffer> apply(Spec.HttpServerSpec<Buffer, Buffer> serverSpec) {
-				serverSpec.timer(Timers.globalOrNull());
+				serverSpec.timer(Timer.globalOrNull());
 				return serverSpec.listen(bindAddress, port);
 			}
 		});

@@ -26,7 +26,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Processors;
-import reactor.core.timer.Timers;
 import reactor.core.util.Logger;
 import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.impl.netty.udp.NettyDatagramServer;
@@ -50,7 +49,7 @@ public class UdpServerTests {
 
 	@Before
 	public void setup() {
-		Timers.global();
+		Timer.global();
 		threadPool = Executors.newCachedThreadPool();
 	}
 
@@ -58,7 +57,7 @@ public class UdpServerTests {
 	public void cleanup() throws InterruptedException {
 		threadPool.shutdown();
 		threadPool.awaitTermination(5, TimeUnit.SECONDS);
-		Timers.unregisterGlobal();
+		Timer.unregisterGlobal();
 	}
 
 	@Test

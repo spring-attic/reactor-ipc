@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import reactor.core.publisher.ProcessorWorkQueue;
 import reactor.core.publisher.Processors;
-import reactor.core.timer.Timers;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.preprocessor.CodecPreprocessor;
@@ -222,14 +221,14 @@ public class ClientServerHttpTests {
 
 	@Before
 	public void loadEnv() throws Exception {
-		Timers.global();
+		Timer.global();
 		setupFakeProtocolListener();
 	}
 
 	@After
 	public void clean() throws Exception {
 		httpServer.shutdown().get();
-		Timers.unregisterGlobal();
+		Timer.unregisterGlobal();
 	}
 
 	public Set<Integer> findDuplicates(List<Integer> listContainingDuplicates) {

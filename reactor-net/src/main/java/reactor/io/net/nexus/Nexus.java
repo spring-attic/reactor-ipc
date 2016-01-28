@@ -38,7 +38,6 @@ import reactor.core.state.Introspectable;
 import reactor.core.subscriber.ReactiveSession;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
-import reactor.core.timer.Timers;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
@@ -124,7 +123,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.server = server;
 		this.eventStream = Processors.emitter(false);
 		this.lastStateMerge = new LastGraphStateMap();
-		this.timer = Timers.create("nexus-poller");
+		this.timer = Timer.create("nexus-poller");
 		this.group = Processors.asyncGroup("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
 			@Override
 			public WaitStrategy get() {
