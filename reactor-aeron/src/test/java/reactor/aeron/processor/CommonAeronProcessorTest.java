@@ -29,6 +29,7 @@ import reactor.aeron.Context;
 import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
@@ -131,7 +132,7 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Die"),
 				Buffer.wrap("Harder")).subscribe(processor);
 
-		FluxProcessor<Buffer, Buffer> emitter = Processors.emitter();
+		FluxProcessor<Buffer, Buffer> emitter = EmitterProcessor.create();
 		processor.subscribe(emitter);
 
 		TestSubscriber<String> subscriber1 = new TestSubscriber<String>();

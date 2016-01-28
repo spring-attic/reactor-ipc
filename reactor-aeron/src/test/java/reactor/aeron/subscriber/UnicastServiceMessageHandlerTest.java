@@ -21,6 +21,7 @@ import org.junit.Test;
 import reactor.aeron.Context;
 import reactor.aeron.support.SignalType;
 import reactor.aeron.support.TestAeronInfra;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.FluxProcessor;
 import reactor.io.buffer.Buffer;
 import reactor.rx.Stream;
@@ -41,7 +42,7 @@ public class UnicastServiceMessageHandlerTest {
 
 	@Before
 	public void doSetup() {
-		processor = Processors.emitter(2);
+		processor = EmitterProcessor.create(2);
 
 		aeronInfra = new TestAeronInfra();
 

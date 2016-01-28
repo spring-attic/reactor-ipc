@@ -19,7 +19,9 @@ import java.util.Random;
 import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.FluxProcessor;
+import reactor.core.publisher.ProcessorGroup;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
 import reactor.io.net.ReactiveNet;
@@ -49,7 +51,7 @@ public class NexusPlay {
 
 		// =========================================================
 
-		FluxProcessor<Integer, Integer> p = Processors.emitter();
+		FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
 		Stream<Integer> dispatched = Stream.from(p).dispatchOn(ProcessorGroup.async("semi-fast",  8192, 4));
 
 		//slow subscribers
@@ -70,7 +72,7 @@ public class NexusPlay {
 
 		// =========================================================
 
-		p = Processors.emitter();
+		p = EmitterProcessor.create();
 		dispatched = Stream.from(p).dispatchOn(ProcessorGroup.async("semi-slow", 1024, 4));
 
 		//slow subscribers
@@ -93,7 +95,7 @@ public class NexusPlay {
 
 		// =========================================================
 
-		p = Processors.emitter();
+		p = EmitterProcessor.create();
 		dispatched = Stream.from(p).dispatchOn(ProcessorGroup.async("slow", 1024, 3));
 
 		//slow subscribers

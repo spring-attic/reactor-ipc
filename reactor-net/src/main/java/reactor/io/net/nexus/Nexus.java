@@ -28,6 +28,7 @@ import java.util.logging.Level;
 
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
@@ -120,7 +121,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private Nexus(Timer defaultTimer, HttpServer<Buffer, Buffer> server) {
 		super(defaultTimer);
 		this.server = server;
-		this.eventStream = Processors.emitter(false);
+		this.eventStream = EmitterProcessor.create(false);
 		this.lastStateMerge = new LastGraphStateMap();
 		this.timer = Timer.create("nexus-poller");
 		this.group = ProcessorGroup.async("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
@@ -130,7 +131,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 			}
 		});
 
-		FluxProcessor<Publisher<Event>, Publisher<Event>> cannons = Processors.emitter();
+		FluxProcessor<Publisher<Event>, Publisher<Event>> cannons = EmitterProcessor.create();
 
 		Flux.merge(cannons)
 		    .subscribe(eventStream);
