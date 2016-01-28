@@ -25,6 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import reactor.core.publisher.ProcessorGroup;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.io.net.config.ServerSocketOptions;
