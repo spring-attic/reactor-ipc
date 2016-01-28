@@ -28,7 +28,6 @@ import reactor.aeron.support.AeronUtils;
 import reactor.aeron.support.SignalPublicationFailedException;
 import reactor.aeron.support.SignalType;
 import reactor.core.queue.RingBuffer;
-import reactor.core.queue.Sequencer;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
@@ -107,7 +106,7 @@ public class UnicastAsyncSignalSender implements Runnable {
 			}
 		}, PlatformDependent.MEDIUM_BUFFER_SIZE);
 
-		this.pollCursor = Sequencer.newSequence(-1L);
+		this.pollCursor = RingBuffer.newSequence(-1L);
 		buffer.addGatingSequence(pollCursor);
 		this.executor = ExecutorUtils.singleUse("async-signal-sender", null);
 	}

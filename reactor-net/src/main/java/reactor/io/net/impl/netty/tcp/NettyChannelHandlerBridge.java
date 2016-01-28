@@ -35,7 +35,6 @@ import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.queue.RingBuffer;
-import reactor.core.queue.Sequencer;
 import reactor.core.queue.Slot;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
@@ -573,7 +572,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			RingBuffer<Slot<Buffer>> q = readBackpressureBuffer;
 			if (q == null) {
 				q = RingBuffer.createSingleProducer(bufferSize);
-				q.addGatingSequence(pollCursor = Sequencer.newSequence(-1L));
+				q.addGatingSequence(pollCursor = RingBuffer.newSequence(-1L));
 				readBackpressureBuffer = q;
 			}
 			return q;

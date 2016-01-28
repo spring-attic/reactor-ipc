@@ -15,11 +15,11 @@
  */
 package reactor.aeron.subscriber;
 
-import reactor.core.queue.Sequencer;
+import java.util.UUID;
+
+import reactor.core.queue.RingBuffer;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Sequence;
-
-import java.util.UUID;
 
 /**
  * @author Anatoly Kadyshev
@@ -43,7 +43,7 @@ class MulticastSession implements Session {
 		}
 
 		this.sessionId = sessionId;
-		this.sequence = Sequencer.newSequence(sequence);
+		this.sequence = RingBuffer.newSequence(sequence);
 	}
 
 	@Override
