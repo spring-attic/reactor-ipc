@@ -19,6 +19,7 @@ package reactor.io.net.tcp;
 import java.net.InetSocketAddress;
 
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.ProcessorGroup;
 import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;
