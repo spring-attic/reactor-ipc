@@ -140,7 +140,7 @@ session.
 
 AeronPublisher plays a role of a client receiving signals from AeronSubscriber.
 The publisher supports only a single subscriber. Therefore if you need to attach multiple subscriber then
-`ReplayProcessor` should be put after the publisher.
+`EmitterProcessor` should be put after the publisher.
 
 The subscriber is configured via fields of `Context' which have default values and normally there is no need
 to adjust them.

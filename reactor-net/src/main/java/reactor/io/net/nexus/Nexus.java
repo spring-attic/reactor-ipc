@@ -357,10 +357,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					       String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
 					       log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
 //					if(action.equals("pause") && !arg.isEmpty()){
-//						((ReplayProcessor)Nexus.this.eventStream).pause();
+//						((EmitterProcessor)Nexus.this.eventStream).pause();
 //					}
 //					else if(action.equals("resume") && !arg.isEmpty()){
-//						((ReplayProcessor)Nexus.this.eventStream).resume();
+//						((EmitterProcessor)Nexus.this.eventStream).resume();
 //					}
 				       }
 			       }
