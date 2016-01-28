@@ -75,8 +75,7 @@ public enum NetStreams {
 
 	static {
 		if (!DependencyUtils.hasReactorStream()) {
-			throw new IllegalStateException("io.projectreactor:reactor-stream:" + DependencyUtils.reactorVersion() +
-					" dependency is missing from the classpath.");
+			throw new IllegalStateException("io.projectreactor:reactor-stream dependency is missing from the classpath.");
 		}
 
 	}
