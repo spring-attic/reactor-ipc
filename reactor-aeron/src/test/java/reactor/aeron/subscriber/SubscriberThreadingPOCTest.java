@@ -27,8 +27,8 @@ import org.reactivestreams.Subscription;
 import reactor.aeron.support.AeronUtils;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.ProcessorGroup;
-import reactor.core.publisher.ProcessorTopic;
 import reactor.core.publisher.Processors;
+import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
@@ -184,7 +184,7 @@ public class SubscriberThreadingPOCTest {
 	@Test
 	public void test() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(32);
-		ProcessorTopic<Buffer> processor = ProcessorTopic.create("ringbuffer-sender", 8);
+		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		dataPublisher.subscribe(processor);
 
 		SignalPollerForPOC signalPoller = new SignalPollerForPOC(processor);
@@ -204,7 +204,7 @@ public class SubscriberThreadingPOCTest {
 	@Test
 	public void testCompletedPublisher() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(4);
-		ProcessorTopic<Buffer> processor = ProcessorTopic.create("ringbuffer-sender", 8);
+		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		dataPublisher.subscribe(processor);
 
 		SignalPollerForPOC signalPoller = new SignalPollerForPOC(processor);
@@ -227,7 +227,7 @@ public class SubscriberThreadingPOCTest {
 
 		ProcessorGroup<Buffer> group = Processors.asyncGroup();
 		FluxProcessor<Buffer, Buffer> publishOn = group.publishOn();
-		ProcessorTopic<Buffer> processor = ProcessorTopic.create("ringbuffer-sender", 8);
+		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		dataPublisher.subscribe(publishOn);
 
 		// by doing so processor is subscribed to publishOn asynchronously

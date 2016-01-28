@@ -37,7 +37,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
-import reactor.core.publisher.ProcessorWorkQueue;
+import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
@@ -376,7 +376,7 @@ public class TcpServerTests {
 		Broadcaster<String> broadcaster = Broadcaster.<String>create();
 
 		//Get a reference to the tail of the operation pipeline (microbatching + partitioning)
-		final Processor<List<String>, List<String>> processor = ProcessorWorkQueue.create(false);
+		final Processor<List<String>, List<String>> processor = WorkQueueProcessor.create(false);
 
 		broadcaster
 

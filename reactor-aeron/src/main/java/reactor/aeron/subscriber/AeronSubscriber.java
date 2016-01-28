@@ -23,7 +23,7 @@ import reactor.aeron.support.AeronInfra;
 import reactor.aeron.support.AeronUtils;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Receiver;
-import reactor.core.publisher.ProcessorTopic;
+import reactor.core.publisher.TopicProcessor;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.timer.Timer;
@@ -114,7 +114,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 
 	private final ServiceMessagePoller serviceMessagePoller;
 
-	private final ProcessorTopic<Buffer> processor;
+	private final TopicProcessor<Buffer> processor;
 
 	public static AeronSubscriber create(Context context) {
 		return new AeronSubscriber(context, false);
@@ -143,7 +143,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		}
 
 		this.aeronInfra = context.createAeronInfra();
-		this.processor = createProcessorTopic(context, multiPublishers);
+		this.processor = createTopicProcessor(context, multiPublishers);
 		boolean isMulticast = AeronUtils.isMulticastCommunication(context);
 		if (isMulticast) {
 			this.serviceMessageHandler = new MulticastServiceMessageHandler(processor, aeronInfra, context,
@@ -207,11 +207,11 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 		return new ServiceMessagePoller(context, aeronInfra, serviceMessageHandler);
 	}
 
-	private ProcessorTopic<Buffer> createProcessorTopic(Context context, boolean multiPublishers) {
+	private TopicProcessor<Buffer> createTopicProcessor(Context context, boolean multiPublishers) {
 		String name = AeronUtils.makeThreadName(context, "signal-sender");
 		return multiPublishers ?
-				ProcessorTopic.<Buffer>share(name, context.ringBufferSize(), context.autoCancel()) :
-				ProcessorTopic.<Buffer>create(name, context.ringBufferSize(), context.autoCancel());
+				TopicProcessor.<Buffer>share(name, context.ringBufferSize(), context.autoCancel()) :
+				TopicProcessor.<Buffer>create(name, context.ringBufferSize(), context.autoCancel());
 	}
 
 	public void shutdown() {

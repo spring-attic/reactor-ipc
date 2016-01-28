@@ -27,7 +27,7 @@ import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
 import reactor.aeron.support.Stepper;
 import reactor.aeron.support.TestAeronInfra;
-import reactor.core.publisher.ProcessorTopic;
+import reactor.core.publisher.TopicProcessor;
 import reactor.io.buffer.Buffer;
 
 import static org.hamcrest.Matchers.is;
@@ -62,7 +62,7 @@ public class MulticastServiceMessageHandlerTest {
 			public void cancel() {
 			}
 		});
-		ProcessorTopic<Buffer> processor = ProcessorTopic.create();
+		TopicProcessor<Buffer> processor = TopicProcessor.create();
 		publisher.subscribe(processor);
 
 		MulticastServiceMessageHandler requestHandler = new MulticastServiceMessageHandler(

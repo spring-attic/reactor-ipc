@@ -34,8 +34,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
-import reactor.core.publisher.ProcessorTopic;
-import reactor.core.publisher.ProcessorWorkQueue;
+import reactor.core.publisher.TopicProcessor;
+import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
@@ -97,7 +97,7 @@ public class SmokeTests {
 	@SuppressWarnings("unchecked")
 	private List<Integer> windowsData = new ArrayList<>();
 
-	private ProcessorWorkQueue<Buffer> workProcessor;
+	private WorkQueueProcessor<Buffer> workProcessor;
 
 
 	@Before
@@ -259,8 +259,8 @@ public class SmokeTests {
 
 	private void setupFakeProtocolListener() throws Exception {
 
-		processor = ProcessorTopic.create(false);
-		workProcessor = ProcessorWorkQueue.create(false);
+		processor = TopicProcessor.create(false);
+		workProcessor = WorkQueueProcessor.create(false);
 		Stream<Buffer> bufferStream = Stream
 		  .from(processor)
 		  .window(windowBatch, 2, TimeUnit.SECONDS)
