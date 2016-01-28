@@ -21,7 +21,7 @@ import java.util.logging.Level;
 
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
-import reactor.core.subscriber.ReactiveSession;
+import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.nexus.Nexus;
@@ -66,7 +66,7 @@ public class NexusPlay {
 		dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
 
 
-		ReactiveSession<Integer> s1 = p.startSession();
+		SignalEmitter<Integer> s1 = p.startEmitter();
 		nexus.monitor(s1);
 
 		// =========================================================
@@ -88,7 +88,7 @@ public class NexusPlay {
 		dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
 
 
-		ReactiveSession<Integer> s2 = p.startSession();
+		SignalEmitter<Integer> s2 = p.startEmitter();
 
 		nexus.monitor(s2);
 
@@ -108,7 +108,7 @@ public class NexusPlay {
 		}
 
 
-		ReactiveSession<Integer> s3 = p.startSession();
+		SignalEmitter<Integer> s3 = p.startEmitter();
 		nexus.monitor(s3);
 
 

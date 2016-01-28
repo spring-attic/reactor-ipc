@@ -35,7 +35,7 @@ import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.ProcessorTopic;
 import reactor.core.publisher.Processors;
 import reactor.core.state.Introspectable;
-import reactor.core.subscriber.ReactiveSession;
+import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
@@ -75,7 +75,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final ProcessorGroup                    group;
 	private final Function<Event, Event>            lastStateMerge;
 	private final Timer                             timer;
-	private final ReactiveSession<Publisher<Event>> cannons;
+	private final SignalEmitter<Publisher<Event>> cannons;
 
 	@SuppressWarnings("unused")
 	private volatile FederatedClient[] federatedClients;
@@ -136,7 +136,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		Flux.merge(cannons)
 		    .subscribe(eventStream);
 
-		this.cannons = cannons.startSession();
+		this.cannons = cannons.startEmitter();
 
 		lastState = new GraphEvent(server.getListenAddress()
 		                                 .toString(), ReactiveStateUtils.createGraph());
@@ -219,21 +219,21 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	/**
 	 * @return
 	 */
-	public final ReactiveSession<Object> metricCannon() {
+	public final SignalEmitter<Object> metricCannon() {
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
 		this.cannons.submit(p.map(new MetricMapper()));
-		return p.startSession();
+		return p.startEmitter();
 	}
 
 	/**
 	 * @return
 	 */
-	public final ReactiveSession<Object> streamCannon() {
+	public final SignalEmitter<Object> streamCannon() {
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
 		this.cannons.submit(p.map(new GraphMapper()));
-		return p.startSession();
+		return p.startEmitter();
 	}
 
 	/**
@@ -271,7 +271,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
 		                                                .dispatchOn();
-		final ReactiveSession<Object> session = p.startSession();
+		final SignalEmitter<Object> session = p.startEmitter();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
 		timer.schedule(new Consumer<Long>() {
 			@Override
@@ -384,7 +384,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					ProcessorTopic.share("nexus-log-sink", 256, WaitStrategy.blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
-			                                              .toString(), p.startSession());
+			                                              .toString(), p.startEmitter());
 
 			//monitor(p);
 			if (!Logger.enableExtension(logExtension)) {
@@ -396,7 +396,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		if (systemStats) {
 			FluxProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
 			this.cannons.submit(p);
-			final ReactiveSession<Event> session = p.startSession();
+			final SignalEmitter<Event> session = p.startEmitter();
 			log.info("System Monitoring Starting");
 			timer.schedule(new Consumer<Long>() {
 				@Override
@@ -763,10 +763,10 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 	private final static class NexusLoggerExtension implements Logger.Extension {
 
-		final ReactiveSession<Event> logSink;
+		final SignalEmitter<Event> logSink;
 		final String                 hostname;
 
-		public NexusLoggerExtension(String hostname, ReactiveSession<Event> logSink) {
+		public NexusLoggerExtension(String hostname, SignalEmitter<Event> logSink) {
 			this.logSink = logSink;
 			this.hostname = hostname;
 		}
@@ -774,7 +774,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		@Override
 		public void log(String category, Level level, String msg, Object... arguments) {
 			String computed = Logger.format(msg, arguments);
-			ReactiveSession.Emission emission;
+			SignalEmitter.Emission emission;
 
 			if (arguments != null && arguments.length == 3 && ReactiveStateUtils.isLogging(arguments[2])) {
 				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()) {
