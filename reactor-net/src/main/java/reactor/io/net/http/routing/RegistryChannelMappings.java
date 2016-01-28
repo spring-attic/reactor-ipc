@@ -37,8 +37,7 @@ public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
 
 	static {
 		if (!DependencyUtils.hasReactorBus()) {
-			throw new IllegalStateException("io.projectreactor:reactor-bus:" + DependencyUtils.reactorVersion() +
-					" dependency is missing from the classpath.");
+			throw new IllegalStateException("io.projectreactor:reactor-bus dependency is missing from the classpath.");
 		}
 	}
 

@@ -54,8 +54,7 @@ public final class CodecPreprocessor<IN, OUT>
 
 	static {
 		if (!DependencyUtils.hasReactorCodec()) {
-			throw new IllegalStateException("io.projectreactor:reactor-codec:" + DependencyUtils.reactorVersion() +
-					" dependency is missing from the classpath.");
+			throw new IllegalStateException("io.projectreactor:reactor-codec dependency is missing from the classpath.");
 		}
 
 	}
