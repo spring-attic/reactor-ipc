@@ -42,6 +42,7 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.ProcessorGroup;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
 import reactor.core.util.PlatformDependent;
