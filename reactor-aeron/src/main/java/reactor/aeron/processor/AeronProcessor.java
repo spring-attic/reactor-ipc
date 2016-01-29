@@ -116,8 +116,7 @@ public class AeronProcessor extends FluxProcessor<Buffer, Buffer> {
 	@Override
 	public void onSubscribe(Subscription s) {
 		super.onSubscribe(s);
-
-		subscriber.onSubscribe(upstreamSubscription);
+		subscriber.onSubscribe(s);
 	}
 
 	@Override
