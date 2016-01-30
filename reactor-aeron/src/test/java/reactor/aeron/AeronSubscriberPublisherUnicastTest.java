@@ -187,4 +187,45 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		client.canReturnLatch.countDown();
 	}
 
+	@Test
+	public void testRequestAfterCompleteEventIsNoOp() {
+		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber"));
+
+		Flux.fromIterable(createBuffers(3)).subscribe(aeronSubscriber);
+
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
+		TestSubscriber<String> client = new TestSubscriber<>(0);
+
+		Buffer.bufferToString(publisher).subscribe(client);
+
+		client.request(3);
+
+		client.awaitAndAssertValues("1", "2", "3");
+		client.assertComplete();
+
+		TestSubscriber.await(TIMEOUT_SECS, () -> "Publisher hasn't been terminated", publisher::isTerminated);
+
+		client.request(1);
+	}
+
+	@Test
+	public void testRequestAfterErrorEventIsNoOp() throws InterruptedException {
+		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber"));
+
+		Flux.<Buffer>error(new RuntimeException("Oops!")).subscribe(aeronSubscriber);
+
+		AeronPublisher publisher = AeronPublisher.create(createContext("publisher").autoCancel(false));
+		TestSubscriber<String> client = new TestSubscriber<>(0);
+
+		Buffer.bufferToString(publisher).subscribe(client);
+
+		client.request(1);
+
+		client.await(TIMEOUT_SECS).assertError();
+
+		TestSubscriber.await(TIMEOUT_SECS, () -> "Publisher hasn't been terminated", publisher::isTerminated);
+
+		client.request(1);
+	}
+
 }

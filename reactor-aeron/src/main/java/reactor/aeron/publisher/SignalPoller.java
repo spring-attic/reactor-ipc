@@ -254,6 +254,7 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
 				errorSub.poll(errorFragmentHandler, 1);
 				if (errorFragmentHandler.isErrorReceived()) {
 					isTerminalSignalReceived = true;
+					running = false;
 					break;
 				}
 
@@ -283,6 +284,7 @@ public class SignalPoller implements org.reactivestreams.Subscription, Runnable,
 				if (completeNextFragmentHandler.isCompleteReceived()) {
 					isTerminalSignalReceived = true;
 					subscriber.onComplete();
+					running = false;
 					break;
 				}
 			}
