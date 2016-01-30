@@ -81,12 +81,7 @@ public class AeronProcessor extends FluxProcessor<Buffer, Buffer> {
 	}
 
 	private AeronPublisher createAeronPublisher(Context context) {
-		return new AeronPublisher(context, new Runnable() {
-			@Override
-			public void run() {
-				shutdown();
-			}
-		}, onTerminateTask);
+		return new AeronPublisher(context);
 	}
 
 	private AeronSubscriber createAeronSubscriber(Context context, boolean multiPublishers) {

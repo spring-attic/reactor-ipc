@@ -30,6 +30,7 @@ import reactor.aeron.publisher.AeronPublisher;
 import reactor.aeron.support.AeronTestUtils;
 import reactor.aeron.support.ThreadSnapshot;
 import reactor.core.publisher.EmitterProcessor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
@@ -213,7 +214,7 @@ public abstract class CommonAeronProcessorTest {
 	}
 
 	@Test
-	public void testPublisherConnectsToProcessor() throws InterruptedException {
+	public void testRemotePublisherReceivesCompleteBeforeProcessorIsShutdown() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
 
 		Stream.just(
@@ -231,8 +232,27 @@ public abstract class CommonAeronProcessorTest {
 		remoteSubscriber.request(1);
 
 		subscriber.awaitAndAssertValues("Live").assertComplete();
-
 		remoteSubscriber.awaitAndAssertValues("Live").assertComplete();
+	}
+
+	@Test
+	public void testRemotePublisherReceivesErrorBeforeProcessorIsShutdown() throws InterruptedException {
+		AeronProcessor processor = AeronProcessor.create(createContext());
+
+		Flux.<Buffer>error(new Exception("Oops!")).subscribe(processor);
+
+		TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
+		Buffer.bufferToString(processor).subscribe(subscriber);
+
+		AeronPublisher remotePublisher = AeronPublisher.create(createContext());
+		TestSubscriber<String> remoteSubscriber = new TestSubscriber<String>(0);
+		Buffer.bufferToString(remotePublisher).subscribe(remoteSubscriber);
+
+		subscriber.request(1);
+		remoteSubscriber.request(1);
+
+		subscriber.await(TIMEOUT_SECS).assertError();
+		remoteSubscriber.await(TIMEOUT_SECS).assertError();
 	}
 
 }

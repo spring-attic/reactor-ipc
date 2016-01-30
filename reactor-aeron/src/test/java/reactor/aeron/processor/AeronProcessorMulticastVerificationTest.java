@@ -16,14 +16,14 @@
 package reactor.aeron.processor;
 
 import reactor.aeron.Context;
-import reactor.io.net.tcp.support.SocketUtils;
+import reactor.aeron.support.AeronTestUtils;
 
 /**
  * @author Anatoly Kadyshev
  */
 public class AeronProcessorMulticastVerificationTest extends AeronProcessorCommonVerificationTest {
 
-	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
+	private final String CHANNEL = AeronTestUtils.availableLocalhostChannel();
 
 	@Override
 	protected Context createContext(int streamId) {

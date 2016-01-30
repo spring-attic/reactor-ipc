@@ -88,10 +88,6 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 
 	private final ExecutorService executor;
 
-	private final Runnable shutdownTask;
-
-	private final Runnable onTerminateTask;
-
 	private final Publication serviceRequestPub;
 
 	private final AtomicBoolean alive = new AtomicBoolean(true);
@@ -112,24 +108,11 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 		return new AeronPublisher(context);
 	}
 
-	public AeronPublisher(Context context,
-						  Runnable shutdownTask,
-						  Runnable onTerminateTask) {
-
+	public AeronPublisher(Context context) {
 		Assert.notNull(context.receiverChannel(), "'receiverChannel' should be provided");
 		context.validate();
 
-		if (shutdownTask == null) {
-			shutdownTask = new Runnable() {
-				@Override
-				public void run() {
-					shutdown();
-				}
-			};
-		}
-
 		this.context = context;
-		this.onTerminateTask = onTerminateTask;
 		this.aeronInfra = context.createAeronInfra();
 		this.executor = ExecutorUtils.singleUse("signal-poller", null);
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
@@ -142,7 +125,6 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 				shutdown();
 			}
 		});
-		this.shutdownTask = shutdownTask;
 
 		logger.info("publisher initialized, sessionId: {}", sessionId);
 	}
@@ -153,17 +135,6 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 				context.receiverChannel() + "/" + context.streamId() + "/" + context.errorStreamId();
 	}
 
-	public AeronPublisher(Context context) {
-		this(context,
-				null,
-				new Runnable() {
-					@Override
-					public void run() {
-					}
-				});
-
-	}
-
 	private Publication createServiceRequestPub(Context context, AeronInfra aeronInfra) {
 		return aeronInfra.addPublication(context.senderChannel(), context.serviceRequestStreamId());
 	}
@@ -171,8 +142,7 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 	@Override
 	public void subscribe(Subscriber<? super Buffer> subscriber) {
 		if (subscriber == null) {
-			Exceptions.argumentIsNullException();
-			return;
+			throw Exceptions.argumentIsNullException();
 		}
 
 		if (!subscribed.compareAndSet(false, true)) {
@@ -203,7 +173,7 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 				subscribed.set(false);
 
 				if (context.autoCancel() || isTerminalSignalReceived) {
-					shutdownTask.run();
+					shutdown();
 				}
 			}
 		});
@@ -243,8 +213,6 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 
 							logger.info("publisher shutdown, sessionId: {}", sessionId);
 							terminated = true;
-
-							onTerminateTask.run();
 						}
 					});
 				}
