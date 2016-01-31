@@ -25,6 +25,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.support.AeronUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.TopicProcessor;
@@ -224,13 +225,9 @@ public class SubscriberThreadingPOCTest {
 	public void testPublishOn() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(32);
 
-		ProcessorGroup<Buffer> group = ProcessorGroup.async();
-		FluxProcessor<Buffer, Buffer> publishOn = group.publishOn();
+		ProcessorGroup group = ProcessorGroup.async();
 		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
-		dataPublisher.subscribe(publishOn);
-
-		// by doing so processor is subscribed to publishOn asynchronously
-		publishOn.subscribe(processor);
+		Flux.publishOn(dataPublisher, group).subscribe(processor);
 
 		SignalPollerForPOC signalPoller = new SignalPollerForPOC(processor);
 		Thread signalPollerThread = new Thread(signalPoller, "signal-poller");

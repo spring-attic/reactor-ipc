@@ -221,7 +221,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 */
 	public final SignalEmitter<Object> metricCannon() {
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
-		                                                .dispatchOn();
+		                                                .processor();
 		this.cannons.submit(p.map(new MetricMapper()));
 		return p.startEmitter();
 	}
@@ -231,7 +231,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 */
 	public final SignalEmitter<Object> streamCannon() {
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
-		                                                .dispatchOn();
+		                                                .processor();
 		this.cannons.submit(p.map(new GraphMapper()));
 		return p.startEmitter();
 	}
@@ -270,7 +270,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		final long _period = period > 0 ? (unit != null ? TimeUnit.MILLISECONDS.convert(period, unit) : period) : 400L;
 
 		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
-		                                                .dispatchOn();
+		                                                .processor();
 		final SignalEmitter<Object> session = p.startEmitter();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
 		timer.schedule(new Consumer<Long>() {
@@ -394,7 +394,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		}
 
 		if (systemStats) {
-			FluxProcessor<Event, Event> p = ProcessorGroup.<Event>sync().dispatchOn();
+			FluxProcessor<Event, Event> p = ProcessorGroup.<Event>sync().processor();
 			this.cannons.submit(p);
 			final SignalEmitter<Event> session = p.startEmitter();
 			log.info("System Monitoring Starting");
