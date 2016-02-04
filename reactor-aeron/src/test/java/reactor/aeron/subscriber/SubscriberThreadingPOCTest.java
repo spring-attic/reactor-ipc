@@ -27,7 +27,7 @@ import org.reactivestreams.Subscription;
 import reactor.aeron.support.AeronUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
@@ -225,7 +225,7 @@ public class SubscriberThreadingPOCTest {
 	public void testPublishOn() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(32);
 
-		ProcessorGroup group = ProcessorGroup.async();
+		SchedulerGroup group = SchedulerGroup.async();
 		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		Flux.publishOn(dataPublisher, group).subscribe(processor);
 

@@ -19,7 +19,7 @@ package reactor.io.net.tcp;
 import java.net.InetSocketAddress;
 
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;
@@ -42,7 +42,7 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ReactiveC
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.selectThreadCount",
-			"" + ProcessorGroup.DEFAULT_POOL_SIZE / 2));
+			"" + SchedulerGroup.DEFAULT_POOL_SIZE / 2));
 
 	public static final int DEFAULT_TCP_SELECT_COUNT =
 			Integer.parseInt(System.getProperty("reactor.tcp.selectThreadCount", "" + DEFAULT_TCP_THREAD_COUNT));

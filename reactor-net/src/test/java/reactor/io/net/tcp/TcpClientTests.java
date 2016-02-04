@@ -42,7 +42,7 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
 import reactor.core.util.PlatformDependent;
@@ -182,7 +182,7 @@ public class TcpClientTests {
 			input.writeWith(
 			  Stream.range(1, messages)
 				.map(i -> "Hello World!")
-				.publishOn(ProcessorGroup.io("test-line-feed"))
+				.publishOn(SchedulerGroup.io("test-line-feed"))
 			).subscribe();
 
 			return Stream.never();

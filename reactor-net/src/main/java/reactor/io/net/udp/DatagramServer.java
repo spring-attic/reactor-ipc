@@ -22,7 +22,7 @@ import java.net.NetworkInterface;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;
 import reactor.io.net.Preprocessor;
@@ -40,7 +40,7 @@ public abstract class DatagramServer<IN, OUT>
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
-		"" + ProcessorGroup.DEFAULT_POOL_SIZE)
+		"" + SchedulerGroup.DEFAULT_POOL_SIZE)
 	);
 
 	private final InetSocketAddress   listenAddress;

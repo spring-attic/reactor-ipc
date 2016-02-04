@@ -32,7 +32,7 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SignalEmitter;
@@ -72,7 +72,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	private final GraphEvent                        lastState;
 	private final SystemEvent                       lastSystemState;
 	private final FluxProcessor<Event, Event>       eventStream;
-	private final ProcessorGroup                    group;
+	private final SchedulerGroup                    group;
 	private final Function<Event, Event>            lastStateMerge;
 	private final Timer                             timer;
 	private final SignalEmitter<Publisher<Event>> cannons;
@@ -124,7 +124,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		this.eventStream = EmitterProcessor.create(false);
 		this.lastStateMerge = new LastGraphStateMap();
 		this.timer = Timer.create("nexus-poller");
-		this.group = ProcessorGroup.async("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
+		this.group = SchedulerGroup.async("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
 			@Override
 			public WaitStrategy get() {
 				return WaitStrategy.blocking();
@@ -220,8 +220,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 * @return
 	 */
 	public final SignalEmitter<Object> metricCannon() {
-		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
-		                                                .processor();
+		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		this.cannons.submit(p.map(new MetricMapper()));
 		return p.startEmitter();
 	}
@@ -230,8 +229,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	 * @return
 	 */
 	public final SignalEmitter<Object> streamCannon() {
-		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
-		                                                .processor();
+		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		this.cannons.submit(p.map(new GraphMapper()));
 		return p.startEmitter();
 	}
@@ -269,8 +267,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 
 		final long _period = period > 0 ? (unit != null ? TimeUnit.MILLISECONDS.convert(period, unit) : period) : 400L;
 
-		FluxProcessor<Object, Object> p = ProcessorGroup.sync()
-		                                                .processor();
+		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		final SignalEmitter<Object> session = p.startEmitter();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
 		timer.schedule(new Consumer<Long>() {
@@ -394,7 +391,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		}
 
 		if (systemStats) {
-			FluxProcessor<Event, Event> p = ProcessorGroup.<Event>sync().processor();
+			FluxProcessor<Event, Event> p = FluxProcessor.blocking();
 			this.cannons.submit(p);
 			final SignalEmitter<Event> session = p.startEmitter();
 			log.info("System Monitoring Starting");
