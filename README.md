@@ -10,8 +10,8 @@ Backpressure-ready components to encode, decode, send (unicast, multicast or req
 - reactor-codec : Reactive-Streams decoders/encoders (Codec) including compression, serialization and such.
 
 ## Reference
-http://next.projectreactor.io/io/docs/reference/
+http://projectreactor.io/io/docs/reference/
 
 ## Javadoc
-http://next.projectreactor.io/io/docs/api/
+http://projectreactor.io/io/docs/api/
 
