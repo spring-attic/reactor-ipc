@@ -16,6 +16,7 @@
 package reactor.io.net.tcp;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
@@ -45,86 +46,113 @@ public class NexusPlay {
 		//ReactiveStateUtils.scan(o).toString()
 
 		//SAMPLE streams to monitor
-		nexus.monitor(nexus);
+		//nexus.monitor(nexus);
 
-		Random r = new Random();
+		//hotSample(nexus);
+		schedulerGroupSample(nexus);
 
-		// =========================================================
-
-		FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
-		Stream<Integer> dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("semi-fast",  8192, 4));
-
-		//slow subscribers
-		for(int i = 0; i < 2; i++) {
-			dispatched
-					.log("semi-fast",  Level.FINEST, Logger.ALL)
-					.consume(d ->
-						LockSupport.parkNanos(100_000 * (r.nextInt(80) + 1))
-					);
-		}
-
-		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
+		CountDownLatch latch = new CountDownLatch(1);
+		latch.await();
+	}
 
 
-		SignalEmitter<Integer> s1 = p.startEmitter();
-		nexus.monitor(s1);
+	static void hotSample(final Nexus nexus){
+		new Thread("hotSample"){
+			@Override
+			public void run() {
+				Random r = new Random();
 
-		// =========================================================
+				// =========================================================
 
-		p = EmitterProcessor.create();
-		dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("semi-slow", 1024, 4));
+				FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
+				Stream<Integer> dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("semi-fast",  8192, 4));
 
-		//slow subscribers
-		for(int j = 0; j < 3; j++) {
-			dispatched
-					.log("slow",  Level.FINEST, Logger.ALL)
-					//.capacity(5)
-					.consume(d ->
-							LockSupport.parkNanos(10_000_000 * (r.nextInt(20) + 1))
-					);
-		}
+				//slow subscribers
+				for(int i = 0; i < 2; i++) {
+					dispatched
+							.log("semi-fast",  Level.FINEST, Logger.ALL)
+							.consume(d ->
+									LockSupport.parkNanos(100_000 * (r.nextInt(80) + 1))
+							);
+				}
 
-		//fast subscriber
-		dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
-
-
-		SignalEmitter<Integer> s2 = p.startEmitter();
-
-		nexus.monitor(s2);
-
-		// =========================================================
-
-		p = EmitterProcessor.create();
-		dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("slow", 1024, 3));
-
-		//slow subscribers
-		for(int j = 0; j < 3; j++) {
-			dispatched
-					.log("slow",  Level.FINEST, Logger.ALL)
-					//.capacity(5)
-					.consume(d ->
-							LockSupport.parkNanos(1000_000_000)
-					);
-		}
+				//fast subscriber
+				dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
 
 
-		SignalEmitter<Integer> s3 = p.startEmitter();
-		nexus.monitor(s3);
+				SignalEmitter<Integer> s1 = p.startEmitter();
+				nexus.monitor(s1);
+
+				// =========================================================
+
+				p = EmitterProcessor.create();
+				dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("semi-slow", 1024, 4));
+
+				//slow subscribers
+				for(int j = 0; j < 3; j++) {
+					dispatched
+							.log("slow",  Level.FINEST, Logger.ALL)
+							//.capacity(5)
+							.consume(d ->
+									LockSupport.parkNanos(10_000_000 * (r.nextInt(20) + 1))
+							);
+				}
+
+				//fast subscriber
+				dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
 
 
-		int j = 0;
-		for(;;){
-			s1.emit(j);
-			s2.emit(j);
-			s3.emit(j);
-			j++;
-			LockSupport.parkNanos(30_000_000);
+				SignalEmitter<Integer> s2 = p.startEmitter();
+
+				nexus.monitor(s2);
+
+				// =========================================================
+
+				p = EmitterProcessor.create();
+				dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("slow", 1024, 3));
+
+				//slow subscribers
+				for(int j = 0; j < 3; j++) {
+					dispatched
+							.log("slow",  Level.FINEST, Logger.ALL)
+							//.capacity(5)
+							.consume(d ->
+									LockSupport.parkNanos(1000_000_000)
+							);
+				}
+
+
+				SignalEmitter<Integer> s3 = p.startEmitter();
+				nexus.monitor(s3);
+
+
+				int j = 0;
+				for(;;){
+					s1.emit(j);
+					s2.emit(j);
+					s3.emit(j);
+					j++;
+					LockSupport.parkNanos(30_000_000);
 //			if(j == 200){
 //				s2.failWith(new Exception("AHAH"));
 //				break;
 //			}
-		}
+				}
+			}
+		}.start();
+	}
 
+	static void schedulerGroupSample(final Nexus nexus){
+		new Thread("schedulerGroupSample"){
+			@Override
+			public void run() {
+				SchedulerGroup io = SchedulerGroup.io();
+				SchedulerGroup single = SchedulerGroup.single();
+				SchedulerGroup async = SchedulerGroup.async();
+				nexus.monitor(io);
+				nexus.monitor(single);
+				nexus.monitor(async);
+			}
+		}.start();
 	}
 }
