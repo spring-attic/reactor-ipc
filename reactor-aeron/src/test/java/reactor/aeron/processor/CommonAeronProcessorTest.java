@@ -154,7 +154,7 @@ public abstract class CommonAeronProcessorTest {
 		// its delivery could shutdown the processor before the processor subscriber
 		// receives signal
 		Stream.concat(Stream.just(Buffer.wrap("Item")),
-				Stream.fail(new RuntimeException("Something went wrong")))
+				Stream.error(new RuntimeException("Something went wrong")))
 				.subscribe(processor);
 
 		TestSubscriber<String> subscriber = new TestSubscriber<String>();
@@ -170,7 +170,7 @@ public abstract class CommonAeronProcessorTest {
 		TestSubscriber<String> subscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(processor).subscribe(subscriber);
 
-		Stream<Buffer> sourceStream = Stream.fail(new RuntimeException());
+		Stream<Buffer> sourceStream = Stream.error(new RuntimeException());
 		sourceStream.subscribe(processor);
 
 		subscriber.await(TIMEOUT_SECS).assertErrorWith(t -> assertThat(t.getMessage(), is("")));

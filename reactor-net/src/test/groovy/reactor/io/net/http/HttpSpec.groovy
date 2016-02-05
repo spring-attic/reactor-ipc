@@ -177,7 +177,7 @@ class HttpSpec extends Specification {
 		errored
 				.countDown()
 	  })
-	}.get('/test3') { HttpChannelStream<String, String> req -> return Stream.fail(new Exception())
+	}.get('/test3') { HttpChannelStream<String, String> req -> return Stream.error(new Exception())
 	}
 
 	then: "the server was started"

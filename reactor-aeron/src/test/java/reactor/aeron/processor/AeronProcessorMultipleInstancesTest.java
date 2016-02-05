@@ -170,7 +170,7 @@ public class AeronProcessorMultipleInstancesTest {
 	public void testSingleSenderSendsErrorToTwoReceivers() throws InterruptedException {
 		AeronProcessor server = createProcessor("server");
 		Stream.concat(Stream.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three")),
-				Stream.fail(new RuntimeException("Something went wrong")))
+				Stream.error(new RuntimeException("Something went wrong")))
 		       .subscribe(server);
 
 		AeronProcessor client1 = createProcessor("client-1");
