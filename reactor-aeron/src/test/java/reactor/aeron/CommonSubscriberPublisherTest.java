@@ -100,7 +100,7 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
 
-		Stream.<Buffer>fail(new RuntimeException("Something went wrong")).subscribe(subscriber);
+		Stream.<Buffer>error(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
 		clientSubscriber.await().assertError();
 	}
