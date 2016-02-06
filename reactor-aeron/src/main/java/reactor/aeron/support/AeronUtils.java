@@ -48,8 +48,8 @@ public class AeronUtils {
 		return !UdpChannel.parse(channel).isMulticast();
 	}
 
-	public static String makeThreadName(Context context, String suffix) {
-		return context.name() != null ? context.name() + "-": "" + suffix;
+	public static String makeThreadName(String prefix, String defaultPrefix, String suffix) {
+		return (prefix != null ? prefix : defaultPrefix) + "-[" + suffix + "]";
 	}
 
 }

@@ -114,7 +114,8 @@ public class AeronPublisher implements Publisher<Buffer>, Producer {
 
 		this.context = context;
 		this.aeronInfra = context.createAeronInfra();
-		this.executor = ExecutorUtils.singleUse("signal-poller", null);
+		this.executor = ExecutorUtils.singleUse(AeronUtils.makeThreadName(
+				context.name(), "publisher", "signal-poller"), null);
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
 		this.sessionId = getSessionId(context);
 		this.serviceMessageSender = new ServiceMessageSender(this, serviceRequestPub, sessionId);

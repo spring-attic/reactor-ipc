@@ -208,7 +208,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 	}
 
 	private TopicProcessor<Buffer> createTopicProcessor(Context context, boolean multiPublishers) {
-		String name = AeronUtils.makeThreadName(context, "signal-sender");
+		String name = AeronUtils.makeThreadName(context.name(), "subscriber", "signal-sender");
 		return multiPublishers ?
 				TopicProcessor.<Buffer>share(name, context.ringBufferSize(), context.autoCancel()) :
 				TopicProcessor.<Buffer>create(name, context.ringBufferSize(), context.autoCancel());

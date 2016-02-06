@@ -115,7 +115,8 @@ class ServiceMessagePoller implements Runnable, Receiver {
 		this.serviceMessageHandler = serviceMessageHandler;
 		this.aeronInfra = aeronInfra;
 		this.serviceRequestSub = aeronInfra.addSubscription(context.senderChannel(), context.serviceRequestStreamId());
-		this.executor = ExecutorUtils.singleUse("service-poller", null);
+		this.executor = ExecutorUtils.singleUse(AeronUtils.makeThreadName(
+				context.name(), "subscriber", "service-poller"), null);
 	}
 
 	void start() {
