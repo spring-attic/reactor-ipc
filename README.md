@@ -11,32 +11,49 @@ Backpressure-ready components to encode, decode, send (unicast, multicast or req
 
 ## reactor-aeron
 
-An implementation of Reactive Streams over Aeron operating in both unicast and multicast modes.
+An implementation of Reactive Streams over Aeron supporting both unicast and multicast modes of data sending.
 
-### AeronSubscriber
-A Reactive Streams Subscriber which plays a role of a signals sender via Aeron in unicast/multicast mode to an instance of AeronPublisher.
+### AeronSubscriber + AeronPublisher
+A combination of AeronSubscriber playing a role of signals sender and AeronPublisher playing a role of signals receiver allows transporting data from a subscriber to a publisher over Aeron in both unicast and multicast modes.
 
-### AeronPublisher
-A Reactive Streams Publisher which plays a role of a signals receiver.
-
-AeronSubscriber and AeronPublisher in action:
-
-On a signals sender side:
+AeronSubscriber awaiting for connections from AeronPublisher:
 ```java
 AeronSubscriber subscriber = AeronSubscriber.create(new Context()
     .senderChannel("udp://serverbox:12000"));
+    
+Stream.range(1, 10).map(i -> Buffer.wrap("" + i)).subscribe(subscriber); // sending 1, 2, ..., 10 via Aeron    
 ```
 
-On a signals receiver side:
+AeronPublisher connecting to AeronSubscruber above:
 ```java
 AeronPublisher publisher = AeronPublisher.create(new Context()
-    .senderChannel("udp://serverbox:12000")
-    .receiverChannel("udp://clientbox:12001"));
+    .senderChannel("udp://serverbox:12000")     // sender channel specified for AeronSubscriber 
+	.receiverChannel("udp://clientbox:12001"));
+
+publisher.subscribe(Subscribers.consumer(System.out::println)); // output: 1, 2, ..., 10
 ```
 
 ### AeronProcessor
-A Reactive Streams Processor which plays roles of both a signal sender and a signal receiver locally but also allows
-other instances of AeronPublisher to receive signals via Aeron.
+A Reactive Streams Processor which plays roles of both signal sender and signal receiver locally and also allows remote instances of AeronPublisher to connect to it via Aeron and request signals.
+
+A processor sending signals via Aeron:
+```java
+AeronProcessor processor = AeronProcessor.create(new Context()
+		.senderChannel("udp://serverbox:12000"));
+
+Stream.range(1, 1000000).map(i -> Buffer.wrap("" + i)).subscribe(processor);
+
+processor.subscribe(Subscribers.consumer(System.out::println));
+```
+
+A publisher connecting to the processor above and receiving signals:
+```java
+AeronPublisher publisher = AeronPublisher.create(new Context()
+		.senderChannel("udp://serverbox:12000")
+		.receiverChannel("udp://clientbox:12001"));
+
+publisher.subscribe(Subscribers.consumer(System.out::println));
+```
 
 ## Reference
 http://projectreactor.io/io/docs/reference/
