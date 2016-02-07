@@ -20,8 +20,8 @@ An implementation of Reactive Streams over Aeron supporting both unicast and mul
 With Gradle from repo.spring.io or Maven Central repositories (stable releases only):
 ```groovy
     repositories {
-      //maven { url 'http://repo.spring.io/snapshot' }
-      maven { url 'http://repo.spring.io/milestone' }
+      maven { url 'http://repo.spring.io/snapshot' }
+      //maven { url 'http://repo.spring.io/milestone' }
       mavenCentral()
     }
 
