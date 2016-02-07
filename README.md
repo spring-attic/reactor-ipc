@@ -9,12 +9,6 @@ Backpressure-ready components to encode, decode, send (unicast, multicast or req
 - reactor-net   : Client/Server interactions for UDP/TCP/HTTP
 - reactor-codec : Reactive-Streams decoders/encoders (Codec) including compression, serialization and such.
 
-## Reference
-http://projectreactor.io/io/docs/reference/
-
-## Javadoc
-http://projectreactor.io/io/docs/api/
-
 ## reactor-aeron
 
 An implementation of Reactive Streams over Aeron operating in both unicast and multicast modes.
@@ -44,7 +38,11 @@ AeronPublisher publisher = AeronPublisher.create(new Context()
 A Reactive Streams Processor which plays roles of both a signal sender and a signal receiver locally but also allows
 other instances of AeronPublisher to receive signals via Aeron.
 
+## Reference
+http://projectreactor.io/io/docs/reference/
 
+## Javadoc
+http://projectreactor.io/io/docs/api/
 
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
 
