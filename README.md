@@ -13,6 +13,24 @@ Backpressure-ready components to encode, decode, send (unicast, multicast or req
 
 An implementation of Reactive Streams over Aeron supporting both unicast and multicast modes of data sending.
 
+### Getting it
+- Snapshot : **2.5.0.BUILD-SNAPSHOT**  ( Java 7+ required )
+- Milestone : **TBA**  ( Java 7+ required )
+
+With Gradle from repo.spring.io or Maven Central repositories (stable releases only):
+```groovy
+    repositories {
+      //maven { url 'http://repo.spring.io/libs-release' }
+      //maven { url 'http://repo.spring.io/libs-milestone' }
+      maven { url 'http://repo.spring.io/libs-snapshot' }
+      mavenCentral()
+    }
+
+    dependencies {
+      compile "io.projectreactor:reactor-aeron:2.5.0.BUILD-SNAPSHOT"
+    }
+```
+
 ### AeronSubscriber + AeronPublisher
 A combination of AeronSubscriber playing a role of signals sender and AeronPublisher playing a role of signals receiver allows transporting data from a subscriber to a publisher over Aeron in both unicast and multicast modes.
 
