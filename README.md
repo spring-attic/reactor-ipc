@@ -15,3 +15,35 @@ http://projectreactor.io/io/docs/reference/
 ## Javadoc
 http://projectreactor.io/io/docs/api/
 
+## reactor-aeron
+
+An implementation of Reactive Streams over Aeron operating in both unicast and multicast modes.
+
+### AeronSubscriber
+A Reactive Streams Subscriber which plays a role of a signals sender via Aeron in unicast/multicast mode to an instance of AeronPublisher.
+
+### AeronPublisher
+A Reactive Streams Publisher which plays a role of a signals receiver.
+
+AeronSubscriber and AeronPublisher in action:
+On a signals sender side:
+```java
+AeronSubscriber subscriber = AeronSubscriber.create(new Context()
+    .senderChannel("udp://serverbox:12000"));
+```
+
+On a signals receiver side:
+```java
+AeronPublisher publisher = AeronPublisher.create(new Context()
+    .senderChannel("udp://serverbox:12000")
+    .receiverChannel("udp://clientbox:12001"));
+```
+
+### AeronProcessor
+A Reactive Streams Processor which plays roles of both a signal sender and a signal receiver locally but also allows
+other instances of AeronPublisher to receive signals via Aeron.
+
+
+_Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
+
+_Sponsored by [Pivotal](http://pivotal.io)_
