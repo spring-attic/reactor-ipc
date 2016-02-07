@@ -5,7 +5,7 @@
 [![Build Status](https://drone.io/github.com/reactor/reactor-io/status.png)](https://drone.io/github.com/reactor/reactor-io/latest)
 
 Backpressure-ready components to encode, decode, send (unicast, multicast or request/response) and serve connections :
-- reactor-aeron : Efficient Unicast/Multicast reactive-streams transport for Aeron
+- [reactor-aeron](#reactor-aeron) : Efficient Unicast/Multicast reactive-streams transport for Aeron
 - reactor-net   : Client/Server interactions for UDP/TCP/HTTP
 - reactor-codec : Reactive-Streams decoders/encoders (Codec) including compression, serialization and such.
 
@@ -26,6 +26,7 @@ A Reactive Streams Subscriber which plays a role of a signals sender via Aeron i
 A Reactive Streams Publisher which plays a role of a signals receiver.
 
 AeronSubscriber and AeronPublisher in action:
+
 On a signals sender side:
 ```java
 AeronSubscriber subscriber = AeronSubscriber.create(new Context()
@@ -42,6 +43,7 @@ AeronPublisher publisher = AeronPublisher.create(new Context()
 ### AeronProcessor
 A Reactive Streams Processor which plays roles of both a signal sender and a signal receiver locally but also allows
 other instances of AeronPublisher to receive signals via Aeron.
+
 
 
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
