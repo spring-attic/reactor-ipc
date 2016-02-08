@@ -21,7 +21,7 @@ package reactor.io.net.http.model;
  *
  * @author Stephane Maldini
  */
-public class Cookie {
+public abstract class Cookie {
 
 	/**
 	 * @return

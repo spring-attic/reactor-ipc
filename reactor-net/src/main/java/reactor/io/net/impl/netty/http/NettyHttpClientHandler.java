@@ -209,6 +209,11 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 		public PostHeaderPublisher() {
 			super(NettyHttpClientHandler.this.tcpStream,
 					new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+		}
+
+		@Override
+		void setNettyResponse(HttpResponse nettyResponse) {
+			super.setNettyResponse(nettyResponse);
 			this.cookies = Cookies.newClientResponseHolder(responseHeaders().delegate());
 		}
 
