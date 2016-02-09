@@ -49,14 +49,14 @@ client.start( input -> {
 
 	//write data
 	input.writeWith(
-		Streams.range(1, 10)
+		Stream.range(1, 10)
 			.map( it -> new Pojo("test" + it) )
 			.log("send")
 			.map(codec)
-	);
+	).subscribe();
 
 	//keep-alive, until 10 data have been read
-	return Streams.never();
+	return Stream.never();
 
 }).await();
 
