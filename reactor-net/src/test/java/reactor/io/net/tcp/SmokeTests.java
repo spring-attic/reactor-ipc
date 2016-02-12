@@ -263,12 +263,13 @@ public class SmokeTests {
 		workProcessor = WorkQueueProcessor.create(false);
 		Stream<Buffer> bufferStream = Stream
 		  .from(processor)
-		  .window(windowBatch, 2, TimeUnit.SECONDS)
+		  .window(windowBatch)
 		  .doOnNext(d ->
 			  windows.getAndIncrement()
 		  )
 		  .flatMap(s ->
-				  s.reduceWith(Buffer::new, Buffer::append)
+				  s.take(2, TimeUnit.SECONDS)
+				   .reduceWith(Buffer::new, Buffer::append)
 		  )
 				.doOnNext(d ->
 								postReduce.getAndIncrement()
