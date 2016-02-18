@@ -275,7 +275,8 @@ public class SmokeTests {
 								postReduce.getAndIncrement()
 				)
 		  //.log("log", LogOperator.REQUEST)
-		  .process(workProcessor);
+		  .subscribeWith(workProcessor)
+		  .as(Stream::from);
 
 		httpServer = NetStreams.httpServer(server -> server
 			.httpProcessor(CodecPreprocessor.from(codec)).listen(port)
@@ -553,7 +554,7 @@ public class SmokeTests {
 						.doOnNext(d ->
 										postReduce.getAndIncrement()
 						))
-				.process(workProcessor);
+				.subscribeWith(workProcessor);
 
 
 	request.writeWith(bufferStream
