@@ -78,7 +78,7 @@ public class NexusPlay {
 				}
 
 				//fast subscriber
-				dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
+				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
 				SignalEmitter<Integer> s1 = p.startEmitter();
@@ -100,7 +100,7 @@ public class NexusPlay {
 				}
 
 				//fast subscriber
-				dispatched.log("fast",  Level.FINEST, Logger.ALL).consume();
+				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
 				SignalEmitter<Integer> s2 = p.startEmitter();

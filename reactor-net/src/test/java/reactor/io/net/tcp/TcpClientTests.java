@@ -126,7 +126,7 @@ public class TcpClientTests {
 				latch.countDown();
 			});
 
-			Stream.from(conn.writeWith(Stream.just("Hello World!"))).consume();
+			Stream.from(conn.writeWith(Stream.just("Hello World!"))).subscribe();
 
 			return Stream.never();
 		});
