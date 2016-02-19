@@ -253,7 +253,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			@SuppressWarnings("unchecked") Publisher<?> data = (Publisher<?>) msg;
 			final long capacity = msg instanceof Backpressurable ? ((Backpressurable) data).getCapacity() : Long.MAX_VALUE;
 
-			if (capacity == Long.MAX_VALUE) {
+			if (capacity == Long.MAX_VALUE || capacity == -1L) {
 				data.subscribe(new FlushOnTerminateSubscriber(ctx, promise));
 			}
 			else {

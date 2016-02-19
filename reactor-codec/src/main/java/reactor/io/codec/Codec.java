@@ -267,7 +267,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		public long getCapacity() {
 			return Backpressurable.class.isAssignableFrom(source.getClass()) ?
 					((Backpressurable) source).getCapacity() :
-					Long.MAX_VALUE;
+					-1L;
 		}
 
 		@Override
