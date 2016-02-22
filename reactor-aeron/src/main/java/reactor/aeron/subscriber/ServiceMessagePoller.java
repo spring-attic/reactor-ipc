@@ -18,9 +18,9 @@ package reactor.aeron.subscriber;
 import java.util.concurrent.ExecutorService;
 
 import reactor.aeron.Context;
-import reactor.aeron.support.AeronInfra;
-import reactor.aeron.support.AeronUtils;
-import reactor.aeron.support.ServiceMessageType;
+import reactor.aeron.utils.AeronInfra;
+import reactor.aeron.utils.AeronUtils;
+import reactor.aeron.utils.ServiceMessageType;
 import reactor.core.flow.Receiver;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
@@ -131,8 +131,7 @@ class ServiceMessagePoller implements Runnable, Receiver {
 
 		FragmentAssembler fragmentAssembler = new FragmentAssembler(new PollerFragmentHandler());
 
-		//TODO: Think about making it configurable via Context
-		final int fragmentLimit = 1;
+		final int fragmentLimit = context.serviceMessagePollerFragmentLimit();
 
 		while (running) {
 			int nFragmentsReceived = 0;

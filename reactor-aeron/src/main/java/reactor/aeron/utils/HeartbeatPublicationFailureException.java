@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.utils;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public class HeartbeatPublicationFailureException extends Exception {
 
-	void handleMore(String sessionId, long n);
-
-	void handleHeartbeat(String sessionId);
-
-	void handleCancel(String sessionId);
-
-	void start();
-
-	void shutdown();
+	public HeartbeatPublicationFailureException(Throwable cause) {
+		super(cause);
+	}
 
 }

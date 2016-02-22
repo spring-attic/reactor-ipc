@@ -13,21 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.publisher;
+
+import reactor.aeron.Context;
+import reactor.aeron.utils.AeronTestUtils;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public class AeronProcessorMulticastVerificationTest extends AeronProcessorCommonVerificationTest {
 
-	void handleMore(String sessionId, long n);
+	private final String CHANNEL = AeronTestUtils.availableLocalhostChannel();
 
-	void handleHeartbeat(String sessionId);
-
-	void handleCancel(String sessionId);
-
-	void start();
-
-	void shutdown();
+	@Override
+	protected Context createContext(int streamId) {
+		return new Context()
+				.name("processor")
+				.autoCancel(true)
+				.streamId(streamId)
+				.errorStreamId(streamId + 1)
+				.serviceRequestStreamId(streamId + 2)
+				.senderChannel(CHANNEL)
+				.receiverChannel(CHANNEL)
+				.publicationRetryMillis(500)
+				.ringBufferSize(1024);
+	}
 
 }

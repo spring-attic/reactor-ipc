@@ -65,15 +65,6 @@ class MulticastSession implements Session {
 		this.lastHeartbeatTimeNs = lastHeartbeatTimeNs;
 	}
 
-	@Override
-	public void setTerminal() {
-	}
-
-	@Override
-	public boolean isTerminal() {
-		return false;
-	}
-
 	public long getSequence() {
 		return sequence.get();
 	}
@@ -81,7 +72,8 @@ class MulticastSession implements Session {
 	@Override
 	public String toString() {
 		return "MulticastSession["
-				+ "sequence=" + sequence
+				+ "sessionId=" + sessionId
+				+ ", sequence=" + sequence
 				+ "]";
 	}
 }

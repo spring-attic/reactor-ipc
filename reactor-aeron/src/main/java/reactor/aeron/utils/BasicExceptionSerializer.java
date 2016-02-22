@@ -13,21 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.utils;
+
+import static reactor.aeron.utils.AeronUtils.UTF_8_CHARSET;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public final class BasicExceptionSerializer implements Serializer<Throwable> {
 
-	void handleMore(String sessionId, long n);
+	@Override
+	public byte[] serialize(Throwable t) {
+		String errorMessage = t.getMessage();
+		if (errorMessage == null) {
+			errorMessage = "";
+		}
+		return errorMessage.getBytes(UTF_8_CHARSET);
+	}
 
-	void handleHeartbeat(String sessionId);
-
-	void handleCancel(String sessionId);
-
-	void start();
-
-	void shutdown();
+	@Override
+	public Throwable deserialize(byte[] data) {
+		String errorMessage = new String(data, UTF_8_CHARSET);
+		return new Exception(errorMessage);
+	}
 
 }

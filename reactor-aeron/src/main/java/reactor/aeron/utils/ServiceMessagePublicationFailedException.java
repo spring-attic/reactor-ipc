@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.utils;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public class ServiceMessagePublicationFailedException extends Exception {
 
-	void handleMore(String sessionId, long n);
+	private final ServiceMessageType serviceMessageType;
 
-	void handleHeartbeat(String sessionId);
+	public ServiceMessagePublicationFailedException(ServiceMessageType serviceMessageType, Throwable cause) {
+		super("Failed to publish service message type: " + serviceMessageType, cause);
+		this.serviceMessageType = serviceMessageType;
+	}
 
-	void handleCancel(String sessionId);
-
-	void start();
-
-	void shutdown();
+	public ServiceMessageType getServiceMessageType() {
+		return serviceMessageType;
+	}
 
 }

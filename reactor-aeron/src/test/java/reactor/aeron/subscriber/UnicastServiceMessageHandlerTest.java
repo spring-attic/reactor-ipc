@@ -19,8 +19,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import reactor.aeron.Context;
-import reactor.aeron.support.SignalType;
-import reactor.aeron.support.TestAeronInfra;
+import reactor.aeron.utils.SignalType;
+import reactor.aeron.utils.TestAeronInfra;
+import reactor.aeron.utils.TestSignalSender;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.FluxProcessor;
 import reactor.io.buffer.Buffer;
@@ -36,22 +37,22 @@ public class UnicastServiceMessageHandlerTest {
 
 	private UnicastServiceMessageHandler handler;
 
-	private TestAeronInfra aeronInfra;
-
 	private FluxProcessor<Buffer, Buffer> processor;
+
+	private TestSignalSender signalSender;
 
 	@Before
 	public void doSetup() {
 		processor = EmitterProcessor.create(2);
 
-		aeronInfra = new TestAeronInfra();
+		signalSender = new TestSignalSender();
 
 		Context context = new Context();
 
-		handler = new UnicastServiceMessageHandler(processor, aeronInfra, context, () -> {}) {
+		handler = new UnicastServiceMessageHandler(processor, new TestAeronInfra(), context, () -> {}) {
 			@Override
 			protected SignalSender createSignalSender() {
-				return aeronInfra.getSignalSender();
+				return signalSender;
 			}
 
 		};
@@ -67,28 +68,24 @@ public class UnicastServiceMessageHandlerTest {
 	public void testItWorks() throws InterruptedException {
 		Stream.just(1, 2, 3, 4, 5).map(i -> Buffer.wrap("" + i)).subscribe(processor);
 
-		String receiverChannel1 = "udp://192.168.1.1:12000";
-		String sessionId1 = receiverChannel1 + "/1/2";
+		String sessionId1 = "udp://192.168.1.1:12000" + "/1/2";
 		handler.handleMore(sessionId1, 1);
 
-		String session1Key = receiverChannel1 + "/1";
-		aeronInfra.assertNextSignalPublished(session1Key, 1);
+		signalSender.assertNumSignalsPublished(sessionId1, 1);
 
-		TestAeronInfra.SignalData lastSignalData = aeronInfra.getSignalDataByKey(session1Key);
-		assertThat(lastSignalData.lastSignalType, is(SignalType.Next));
-		assertThat(lastSignalData.lastBuffer.asString(), is("1"));
+		TestSignalSender.PublicationData data = signalSender.getPublicationDataBySessionId(sessionId1);
+		assertThat(data.lastSignalType, is(SignalType.Next));
+		assertThat(data.lastSignal.asString(), is("1"));
 
-		String receiverChannel2 = "udp://192.168.1.1:12000";
-		String sessionId2 = receiverChannel2 + "/11/12";
+		String sessionId2 = "udp://192.168.1.1:12000" + "/11/12";
 		handler.handleMore(sessionId2, 3);
 
-		String session2Key = receiverChannel2 + "/11";
-		aeronInfra.assertNextSignalPublished(session2Key, 2);
+		signalSender.assertNumSignalsPublished(sessionId2, 2);
 
 		handler.handleMore(sessionId1, 1);
 
-		aeronInfra.assertNextSignalPublished(session1Key, 1);
-		aeronInfra.assertNextSignalPublished(session2Key, 1);
+		signalSender.assertNumSignalsPublished(sessionId1, 1);
+		signalSender.assertNumSignalsPublished(sessionId2, 1);
 	}
 
 }

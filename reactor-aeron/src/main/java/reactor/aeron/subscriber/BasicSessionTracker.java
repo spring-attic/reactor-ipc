@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Anatoly Kadyshev
  */
-public class BasicSessionTracker<T extends Session> implements SessionTracker<T> {
+class BasicSessionTracker<T extends Session> implements SessionTracker<T> {
 
 	private final Map<String, T> sessionById = new ConcurrentHashMap<>();
 

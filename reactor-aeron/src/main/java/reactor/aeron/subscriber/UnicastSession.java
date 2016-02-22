@@ -16,7 +16,7 @@
 package reactor.aeron.subscriber;
 
 import org.reactivestreams.Subscription;
-import reactor.aeron.support.DemandTracker;
+import reactor.aeron.utils.DemandTracker;
 import reactor.core.flow.Producer;
 import reactor.core.state.Introspectable;
 import uk.co.real_logic.aeron.Publication;
@@ -25,8 +25,6 @@ import uk.co.real_logic.aeron.Publication;
  * @author Anatoly Kadyshev
  */
 class UnicastSession implements Session, Introspectable, Producer {
-
-	private static int nextSessionUid = 0;
 
 	private final Publication publication;
 
@@ -40,14 +38,9 @@ class UnicastSession implements Session, Introspectable, Producer {
 
 	public volatile Subscription subscription;
 
-	private volatile boolean isAsyncSenderModeOn;
-
-	private final int sessionUid;
-
-	private volatile boolean terminal;
+	private volatile boolean isTerminal;
 
 	public UnicastSession(String sessionId, Publication publication, Publication errorPublication) {
-		this.sessionUid = nextSessionUid++;
 		this.sessionId = sessionId;
 		this.publication = publication;
 		this.errorPublication = errorPublication;
@@ -59,7 +52,7 @@ class UnicastSession implements Session, Introspectable, Producer {
 
 	@Override
 	public String toString() {
-		return this.getClass().getName() +	"["
+		return "UnicastSession["
 				+ "sessionId=" + sessionId
 				+ ", lastHeartbeatTimeNs=" + lastHeartbeatTimeNs
 				+ "]";
@@ -98,31 +91,17 @@ class UnicastSession implements Session, Introspectable, Producer {
 		this.lastHeartbeatTimeNs = lastHeartbeatTimeNs;
 	}
 
-	@Override
 	public void setTerminal() {
-		this.terminal = true;
+		this.isTerminal = true;
 	}
 
-	@Override
 	public boolean isTerminal() {
-		return terminal;
+		return isTerminal;
 	}
 
 	@Override
 	public String getSessionId() {
 		return sessionId;
-	}
-
-	public void setAsyncSenderModeOn(boolean isAsyncSenderModeOn) {
-		this.isAsyncSenderModeOn = isAsyncSenderModeOn;
-	}
-
-	public boolean isAsyncSenderModeOn() {
-		return isAsyncSenderModeOn;
-	}
-
-	public int getSessionUid() {
-		return sessionUid;
 	}
 
 	public long getAndResetDemad() {

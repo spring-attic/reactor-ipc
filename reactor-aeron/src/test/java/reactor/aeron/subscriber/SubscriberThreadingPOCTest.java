@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.aeron.support.AeronUtils;
+import reactor.aeron.utils.AeronUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;

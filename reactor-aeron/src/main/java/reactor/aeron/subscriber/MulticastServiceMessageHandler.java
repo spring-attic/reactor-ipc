@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
-import reactor.aeron.support.AeronInfra;
-import reactor.aeron.support.Serializer;
-import reactor.aeron.support.SignalType;
+import reactor.aeron.utils.AeronInfra;
+import reactor.aeron.utils.Serializer;
+import reactor.aeron.utils.SignalType;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
@@ -31,7 +31,7 @@ import uk.co.real_logic.aeron.Publication;
 /**
  * @author Anatoly Kadyshev
  */
-public class MulticastServiceMessageHandler implements ServiceMessageHandler {
+class MulticastServiceMessageHandler implements ServiceMessageHandler {
 
 	private static final Logger logger = Logger.getLogger(MulticastServiceMessageHandler.class);
 
@@ -84,7 +84,7 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 			this.exceptionSerializer = context.exceptionSerializer();
 			this.nextCompletePub = aeronInfra.addPublication(context.receiverChannel(), context.streamId());
 			this.errorPub = aeronInfra.addPublication(context.receiverChannel(), context.errorStreamId());
-			this.signalSender = new SignalSender(aeronInfra, context.errorConsumer());
+			this.signalSender = new BasicSignalSender(aeronInfra, context.errorConsumer());
 		}
 
 		@Override
@@ -184,9 +184,7 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 			session = new MulticastSession(sessionId, cursor);
 			sessionTracker.put(sessionId, session);
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("New session established with sessionId: {}", sessionId);
-			}
+			logger.debug("New session established with Id: {}", sessionId);
 		}
 		return session;
 	}
@@ -203,13 +201,10 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 		if (session != null) {
 			minSequence = getMinSequence();
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("Closed session with sessionId: {}", session.getSessionId());
-			}
-
 			if (sessionTracker.getSessionCounter() == 0) {
 				if (context.autoCancel()) {
 					subscriber.subscription.cancel();
+					logger.debug("Closed session with Id: {}", session.getSessionId());
 				}
 
 				if (context.autoCancel() || subscriber.isTerminal()) {
@@ -217,7 +212,7 @@ public class MulticastServiceMessageHandler implements ServiceMessageHandler {
 				}
 			}
 		} else {
-			//TODO: Handle
+			logger.debug("Could not find a session to close with Id: {}", sessionId);
 		}
 	}
 

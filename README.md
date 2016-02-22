@@ -30,10 +30,10 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
     }
 ```
 
-### AeronSubscriber + AeronPublisher
-A combination of AeronSubscriber playing a role of signals sender and AeronPublisher playing a role of signals receiver allows transporting data from a subscriber to a publisher over Aeron in both unicast and multicast modes.
+### AeronSubscriber + AeronFlux
+A combination of AeronSubscriber playing a role of signals sender and AeronFlux playing a role of signals receiver allows transporting data from a sender to a receiver over Aeron in both unicast and multicast modes.
 
-AeronSubscriber awaiting for connections from AeronPublisher:
+AeronSubscriber awaiting for connections from AeronFlux:
 ```java
 AeronSubscriber subscriber = AeronSubscriber.create(new Context()
     .senderChannel("udp://serverbox:12000"));
@@ -41,17 +41,17 @@ AeronSubscriber subscriber = AeronSubscriber.create(new Context()
 Stream.range(1, 10).map(i -> Buffer.wrap("" + i)).subscribe(subscriber); // sending 1, 2, ..., 10 via Aeron    
 ```
 
-AeronPublisher connecting to AeronSubscruber above:
+AeronFlux connecting to AeronSubscruber above:
 ```java
-AeronPublisher publisher = AeronPublisher.create(new Context()
+Flux<Buffer> receiver = AeronFlux.listenOn(new Context()
     .senderChannel("udp://serverbox:12000")     // sender channel specified for AeronSubscriber 
 	.receiverChannel("udp://clientbox:12001"));
 
-publisher.subscribe(Subscribers.consumer(System.out::println)); // output: 1, 2, ..., 10
+receiver.subscribe(Subscribers.consumer(System.out::println)); // output: 1, 2, ..., 10
 ```
 
 ### AeronProcessor
-A Reactive Streams Processor which plays roles of both signal sender and signal receiver locally and also allows remote instances of AeronPublisher to connect to it via Aeron and request signals.
+A Reactive Streams Processor which plays roles of both signal sender and signal receiver locally and also allows remote instances of AeronFlux to connect to it via Aeron and receive signals.
 
 A processor sending signals via Aeron:
 ```java
@@ -63,13 +63,13 @@ Stream.range(1, 1000000).map(i -> Buffer.wrap("" + i)).subscribe(processor);
 processor.subscribe(Subscribers.consumer(System.out::println));
 ```
 
-A publisher connecting to the processor above and receiving signals:
+A receiver connecting to the processor above and receiving signals:
 ```java
-AeronPublisher publisher = AeronPublisher.create(new Context()
+Flux<Buffer> receiver = AeronFlux.listenOn(new Context()
 		.senderChannel("udp://serverbox:12000")
 		.receiverChannel("udp://clientbox:12001"));
 
-publisher.subscribe(Subscribers.consumer(System.out::println));
+receiver.subscribe(Subscribers.consumer(System.out::println));
 ```
 
 ## Reference

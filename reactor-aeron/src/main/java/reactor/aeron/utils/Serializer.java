@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.utils;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public interface Serializer<T> {
 
-	void handleMore(String sessionId, long n);
+	byte[] serialize(T t);
 
-	void handleHeartbeat(String sessionId);
-
-	void handleCancel(String sessionId);
-
-	void start();
-
-	void shutdown();
+	T deserialize(byte[] data);
 
 }

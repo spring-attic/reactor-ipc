@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.utils;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public enum ServiceMessageType {
 
-	void handleMore(String sessionId, long n);
+	Request(1),
+	Cancel(2),
+	Heartbeat(4);
 
-	void handleHeartbeat(String sessionId);
 
-	void handleCancel(String sessionId);
+	private final byte code;
 
-	void start();
+	ServiceMessageType(int code) {
+		this.code = (byte)code;
+	}
 
-	void shutdown();
+	public byte getCode() {
+		return code;
+	}
 
 }

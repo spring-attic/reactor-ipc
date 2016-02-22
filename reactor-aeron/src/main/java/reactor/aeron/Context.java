@@ -19,24 +19,23 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import reactor.aeron.processor.AeronProcessor;
-import reactor.aeron.publisher.AeronPublisher;
+import reactor.aeron.publisher.AeronProcessor;
 import reactor.aeron.subscriber.AeronSubscriber;
-import reactor.aeron.support.AeronInfra;
-import reactor.aeron.support.AeronUtils;
-import reactor.aeron.support.BasicAeronInfra;
-import reactor.aeron.support.BasicExceptionSerializer;
-import reactor.aeron.support.LoggingErrorConsumer;
-import reactor.aeron.support.Serializer;
+import reactor.aeron.utils.AeronInfra;
+import reactor.aeron.utils.AeronUtils;
+import reactor.aeron.utils.BasicAeronInfra;
+import reactor.aeron.utils.BasicExceptionSerializer;
+import reactor.aeron.utils.Serializer;
 import reactor.core.util.Assert;
+import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.fn.Consumer;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 
 /**
- * A class containing parameter values required to create instances of
- * {@link AeronProcessor}, {@link AeronSubscriber} or {@link AeronPublisher}
+ *
+ * Settings for {@link AeronSubscriber}, {@link AeronProcessor}, {@link reactor.aeron.publisher.AeronFlux#listenOn(Context)}
  *
  * @since 2.5
  */
@@ -88,17 +87,24 @@ public class Context {
 	private int signalPollerFragmentLimit = 64;
 
 	/**
+	 * Number of fragments that could be read by the service message receiver during
+	 * a single call to {@link uk.co.real_logic.aeron.Subscription#poll(FragmentHandler, int)}
+	 * method
+	 */
+	private int serviceMessagePollerFragmentLimit = 1;
+
+	/**
 	 * A timeout during which a message is retied to be published into Aeron.
 	 * If the timeout elapses and the message cannot be published the corresponding
-	 * {@link reactor.aeron.support.SignalPublicationFailedException},
-	 * {@link reactor.aeron.support.ServiceMessagePublicationFailedException}
+	 * {@link reactor.aeron.utils.SignalPublicationFailedException},
+	 * {@link reactor.aeron.utils.ServiceMessagePublicationFailedException}
 	 * depending on the message type is provided into
 	 * {@link #errorConsumer}
 	 */
 	private long publicationRetryMillis = 1000;
 
 	/**
-	 * Size of internal ring buffer used for processing of messages
+	 * Size of an internal ring buffer used for processing of messages
 	 * to be published into Aeron
 	 */
 	private int ringBufferSize = PlatformDependent.MEDIUM_BUFFER_SIZE;
@@ -125,6 +131,19 @@ public class Context {
 	 * Max number of heartbeat publication failures after which the publisher is shutdown
 	 */
 	private int maxHeartbeatPublicationFailures = 2;
+
+	private AeronInfra aeronInfra;
+
+	static class LoggingErrorConsumer implements Consumer<Throwable> {
+
+		private static final Logger logger = Logger.getLogger(LoggingErrorConsumer.class);
+
+		@Override
+		public void accept(Throwable t) {
+			logger.error("Unexpected exception", t);
+		}
+
+	}
 
 	public Context name(String name) {
 		this.name = name;
@@ -158,9 +177,15 @@ public class Context {
 		return this;
 	}
 
-	public Context signalPollerFragmentLimit(int signalPollerFragmentLimit) {
-		Assert.isTrue(signalPollerFragmentLimit > 0, "signalPollerFragmentLimit should be > 0");
-		this.signalPollerFragmentLimit = signalPollerFragmentLimit;
+	public Context signalPollerFragmentLimit(int limit) {
+		Assert.isTrue(limit > 0, "limit should be > 0");
+		this.signalPollerFragmentLimit = limit;
+		return this;
+	}
+
+	public Context serviceMessagePollerFragmentLimit(int limit) {
+		Assert.isTrue(limit > 0, "limit should be > 0");
+		this.serviceMessagePollerFragmentLimit = limit;
 		return this;
 	}
 
@@ -179,7 +204,6 @@ public class Context {
 		return this;
 	}
 
-	//TODO: Review its usage
 	public Context ringBufferSize(int ringBufferSize) {
 		this.ringBufferSize = ringBufferSize;
 		return this;
@@ -245,6 +269,10 @@ public class Context {
 		return signalPollerFragmentLimit;
 	}
 
+	public int serviceMessagePollerFragmentLimit() {
+		return serviceMessagePollerFragmentLimit;
+	}
+
 	public long publicationRetryMillis() {
 		return publicationRetryMillis;
 	}
@@ -273,10 +301,11 @@ public class Context {
 		return maxHeartbeatPublicationFailures;
 	}
 
-	//TODO: Move into another class
-	public AeronInfra createAeronInfra() {
-		AeronInfra aeronInfra = new BasicAeronInfra(aeron, publicationRetryMillis);
-		aeronInfra.initialise();
+	public AeronInfra aeronInfra() {
+		if (aeronInfra == null) {
+			aeronInfra = new BasicAeronInfra(aeron, publicationRetryMillis);
+			aeronInfra.initialise();
+		}
 		return aeronInfra;
 	}
 

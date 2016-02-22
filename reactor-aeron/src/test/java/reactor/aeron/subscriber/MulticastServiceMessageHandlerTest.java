@@ -25,8 +25,8 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
-import reactor.aeron.support.Stepper;
-import reactor.aeron.support.TestAeronInfra;
+import reactor.aeron.utils.Stepper;
+import reactor.aeron.utils.TestAeronInfra;
 import reactor.core.publisher.TopicProcessor;
 import reactor.io.buffer.Buffer;
 

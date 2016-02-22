@@ -18,7 +18,7 @@ package reactor.aeron.publisher;
 import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
-import reactor.aeron.support.HeartbeatPublicationFailureException;
+import reactor.aeron.utils.HeartbeatPublicationFailureException;
 import reactor.core.state.Pausable;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
@@ -27,7 +27,7 @@ import reactor.fn.Consumer;
 /**
  * @author Anatoly Kadyshev
  */
-public class HeartbeatSender {
+class HeartbeatSender {
 
 	private volatile Pausable taskPausable;
 
