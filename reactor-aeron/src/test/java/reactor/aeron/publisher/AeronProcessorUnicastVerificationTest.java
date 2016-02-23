@@ -29,7 +29,7 @@ public class AeronProcessorUnicastVerificationTest extends AeronProcessorCommonV
 
 	@Override
 	protected Context createContext(int streamId) {
-		return new Context()
+		return Context.create()
 				.name("processor")
 				.autoCancel(true)
 				.streamId(streamId)

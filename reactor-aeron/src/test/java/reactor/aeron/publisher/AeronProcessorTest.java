@@ -75,7 +75,7 @@ public class AeronProcessorTest {
 		ctx.aeronDirectoryName(mediaDriver.aeronDirectoryName());
 		final Aeron aeron = Aeron.connect(ctx);
 		try {
-			AeronProcessor processor = AeronProcessor.create(new Context()
+			AeronProcessor processor = AeronProcessor.create(Context.create()
 					.name("processor")
 					.autoCancel(false)
 					.senderChannel(CHANNEL)
@@ -138,7 +138,7 @@ public class AeronProcessorTest {
 	}
 
 	protected Context createAeronContext() {
-		return new Context().name("multicast")
+		return Context.create().name("multicast")
 				.senderChannel(CHANNEL)
 				.receiverChannel(CHANNEL);
 	}

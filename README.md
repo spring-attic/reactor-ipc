@@ -35,7 +35,7 @@ A combination of AeronSubscriber playing a role of signals sender and AeronFlux 
 
 AeronSubscriber awaiting for connections from AeronFlux:
 ```java
-AeronSubscriber subscriber = AeronSubscriber.create(new Context()
+AeronSubscriber subscriber = AeronSubscriber.create(Context.create()
     .senderChannel("udp://serverbox:12000"));
     
 Stream.range(1, 10).map(i -> Buffer.wrap("" + i)).subscribe(subscriber); // sending 1, 2, ..., 10 via Aeron    
@@ -43,7 +43,7 @@ Stream.range(1, 10).map(i -> Buffer.wrap("" + i)).subscribe(subscriber); // send
 
 AeronFlux connecting to AeronSubscruber above:
 ```java
-Flux<Buffer> receiver = AeronFlux.listenOn(new Context()
+Flux<Buffer> receiver = AeronFlux.listenOn(Context.create()
     .senderChannel("udp://serverbox:12000")     // sender channel specified for AeronSubscriber 
 	.receiverChannel("udp://clientbox:12001"));
 
@@ -55,7 +55,7 @@ A Reactive Streams Processor which plays roles of both signal sender and signal 
 
 A processor sending signals via Aeron:
 ```java
-AeronProcessor processor = AeronProcessor.create(new Context()
+AeronProcessor processor = AeronProcessor.create(Context.create()
 		.senderChannel("udp://serverbox:12000"));
 
 Stream.range(1, 1000000).map(i -> Buffer.wrap("" + i)).subscribe(processor);
@@ -65,7 +65,7 @@ processor.subscribe(Subscribers.consumer(System.out::println));
 
 A receiver connecting to the processor above and receiving signals:
 ```java
-Flux<Buffer> receiver = AeronFlux.listenOn(new Context()
+Flux<Buffer> receiver = AeronFlux.listenOn(Context.create()
 		.senderChannel("udp://serverbox:12000")
 		.receiverChannel("udp://clientbox:12001"));
 

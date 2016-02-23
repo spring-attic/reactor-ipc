@@ -51,7 +51,7 @@ public class AeronSubscriberTest {
 
 	@Test
 	public void testShutdown() {
-		AeronSubscriber subscriber = AeronSubscriber.create(new Context()
+		AeronSubscriber subscriber = AeronSubscriber.create(Context.create()
 				.name("publisher")
 				.senderChannel(AeronTestUtils.availableLocalhostChannel()));
 

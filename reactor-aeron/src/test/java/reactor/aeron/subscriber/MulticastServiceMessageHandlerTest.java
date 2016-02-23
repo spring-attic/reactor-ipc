@@ -66,7 +66,7 @@ public class MulticastServiceMessageHandlerTest {
 		publisher.subscribe(processor);
 
 		MulticastServiceMessageHandler requestHandler = new MulticastServiceMessageHandler(
-				processor, new TestAeronInfra(), new Context(), () -> {});
+				processor, new TestAeronInfra(), Context.create(), () -> {});
 
 		final Stepper first = new Stepper();
 		Runnable flow1 = () -> {

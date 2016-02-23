@@ -145,6 +145,18 @@ public class Context {
 
 	}
 
+	/**
+	 * Creates a new instance of {@link Context}
+	 *
+	 * @return a new {@link Context}
+     */
+	public static Context create() {
+		return new Context();
+	}
+
+	protected Context() {
+	}
+
 	public Context name(String name) {
 		this.name = name;
 		return this;

@@ -33,7 +33,7 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 
 	@Override
 	protected Context createContext(String name) {
-		return new Context().name(name)
+		return Context.create().name(name)
 		                    .senderChannel(CHANNEL)
 		                    .receiverChannel(CHANNEL);
 	}

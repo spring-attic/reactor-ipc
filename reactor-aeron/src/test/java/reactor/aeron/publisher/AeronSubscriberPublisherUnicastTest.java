@@ -38,7 +38,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 	@Override
 	protected Context createContext(String name) {
-		return new Context().name(name)
+		return Context.create().name(name)
 				.senderChannel(senderChannel)
 				.receiverChannel(AeronTestUtils.availableLocalhostChannel());
 	}

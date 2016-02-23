@@ -66,7 +66,7 @@ public abstract class CommonAeronProcessorTest {
 	}
 
 	protected Context createContext() {
-		return new Context()
+		return Context.create()
 				.senderChannel(CHANNEL)
 				.errorConsumer(Throwable::printStackTrace);
 	}

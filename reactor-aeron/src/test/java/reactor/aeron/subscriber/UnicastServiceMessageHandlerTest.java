@@ -47,7 +47,7 @@ public class UnicastServiceMessageHandlerTest {
 
 		signalSender = new TestSignalSender();
 
-		Context context = new Context();
+		Context context = Context.create();
 
 		handler = new UnicastServiceMessageHandler(processor, new TestAeronInfra(), context, () -> {}) {
 			@Override

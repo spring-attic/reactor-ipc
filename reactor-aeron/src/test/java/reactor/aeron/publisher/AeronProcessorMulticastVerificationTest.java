@@ -27,7 +27,7 @@ public class AeronProcessorMulticastVerificationTest extends AeronProcessorCommo
 
 	@Override
 	protected Context createContext(int streamId) {
-		return new Context()
+		return Context.create()
 				.name("processor")
 				.autoCancel(true)
 				.streamId(streamId)
