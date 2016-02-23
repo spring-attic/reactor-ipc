@@ -63,17 +63,15 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 
 	private final Context context;
 
-	private final ErrorFragmentHandler errorFragmentHandler;
-
-	private final CompleteNextFragmentHandler completeNextFragmentHandler;
+	private final SignalFragmentHandler signalFragmentHandler;
 
 	private volatile boolean running;
 
-	private volatile uk.co.real_logic.aeron.Subscription nextCompleteSub;
+	private volatile uk.co.real_logic.aeron.Subscription signalSub;
 
 	private final ServiceMessageSender serviceMessageSender;
 
-	private abstract class SignalPollerFragmentHandler implements FragmentHandler {
+	private abstract class BaseFragmentHandler implements FragmentHandler {
 
 		private final FragmentAssembler fragmentAssembler = new FragmentAssembler(new FragmentHandler() {
 			@Override
@@ -116,9 +114,9 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 	}
 
 	/**
-	 * Handler for Complete and Next signals
+	 * Handler for Next, Complete and Error signals
 	 */
-	private class CompleteNextFragmentHandler extends SignalPollerFragmentHandler {
+	private class SignalFragmentHandler extends BaseFragmentHandler {
 
 		/**
 		 * If should read a single message from Aeron.
@@ -140,7 +138,7 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 		/**
 		 * Complete signal was received from one of senders
 		 */
-		private boolean completeReceived = false;
+		private boolean isTerminalSignalReceived = false;
 
 		@Override
 		boolean handleSignal(byte signalTypeCode, byte[] data, int sessionId) {
@@ -153,7 +151,14 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 					nextSignalCounter++;
 				}
 			} else if (signalTypeCode == SignalType.Complete.getCode()) {
-				completeReceived = true;
+				subscriber.onComplete();
+
+				isTerminalSignalReceived = true;
+			} else if (signalTypeCode == SignalType.Error.getCode()) {
+				Throwable t = context.exceptionSerializer().deserialize(data);
+				subscriber.onError(t);
+
+				isTerminalSignalReceived = true;
 			} else {
 				return false;
 			}
@@ -175,8 +180,8 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 			reservedNextSignal = null;
 		}
 
-		public boolean isCompleteReceived() {
-			return completeReceived;
+		public boolean isTerminalSignalReceived() {
+			return isTerminalSignalReceived;
 		}
 	}
 
@@ -190,34 +195,6 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 		return SignalPoller.class.getSimpleName();
 	}
 
-	/**
-	 * Handler for Error signals
-	 */
-	private class ErrorFragmentHandler extends SignalPollerFragmentHandler {
-
-		/**
-		 * Error signal was received from one of senders
-		 */
-		private boolean errorReceived = false;
-
-		@Override
-		boolean handleSignal(byte signalTypeCode, byte[] data, int sessionId) {
-			if (signalTypeCode == SignalType.Error.getCode()) {
-				Throwable t = context.exceptionSerializer().deserialize(data);
-				subscriber.onError(t);
-
-				errorReceived = true;
-				return true;
-			}
-			return false;
-		}
-
-		boolean isErrorReceived() {
-			return errorReceived;
-		}
-
-	}
-
 	public SignalPoller(Context context,
 						ServiceMessageSender serviceMessageSender,
 						Subscriber<? super Buffer> subscriber,
@@ -229,8 +206,7 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 		this.subscriber = subscriber;
 		this.aeronInfra = aeronInfra;
 		this.shutdownTask = shutdownTask;
-		this.errorFragmentHandler = new ErrorFragmentHandler();
-		this.completeNextFragmentHandler = new CompleteNextFragmentHandler();
+		this.signalFragmentHandler = new SignalFragmentHandler();
 		this.demandTracker = new DemandTracker();
 	}
 
@@ -239,9 +215,10 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 		running = true;
 		logger.debug("Signal poller started, sessionId: {}", serviceMessageSender.getSessionId());
 
-		uk.co.real_logic.aeron.Subscription nextCompleteSub = createNextCompleteSub();
-		this.nextCompleteSub = nextCompleteSub;
-		uk.co.real_logic.aeron.Subscription errorSub = createErrorSub();
+		uk.co.real_logic.aeron.Subscription signalSub = aeronInfra.addSubscription(context.receiverChannel(),
+				context.streamId());
+
+		this.signalSub = signalSub;
 
 		setSubscriberSubscription();
 
@@ -251,13 +228,6 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 		long demand = 0;
 		try {
 			while (running) {
-				errorSub.poll(errorFragmentHandler, 1);
-				if (errorFragmentHandler.isErrorReceived()) {
-					isTerminalSignalReceived = true;
-					running = false;
-					break;
-				}
-
 				if (demand == 0) {
 					demand = demandTracker.getAndReset();
 				}
@@ -265,32 +235,30 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 				int nFragmentsReceived = 0;
 				int fragmentLimit = (int) Math.min(demand, context.signalPollerFragmentLimit());
 				if (fragmentLimit == 0) {
-					if (!completeNextFragmentHandler.hasReservedNextSignal()) {
-						checkForCompleteSignal(nextCompleteSub);
+					if (!signalFragmentHandler.hasReservedNextSignal()) {
+						checkForTerminalSignal(signalSub);
 					}
 				} else {
-					if (completeNextFragmentHandler.hasReservedNextSignal()) {
-						completeNextFragmentHandler.processReservedNextSignal();
+					if (signalFragmentHandler.hasReservedNextSignal()) {
+						signalFragmentHandler.processReservedNextSignal();
 						fragmentLimit--;
 						demand--;
 					}
 					if (fragmentLimit > 0) {
-						nFragmentsReceived = nextCompleteSub.poll(completeNextFragmentHandler, fragmentLimit);
-						demand -= completeNextFragmentHandler.getAndResetNextSignalCounter();
+						nFragmentsReceived = signalSub.poll(signalFragmentHandler, fragmentLimit);
+						demand -= signalFragmentHandler.getAndResetNextSignalCounter();
 					}
 				}
 				idleStrategy.idle(nFragmentsReceived);
 
-				if (completeNextFragmentHandler.isCompleteReceived()) {
+				if (signalFragmentHandler.isTerminalSignalReceived()) {
 					isTerminalSignalReceived = true;
-					subscriber.onComplete();
 					running = false;
 					break;
 				}
 			}
 		} finally {
-			aeronInfra.close(nextCompleteSub);
-			aeronInfra.close(errorSub);
+			aeronInfra.close(signalSub);
 
 			logger.trace("about to execute shutdownTask");
 			shutdownTask.accept(isTerminalSignalReceived);
@@ -311,18 +279,10 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 		}
 	}
 
-	private Subscription createErrorSub() {
-		return aeronInfra.addSubscription(context.receiverChannel(), context.errorStreamId());
-	}
-
-	private Subscription createNextCompleteSub() {
-		return aeronInfra.addSubscription(context.receiverChannel(), context.streamId());
-	}
-
-	private void checkForCompleteSignal(Subscription nextCompleteSub) {
-		completeNextFragmentHandler.checkForComplete = true;
-		nextCompleteSub.poll(completeNextFragmentHandler, 1);
-		completeNextFragmentHandler.checkForComplete = false;
+	private void checkForTerminalSignal(Subscription nextCompleteSub) {
+		signalFragmentHandler.checkForComplete = true;
+		nextCompleteSub.poll(signalFragmentHandler, 1);
+		signalFragmentHandler.checkForComplete = false;
 	}
 
 	public void shutdown() {
@@ -331,8 +291,7 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 
 	@Override
 	public Iterator<?> downstreams() {
-
-		String up1 = nextCompleteSub != null ? nextCompleteSub.channel()+"/"+nextCompleteSub.streamId() :
+		String up1 = signalSub != null ? signalSub.channel()+"/"+ signalSub.streamId() :
 				context.receiverChannel()+"/"+context.streamId();
 
 		return Arrays.asList(up1, serviceMessageSender).iterator();

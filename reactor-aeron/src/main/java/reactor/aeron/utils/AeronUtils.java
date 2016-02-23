@@ -34,7 +34,7 @@ public final class AeronUtils {
 
 	public static final String LABEL_PREFIX_SUBSCRIBER_POS = "subscriber pos";
 
-	public static final Pattern UNICAST_SESSION_ID_PATTERN = Pattern.compile("(udp://.+:\\d+)/(\\d+)/(\\d+)");
+	public static final Pattern UNICAST_SESSION_ID_PATTERN = Pattern.compile("(udp://.+:\\d+)/(\\d+)");
 
 	public static BackoffIdleStrategy newBackoffIdleStrategy() {
 		return new BackoffIdleStrategy(

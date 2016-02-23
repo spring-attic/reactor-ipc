@@ -93,7 +93,7 @@ class UnicastServiceMessageHandler implements ServiceMessageHandler, MultiProduc
 			session.setTerminal();
 
 			Buffer buffer = Buffer.wrap(context.exceptionSerializer().serialize(t));
-			signalSender.publishSignal(session.getSessionId(), session.getErrorPublication(), buffer,
+			signalSender.publishSignal(session.getSessionId(), session.getPublication(), buffer,
 					SignalType.Error, true);
 		}
 
@@ -206,12 +206,10 @@ class UnicastServiceMessageHandler implements ServiceMessageHandler, MultiProduc
 			}
 
 			int streamId = Integer.parseInt(matcher.group(2));
-			int errorStreamId = Integer.parseInt(matcher.group(3));
 
 			return new UnicastSession(
 					sessionId,
-					aeronInfra.addPublication(receiverChannel, streamId),
-					aeronInfra.addPublication(receiverChannel, errorStreamId));
+					aeronInfra.addPublication(receiverChannel, streamId));
 		} else {
 			throw new IllegalArgumentException("Malformed unicast sessionId: " + sessionId);
 		}
@@ -228,7 +226,6 @@ class UnicastServiceMessageHandler implements ServiceMessageHandler, MultiProduc
 		}
 
 		aeronInfra.close(session.getPublication());
-		aeronInfra.close(session.getErrorPublication());
 
 		logger.debug("Closed session with sessionId: {}", session.getSessionId());
 	}

@@ -140,7 +140,7 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 	protected String getSessionId(Context context) {
 		return AeronUtils.isMulticastCommunication(context) ?
 				UUIDUtils.create().toString():
-				context.receiverChannel() + "/" + context.streamId() + "/" + context.errorStreamId();
+				context.receiverChannel() + "/" + context.streamId();
 	}
 
 	private Publication createServiceRequestPub(Context context, AeronInfra aeronInfra) {

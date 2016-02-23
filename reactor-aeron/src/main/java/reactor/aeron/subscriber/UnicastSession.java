@@ -28,8 +28,6 @@ class UnicastSession implements Session, Introspectable, Producer {
 
 	private final Publication publication;
 
-	private final Publication errorPublication;
-
 	private volatile long lastHeartbeatTimeNs;
 
 	private final DemandTracker demandTracker = new DemandTracker();
@@ -40,10 +38,9 @@ class UnicastSession implements Session, Introspectable, Producer {
 
 	private volatile boolean isTerminal;
 
-	public UnicastSession(String sessionId, Publication publication, Publication errorPublication) {
+	public UnicastSession(String sessionId, Publication publication) {
 		this.sessionId = sessionId;
 		this.publication = publication;
-		this.errorPublication = errorPublication;
 	}
 
 	public Publication getPublication() {
@@ -75,10 +72,6 @@ class UnicastSession implements Session, Introspectable, Producer {
 	@Override
 	public long requestMore(long n) {
 		return demandTracker.request(n);
-	}
-
-	public Publication getErrorPublication() {
-		return errorPublication;
 	}
 
 	@Override

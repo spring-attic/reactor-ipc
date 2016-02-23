@@ -68,7 +68,7 @@ public class UnicastServiceMessageHandlerTest {
 	public void testItWorks() throws InterruptedException {
 		Stream.just(1, 2, 3, 4, 5).map(i -> Buffer.wrap("" + i)).subscribe(processor);
 
-		String sessionId1 = "udp://192.168.1.1:12000" + "/1/2";
+		String sessionId1 = "udp://192.168.1.1:12000" + "/1";
 		handler.handleMore(sessionId1, 1);
 
 		signalSender.assertNumSignalsPublished(sessionId1, 1);
@@ -77,7 +77,7 @@ public class UnicastServiceMessageHandlerTest {
 		assertThat(data.lastSignalType, is(SignalType.Next));
 		assertThat(data.lastSignal.asString(), is("1"));
 
-		String sessionId2 = "udp://192.168.1.1:12000" + "/11/12";
+		String sessionId2 = "udp://192.168.1.1:12000" + "/11";
 		handler.handleMore(sessionId2, 3);
 
 		signalSender.assertNumSignalsPublished(sessionId2, 2);

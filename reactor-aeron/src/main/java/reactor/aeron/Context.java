@@ -15,8 +15,6 @@
  */
 package reactor.aeron;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.publisher.AeronProcessor;
@@ -65,14 +63,9 @@ public class Context {
 	private int streamId = DEFAULT_SIGNAL_STREAM_ID;
 
 	/**
-	 * Aeron StreamId used by the signals sender to publish Error signals
-	 */
-	private int errorStreamId = 2;
-
-	/**
 	 * Aeron StreamId used by the signals sender to listen to service requests from the receiver
 	 */
-	private int serviceRequestStreamId = 3;
+	private int serviceRequestStreamId = DEFAULT_SIGNAL_STREAM_ID + 1;
 
 	/**
 	 * Instance of Aeron to be used by the processor
@@ -201,11 +194,6 @@ public class Context {
 		return this;
 	}
 
-	public Context errorStreamId(int errorStreamId) {
-		this.errorStreamId = errorStreamId;
-		return this;
-	}
-
 	public Context serviceRequestStreamId(int serviceRequestStreamId) {
 		this.serviceRequestStreamId = serviceRequestStreamId;
 		return this;
@@ -233,16 +221,7 @@ public class Context {
 
 	public void validate() {
 		Assert.notNull(senderChannel, "'senderChannel' should be provided");
-
-		Set<Integer> streamIdsSet = new HashSet<>();
-		streamIdsSet.add(streamId);
-		streamIdsSet.add(errorStreamId);
-		streamIdsSet.add(serviceRequestStreamId);
-
-		Assert.isTrue(streamIdsSet.size() == 3,
-				String.format("streamId: %d, errorStreamId: %d, serviceRequestStreamId: %d"
-								+ " should all be different",
-						streamId, errorStreamId, serviceRequestStreamId));
+		Assert.isTrue(streamId != serviceRequestStreamId, "streamId should != serviceRequestStreamId");
 	}
 
 	public String name() {
@@ -263,10 +242,6 @@ public class Context {
 
 	public int streamId() {
 		return streamId;
-	}
-
-	public int errorStreamId() {
-		return errorStreamId;
 	}
 
 	public int serviceRequestStreamId() {

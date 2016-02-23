@@ -67,9 +67,7 @@ class MulticastServiceMessageHandler implements ServiceMessageHandler {
 
 		private static final String SESSION_ID = "<multicast>";
 
-		private final Publication nextCompletePub;
-
-		private final Publication errorPub;
+		private final Publication signalPub;
 
 		private final Serializer<Throwable> exceptionSerializer;
 
@@ -82,8 +80,7 @@ class MulticastServiceMessageHandler implements ServiceMessageHandler {
 		InnerSubscriber(Context context,
 						AeronInfra aeronInfra) {
 			this.exceptionSerializer = context.exceptionSerializer();
-			this.nextCompletePub = aeronInfra.addPublication(context.receiverChannel(), context.streamId());
-			this.errorPub = aeronInfra.addPublication(context.receiverChannel(), context.errorStreamId());
+			this.signalPub = aeronInfra.addPublication(context.receiverChannel(), context.streamId());
 			this.signalSender = new BasicSignalSender(aeronInfra, context.errorConsumer());
 		}
 
@@ -96,7 +93,7 @@ class MulticastServiceMessageHandler implements ServiceMessageHandler {
 
 		@Override
 		public void onNext(Buffer buffer) {
-			signalSender.publishSignal(SESSION_ID, nextCompletePub, buffer, SignalType.Next, true);
+			signalSender.publishSignal(SESSION_ID, signalPub, buffer, SignalType.Next, true);
 
 			incrementCursor();
 		}
@@ -105,7 +102,7 @@ class MulticastServiceMessageHandler implements ServiceMessageHandler {
 		public void onError(Throwable t) {
 			Buffer buffer = Buffer.wrap(exceptionSerializer.serialize(t));
 
-			signalSender.publishSignal(SESSION_ID, errorPub, buffer, SignalType.Error, true);
+			signalSender.publishSignal(SESSION_ID, signalPub, buffer, SignalType.Error, true);
 
 			terminal = true;
 		}
@@ -114,7 +111,7 @@ class MulticastServiceMessageHandler implements ServiceMessageHandler {
 		public void onComplete() {
 			Buffer buffer = new Buffer(0, true);
 
-			signalSender.publishSignal(SESSION_ID, nextCompletePub, buffer, SignalType.Complete, true);
+			signalSender.publishSignal(SESSION_ID, signalPub, buffer, SignalType.Complete, true);
 
 			terminal = true;
 		}
