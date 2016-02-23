@@ -104,6 +104,10 @@ public final class BasicAeronInfra implements AeronInfra {
 		long startTime = System.nanoTime();
 		long result;
 		while ((result = publication.tryClaim(length, bufferClaim)) < 0) {
+			if (result == Publication.CLOSED) {
+				break;
+			}
+
 			if (!retryClaim || System.nanoTime() - startTime > publicationRetryNs) {
 				break;
 			}
