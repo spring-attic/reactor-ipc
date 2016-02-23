@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.publisher;
+
+import reactor.aeron.Context;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public class AeronProcessorMulticastTest extends CommonAeronProcessorTest {
 
-	void handleMore(String sessionId, long n);
-
-	void handleHeartbeat(String sessionId);
-
-	void handleCancel(String sessionId);
-
-	void start();
-
-	void shutdown();
+	@Override
+	protected Context createContext() {
+		return super.createContext()
+				.name("multicast")
+				.senderChannel(CHANNEL)
+				.receiverChannel(CHANNEL);
+	}
 
 }

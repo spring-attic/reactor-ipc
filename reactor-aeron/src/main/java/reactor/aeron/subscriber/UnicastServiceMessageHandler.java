@@ -18,15 +18,14 @@ package reactor.aeron.subscriber;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
-import reactor.aeron.support.AeronInfra;
-import reactor.aeron.support.AeronUtils;
-import reactor.aeron.support.SignalType;
+import reactor.aeron.utils.AeronInfra;
+import reactor.aeron.utils.AeronUtils;
+import reactor.aeron.utils.SignalType;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.util.Logger;
@@ -38,7 +37,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class UnicastServiceMessageHandler implements ServiceMessageHandler, MultiProducer {
+class UnicastServiceMessageHandler implements ServiceMessageHandler, MultiProducer {
 
 	private static final Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
 
@@ -62,9 +61,6 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 	private final SessionTracker<UnicastSession> sessionTracker;
 
 	private final HeartbeatWatchdog heartbeatWatchdog;
-
-	//TODO: Change to work with IPC as well
-	private final Pattern SESSION_ID_PATTERN = Pattern.compile("(udp://.+:\\d+)/(\\d+)/(\\d+)");
 
 	private class InnerSubscriber implements Subscriber<Buffer> {
 
@@ -125,7 +121,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 	}
 
 	protected SignalSender createSignalSender() {
-		return new SignalSender(aeronInfra, context.errorConsumer());
+		return new BasicSignalSender(aeronInfra, context.errorConsumer());
 	}
 
 	@Override
@@ -160,7 +156,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 			}
 
 		} else {
-			//TODO: Handle
+			logger.debug("Could not find a session to close with Id: {}", sessionId);
 		}
 	}
 
@@ -178,7 +174,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 	}
 
 	private void sendCompleteIntoNonTerminalSessions() {
-		SignalSender signalSender = new SignalSender(aeronInfra, context.errorConsumer());
+		SignalSender signalSender = new BasicSignalSender(aeronInfra, context.errorConsumer());
 		Buffer buffer = new Buffer(0, true);
 		for (UnicastSession session: sessionTracker.getSessions()) {
 			if (!session.isTerminal()) {
@@ -196,10 +192,16 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 	}
 
 	private UnicastSession createSession(String sessionId) {
-		Matcher matcher = SESSION_ID_PATTERN.matcher(sessionId);
+		Matcher matcher = AeronUtils.UNICAST_SESSION_ID_PATTERN.matcher(sessionId);
 		if (matcher.matches()) {
 			String receiverChannel = matcher.group(1);
-			if (!validateReceiverChannel(receiverChannel)) {
+
+			boolean isValidChannel = false;
+			try {
+				isValidChannel = AeronUtils.isUnicastChannel(receiverChannel);
+			} catch (Exception ex) {
+			}
+			if (!isValidChannel) {
 				throw new IllegalArgumentException("Invalid unicast receiver channel: " + receiverChannel);
 			}
 
@@ -215,16 +217,6 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 		}
 	}
 
-	private boolean validateReceiverChannel(String receiverChannel) {
-		boolean result;
-		try {
-			result = AeronUtils.isUnicastChannel(receiverChannel);
-		} catch (Exception ex) {
-			result = false;
-		}
-		return result;
-	}
-
 	private void cancel(UnicastSession session) {
 		if (waitTillSubscriptionIsAssigned(session)) {
 			session.subscription.cancel();
@@ -232,15 +224,13 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 			context.errorConsumer().accept(
 					new RuntimeException(String.format(
 							"No subscription for inner subscriber for sessionId: %s was assigned during %d millis",
-							session.getSessionId(), 100)));
+							session.getSessionId(), SUBSCRIPTION_TIMEOUT_NS)));
 		}
 
 		aeronInfra.close(session.getPublication());
 		aeronInfra.close(session.getErrorPublication());
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("Closed session with sessionId: {}", session.getSessionId());
-		}
+		logger.debug("Closed session with sessionId: {}", session.getSessionId());
 	}
 
 	public boolean waitTillSubscriptionIsAssigned(UnicastSession session) {
@@ -265,9 +255,7 @@ public class UnicastServiceMessageHandler implements ServiceMessageHandler, Mult
 
 			processor.subscribe(new InnerSubscriber(session));
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("New session established with sessionId: {}", sessionId);
-			}
+			logger.debug("New session established with sessionId: {}", sessionId);
 		}
 		return session;
 	}

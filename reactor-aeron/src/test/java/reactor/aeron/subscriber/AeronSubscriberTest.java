@@ -19,8 +19,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import reactor.aeron.Context;
-import reactor.aeron.support.AeronTestUtils;
-import reactor.aeron.support.ThreadSnapshot;
+import reactor.aeron.utils.AeronTestUtils;
+import reactor.aeron.utils.ThreadSnapshot;
 
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +51,7 @@ public class AeronSubscriberTest {
 
 	@Test
 	public void testShutdown() {
-		AeronSubscriber subscriber = AeronSubscriber.create(new Context()
+		AeronSubscriber subscriber = AeronSubscriber.create(Context.create()
 				.name("publisher")
 				.senderChannel(AeronTestUtils.availableLocalhostChannel()));
 

@@ -28,7 +28,7 @@ import reactor.fn.Consumer;
 /**
  * @author Anatoly Kadyshev
  */
-public class HeartbeatWatchdog {
+class HeartbeatWatchdog {
 
 	private static final Logger logger = Logger.getLogger(HeartbeatWatchdog.class);
 
@@ -57,8 +57,9 @@ public class HeartbeatWatchdog {
 			}
 
 			for (int i = 0; i < heartbeatLostSessions.size(); i++) {
-				//TODO: Report heartbeat loss
-				serviceMessageHandler.handleCancel(heartbeatLostSessions.get(i).getSessionId());
+				String sessionId = heartbeatLostSessions.get(i).getSessionId();
+				serviceMessageHandler.handleCancel(sessionId);
+				logger.debug("Closed session with Id: {} due to a heartbeat loss", sessionId);
 			}
 
 			heartbeatLostSessions.clear();

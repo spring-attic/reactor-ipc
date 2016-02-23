@@ -20,12 +20,12 @@ import java.util.Iterator;
 
 import org.reactivestreams.Subscriber;
 import reactor.aeron.Context;
-import reactor.aeron.support.AeronInfra;
-import reactor.aeron.support.AeronUtils;
-import reactor.aeron.support.DemandTracker;
-import reactor.aeron.support.ServiceMessagePublicationFailedException;
-import reactor.aeron.support.ServiceMessageType;
-import reactor.aeron.support.SignalType;
+import reactor.aeron.utils.AeronInfra;
+import reactor.aeron.utils.AeronUtils;
+import reactor.aeron.utils.DemandTracker;
+import reactor.aeron.utils.ServiceMessagePublicationFailedException;
+import reactor.aeron.utils.ServiceMessageType;
+import reactor.aeron.utils.SignalType;
 import reactor.core.flow.MultiProducer;
 import reactor.core.flow.Producer;
 import reactor.core.state.Cancellable;
@@ -47,7 +47,7 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 /**
  * Signals receiver functionality which polls for signals sent by senders
  */
-public class SignalPoller implements org.reactivestreams.Subscription, Runnable, Producer,
+class SignalPoller implements org.reactivestreams.Subscription, Runnable, Producer,
                                      Requestable, Completable,
                                      Cancellable, MultiProducer, Introspectable {
 

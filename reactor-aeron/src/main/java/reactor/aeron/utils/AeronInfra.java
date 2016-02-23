@@ -13,21 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.aeron.subscriber;
+package reactor.aeron.utils;
+
+import uk.co.real_logic.aeron.Publication;
+import uk.co.real_logic.aeron.Subscription;
+import uk.co.real_logic.aeron.logbuffer.BufferClaim;
+import uk.co.real_logic.agrona.concurrent.IdleStrategy;
 
 /**
  * @author Anatoly Kadyshev
  */
-interface ServiceMessageHandler {
+public interface AeronInfra {
 
-	void handleMore(String sessionId, long n);
-
-	void handleHeartbeat(String sessionId);
-
-	void handleCancel(String sessionId);
-
-	void start();
+	void initialise();
 
 	void shutdown();
+
+	Publication addPublication(String channel, int streamId);
+
+	Subscription addSubscription(String channel, int streamId);
+
+	long claim(Publication publication, BufferClaim bufferClaim, int length, IdleStrategy idleStrategy,
+			   boolean retryClaim);
+
+	void close(Publication publication);
+
+	void close(Subscription subscription);
 
 }

@@ -15,8 +15,8 @@
  */
 package reactor.aeron.publisher;
 
-import reactor.aeron.support.AeronUtils;
-import reactor.aeron.support.ServiceMessageType;
+import reactor.aeron.utils.AeronUtils;
+import reactor.aeron.utils.ServiceMessageType;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
 import uk.co.real_logic.aeron.Publication;
@@ -29,7 +29,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  * @author Anatoly Kadyshev
  * @author Stephane Maldini
  */
-public class ServiceMessageSender implements Producer, Loopback {
+class ServiceMessageSender implements Producer, Loopback {
 
 	private final Publication serviceRequestPub;
 
@@ -39,11 +39,11 @@ public class ServiceMessageSender implements Producer, Loopback {
 
 	private final byte[] sessionIdEncoded;
 
-	private final AeronPublisher parent;
+	private final AeronFlux parent;
 
 	private final String sessionId;
 
-	public ServiceMessageSender(AeronPublisher parent, Publication serviceRequestPub, String sessionId) {
+	public ServiceMessageSender(AeronFlux parent, Publication serviceRequestPub, String sessionId) {
 		this.parent = parent;
 		this.serviceRequestPub = serviceRequestPub;
 		this.sessionId = sessionId;
@@ -63,7 +63,6 @@ public class ServiceMessageSender implements Producer, Loopback {
 		if (claimBuffer(1 + 8 + (sessionIdEncoded.length + 1)) >= 0) {
 			commitRequest(bufferClaim, n, sessionIdEncoded);
 		} else {
-			//TODO: Handle a situation when service request cannot be sent
 			throw new RuntimeException("Failed to send request service message" +
 					" due to backpressured/not connected publication");
 		}

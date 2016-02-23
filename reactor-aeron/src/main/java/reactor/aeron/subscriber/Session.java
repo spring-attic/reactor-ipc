@@ -16,21 +16,36 @@
 package reactor.aeron.subscriber;
 
 /**
+ * A session between a signals sender and a signals receiver
+ *
  * @author Anatoly Kadyshev
  */
 interface Session {
 
+	/**
+	 * @return current session Id
+     */
 	String getSessionId();
 
-	//TODO: Get rid of the method as it returns different notions depending on the implementation
+	/**
+	 * Increases requested demand for the session for n signals
+	 *
+	 * @param n number of signals to request
+	 *
+	 * @return a value indicating the previous demand
+     */
 	long requestMore(long n);
 
+	/**
+	 * @return time in nanos of the last heartbeat received for the session
+     */
 	long getLastHeartbeatTimeNs();
 
+	/**
+	 * Sets time of the last heartbeat received for the session in nanos
+	 *
+	 * @param lastHeartbeatTimeNs time of the last heartbeat in nanos
+     */
 	void setLastHeartbeatTimeNs(long lastHeartbeatTimeNs);
-
-	void setTerminal();
-
-	boolean isTerminal();
 
 }

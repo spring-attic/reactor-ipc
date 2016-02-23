@@ -25,8 +25,8 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
-import reactor.aeron.support.Stepper;
-import reactor.aeron.support.TestAeronInfra;
+import reactor.aeron.utils.Stepper;
+import reactor.aeron.utils.TestAeronInfra;
 import reactor.core.publisher.TopicProcessor;
 import reactor.io.buffer.Buffer;
 
@@ -66,7 +66,7 @@ public class MulticastServiceMessageHandlerTest {
 		publisher.subscribe(processor);
 
 		MulticastServiceMessageHandler requestHandler = new MulticastServiceMessageHandler(
-				processor, new TestAeronInfra(), new Context(), () -> {});
+				processor, new TestAeronInfra(), Context.create(), () -> {});
 
 		final Stepper first = new Stepper();
 		Runnable flow1 = () -> {

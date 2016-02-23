@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
-import reactor.aeron.support.AeronInfra;
-import reactor.aeron.support.AeronUtils;
+import reactor.aeron.utils.AeronInfra;
+import reactor.aeron.utils.AeronUtils;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.TopicProcessor;
@@ -33,7 +33,7 @@ import reactor.io.buffer.Buffer;
 
 /**
  * The subscriber part of Reactive Streams over Aeron transport implementation
- * used to pass signals to publishers {@link reactor.aeron.publisher.AeronPublisher} over Aeron
+ * used to pass signals to publishers {@link reactor.aeron.publisher.AeronFlux#listenOn(Context)} over Aeron
  * and configured via fields of {@link Context}.
  *
  * <p/>Can operate in both unicast and multicast sending modes.
@@ -57,7 +57,7 @@ import reactor.io.buffer.Buffer;
  *     the signals sender to signals receivers</li>
  *     <li>{@link Context#errorStreamId} - for passing of Error signals</li>
  *     <li>{@link Context#serviceRequestStreamId} - for service requests of
- *     {@link reactor.aeron.support.ServiceMessageType}
+ *     {@link reactor.aeron.utils.ServiceMessageType}
  *     from signal receivers to the signal sender
  * </ul>
  *
@@ -97,7 +97,7 @@ import reactor.io.buffer.Buffer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class AeronSubscriber extends BaseSubscriber<Buffer>
+public final class AeronSubscriber extends BaseSubscriber<Buffer>
 		implements Completable, Receiver, Loopback {
 
 	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
@@ -142,7 +142,7 @@ public class AeronSubscriber extends BaseSubscriber<Buffer>
 			};
 		}
 
-		this.aeronInfra = context.createAeronInfra();
+		this.aeronInfra = context.aeronInfra();
 		this.processor = createTopicProcessor(context, multiPublishers);
 		boolean isMulticast = AeronUtils.isMulticastCommunication(context);
 		if (isMulticast) {
