@@ -274,6 +274,7 @@ public abstract class BaseHttpChannel<IN, OUT> extends Flux<IN> implements Intro
 		@Override
 		public void subscribe(final Subscriber<? super Void> s) {
 			if(markHeadersAsFlushed()){
+				headers().transferEncodingChunked();
 				doSubscribeHeaders(new PostHeaderWriteSubscriber(s));
 			}
 			else{

@@ -73,7 +73,6 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 		if(httpChannel == null) {
 			httpChannel = new PostHeaderPublisher();
 			httpChannel.keepAlive(true);
-			httpChannel.headers().transferEncodingChunked();
 		}
 
 

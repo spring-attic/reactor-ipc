@@ -83,13 +83,66 @@ class HttpSpec extends Specification {
 	  println "Failed requesting server: $it"
 	}
 
-	then: "data was not recieved"
+	then: "data was not received"
 	//the produced reply should be there soon
 	!content.get(5, TimeUnit.SECONDS)
   }
 
+  def "http responds with body"() {
+	given: "a simple HttpServer"
 
-	def "http responds to requests from clients"() {
+	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
+	def server = NetStreams.httpServer {
+	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
+	}
+
+	when: "the server is prepared"
+
+	//prepare post request consumer on /test/* and capture the URL parameter "param"
+	server.get('/resource') {
+	  HttpChannelStream<String, String> req
+		->
+		assert req.headers().entries().size() == 3
+		assert req.headers().contains("Host")
+		assert req.headers().get("Accept") == "*/*"
+		assert req.headers().get("X-Test") == "test"
+		req.writeWith(Mono.just("OK"))
+	}
+
+	then: "the server was started"
+	server
+	!server.start().get(5, TimeUnit.SECONDS)
+
+	when: "data is sent with Reactor HTTP support"
+
+	//Prepare a client using default impl (Netty) to connect on http://localhost:port/ and assign global codec to send/receive String data
+	def client = NetStreams.httpClient {
+	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
+	}
+
+	//prepare an http post request-reply flow
+	def content = client.get('/resource') { HttpChannelStream<String, String> req ->
+	  //prepare content-type
+	  req.header('X-Test', 'test')
+
+	  req.writeHeaders()
+
+	}.then { replies ->
+	  //successful request, listen for the first returned next reply and pass it downstream
+	  replies.log('client-received').next()
+	}
+	.doOnError {
+	  //something failed during the request or the reply processing
+	  println "Failed requesting server: $it"
+	}
+
+	then: "data was received"
+	//the produced reply should be there soon
+	content.get(5, TimeUnit.SECONDS) == "OK"
+  }
+
+
+  def "http responds to requests from clients"() {
 	given: "a simple HttpServer"
 
 	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
@@ -103,6 +156,12 @@ class HttpSpec extends Specification {
 	server.post('/test/{param}') {
 	  HttpChannelStream<String, String> req
 		->
+
+		assert req.headers().entries().size() == 4
+		assert req.headers().contains("Host")
+		assert req.headers().get("Accept") == "*/*"
+		assert req.headers().get("Content-Type") == "text/plain"
+		assert req.headers().get("Transfer-Encoding") == "chunked"
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
@@ -149,7 +208,7 @@ class HttpSpec extends Specification {
 
 
 
-	then: "data was recieved"
+	then: "data was received"
 	//the produced reply should be there soon
 	content.get(5, TimeUnit.SECONDS) == "Hello World!"
 
@@ -200,14 +259,14 @@ class HttpSpec extends Specification {
 	client
 			.get('/test')
 			.then { replies ->
-	 			 Mono.just(replies.responseStatus().code)
+	  Mono.just(replies.responseStatus().code)
 			  .log("received-status-1")
-			}
-			.get(5, TimeUnit.SECONDS)
+	}
+	.get(5, TimeUnit.SECONDS)
 
 
 
-	then: "data was recieved"
+	then: "data was received"
 	//the produced reply should be there soon
 	thrown HttpException
 
@@ -220,7 +279,7 @@ class HttpSpec extends Specification {
 	.next()
 			.get(3, TimeUnit.SECONDS)
 
-	then: "data was recieved"
+	then: "data was received"
 	//the produced reply should be there soon
 	thrown Exceptions.CancelException
 	errored.await(5, TimeUnit.SECONDS.SECONDS)
@@ -237,7 +296,7 @@ class HttpSpec extends Specification {
 	.next()
 			.get(5, TimeUnit.SECONDS)
 
-	then: "data was recieved"
+	then: "data was received"
 	//the produced reply should be there soon
 	thrown HttpException
 
@@ -311,7 +370,7 @@ class HttpSpec extends Specification {
 			  .doOnNext { clientRes++ }
 	}
 	.as(Stream.&from)
-	.take(1000)
+			.take(1000)
 			.toList()
 			.doOnError {
 	  //something failed during the request or the reply processing
@@ -321,7 +380,7 @@ class HttpSpec extends Specification {
 
 	println "server: $serverRes / client: $clientRes"
 
-	then: "data was recieved"
+	then: "data was received"
 	//the produced reply should be there soon
 	content.get()[1000 - 1] == "1000 World!"
 
