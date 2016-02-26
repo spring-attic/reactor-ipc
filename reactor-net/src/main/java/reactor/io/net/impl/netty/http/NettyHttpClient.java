@@ -93,9 +93,9 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
 		return client.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
 			@Override
-			public Publisher<Void> apply(ReactiveChannel<Buffer, Buffer> inoutChannelStream) {
+			public Publisher<Void> apply(ReactiveChannel<Buffer, Buffer> inoutChannelFluxion) {
 				final NettyHttpChannel ch =
-						((NettyHttpChannel) inoutChannelStream);
+						((NettyHttpChannel) inoutChannelFluxion);
 				return handler.apply(ch);
 			}
 		});
@@ -107,9 +107,9 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 			final Reconnect reconnect) {
 		return client.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
 			@Override
-			public Publisher<Void> apply(ReactiveChannel<Buffer, Buffer> inoutChannelStream) {
+			public Publisher<Void> apply(ReactiveChannel<Buffer, Buffer> inoutChannelFluxion) {
 				final NettyHttpChannel ch =
-						((NettyHttpChannel) inoutChannelStream);
+						((NettyHttpChannel) inoutChannelFluxion);
 				return handler.apply(ch);
 			}
 		}, reconnect);

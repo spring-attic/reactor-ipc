@@ -42,8 +42,8 @@ import reactor.io.codec.Codec;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.impl.netty.NettyClientSocketOptions;
 import reactor.io.net.preprocessor.CodecPreprocessor;
+import reactor.rx.Fluxion;
 import reactor.rx.Promise;
-import reactor.rx.Stream;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -261,7 +261,7 @@ public class SmokeTests {
 
 		processor = TopicProcessor.create(false);
 		workProcessor = WorkQueueProcessor.create(false);
-		Stream<Buffer> bufferStream = Stream
+		Fluxion<Buffer> bufferStream = Fluxion
 		  .from(processor)
 		  .window(windowBatch)
 		  .doOnNext(d ->
@@ -276,7 +276,7 @@ public class SmokeTests {
 				)
 		  //.log("log", LogOperator.REQUEST)
 		  .subscribeWith(workProcessor)
-		  .as(Stream::from);
+		  .as(Fluxion::from);
 
 		httpServer = NetStreams.httpServer(server -> server
 			.httpProcessor(CodecPreprocessor.from(codec)).listen(port)
@@ -294,9 +294,9 @@ public class SmokeTests {
 			return request.writeWith(bufferStream.doOnNext(d -> integer.getAndIncrement())
 			                                     .take(takeCount)
 			                                     .doOnNext(d -> integerPostTake.getAndIncrement())
-			                                     .timeout(2, TimeUnit.SECONDS, Stream.<Buffer>empty().doOnComplete(() -> System.out.println(
+			                                     .timeout(2, TimeUnit.SECONDS, Fluxion.<Buffer>empty().doOnComplete(() -> System.out.println(
 					                                     "timeout after 2 ")))
-			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Stream.just(
+			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Fluxion.just(
 									GpdistCodec.class.equals(codec.getClass()) ?
 											Buffer.wrap(new byte[0]) : Buffer.wrap("END"))
 			                                                                                                           .doOnComplete(
@@ -312,7 +312,7 @@ public class SmokeTests {
 		ReactorHttpClient<String, String> httpClient = NetStreams.httpClient(clientFactory);
 
 		Promise<List<String>> content = httpClient.get("/data")
-		                                       .flatMap(Stream::buffer)
+		                                       .flatMap(Fluxion::buffer)
 		                                       .subscribeWith(Promise.ready());
 
 		List<String> res = content.await(20, TimeUnit.SECONDS);
@@ -543,7 +543,7 @@ public class SmokeTests {
 
 	/*
 
-	Stream<Buffer> bufferStream = Streams
+	Fluxion<Buffer> bufferStream = Streams
 				.wrap(processor)
 				.window(windowBatch, 2, TimeUnit.SECONDS)
 				.flatMap(s -> s

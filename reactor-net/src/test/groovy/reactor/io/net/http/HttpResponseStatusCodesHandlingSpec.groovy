@@ -1,9 +1,8 @@
 package reactor.io.net.http
 
-import reactor.rx.Stream
-import reactor.rx.net.NetStreams
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.rx.net.http.HttpChannelStream
+import reactor.rx.net.NetStreams
+import reactor.rx.net.http.HttpChannelFluxion
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -20,7 +19,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             }
 
         when: "the server is prepared"
-            server.post('/test') { HttpChannelStream<String, String> req ->
+            server.post('/test') { HttpChannelFluxion<String, String> req ->
                 req.writeWith(
                         req.log('server-received')
                 )
@@ -36,7 +35,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             }
 
             def replyReceived = ""
-            def content = client.get('/unsupportedURI') { HttpChannelStream<String, String> req ->
+            def content = client.get('/unsupportedURI') { HttpChannelFluxion<String, String> req ->
                 //prepare content-type
                 req.header('Content-Type', 'text/plain')
 

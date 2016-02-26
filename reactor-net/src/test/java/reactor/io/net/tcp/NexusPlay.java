@@ -27,7 +27,7 @@ import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.nexus.Nexus;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 
 /**
  * @author Stephane Maldini
@@ -65,7 +65,7 @@ public class NexusPlay {
 				// =========================================================
 
 				FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
-				Stream<Integer> dispatched = Stream.from(p)
+				Fluxion<Integer> dispatched = Fluxion.from(p)
 				                                   .dispatchOn(SchedulerGroup.async("semi-fast",  8192, 4));
 
 				//slow subscribers
@@ -87,7 +87,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("semi-slow", 1024, 4));
+				dispatched = Fluxion.from(p).dispatchOn(SchedulerGroup.async("semi-slow", 1024, 4));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -110,7 +110,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = Stream.from(p).dispatchOn(SchedulerGroup.async("slow", 1024, 3));
+				dispatched = Fluxion.from(p).dispatchOn(SchedulerGroup.async("slow", 1024, 3));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {

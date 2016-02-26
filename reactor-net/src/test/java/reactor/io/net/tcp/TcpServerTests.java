@@ -55,7 +55,7 @@ import reactor.io.net.impl.netty.tcp.NettyTcpClient;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
 import reactor.rx.Broadcaster;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -153,11 +153,11 @@ public class TcpServerTests {
 					       latch.countDown();
 				       }
 			       });
-			return Stream.never();
+			return Fluxion.never();
 		});
 
 
-		client.start(ch -> ch.writeWith(Stream.just(new Pojo("John Doe")))).get();
+		client.start(ch -> ch.writeWith(Fluxion.just(new Pojo("John Doe")))).get();
 
 		assertTrue("Latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -203,7 +203,7 @@ public class TcpServerTests {
 			  })
 			             .debug()
 			             .toString());
-			  return Stream.never();
+			  return Fluxion.never();
 		  }
 		).get();
 
@@ -248,7 +248,7 @@ public class TcpServerTests {
 
 				latch.countDown();
 			});
-			return Stream.never();
+			return Fluxion.never();
 		}).get();
 
 		start.set(System.currentTimeMillis());
@@ -286,10 +286,10 @@ public class TcpServerTests {
 			assertNotNull("remote address is not null", remoteAddr.getAddress());
 			latch.countDown();
 
-			return Stream.never();
+			return Fluxion.never();
 		}).get();
 
-		client.start(ch -> ch.writeWith(Stream.just(Buffer.wrap("Hello World!")))).get();
+		client.start(ch -> ch.writeWith(Fluxion.just(Buffer.wrap("Hello World!")))).get();
 
 		assertTrue("latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -310,7 +310,7 @@ public class TcpServerTests {
 				log.info("data " + data + " on " + ch);
 				latch.countDown();
 			});
-			return Stream.never();
+			return Fluxion.never();
 		};
 
 		ReactorTcpServer<String, String> server = NetStreams.tcpServer(s ->
@@ -323,7 +323,7 @@ public class TcpServerTests {
 
 		server.start(serverHandler).get();
 
-		client.start(ch -> ch.writeWith(Stream.just("Hello World!", "Hello 11!"))).get();
+		client.start(ch -> ch.writeWith(Fluxion.just("Hello World!", "Hello 11!"))).get();
 
 		assertTrue("Latch was counted down", latch.await(10, TimeUnit.SECONDS));
 
@@ -352,7 +352,7 @@ public class TcpServerTests {
 				});
 				byteBuf.getByteBuf().release();
 			});
-			return Stream.never();
+			return Fluxion.never();
 		}).get();
 
 
@@ -400,11 +400,11 @@ public class TcpServerTests {
 			//returning a stream of String from each microbatch merged
 			return
 			  request.writeWith(
-				Stream.from(processor)
+				Fluxion.from(processor)
 				  //split each microbatch data into individual data
-				  .flatMap(Stream::fromIterable)
+				  .flatMap(Fluxion::fromIterable)
 				  .take(5, TimeUnit.SECONDS)
-				  .concatWith(Stream.just("end\n"))
+				  .concatWith(Fluxion.just("end\n"))
 			  );
 		});
 
@@ -437,7 +437,7 @@ public class TcpServerTests {
 			ch.log("channel").consume(trip -> {
 				countDownLatch.countDown();
 			});
-			return Stream.never();
+			return Fluxion.never();
 		}).get();
 
 		System.out.println("PORT +"+server.getListenAddress().getPort());
@@ -450,7 +450,7 @@ public class TcpServerTests {
 
 
 		client.start(ch ->
-			ch.writeWith(Stream.just("test"))
+			ch.writeWith(Fluxion.just("test"))
 		).get();
 
 		assertThat("countDownLatch counted down", countDownLatch.await(5, TimeUnit.SECONDS));
@@ -480,7 +480,7 @@ public class TcpServerTests {
 		server.get("/search/{search}", requestIn ->
 			NetStreams.httpClient()
 			  .ws("ws://localhost:3000", requestOut ->
-				  requestOut.writeWith(Stream.just(Buffer.wrap("ping")))
+				  requestOut.writeWith(Fluxion.just(Buffer.wrap("ping")))
 			  )
 			  .flatMap(repliesOut ->
 				  requestIn

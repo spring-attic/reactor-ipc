@@ -33,7 +33,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -79,7 +79,7 @@ public abstract class CommonAeronProcessorTest {
 		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(4);
 
-		Stream.just(Buffer.wrap("Live"),
+		Fluxion.just(Buffer.wrap("Live"),
 				Buffer.wrap("Hard"),
 				Buffer.wrap("Die"),
 				Buffer.wrap("Harder"),
@@ -95,7 +95,7 @@ public abstract class CommonAeronProcessorTest {
 	@Test
 	public void testCompleteSignalIsReceived() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
-		Stream.just(
+		Fluxion.just(
 				Buffer.wrap("One"),
 				Buffer.wrap("Two"),
 				Buffer.wrap("Three"))
@@ -127,7 +127,7 @@ public abstract class CommonAeronProcessorTest {
 	@Test
 	public void testWorksWithTwoSubscribersViaEmitter() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
-		Stream.just(Buffer.wrap("Live"),
+		Fluxion.just(Buffer.wrap("Live"),
 				Buffer.wrap("Hard"),
 				Buffer.wrap("Die"),
 				Buffer.wrap("Harder")).subscribe(processor);
@@ -152,8 +152,8 @@ public abstract class CommonAeronProcessorTest {
 		// as error is delivered on a different channelId compared to signal
 		// its delivery could shutdown the processor before the processor subscriber
 		// receives signal
-		Stream.concat(Stream.just(Buffer.wrap("Item")),
-				Stream.error(new RuntimeException("Something went wrong")))
+		Fluxion.concat(Fluxion.just(Buffer.wrap("Item")),
+				Fluxion.error(new RuntimeException("Something went wrong")))
 				.subscribe(processor);
 
 		TestSubscriber<String> subscriber = new TestSubscriber<String>();
@@ -169,8 +169,8 @@ public abstract class CommonAeronProcessorTest {
 		TestSubscriber<String> subscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(processor).subscribe(subscriber);
 
-		Stream<Buffer> sourceStream = Stream.error(new RuntimeException());
-		sourceStream.subscribe(processor);
+		Fluxion<Buffer> sourceStream = Fluxion.error(new RuntimeException());
+		sourceFluxion.subscribe(processor);
 
 		subscriber.await(TIMEOUT_SECS).assertErrorWith(t -> assertThat(t.getMessage(), is("")));
 	}
@@ -216,7 +216,7 @@ public abstract class CommonAeronProcessorTest {
 	public void testRemotePublisherReceivesCompleteBeforeProcessorIsShutdown() throws InterruptedException {
 		AeronProcessor processor = AeronProcessor.create(createContext());
 
-		Stream.just(
+		Fluxion.just(
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 

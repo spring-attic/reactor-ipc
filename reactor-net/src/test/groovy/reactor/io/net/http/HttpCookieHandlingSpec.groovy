@@ -4,7 +4,7 @@ import reactor.core.publisher.Mono
 import reactor.io.net.http.model.Cookie
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.net.NetStreams
-import reactor.rx.net.http.HttpChannelStream
+import reactor.rx.net.http.HttpChannelFluxion
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -45,7 +45,7 @@ public class HttpCookieHandlingSpec extends Specification{
 
 	when: "server is prepared"
 	server.get("/test"){
-	  HttpChannelStream<String,String> req ->
+	  HttpChannelFluxion<String,String> req ->
 		req.addResponseCookie("cookie1", getResponseCookie())
 			.writeWith(req.log("server received"))
 	}

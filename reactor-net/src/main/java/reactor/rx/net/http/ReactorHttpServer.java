@@ -51,9 +51,9 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, HttpChannelStream<IN, OUT>> handler) {
+	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, HttpChannelFluxion<IN, OUT>> handler) {
 		return peer.start(
-				HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				HttpChannelFluxion.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 		);
 	}
 
@@ -99,7 +99,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	public ReactorHttpServer<IN, OUT> route(
 	  final Predicate<HttpChannel> condition,
 	 final ReactorHttpHandler<IN, OUT> serviceFunction) {
-		peer.route(condition, HttpChannelStream.wrapHttp(serviceFunction, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
+		peer.route(condition, HttpChannelFluxion.wrapHttp(serviceFunction, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
 		return this;
 	}
 
@@ -116,7 +116,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 */
 	public final ReactorHttpServer<IN, OUT> get(String path,
 	                                    final ReactorHttpHandler<IN, OUT> handler) {
-		peer.get(path, HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
+		peer.get(path, HttpChannelFluxion.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
 		return this;
 	}
 
@@ -133,7 +133,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 */
 	public final ReactorHttpServer<IN, OUT> post(String path,
 	                                     final ReactorHttpHandler<IN, OUT> handler) {
-		peer.post(path, HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
+		peer.post(path, HttpChannelFluxion.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
 		return this;
 	}
 
@@ -151,7 +151,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 */
 	public final ReactorHttpServer<IN, OUT> put(String path,
 	                                    final ReactorHttpHandler<IN, OUT> handler) {
-		peer.put(path, HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
+		peer.put(path, HttpChannelFluxion.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
 		return this;
 	}
 
@@ -169,7 +169,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 */
 	public final ReactorHttpServer<IN, OUT> ws(String path,
 	                                    final ReactorHttpHandler<IN, OUT> handler) {
-		peer.ws(path, HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
+		peer.ws(path, HttpChannelFluxion.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
 		return this;
 	}
 
@@ -186,7 +186,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 */
 	public final ReactorHttpServer<IN, OUT> delete(String path,
 	                                       final ReactorHttpHandler<IN, OUT> handler) {
-		peer.delete(path, HttpChannelStream.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
+		peer.delete(path, HttpChannelFluxion.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize()));
 		return this;
 	}
 

@@ -37,7 +37,7 @@ import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 
 import static org.junit.Assert.*;
 
@@ -79,7 +79,7 @@ public abstract class CommonSubscriberPublisherTest {
 	public void testNextSignalIsReceivedByPublisher() throws InterruptedException {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
 
-		Stream.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
+		Fluxion.just(Buffer.wrap("One"), Buffer.wrap("Two"), Buffer.wrap("Three"))
 		       .subscribe(subscriber);
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher"));
@@ -100,7 +100,7 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
 
-		Stream.<Buffer>error(new RuntimeException("Something went wrong")).subscribe(subscriber);
+		Fluxion.<Buffer>error(new RuntimeException("Something went wrong")).subscribe(subscriber);
 
 		clientSubscriber.await().assertError();
 	}
@@ -115,7 +115,7 @@ public abstract class CommonSubscriberPublisherTest {
 		}));
 
 		final byte[] bytes = new byte[2048];
-		Stream.range(1, 100).map(i -> Buffer.wrap(bytes)).subscribe(subscriber);
+		Fluxion.range(1, 100).map(i -> Buffer.wrap(bytes)).subscribe(subscriber);
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(false));
 

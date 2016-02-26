@@ -26,7 +26,7 @@ import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 
@@ -82,7 +82,7 @@ public class AeronProcessorTest {
 					.receiverChannel(CHANNEL)
 					.aeron(aeron));
 
-			Stream.just(
+			Fluxion.just(
 					Buffer.wrap("Live"))
 					.subscribe(processor);
 
@@ -111,7 +111,7 @@ public class AeronProcessorTest {
 	public void testCreate() throws InterruptedException {
 		processor = AeronProcessor.create(createAeronContext());
 
-		Stream.just(
+		Fluxion.just(
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
@@ -126,7 +126,7 @@ public class AeronProcessorTest {
 	public void testShare() throws InterruptedException {
 		processor = AeronProcessor.share(createAeronContext());
 
-		Stream.just(
+		Fluxion.just(
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 

@@ -19,9 +19,9 @@ import reactor.core.publisher.Mono
 import reactor.core.util.Exceptions
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.rx.Stream
+import reactor.rx.Fluxion
 import reactor.rx.net.NetStreams
-import reactor.rx.net.http.HttpChannelStream
+import reactor.rx.net.http.HttpChannelFluxion
 import rx.Observable
 import spock.lang.Specification
 
@@ -45,13 +45,13 @@ class HttpSpec extends Specification {
 
 	//prepare post request consumer on /test/* and capture the URL parameter "param"
 	server.post('/test/{param}') {
-	  HttpChannelStream<String, String> req
+	  HttpChannelFluxion<String, String> req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
 
-		req.writeWith(Stream.empty())
+		req.writeWith(Fluxion.empty())
 
 	}
 
@@ -67,7 +67,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http post request-reply flow
-	def content = client.post('/test/World') { HttpChannelStream<String, String> req ->
+	def content = client.post('/test/World') { HttpChannelFluxion<String, String> req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -101,7 +101,7 @@ class HttpSpec extends Specification {
 
 	//prepare post request consumer on /test/* and capture the URL parameter "param"
 	server.post('/test/{param}') {
-	  HttpChannelStream<String, String> req
+	  HttpChannelFluxion<String, String> req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
@@ -127,7 +127,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http post request-reply flow
-	def content = client.post('/test/World') { HttpChannelStream<String, String> req ->
+	def content = client.post('/test/World') { HttpChannelFluxion<String, String> req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -171,13 +171,13 @@ class HttpSpec extends Specification {
 
 	CountDownLatch errored = new CountDownLatch(1)
 
-	server.get('/test') { HttpChannelStream<String, String> req -> throw new Exception()
-	}.get('/test2') { HttpChannelStream<String, String> req ->
-	  req.writeWith(Stream.convert(Observable.error(new Exception()))).flux().log("writeWith").doOnError({
+	server.get('/test') { HttpChannelFluxion<String, String> req -> throw new Exception()
+	}.get('/test2') { HttpChannelFluxion<String, String> req ->
+	  req.writeWith(Fluxion.convert(Observable.error(new Exception()))).flux().log("writeWith").doOnError({
 		errored
 				.countDown()
 	  })
-	}.get('/test3') { HttpChannelStream<String, String> req -> return Stream.error(new Exception())
+	}.get('/test3') { HttpChannelFluxion<String, String> req -> return Fluxion.error(new Exception())
 	}
 
 	then: "the server was started"
@@ -231,7 +231,7 @@ class HttpSpec extends Specification {
 	client
 			.get('/test3')
 			.flatMap { replies ->
-	  Stream.just(replies.responseStatus().code)
+	  Fluxion.just(replies.responseStatus().code)
 			  .log("received-status-3")
 	}
 	.next()
@@ -263,7 +263,7 @@ class HttpSpec extends Specification {
 	//prepare websocket request consumer on /test/* and capture the URL parameter "param"
 	server
 			.get('/test/{param}') {
-	  HttpChannelStream<String, String> req
+	  HttpChannelFluxion<String, String> req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
@@ -293,7 +293,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http websocket request-reply flow
-	def content = client.ws('/test/World') { HttpChannelStream<String, String> req ->
+	def content = client.ws('/test/World') { HttpChannelFluxion<String, String> req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -310,7 +310,7 @@ class HttpSpec extends Specification {
 			  .log('client-received')
 			  .doOnNext { clientRes++ }
 	}
-	.as(Stream.&from)
+	.as(Fluxion.&from)
 	.take(1000)
 			.toList()
 			.doOnError {

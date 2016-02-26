@@ -46,7 +46,7 @@ import reactor.io.net.udp.DatagramServer;
  *      .flatMap(self -> new StringCodec('\n').decode(self))
  *      .consume(log::info);
  *
- *    //Push anything from the publisher returned, here a simple Reactor Stream. By default a Buffer is expected
+ *    //Push anything from the publisher returned, here a simple Reactor Fluxion. By default a Buffer is expected
  *    //Will close after write
  *    return connection.writeWith(Flux.just(Buffer.wrap("hello\n")));
  * });
@@ -794,17 +794,17 @@ public enum ReactiveNet {
 	 */
 
 	@SuppressWarnings("unchecked")
-	public static <E, IN, OUT> E delegate(ReactiveChannel<IN, OUT> channelStream) {
-		return (E) delegate(channelStream, Object.class);
+	public static <E, IN, OUT> E delegate(ReactiveChannel<IN, OUT> channel) {
+		return (E) delegate(channel, Object.class);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <E, IN, OUT> E delegate(ReactiveChannel<IN, OUT> channelStream, Class<E> clazz) {
-		Assert.isTrue(clazz.isAssignableFrom(channelStream.delegate()
+	public static <E, IN, OUT> E delegate(ReactiveChannel<IN, OUT> channel, Class<E> clazz) {
+		Assert.isTrue(clazz.isAssignableFrom(channel.delegate()
 		                                                  .getClass()),
 				"Underlying channel is not of the given type: " + clazz.getName());
 
-		return (E) channelStream.delegate();
+		return (E) channel.delegate();
 	}
 
 	/**

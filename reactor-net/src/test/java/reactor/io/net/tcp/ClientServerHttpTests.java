@@ -35,8 +35,8 @@ import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.preprocessor.CodecPreprocessor;
+import reactor.rx.Fluxion;
 import reactor.rx.Promise;
-import reactor.rx.Stream;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -247,7 +247,7 @@ public class ClientServerHttpTests {
 	private void setupFakeProtocolListener() throws Exception {
 		broadcaster = TopicProcessor.create();
 		final Processor<List<String>, List<String>> processor = WorkQueueProcessor.create(false);
-		Stream.from(broadcaster)
+		Fluxion.from(broadcaster)
 		      .buffer(5)
 		      .subscribe(processor);
 
@@ -257,10 +257,10 @@ public class ClientServerHttpTests {
 
 		httpServer.get("/data", (request) -> {
 			request.responseHeaders().removeTransferEncodingChunked();
-			return request.writeWith(Stream.from(processor)
+			return request.writeWith(Fluxion.from(processor)
 			                               .log("server")
-			                               .timeout(2, TimeUnit.SECONDS, Stream.empty())
-			                               .concatWith(Stream.just(new ArrayList<String>()))
+			                               .timeout(2, TimeUnit.SECONDS, Fluxion.empty())
+			                               .concatWith(Fluxion.just(new ArrayList<String>()))
 			                               .capacity(1L)
 
 			);
@@ -280,7 +280,7 @@ public class ClientServerHttpTests {
 
 		return httpClient.get("/data")
 		                 .then(s ->  s.log("client").next())
-		                 .as(Stream::from)
+		                 .as(Fluxion::from)
 		                 .toList()
 		                 .subscribeWith(Promise.ready());
 	}

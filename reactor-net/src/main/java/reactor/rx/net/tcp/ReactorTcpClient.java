@@ -26,8 +26,8 @@ import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.Reconnect;
 import reactor.io.net.tcp.TcpClient;
-import reactor.rx.Stream;
-import reactor.rx.net.ChannelStream;
+import reactor.rx.Fluxion;
+import reactor.rx.net.ChannelFluxion;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.ReactorPeer;
 
@@ -60,9 +60,9 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> handler) {
+	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelFluxion<IN, OUT>> handler) {
 		return peer.start(
-				ChannelStream.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				ChannelFluxion.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 		);
 	}
 
@@ -84,11 +84,11 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 	 * @param reconnect the reconnection strategy to use when disconnects happen
 	 * @return a Publisher of reconnected address and accumulated number of attempt pairs
 	 */
-	public Stream<Tuple2<InetSocketAddress, Integer>> start(
+	public Fluxion<Tuple2<InetSocketAddress, Integer>> start(
 			ReactorChannelHandler<IN, OUT> handler, Reconnect reconnect) {
-		return Stream.from(
+		return Fluxion.from(
 				peer.start(
-				ChannelStream.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				ChannelFluxion.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 				, reconnect)
 		);
 	}

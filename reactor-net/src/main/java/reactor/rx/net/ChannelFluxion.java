@@ -26,18 +26,18 @@ import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 
 /**
  * An abstract {@link ReactiveChannel} implementation that handles the basic interaction and behave as a {@link
- * Stream}.
+ * Fluxion}.
  *
  * @author Stephane Maldini
  */
-public class ChannelStream<IN, OUT> extends Stream<IN> implements
+public class ChannelFluxion<IN, OUT> extends Fluxion<IN> implements
                                                        ReactiveChannel<IN, OUT> {
 
-	protected static final Logger log = Logger.getLogger(ChannelStream.class);
+	protected static final Logger log = Logger.getLogger(ChannelFluxion.class);
 
 
 	private final ReactiveChannel<IN, OUT> actual;
@@ -53,8 +53,8 @@ public class ChannelStream<IN, OUT> extends Stream<IN> implements
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> ChannelStream<IN, OUT> wrap(final ReactiveChannel<IN, OUT> actual, Timer timer, long prefetch){
-		return new ChannelStream<>(actual, timer, prefetch);
+	public static <IN, OUT> ChannelFluxion<IN, OUT> wrap(final ReactiveChannel<IN, OUT> actual, Timer timer, long prefetch){
+		return new ChannelFluxion<>(actual, timer, prefetch);
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class ChannelStream<IN, OUT> extends Stream<IN> implements
 	 * @return
 	 */
 	public static <IN, OUT> ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>> wrap(
-			final ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> actual,
+			final ReactiveChannelHandler<IN, OUT, ChannelFluxion<IN, OUT>> actual,
 			final Timer timer,
 			final long prefetch){
 
@@ -81,7 +81,7 @@ public class ChannelStream<IN, OUT> extends Stream<IN> implements
 		};
 	}
 
-	protected ChannelStream(final ReactiveChannel<IN, OUT> actual,
+	protected ChannelFluxion(final ReactiveChannel<IN, OUT> actual,
 							final Timer timer,
 	                        long prefetch) {
 
@@ -91,19 +91,19 @@ public class ChannelStream<IN, OUT> extends Stream<IN> implements
 	}
 
 	@Override
-	public Stream<IN> input() {
+	public Fluxion<IN> input() {
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public Mono<Void> writeWith(final Publisher<? extends OUT> source) {
-		final Stream<? extends OUT> sourceStream;
+		final Fluxion<? extends OUT> sourceStream;
 
-		if (Stream.class.isAssignableFrom(source.getClass())) {
-			sourceStream = ((Stream<? extends OUT>) source);
+		if (Fluxion.class.isAssignableFrom(source.getClass())) {
+			sourceStream = ((Fluxion<? extends OUT>) source);
 		} else {
-			sourceStream = new Stream<OUT>() {
+			sourceStream = new Fluxion<OUT>() {
 				@Override
 				public void subscribe(Subscriber<? super OUT> subscriber) {
 					source.subscribe(subscriber);

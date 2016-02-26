@@ -25,7 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import reactor.io.buffer.Buffer;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpHandler;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -60,7 +60,7 @@ public class PostAndGetTests {
 
 			StringBuilder response = new StringBuilder().append("hello ").append(channel.params().get("name"));
 			System.out.println(String.format("%s from thread %s", response.toString(), Thread.currentThread()));
-			return channel.writeWith(Stream.just(Buffer.wrap(response.toString())));
+			return channel.writeWith(Fluxion.just(Buffer.wrap(response.toString())));
 		};
 	}
 
@@ -78,7 +78,7 @@ public class PostAndGetTests {
 				  final StringBuilder response = new StringBuilder().append("hello ").append(new String(data.asBytes
 				    ()));
 				  System.out.println(String.format("%s from thread %s", response.toString(), Thread.currentThread()));
-				  return Stream.just(Buffer.wrap(response.toString()));
+				  return Fluxion.just(Buffer.wrap(response.toString()));
 			  }));
 		};
 	}

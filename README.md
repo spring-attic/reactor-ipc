@@ -38,7 +38,7 @@ AeronSubscriber awaiting for connections from AeronFlux:
 AeronSubscriber subscriber = AeronSubscriber.create(Context.create()
     .senderChannel("udp://serverbox:12000"));
     
-Stream.range(1, 10).map(i -> Buffer.wrap("" + i)).subscribe(subscriber); // sending 1, 2, ..., 10 via Aeron    
+Fluxion.range(1, 10).map(i -> Buffer.wrap("" + i)).subscribe(subscriber); // sending 1, 2, ..., 10 via Aeron
 ```
 
 AeronFlux connecting to AeronSubscruber above:
@@ -58,7 +58,7 @@ A processor sending signals via Aeron:
 AeronProcessor processor = AeronProcessor.create(Context.create()
 		.senderChannel("udp://serverbox:12000"));
 
-Stream.range(1, 1000000).map(i -> Buffer.wrap("" + i)).subscribe(processor);
+Fluxion.range(1, 1000000).map(i -> Buffer.wrap("" + i)).subscribe(processor);
 
 processor.subscribe(Subscribers.consumer(System.out::println));
 ```

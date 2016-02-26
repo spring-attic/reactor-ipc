@@ -20,7 +20,7 @@ import reactor.io.buffer.Buffer
 import reactor.io.codec.json.JsonCodec
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.io.net.tcp.support.SocketUtils
-import reactor.rx.Stream
+import reactor.rx.Fluxion
 import reactor.rx.net.NetStreams
 import reactor.rx.net.tcp.ReactorTcpServer
 import spock.lang.Specification
@@ -45,7 +45,7 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the server is started"
 			server.start { conn ->
-				conn.writeBufferWith(Stream.just(Buffer.wrap("Hello World!")))
+				conn.writeBufferWith(Fluxion.just(Buffer.wrap("Hello World!")))
 			}.get()
 
 			def client = new SimpleClient(port, dataLatch, Buffer.wrap("Hello World!"))
@@ -104,7 +104,7 @@ class NettyTcpServerSpec extends Specification {
 		when: "the client/server are prepared"
 			server.start { input ->
 				input.writeWith(
-						Stream.from(codec.decode(input))
+						Fluxion.from(codec.decode(input))
 								.log('serve')
 								.map(codec)
 								.capacity(5l)
@@ -112,18 +112,18 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-				Stream.from(codec.decode(input))
+				Fluxion.from(codec.decode(input))
 						.log('receive')
 						.consume { latch.countDown() }
 
 				input.writeWith(
-						Stream.range(1, 10)
+						Fluxion.range(1, 10)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')
 								.map(codec)
 				).subscribe()
 
-				Stream.never()
+				Fluxion.never()
 			}.get()
 
 		then: "the client/server were started"
@@ -149,9 +149,9 @@ class NettyTcpServerSpec extends Specification {
 		when: "the client/server are prepared"
 			server.start { input ->
 				input.writeWith(
-						Stream.from(codec.decode(input.input()))
+						Fluxion.from(codec.decode(input.input()))
 						.flatMap {
-					Stream.just(it)
+					Fluxion.just(it)
 							.log('flatmap-retry')
 							.doOnNext {
 						if (i++ < 2) {
@@ -166,18 +166,18 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-				Stream.from(codec.decode(input))
+				Fluxion.from(codec.decode(input))
 						.log('receive')
 						.consume { latch.countDown() }
 
 				input.writeWith(
-						Stream.range(1, elem)
+						Fluxion.range(1, elem)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')
 								.map(codec)
 				).subscribe()
 
-				Stream.never()
+				Fluxion.never()
 			}.get()
 
 		then: "the client/server were started"

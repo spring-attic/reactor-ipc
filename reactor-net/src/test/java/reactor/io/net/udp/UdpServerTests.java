@@ -32,7 +32,7 @@ import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.impl.netty.udp.NettyDatagramServer;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.udp.ReactorDatagramServer;
 
@@ -78,7 +78,7 @@ public class UdpServerTests {
 					latch.countDown();
 				}
 			});
-			return Stream.never();
+			return Fluxion.never();
 		}).doOnSuccess(v -> {
 			try {
 				DatagramChannel udp = DatagramChannel.open();
@@ -131,7 +131,7 @@ public class UdpServerTests {
 						latch.countDown();
 					}
 				});
-				return Stream.never();
+				return Fluxion.never();
 			}).doOnSuccess(v -> {
 				try {
 					for (Enumeration<NetworkInterface> ifaces =

@@ -33,15 +33,15 @@ import reactor.io.net.http.model.Protocol;
 import reactor.io.net.http.model.ResponseHeaders;
 import reactor.io.net.http.model.Status;
 import reactor.io.net.http.model.Transfer;
-import reactor.rx.net.ChannelStream;
+import reactor.rx.net.ChannelFluxion;
 
 /**
- * A Request/Response {@link ChannelStream} extension that provides for several helpers to
+ * A Request/Response {@link ChannelFluxion} extension that provides for several helpers to
  * control HTTP behavior and observe its metadata.
  * @author Stephane maldini
  * @since 2.5
  */
-public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implements HttpChannel<IN, OUT> {
+public class HttpChannelFluxion<IN, OUT> extends ChannelFluxion<IN, OUT> implements HttpChannel<IN, OUT> {
 
 	private final HttpChannel<IN, OUT> actual;
 
@@ -54,8 +54,8 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> HttpChannelStream<IN, OUT> wrap(final HttpChannel<IN, OUT> actual, Timer timer, long prefetch){
-		return new HttpChannelStream<>(actual, timer, prefetch);
+	public static <IN, OUT> HttpChannelFluxion<IN, OUT> wrap(final HttpChannel<IN, OUT> actual, Timer timer, long prefetch){
+		return new HttpChannelFluxion<>(actual, timer, prefetch);
 	}
 
 	/**
@@ -68,7 +68,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	 * @return
 	 */
 	public static <IN, OUT> ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> wrapHttp(
-			final ReactiveChannelHandler<IN, OUT, HttpChannelStream<IN, OUT>> actual, final Timer timer, final long prefetch){
+			final ReactiveChannelHandler<IN, OUT, HttpChannelFluxion<IN, OUT>> actual, final Timer timer, final long prefetch){
 
 		if(actual == null) return null;
 
@@ -80,7 +80,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 		};
 	}
 
-	protected HttpChannelStream(HttpChannel<IN, OUT> actual, Timer timer, long prefetch) {
+	protected HttpChannelFluxion(HttpChannel<IN, OUT> actual, Timer timer, long prefetch) {
 		super(actual, timer, prefetch);
 		this.actual = actual;
 	}
@@ -116,7 +116,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	 * @param value Header content
 	 * @return this
 	 */
-	public final HttpChannelStream<IN, OUT> header(String name, String value) {
+	public final HttpChannelFluxion<IN, OUT> header(String name, String value) {
 		actual.header(name, value);
 		return this;
 	}
@@ -134,7 +134,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	 * alive header
 	 * @return is keep alive
 	 */
-	public HttpChannelStream<IN, OUT> keepAlive(boolean keepAlive){
+	public HttpChannelFluxion<IN, OUT> keepAlive(boolean keepAlive){
 		actual.keepAlive(keepAlive);
 		return this;
 	}
@@ -145,7 +145,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	 * new value
 	 * @return this
 	 */
-	public HttpChannelStream<IN, OUT> addHeader(String name, String value) {
+	public HttpChannelFluxion<IN, OUT> addHeader(String name, String value) {
 		actual.addHeader(name, value);
 		return this;
 	}
@@ -171,7 +171,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	}
 
 	@Override
-	public HttpChannelStream<IN, OUT> addCookie(String name, Cookie cookie) {
+	public HttpChannelFluxion<IN, OUT> addCookie(String name, Cookie cookie) {
 		actual.addCookie(name, cookie);
 		return this;
 	}
@@ -179,7 +179,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	// RESPONSE contract
 
 	@Override
-	public HttpChannelStream<IN, OUT> addResponseCookie(String name, Cookie cookie) {
+	public HttpChannelFluxion<IN, OUT> addResponseCookie(String name, Cookie cookie) {
 		actual.addResponseCookie(name, cookie);
 		return this;
 	}
@@ -190,7 +190,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	}
 
 	@Override
-	public HttpChannelStream<IN, OUT> responseStatus(Status status) {
+	public HttpChannelFluxion<IN, OUT> responseStatus(Status status) {
 		actual.responseStatus(status);
 		return this;
 	}
@@ -201,13 +201,13 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	}
 
 	@Override
-	public final HttpChannelStream<IN, OUT> responseHeader(String name, String value) {
+	public final HttpChannelFluxion<IN, OUT> responseHeader(String name, String value) {
 		actual.responseHeader(name, value);
 		return this;
 	}
 
 	@Override
-	public HttpChannelStream<IN, OUT> addResponseHeader(String name, String value) {
+	public HttpChannelFluxion<IN, OUT> addResponseHeader(String name, String value) {
 		actual.addResponseHeader(name, value);
 		return this;
 	}
@@ -218,7 +218,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	}
 
 	@Override
-	public HttpChannelStream<IN, OUT> sse() {
+	public HttpChannelFluxion<IN, OUT> sse() {
 		return transfer(Transfer.EVENT_STREAM);
 	}
 
@@ -228,7 +228,7 @@ public class HttpChannelStream<IN, OUT> extends ChannelStream<IN, OUT> implement
 	}
 
 	@Override
-	public HttpChannelStream<IN, OUT> transfer(Transfer transfer){
+	public HttpChannelFluxion<IN, OUT> transfer(Transfer transfer){
 		actual.transfer(transfer);
 		return this;
 	}

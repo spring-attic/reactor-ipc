@@ -33,5 +33,5 @@ import reactor.io.net.ReactivePeer;
  * @since  2.5
  */
 public interface ReactorChannelHandler<IN, OUT>
-		extends ReactiveChannelHandler<IN, OUT, ChannelStream<IN, OUT>> {
+		extends ReactiveChannelHandler<IN, OUT, ChannelFluxion<IN, OUT>> {
 }
