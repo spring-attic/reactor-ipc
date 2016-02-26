@@ -170,7 +170,7 @@ public abstract class CommonAeronProcessorTest {
 		Buffer.bufferToString(processor).subscribe(subscriber);
 
 		Fluxion<Buffer> sourceStream = Fluxion.error(new RuntimeException());
-		sourceFluxion.subscribe(processor);
+		sourceStream.subscribe(processor);
 
 		subscriber.await(TIMEOUT_SECS).assertErrorWith(t -> assertThat(t.getMessage(), is("")));
 	}
