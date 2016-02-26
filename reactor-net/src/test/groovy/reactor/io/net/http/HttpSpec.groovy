@@ -132,7 +132,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.writeWith(Stream
+	  req.writeWith(Fluxion
 			  .just("Hello")
 			  .log('client-send'))
 
@@ -298,7 +298,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.writeWith(Stream
+	  req.writeWith(Fluxion
 			  .range(1, 1000)
 			  .capacity(1)
 			  .map { it.toString() }

@@ -1,6 +1,7 @@
 package reactor.io.net.http
 
 import reactor.io.net.preprocessor.CodecPreprocessor
+import reactor.rx.Fluxion
 import reactor.rx.net.NetStreams
 import reactor.rx.net.http.HttpChannelFluxion
 import spock.lang.Specification
@@ -41,7 +42,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
 
                 //return a producing stream to send some data along the request
                 req.writeWith(
-                    Stream
+                    Fluxion
                             .just("Hello")
                             .log('client-send')
                 )
