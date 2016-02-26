@@ -14,7 +14,7 @@ NetStreams.<String, String>httpServer(spec ->
 	.ws("/", channel -> {
 		System.out.println("Connected a websocket client: " + channel.remoteAddress());
 
-		return Streams
+		return Fluxion
 			.from(keyboardStream)
 			.skipWhile(key -> KeyEvent.VK_UP != key)
 			.buffer(10, 1) // <1>
