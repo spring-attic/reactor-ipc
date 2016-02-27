@@ -96,8 +96,8 @@ import reactor.io.buffer.Buffer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class AeronSubscriber extends BaseSubscriber<Buffer>
-		implements Completable, Receiver, Loopback {
+public final class AeronSubscriber
+		implements Completable, Receiver, Loopback, BaseSubscriber<Buffer> {
 
 	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
 
@@ -175,29 +175,27 @@ public final class AeronSubscriber extends BaseSubscriber<Buffer>
 
 	@Override
 	public void onSubscribe(Subscription s) {
-		super.onSubscribe(s);
+		BaseSubscriber.super.onSubscribe(s);
 
 		processor.onSubscribe(s);
 	}
 
 	@Override
 	public void onNext(Buffer buffer) {
-		super.onNext(buffer);
+		BaseSubscriber.super.onNext(buffer);
 
 		processor.onNext(buffer);
 	}
 
 	@Override
 	public void onError(Throwable t) {
-		super.onError(t);
+		BaseSubscriber.super.onError(t);
 
 		processor.onError(t);
 	}
 
 	@Override
 	public void onComplete() {
-		super.onComplete();
-
 		processor.onComplete();
 	}
 
