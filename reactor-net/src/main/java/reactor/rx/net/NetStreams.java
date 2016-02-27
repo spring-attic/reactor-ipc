@@ -75,7 +75,7 @@ public enum NetStreams {
 
 	static {
 		if (!DependencyUtils.hasReactorFluxion()) {
-			throw new IllegalStateException("io.projectreactor:reactor-fluxion dependency is missing from the classpath.");
+			throw new IllegalStateException("io.projectreactor:reactor-stream dependency is missing from the classpath.");
 		}
 
 	}

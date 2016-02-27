@@ -65,7 +65,7 @@ ext {
 			"http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/",
 			"http://next.projectreactor.io/core/docs/api/",
 			"http://next.projectreactor.io/ext/docs/api/",
-			"http://next.projectreactor.io/fluxion/docs/api/"
+			"http://next.projectreactor.io/stream/docs/api/"
 	] as String[]
 }
 
@@ -220,13 +220,13 @@ project('reactor-net') {
 		optional project(':reactor-codec')
 
 	  	//Stream support
-		optional "io.projectreactor:reactor-fluxion:$reactorVersion"
+		optional "io.projectreactor:reactor-stream:$reactorVersion"
 
 		//Default reactor-net impl
 		optional "io.netty:netty-all:$nettyVersion"
 
 		// Testing
-		testCompile "io.projectreactor:reactor-fluxion:$reactorVersion"
+		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
 		testCompile "org.apache.httpcomponents:fluent-hc:4.3.6"
 		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
 	  	testCompile "io.reactivex:rxjava:$rxJavaVersion"
@@ -267,7 +267,7 @@ project('reactor-aeron') {
 				"uk.co.real-logic:aeron-client:$aeronVersion"
 
 		testCompile project(':reactor-net')
-		testCompile "io.projectreactor:reactor-fluxion:$reactorVersion"
+		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
 		testCompile "org.reactivestreams:reactive-streams-tck:1.0.0"
 		testCompile "org.mockito:mockito-core:1.10.19"
     }
