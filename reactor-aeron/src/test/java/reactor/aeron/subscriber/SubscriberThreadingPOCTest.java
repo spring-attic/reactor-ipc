@@ -68,13 +68,13 @@ public class SubscriberThreadingPOCTest {
 
 		}
 
-		class SenderSubscriber extends BaseSubscriber<Buffer> {
+		final class SenderSubscriber implements BaseSubscriber<Buffer> {
 
 			private Subscription subscription;
 
 			@Override
 			public void onSubscribe(Subscription s) {
-				super.onSubscribe(s);
+				BaseSubscriber.super.onSubscribe(s);
 				this.subscription = s;
 				log(this.getClass().getSimpleName() + ".onSubscribe: " + s);
 
@@ -83,15 +83,13 @@ public class SubscriberThreadingPOCTest {
 
 			@Override
 			public void onNext(Buffer buffer) {
-				super.onNext(buffer);
+				BaseSubscriber.super.onNext(buffer);
 
 				log(this.getClass().getSimpleName() + ".onNext: " + buffer.asString());
 			}
 
 			@Override
 			public void onComplete() {
-				super.onComplete();
-
 				log(this.getClass().getSimpleName() + ".onComplete");
 			}
 		}

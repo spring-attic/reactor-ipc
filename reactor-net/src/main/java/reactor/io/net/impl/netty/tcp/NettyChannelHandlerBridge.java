@@ -587,7 +587,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 	}
 
-	private static class CloseSubscriber extends BaseSubscriber<Void> {
+	private static class CloseSubscriber implements BaseSubscriber<Void> {
 
 		private final ChannelHandlerContext ctx;
 
@@ -597,7 +597,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			super.onSubscribe(s);
+			BaseSubscriber.super.onSubscribe(s);
 			s.request(Long.MAX_VALUE);
 		}
 
@@ -623,8 +623,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 	}
 
-	private class FlushOnTerminateSubscriber extends BaseSubscriber<Object>
-			implements ChannelFutureListener, Loopback {
+	private class FlushOnTerminateSubscriber implements BaseSubscriber<Object>, ChannelFutureListener, Loopback {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -672,7 +671,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onNext(final Object w) {
-			super.onNext(w);
+			BaseSubscriber.super.onNext(w);
 			if (subscription == null) {
 				Exceptions.failWithCancel();
 			}
@@ -700,7 +699,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onError(Throwable t) {
-			super.onError(t);
+			BaseSubscriber.super.onError(t);
 			if (subscription == null) {
 				throw new IllegalStateException("already flushed", t);
 			}
@@ -725,8 +724,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 	}
 
-	private class FlushOnCapacitySubscriber extends BaseSubscriber<Object>
-			implements Runnable,
+	private class FlushOnCapacitySubscriber
+			implements Runnable, BaseSubscriber<Object>,
 			           ChannelFutureListener, Loopback, Backpressurable, Completable,
 			           Cancellable, Receiver, Prefetchable {
 
@@ -809,7 +808,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onNext(Object w) {
-			super.onNext(w);
+			BaseSubscriber.super.onNext(w);
 			if (subscription == null) {
 				Exceptions.failWithCancel();
 			}
@@ -835,7 +834,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public void onError(Throwable t) {
-			super.onError(t);
+			BaseSubscriber.super.onError(t);
 			if (subscription == null) {
 				throw new IllegalStateException("already flushed", t);
 			}

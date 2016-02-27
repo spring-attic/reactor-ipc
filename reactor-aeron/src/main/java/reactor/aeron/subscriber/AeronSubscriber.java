@@ -53,9 +53,8 @@ import reactor.io.buffer.Buffer;
  * <p/>
  * The subscriber uses 3 <b>different</b> pre-configured Aeron streamIds to function:<br>
  * <ul>
- *     <li>{@link Context#streamId} - used for passing of Next and Complete signals from
+ *     <li>{@link Context#streamId} - used for passing of Error, Next and Complete signals from
  *     the signals sender to signals receivers</li>
- *     <li>{@link Context#errorStreamId} - for passing of Error signals</li>
  *     <li>{@link Context#serviceRequestStreamId} - for service requests of
  *     {@link reactor.aeron.utils.ServiceMessageType}
  *     from signal receivers to the signal sender

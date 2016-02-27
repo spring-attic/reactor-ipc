@@ -156,7 +156,7 @@ public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 	}
 
-	private class CloseSubscriber extends BaseSubscriber<Void> implements Receiver, Completable {
+	private class CloseSubscriber implements BaseSubscriber<Void>, Receiver, Completable {
 
 		private final ChannelHandlerContext ctx;
 		Subscription subscription;
