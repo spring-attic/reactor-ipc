@@ -66,7 +66,7 @@ class MulticastSession implements Session {
 	}
 
 	public long getSequence() {
-		return sequence.get();
+		return sequence.getAsLong();
 	}
 
 	@Override
