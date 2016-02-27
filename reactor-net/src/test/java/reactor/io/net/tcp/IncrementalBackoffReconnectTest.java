@@ -19,7 +19,7 @@ package reactor.io.net.tcp;
 import java.net.InetSocketAddress;
 
 import org.junit.Test;
-import reactor.fn.tuple.Tuple2;
+import reactor.core.tuple.Tuple2;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.Reconnect;
 import reactor.io.net.Spec;

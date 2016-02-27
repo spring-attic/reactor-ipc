@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-import reactor.fn.tuple.Tuple2;
+import reactor.core.tuple.Tuple2;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;

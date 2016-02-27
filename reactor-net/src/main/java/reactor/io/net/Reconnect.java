@@ -16,9 +16,9 @@
 
 package reactor.io.net;
 
-import reactor.fn.tuple.Tuple2;
-
 import java.net.InetSocketAddress;
+
+import reactor.core.tuple.Tuple2;
 
 /**
  * Implementations of this interface will be instantiated by a {@link reactor.fn.Supplier} to provide information

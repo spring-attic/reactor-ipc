@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.timer.Timer;
-import reactor.fn.tuple.Tuple2;
+import reactor.core.tuple.Tuple2;
 
 /**
  * A network-aware client that will publish its connection once available to the {@link
