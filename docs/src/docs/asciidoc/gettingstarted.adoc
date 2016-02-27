@@ -21,7 +21,7 @@ Reactor is sponsored by http://pivotal.io[Pivotal] and is http://www.apache.org/
 
 === Requirements
 
-* Reactor needs at minimum Java 7 to execute.
+* Reactor needs at minimum Java 8 to execute.
 ** But the full expressive potential of functional composition happens with Java 8 Lambdas.
 * Reactor runs at full capacity when the JVM supports *Unsafe* access (e.g., not the case for Android).
 * Reactor is packaged as traditional JAR archives in Maven Central and can be pulled into any JVM project as a dependency using your preferred build tool.
