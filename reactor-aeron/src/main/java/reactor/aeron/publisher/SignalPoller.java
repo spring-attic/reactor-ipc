@@ -17,6 +17,7 @@ package reactor.aeron.publisher;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Subscriber;
 import reactor.aeron.Context;
@@ -35,7 +36,6 @@ import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.FragmentAssembler;
 import uk.co.real_logic.aeron.Subscription;

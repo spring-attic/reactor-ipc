@@ -21,6 +21,7 @@ import java.net.NetworkInterface;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -28,7 +29,6 @@ import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple;
 import reactor.core.tuple.Tuple2;
 import reactor.core.util.Assert;
-import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.config.ClientSocketOptions;
 import reactor.io.net.config.ServerSocketOptions;

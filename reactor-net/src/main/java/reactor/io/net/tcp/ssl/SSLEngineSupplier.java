@@ -16,12 +16,17 @@
 
 package reactor.io.net.tcp.ssl;
 
-import reactor.fn.Supplier;
-import reactor.io.net.config.SslOptions;
-
-import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.util.function.Supplier;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
+import reactor.io.net.config.SslOptions;
 
 /**
  * @author Jon Brisbin

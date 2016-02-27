@@ -17,9 +17,9 @@
 package reactor.rx.net.http;
 
 import java.net.InetSocketAddress;
+import java.util.function.Predicate;
 
 import reactor.core.publisher.Mono;
-import reactor.fn.Predicate;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.http.HttpChannel;

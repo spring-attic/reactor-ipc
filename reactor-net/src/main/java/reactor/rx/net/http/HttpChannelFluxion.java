@@ -18,11 +18,11 @@ package reactor.rx.net.http;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
-import reactor.fn.Function;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.BaseHttpChannel;
 import reactor.io.net.http.HttpChannel;

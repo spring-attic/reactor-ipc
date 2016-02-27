@@ -18,9 +18,9 @@ package reactor.io.codec.syslog;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-import reactor.fn.Consumer;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 

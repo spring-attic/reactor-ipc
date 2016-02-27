@@ -18,12 +18,12 @@ package reactor.aeron.subscriber;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import reactor.aeron.Context;
 import reactor.core.state.Pausable;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
 
 /**
  * @author Anatoly Kadyshev

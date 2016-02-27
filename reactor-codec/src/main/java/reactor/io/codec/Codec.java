@@ -16,6 +16,10 @@
 
 package reactor.io.codec;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.Receiver;
@@ -23,14 +27,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SubscriberBarrier;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 
 /**
  * Implementations of a {@literal Codec} are responsible for decoding a {@code SRC} into an
- * instance of {@code IN} and passing that to the given {@link reactor.fn.Consumer}. A
+ * instance of {@code IN} and passing that to the given {@link java.util.function.Consumer}. A
  * codec also provides an encoder to take an instance of {@code OUT} and encode to an
  * instance of {@code SRC}.
  *

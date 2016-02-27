@@ -18,11 +18,11 @@ package reactor.io.codec;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import reactor.core.util.Assert;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 
 /**

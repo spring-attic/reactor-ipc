@@ -18,10 +18,10 @@ package reactor.io.codec.protobuf;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import com.google.protobuf.Message;
 import reactor.core.util.Assert;
-import reactor.fn.Function;
 import reactor.io.codec.SerializationCodec;
 
 /**

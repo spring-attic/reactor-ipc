@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 import reactor.core.tuple.Tuple2;
 
 /**
- * Implementations of this interface will be instantiated by a {@link reactor.fn.Supplier} to provide information
+ * Implementations of this interface will be instantiated by a {@link java.util.function.Supplier} to provide information
  * to the {@link reactor.io.net.tcp.TcpClient} whether or not to attempt to reconnect a broken connection.
  * <p>
  * The {@link #reconnect(InetSocketAddress, int)} method will be invoked, passing the currently-connected

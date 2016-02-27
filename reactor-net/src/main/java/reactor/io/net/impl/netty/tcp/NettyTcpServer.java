@@ -18,6 +18,7 @@ package reactor.io.net.impl.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
+import java.util.function.Function;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -41,7 +42,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;

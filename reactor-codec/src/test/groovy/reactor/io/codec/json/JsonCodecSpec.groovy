@@ -2,10 +2,11 @@ package reactor.io.codec.json
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import reactor.fn.Consumer
-import reactor.fn.Function
 import reactor.io.buffer.Buffer
 import spock.lang.Specification
+
+import java.util.function.Consumer
+import java.util.function.Function
 
 class JsonCodecSpec extends Specification {
 

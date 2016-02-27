@@ -20,6 +20,8 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -28,8 +30,6 @@ import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.PlatformDependent;
-import reactor.fn.Consumer;
-import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 
 /**

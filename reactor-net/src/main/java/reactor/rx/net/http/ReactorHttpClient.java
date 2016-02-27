@@ -16,8 +16,9 @@
 
 package reactor.rx.net.http;
 
+import java.util.function.Function;
+
 import reactor.core.publisher.Mono;
-import reactor.fn.Function;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.HttpClient;

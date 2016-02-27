@@ -17,12 +17,12 @@
 package reactor.io.net.tcp;
 
 import java.net.InetSocketAddress;
+import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
-import reactor.fn.Function;
 import reactor.io.net.Preprocessor;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;

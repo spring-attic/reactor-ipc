@@ -16,6 +16,8 @@
 package reactor.io.net.http.routing;
 
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import reactor.bus.registry.Registries;
 import reactor.bus.registry.Registry;
@@ -23,8 +25,6 @@ import reactor.bus.selector.Selector;
 import reactor.bus.selector.Selectors;
 import reactor.bus.selector.UriPathSelector;
 import reactor.core.converter.DependencyUtils;
-import reactor.fn.Function;
-import reactor.fn.Predicate;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.model.Method;

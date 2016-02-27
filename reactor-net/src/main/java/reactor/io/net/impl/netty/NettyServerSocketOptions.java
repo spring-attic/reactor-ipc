@@ -16,9 +16,10 @@
 
 package reactor.io.net.impl.netty;
 
+import java.util.function.Consumer;
+
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import reactor.fn.Consumer;
 import reactor.io.net.config.ServerSocketOptions;
 
 /**

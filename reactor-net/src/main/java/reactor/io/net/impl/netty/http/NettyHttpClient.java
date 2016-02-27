@@ -18,6 +18,7 @@ package reactor.io.net.impl.netty.http;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.function.Consumer;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -40,7 +41,6 @@ import reactor.core.tuple.Tuple2;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;

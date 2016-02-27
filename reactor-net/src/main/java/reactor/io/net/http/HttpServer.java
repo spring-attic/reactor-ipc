@@ -24,14 +24,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
-import reactor.fn.Predicate;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;

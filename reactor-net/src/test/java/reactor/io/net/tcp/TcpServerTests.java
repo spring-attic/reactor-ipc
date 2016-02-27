@@ -28,6 +28,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -40,8 +42,6 @@ import org.reactivestreams.Processor;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
-import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Frame;
 import reactor.io.codec.FrameCodec;

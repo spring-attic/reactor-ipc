@@ -17,9 +17,9 @@ package reactor.io.net.http;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
-import reactor.fn.Function;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.http.model.Cookie;
 import reactor.io.net.http.model.HttpHeaders;

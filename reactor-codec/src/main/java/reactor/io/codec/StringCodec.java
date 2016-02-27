@@ -22,9 +22,9 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
 

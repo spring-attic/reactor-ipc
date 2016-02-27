@@ -16,8 +16,9 @@
 
 package reactor.io.net;
 
+import java.util.function.Function;
+
 import org.reactivestreams.Publisher;
-import reactor.fn.Function;
 
 /**
  * A {@link ReactiveChannel} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization

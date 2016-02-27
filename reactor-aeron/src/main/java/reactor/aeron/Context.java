@@ -16,6 +16,7 @@
 package reactor.aeron;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import reactor.aeron.publisher.AeronProcessor;
 import reactor.aeron.subscriber.AeronSubscriber;
@@ -27,7 +28,6 @@ import reactor.aeron.utils.Serializer;
 import reactor.core.util.Assert;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
-import reactor.fn.Consumer;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 

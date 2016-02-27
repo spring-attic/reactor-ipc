@@ -18,18 +18,18 @@ package reactor.io.net.http;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
-import reactor.core.flow.Receiver;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Introspectable;
 import reactor.core.util.EmptySubscription;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.model.Cookie;
 import reactor.io.net.http.model.Method;

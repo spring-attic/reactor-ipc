@@ -16,13 +16,13 @@
 package reactor.aeron.publisher;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import reactor.aeron.Context;
 import reactor.aeron.utils.HeartbeatPublicationFailureException;
 import reactor.core.state.Pausable;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
-import reactor.fn.Consumer;
 
 /**
  * @author Anatoly Kadyshev

@@ -20,6 +20,8 @@ import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.Bootstrap;
@@ -50,8 +52,6 @@ import reactor.core.tuple.Tuple2;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
-import reactor.fn.Supplier;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;

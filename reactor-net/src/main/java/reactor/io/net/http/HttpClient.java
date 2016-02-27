@@ -17,13 +17,13 @@
 package reactor.io.net.http;
 
 import java.net.InetSocketAddress;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple2;
-import reactor.fn.Function;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactiveClient;
 import reactor.io.net.Reconnect;

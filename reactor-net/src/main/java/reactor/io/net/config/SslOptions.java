@@ -17,10 +17,10 @@
 package reactor.io.net.config;
 
 import java.io.File;
+import java.util.function.Supplier;
 import javax.net.ssl.TrustManager;
 
 import reactor.core.util.Assert;
-import reactor.fn.Supplier;
 
 /**
  * Helper class encapsulating common SSL configuration options.

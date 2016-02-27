@@ -16,11 +16,12 @@
 
 package reactor.io.codec.kryo;
 
+import java.util.function.Function;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
 import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
 import reactor.core.util.PlatformDependent;
-import reactor.fn.Function;
 import reactor.io.codec.SerializationCodec;
 
 /**

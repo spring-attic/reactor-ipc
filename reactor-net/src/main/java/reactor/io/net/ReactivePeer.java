@@ -17,12 +17,12 @@
 package reactor.io.net;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
-import reactor.fn.Function;
 
 /**
  * Abstract base class that implements common functionality shared by clients and servers.

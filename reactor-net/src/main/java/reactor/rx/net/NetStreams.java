@@ -15,9 +15,10 @@
  */
 package reactor.rx.net;
 
+import java.util.function.Function;
+
 import reactor.core.converter.DependencyUtils;
 import reactor.core.util.Assert;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveNet;

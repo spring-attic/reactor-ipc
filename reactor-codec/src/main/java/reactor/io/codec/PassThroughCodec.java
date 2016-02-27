@@ -16,9 +16,8 @@
 
 package reactor.io.codec;
 
-import reactor.fn.Consumer;
-import reactor.fn.Function;
-import reactor.io.buffer.Buffer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A simple {@code Codec} that uses the source object as both input and output. Override the {@link
@@ -46,8 +45,8 @@ public class PassThroughCodec<SRC> extends Codec<SRC, SRC, SRC> {
 	}
 
 	/**
-	 * Override to intercept the source object before it is passed into the next {@link reactor.fn.Consumer} or
-	 * returned to the caller if a {@link reactor.fn.Consumer} is not set.
+	 * Override to intercept the source object before it is passed into the next {@link java.util.function.Consumer} or
+	 * returned to the caller if a {@link java.util.function.Consumer} is not set.
 	 *
 	 * @param src The source object.
 	 * @return

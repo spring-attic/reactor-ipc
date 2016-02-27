@@ -16,6 +16,7 @@
 package reactor.aeron.subscriber;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
@@ -28,7 +29,6 @@ import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 
 /**

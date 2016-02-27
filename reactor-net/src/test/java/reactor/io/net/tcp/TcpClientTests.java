@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -47,7 +48,6 @@ import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple;
 import reactor.core.util.PlatformDependent;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.impl.netty.NettyBuffer;

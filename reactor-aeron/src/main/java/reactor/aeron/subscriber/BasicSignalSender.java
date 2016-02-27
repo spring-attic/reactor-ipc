@@ -15,11 +15,12 @@
  */
 package reactor.aeron.subscriber;
 
+import java.util.function.Consumer;
+
 import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.SignalPublicationFailedException;
 import reactor.aeron.utils.SignalType;
-import reactor.fn.Consumer;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;

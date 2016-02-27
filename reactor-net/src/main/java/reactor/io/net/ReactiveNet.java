@@ -16,9 +16,10 @@
 
 package reactor.io.net;
 
+import java.util.function.Function;
+
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
-import reactor.fn.Function;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.http.HttpClient;
 import reactor.io.net.http.HttpServer;

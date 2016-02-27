@@ -18,12 +18,12 @@ package reactor.io.net.http.routing;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.reactivestreams.Publisher;
 import reactor.core.converter.DependencyUtils;
 import reactor.core.util.Assert;
-import reactor.fn.Function;
-import reactor.fn.Predicate;
 import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.http.HttpChannel;
 import reactor.io.net.http.model.Method;

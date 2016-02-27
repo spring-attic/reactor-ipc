@@ -16,9 +16,10 @@
 
 package reactor.io.codec
 
-import reactor.fn.Consumer
 import reactor.io.buffer.Buffer
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 /**
  * Tests to cover the basic, built-in Codecs.
