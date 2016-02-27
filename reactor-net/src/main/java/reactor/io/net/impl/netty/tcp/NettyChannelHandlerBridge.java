@@ -535,7 +535,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 								break;
 							}
 
-							polled = pollCursor.get() + 1L;
+							polled = pollCursor.getAsLong() + 1L;
 							holder = queue.get(polled);
 							if (holder.value != null) {
 								child.onNext(holder.value);
