@@ -190,10 +190,6 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 		return INNER;
 	}
 
-	@Override
-	public String getName() {
-		return SignalPoller.class.getSimpleName();
-	}
 
 	public SignalPoller(Context context,
 						ServiceMessageSender serviceMessageSender,
