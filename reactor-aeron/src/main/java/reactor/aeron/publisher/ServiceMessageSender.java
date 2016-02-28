@@ -157,11 +157,6 @@ class ServiceMessageSender implements Producer, Loopback {
 	}
 
 	@Override
-	public Object connectedInput() {
-		return null;
-	}
-
-	@Override
 	public Object connectedOutput() {
 		return parent;
 	}

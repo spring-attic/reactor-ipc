@@ -194,11 +194,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	}
 
 	@Override
-	public Object connectedOutput() {
-		return null;
-	}
-
-	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		doRead(ctx, msg);
 	}
@@ -652,11 +647,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 
 		@Override
-		public Object connectedOutput() {
-			return null;
-		}
-
-		@Override
 		public void onSubscribe(final Subscription s) {
 			if (BackpressureUtils.validate(subscription, s)) {
 				this.subscription = s;
@@ -786,11 +776,6 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		@Override
 		public Object connectedInput() {
 			return NettyChannelHandlerBridge.this;
-		}
-
-		@Override
-		public Object connectedOutput() {
-			return null;
 		}
 
 		@Override
