@@ -238,7 +238,7 @@ public interface Spec {
 		 * @return {@literal this}
 		 */
 		public TcpClientSpec<IN, OUT> connect(@Nonnull InetSocketAddress connectAddress) {
-			Assert.isNull(this.connectAddress, "Connect address is already set.");
+			Assert.state(this.connectAddress  != null, "Connect address is already set.");
 			this.connectAddress = connectAddress;
 			return this;
 		}
@@ -648,7 +648,7 @@ public interface Spec {
 		 * @return {@literal this}
 		 */
 		public HttpClientSpec<IN, OUT> connect(@Nonnull InetSocketAddress connectAddress) {
-			Assert.isNull(this.connectAddress, "Connect address is already set.");
+			Assert.state(this.connectAddress  != null, "Connect address is already set.");
 			this.connectAddress = connectAddress;
 			return this;
 		}

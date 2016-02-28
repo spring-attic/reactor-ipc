@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import com.google.protobuf.Message;
-import reactor.core.util.Assert;
 import reactor.io.codec.SerializationCodec;
 
 /**
@@ -40,12 +39,12 @@ public class ProtobufCodec<IN, OUT> extends SerializationCodec<Map<Class<?>, Mes
 	@Override
 	protected Function<byte[], IN> deserializer(final Map<Class<?>, Message> messages,
 	                                            final Class<IN> type) {
-		Assert.isAssignable(Message.class,
-		                    type,
-		                    "Can only deserialize Protobuf messages. " +
-				                    type.getName() +
-				                    " is not an instance of " +
-				                    Message.class.getName());
+
+
+		if (type == null || !Message.class.isAssignableFrom(type)) {
+			throw new IllegalArgumentException("Can only deserialize Protobuf messages. " + type + " is not assignable " +
+					"to Message");
+		}
 		return new Function<byte[], IN>() {
 			@SuppressWarnings("unchecked")
 			@Override
