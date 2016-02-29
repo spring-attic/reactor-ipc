@@ -261,7 +261,7 @@ public class ClientServerHttpTests {
 			                               .log("server")
 			                               .timeout(2, TimeUnit.SECONDS, Fluxion.empty())
 			                               .concatWith(Fluxion.just(new ArrayList<String>()))
-			                               .capacity(1L)
+			                               .useCapacity(1L)
 
 			);
 		});

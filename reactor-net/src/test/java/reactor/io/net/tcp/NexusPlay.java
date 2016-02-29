@@ -40,7 +40,7 @@ public class NexusPlay {
 		Nexus nexus = ReactiveNet.nexus();
 		nexus.withSystemStats()
 		     .withLogTail()
-		     //.capacity(5l)
+		     //.useCapacity(5l)
 		     .startAndAwait();
 
 		//ReactiveStateUtils.scan(o).toString()
@@ -93,7 +93,7 @@ public class NexusPlay {
 				for(int j = 0; j < 3; j++) {
 					dispatched
 							.log("slow",  Level.FINEST, Logger.ALL)
-							//.capacity(5)
+							//.useCapacity(5)
 							.consume(d ->
 									LockSupport.parkNanos(10_000_000 * (r.nextInt(20) + 1))
 							);
@@ -116,7 +116,7 @@ public class NexusPlay {
 				for(int j = 0; j < 3; j++) {
 					dispatched
 							.log("slow",  Level.FINEST, Logger.ALL)
-							//.capacity(5)
+							//.useCapacity(5)
 							.consume(d ->
 									LockSupport.parkNanos(1000_000_000)
 							);

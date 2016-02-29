@@ -271,7 +271,7 @@ class HttpSpec extends Specification {
 		def res = req
 				.responseHeader("content-type", "text/plain")
 				.writeWith(req.log('server-received')
-				.capacity(1)
+				.useCapacity(1)
 				.doOnNext { serverRes++ }
 				.map { it + ' ' + req.param('param') + '!' }
 				.log('server-reply'))
@@ -300,7 +300,7 @@ class HttpSpec extends Specification {
 	  //return a producing stream to send some data along the request
 	  req.writeWith(Fluxion
 			  .range(1, 1000)
-			  .capacity(1)
+			  .useCapacity(1)
 			  .map { it.toString() }
 			  .log('client-send'))
 

@@ -302,7 +302,7 @@ public class SmokeTests {
 			                                                                                                           .doOnComplete(
 					                                                                                                           () -> integerPostConcat.decrementAndGet()))//END
 			                                     .doOnNext(d -> integerPostConcat.getAndIncrement())
-			                                     .capacity(1L));
+			                                     .useCapacity(1L));
 		});
 
 		httpServer.start().get();
@@ -589,7 +589,7 @@ public class SmokeTests {
 //										System.out.println("YYYYY COMPLETE " + Thread.currentThread());
 //									}
 //							)
-							.capacity(5L)
+							.useCapacity(5L)
 					//.log("writer")
 	 */
 }

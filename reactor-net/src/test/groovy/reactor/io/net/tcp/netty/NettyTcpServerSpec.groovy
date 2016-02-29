@@ -107,7 +107,7 @@ class NettyTcpServerSpec extends Specification {
 						Fluxion.from(codec.decode(input))
 								.log('serve')
 								.map(codec)
-								.capacity(5l)
+								.useCapacity(5l)
 				)
 			}.get()
 
@@ -161,7 +161,7 @@ class NettyTcpServerSpec extends Specification {
 					.retry(2)
 				}
 				.map(codec)
-						.capacity(10l)
+						.useCapacity(10l)
 				)
 			}.get()
 

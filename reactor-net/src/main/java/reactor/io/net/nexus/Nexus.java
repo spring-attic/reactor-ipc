@@ -165,7 +165,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 	/**
 	 * @return
 	 */
-	public final Nexus capacity(long capacity) {
+	public final Nexus useCapacity(long capacity) {
 		this.websocketCapacity = capacity;
 		return this;
 	}
@@ -439,13 +439,13 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
 			return stream.map(BUFFER_STRING_FUNCTION)
-			             .capacity(websocketCapacity);
+			             .useCapacity(websocketCapacity);
 		}
 		Flux<Buffer> mergedUpstreams = Flux.merge(Flux.fromArray(clients)
 		                                              .map(new FederatedMerger(c)));
 
 		return Flux.merge(stream.map(BUFFER_STRING_FUNCTION), mergedUpstreams)
-		           .capacity(websocketCapacity);
+		           .useCapacity(websocketCapacity);
 	}
 
 	private static final Function<Event, Buffer> BUFFER_STRING_FUNCTION = new StringToBuffer();

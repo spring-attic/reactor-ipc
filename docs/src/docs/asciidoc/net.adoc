@@ -34,7 +34,7 @@ server.start( input ->
 			.decode(codec) //transform Buffer into Pojo
 			.log("serve")
 			.map(codec)    //transform Pojo into Buffer
-			.capacity(5l)  //auto-flush every 5 elements
+			.useCapacity(5l)  //auto-flush every 5 elements
 	)
 ).await();
 

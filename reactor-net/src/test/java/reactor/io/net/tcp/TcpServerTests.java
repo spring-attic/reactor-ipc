@@ -484,7 +484,7 @@ public class TcpServerTests {
 			  )
 			  .flatMap(repliesOut ->
 				  requestIn
-					.writeWith(repliesOut.capacity(100))
+					.writeWith(repliesOut.useCapacity(100))
 			  )
 		);
 		server.start().get();
