@@ -17,8 +17,8 @@
 package reactor.io.net.impl.netty.tcp;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -333,7 +333,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 					}
 					channelOpen.addListener(new AfterOpen(subscriber));
 				}
-			}, delay, TimeUnit.MILLISECONDS);
+			}, delay);
 		}
 
 		private class AfterOpen implements ChannelFutureListener {

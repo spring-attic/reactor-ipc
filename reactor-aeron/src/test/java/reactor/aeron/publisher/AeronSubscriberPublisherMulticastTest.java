@@ -71,8 +71,8 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 		subscriber.shutdown();
 		publisher.shutdown();
 
-		TestSubscriber.await(TIMEOUT_SECS, "Subscriber wasn't terminated", subscriber::isTerminated);
-		TestSubscriber.await(TIMEOUT_SECS, "Publisher wasn't terminated", publisher::isTerminated);
+		TestSubscriber.await(TIMEOUT, "Subscriber wasn't terminated", subscriber::isTerminated);
+		TestSubscriber.await(TIMEOUT, "Publisher wasn't terminated", publisher::isTerminated);
 	}
 
 }

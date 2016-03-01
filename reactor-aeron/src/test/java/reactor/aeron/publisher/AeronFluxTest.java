@@ -15,7 +15,7 @@
  */
 package reactor.aeron.publisher;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class AeronFluxTest {
 
-	private static final int TIMEOUT_SECS = 5;
+	private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
 	private ThreadSnapshot threadSnapshot;
 
@@ -64,9 +64,9 @@ public class AeronFluxTest {
 
 	@After
 	public void doTearDown() throws InterruptedException {
-		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
+		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT);
 
-		assertTrue(threadSnapshot.takeAndCompare(new String[] { "global-"}, TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
+		assertTrue(threadSnapshot.takeAndCompare(new String[] { "global-"}, TIMEOUT.toMillis()));
 	}
 
 	@Test
@@ -91,7 +91,7 @@ public class AeronFluxTest {
 		TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
 		Buffer.bufferToString(publisher).subscribe(subscriber);
 
-		TestSubscriber.await(2, "publisher didn't terminate due to heartbeat loss", publisher::isTerminated);
+		TestSubscriber.await(Duration.ofSeconds(2), "publisher didn't terminate due to heartbeat loss", publisher::isTerminated);
 	}
 
 }

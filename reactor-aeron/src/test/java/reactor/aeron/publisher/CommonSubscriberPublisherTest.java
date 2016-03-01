@@ -16,6 +16,7 @@
 
 package reactor.aeron.publisher;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -46,7 +47,7 @@ import static org.junit.Assert.*;
  */
 public abstract class CommonSubscriberPublisherTest {
 
-	public static final long TIMEOUT_SECS = 5L;
+	public static final Duration TIMEOUT = Duration.ofSeconds(5);
 
 	final String senderChannel = AeronTestUtils.availableLocalhostChannel();
 
@@ -62,7 +63,7 @@ public abstract class CommonSubscriberPublisherTest {
 	@After
 	public void doTearDown() throws InterruptedException {
 		assertTrue(threadSnapshot.takeAndCompare(new String[]{"hash", "global"},
-				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
+				TIMEOUT.toMillis()));
 	}
 
 	protected abstract Context createContext(String name);
@@ -129,14 +130,14 @@ public abstract class CommonSubscriberPublisherTest {
 			@Override
 			public void onNext(Buffer buffer) {
 				try {
-					onNextLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS);
+					onNextLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
 			}
 		});
 
-		assertTrue(gotErrorLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
+		assertTrue(gotErrorLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS));
 		onNextLatch.countDown();
 
 		assertThat(error.get(), Matchers.instanceOf(SignalPublicationFailedException.class));
@@ -164,8 +165,8 @@ public abstract class CommonSubscriberPublisherTest {
 			});
 		}
 
-		public boolean awaitCancelled(int timeoutSecs) throws InterruptedException {
-			return cancelledLatch.await(timeoutSecs, TimeUnit.SECONDS);
+		public boolean awaitCancelled(Duration timeout) throws InterruptedException {
+			return cancelledLatch.await(timeout.getSeconds(), TimeUnit.SECONDS);
 		}
 
 	}
@@ -186,7 +187,7 @@ public abstract class CommonSubscriberPublisherTest {
 		client.cancel();
 
 
-		assertTrue(valuePublisher.awaitCancelled((int) TIMEOUT_SECS));
+		assertTrue(valuePublisher.awaitCancelled(TIMEOUT));
 	}
 
 	@Test
@@ -205,7 +206,7 @@ public abstract class CommonSubscriberPublisherTest {
 		client.cancel();
 
 
-		assertFalse(valuePublisher.awaitCancelled(2));
+		assertFalse(valuePublisher.awaitCancelled(Duration.ofSeconds(2)));
 
 		publisher.shutdown();
 		aeronSubscriber.shutdown();
