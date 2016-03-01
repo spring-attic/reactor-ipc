@@ -683,7 +683,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 				}
 			}
 			catch (Throwable t) {
-				onError(Exceptions.addValueAsLastCause(t, w));
+				log.error("Write error for "+w, t);
+				onError(t);
 			}
 		}
 
@@ -812,7 +813,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 				}
 			}
 			catch (Throwable t) {
-				onError(Exceptions.addValueAsLastCause(t, w));
+				log.error("Write error for "+w, t);
+				onError(t);
 				Exceptions.failWithCancel();
 			}
 		}
