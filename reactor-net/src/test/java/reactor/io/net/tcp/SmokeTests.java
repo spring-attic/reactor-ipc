@@ -42,6 +42,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.impl.netty.NettyClientSocketOptions;
+import reactor.io.net.impl.netty.NettyServerSocketOptions;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.rx.Fluxion;
 import reactor.rx.Promise;
@@ -279,8 +280,10 @@ public class SmokeTests {
 		  .subscribeWith(workProcessor)
 		  .as(Fluxion::from);
 
-		httpServer = NetStreams.httpServer(server -> server
-			.httpProcessor(CodecPreprocessor.from(codec)).listen(port)
+		httpServer = NetStreams.httpServer(server -> server.httpProcessor(CodecPreprocessor.from(codec))
+		                                                   .listen(port)
+		                                                   .options(new NettyServerSocketOptions().eventLoopGroup(
+				                                                   new NioEventLoopGroup(10)))
 		);
 
 		httpServer.get("/data", (request) -> {

@@ -336,8 +336,7 @@ public class TcpClientTests {
 
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {
-				  allWrites.add(connection.writeBufferWith(Fluxion.just(Buffer.wrap("a"))
-				    .throttleRequest(750)));
+				  allWrites.add(connection.writeBufferWith(Fluxion.just(Buffer.wrap("a")).delay(750)));
 			  }
 			  return Fluxion.merge(allWrites);
 		  }
