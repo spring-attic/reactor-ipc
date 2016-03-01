@@ -16,6 +16,7 @@
 package reactor.aeron.publisher;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -64,7 +65,7 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 	@AfterClass
 	public void doTeardown() throws InterruptedException {
 		driverManager.shutdown();
-		AeronTestUtils.awaitMediaDriverIsTerminated(10);
+		AeronTestUtils.awaitMediaDriverIsTerminated(Duration.ofSeconds(10));
 	}
 
 	@AfterMethod
@@ -79,10 +80,10 @@ public abstract class AeronProcessorCommonVerificationTest extends IdentityProce
 
 				for (AeronProcessor processor: processors) {
 					processor.shutdown();
-					TestSubscriber.await(10L, "processor didn't terminate", processor::isTerminated);
+					TestSubscriber.await(Duration.ofSeconds(10), "processor didn't terminate", processor::isTerminated);
 				}
 
-				TestSubscriber.await(5L, "Embedded Media driver wasn't shutdown properly",
+				TestSubscriber.await(Duration.ofSeconds(5), "Embedded Media driver wasn't shutdown properly",
 						() -> driverManager.getCounter() == 0);
 			}
 		}

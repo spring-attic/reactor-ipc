@@ -15,7 +15,6 @@
  */
 package reactor.aeron.publisher;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import reactor.aeron.Context;
@@ -87,7 +86,7 @@ class HeartbeatSender {
 	public void start() {
 		Assert.state(taskPausable == null, "Heartbeat sending task was already scheduled");
 
-		this.taskPausable = Timer.global().schedule(task, context.heartbeatIntervalMillis(), TimeUnit.MILLISECONDS);
+		this.taskPausable = Timer.global().schedule(task, context.heartbeatIntervalMillis());
 	}
 
 	public void shutdown() {

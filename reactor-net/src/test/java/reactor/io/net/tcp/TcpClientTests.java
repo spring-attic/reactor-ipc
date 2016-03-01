@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -152,7 +153,7 @@ public class TcpClientTests {
 			input.writeWith(Fluxion.just("Hello")).subscribe();
 
 			return Fluxion.never();
-		}).get(5, TimeUnit.SECONDS);
+		}).get(Duration.ofSeconds(5));
 
 		latch.await(5, TimeUnit.SECONDS);
 
@@ -186,7 +187,7 @@ public class TcpClientTests {
 			).subscribe();
 
 			return Fluxion.never();
-		}).get(5, TimeUnit.SECONDS);
+		}).get(Duration.ofSeconds(5));
 
 		assertTrue("Expected messages not received. Received " + strings.size() + " messages: " + strings,
 		  latch.await(5, TimeUnit.SECONDS));
@@ -206,7 +207,7 @@ public class TcpClientTests {
 
 		client.start(null);
 
-		client.shutdown().get(30, TimeUnit.SECONDS);
+		client.shutdown().get(Duration.ofSeconds(30));
 	}
 
 	@Test
@@ -284,7 +285,7 @@ public class TcpClientTests {
 					latch.countDown();
 				});
 
-			  return Mono.delay(3).after().log();
+			  return Mono.delay(3000).after().log();
 		  }
 		);
 

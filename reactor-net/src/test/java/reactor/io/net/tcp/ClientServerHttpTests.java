@@ -15,6 +15,7 @@
  */
 package reactor.io.net.tcp;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -259,7 +260,7 @@ public class ClientServerHttpTests {
 			request.responseHeaders().removeTransferEncodingChunked();
 			return request.writeWith(Fluxion.from(processor)
 			                               .log("server")
-			                               .timeout(2, TimeUnit.SECONDS, Fluxion.empty())
+			                               .timeout(Duration.ofSeconds(2), Fluxion.empty())
 			                               .concatWith(Fluxion.just(new ArrayList<String>()))
 			                               .useCapacity(1L)
 
@@ -298,7 +299,7 @@ public class ClientServerHttpTests {
 						latch.await();
 						Promise<List<String>> clientDataPromise = getClientDataPromise();
 						promiseLatch.countDown();
-						datas.add(clientDataPromise.await(10, TimeUnit.SECONDS));
+						datas.add(clientDataPromise.await(Duration.ofSeconds(10)));
 					} catch (Exception ie) {
 						ie.printStackTrace();
 					}

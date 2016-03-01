@@ -21,6 +21,7 @@ import uk.co.real_logic.aeron.driver.Configuration;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 import uk.co.real_logic.aeron.driver.ThreadingMode;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,8 +44,8 @@ public class AeronTestUtils {
 		driverManager.setDeleteAeronDirsOnExit(true);
 	}
 
-	public static void awaitMediaDriverIsTerminated(int timeoutSecs) throws InterruptedException {
-		TestSubscriber.await(timeoutSecs, "Aeron hasn't been shutdown properly",
+	public static void awaitMediaDriverIsTerminated(Duration timeout) throws InterruptedException {
+		TestSubscriber.await(timeout, "Aeron hasn't been shutdown properly",
 				() -> EmbeddedMediaDriverManager.getInstance().isTerminated());
 	}
 

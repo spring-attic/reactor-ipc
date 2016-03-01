@@ -6,6 +6,7 @@ import reactor.rx.net.NetStreams
 import reactor.rx.net.http.HttpChannelFluxion
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 /**
@@ -28,7 +29,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
 
         then: "the server was started"
           server
-          !server.start().get(5, TimeUnit.SECONDS)
+          !server.start().get(Duration.ofSeconds(5))
 
         when: "a request with unsupported URI is sent onto the server"
             def client = NetStreams.httpClient {

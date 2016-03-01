@@ -25,6 +25,7 @@ import reactor.rx.net.http.HttpChannelFluxion
 import rx.Observable
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -57,7 +58,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().get(5, TimeUnit.SECONDS)
+	!server.start().get(Duration.ofSeconds(5))
 
 	when: "data is sent with Reactor HTTP support"
 
@@ -85,7 +86,7 @@ class HttpSpec extends Specification {
 
 	then: "data was not recieved"
 	//the produced reply should be there soon
-	!content.get(5, TimeUnit.SECONDS)
+	!content.get(Duration.ofSeconds(5))
   }
 
 
@@ -117,7 +118,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().get(5, TimeUnit.SECONDS)
+	!server.start().get(Duration.ofSeconds(5))
 
 	when: "data is sent with Reactor HTTP support"
 
@@ -151,7 +152,7 @@ class HttpSpec extends Specification {
 
 	then: "data was recieved"
 	//the produced reply should be there soon
-	content.get(5, TimeUnit.SECONDS) == "Hello World!"
+	content.get(Duration.ofSeconds(5)) == "Hello World!"
 
 	cleanup: "the client/server where stopped"
 	//note how we order first the client then the server shutdown
@@ -182,7 +183,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().get(5, TimeUnit.SECONDS)
+	!server.start().get(Duration.ofSeconds(5))
 
 	when:
 	def client = NetStreams.httpClient {
@@ -203,7 +204,7 @@ class HttpSpec extends Specification {
 	 			 Mono.just(replies.responseStatus().code)
 			  .log("received-status-1")
 			}
-			.get(5, TimeUnit.SECONDS)
+			.get(Duration.ofSeconds(5))
 
 
 
@@ -218,12 +219,12 @@ class HttpSpec extends Specification {
 			.flatMap { replies -> replies.log("received-status-2")
 	}
 	.next()
-			.get(3, TimeUnit.SECONDS)
+			.get(Duration.ofSeconds(3))
 
 	then: "data was recieved"
 	//the produced reply should be there soon
 	thrown Exceptions.CancelException
-	errored.await(5, TimeUnit.SECONDS.SECONDS)
+	errored.await(5, TimeUnit.SECONDS)
 	!content
 
 	when:
@@ -235,7 +236,7 @@ class HttpSpec extends Specification {
 			  .log("received-status-3")
 	}
 	.next()
-			.get(5, TimeUnit.SECONDS)
+			.get(Duration.ofSeconds(5))
 
 	then: "data was recieved"
 	//the produced reply should be there soon
@@ -283,7 +284,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().get(5, TimeUnit.SECONDS)
+	!server.start().get(Duration.ofSeconds(5))
 
 	when: "data is sent with Reactor HTTP support"
 

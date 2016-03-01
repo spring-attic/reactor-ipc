@@ -7,6 +7,7 @@ import reactor.rx.net.NetStreams
 import reactor.rx.net.http.HttpChannelFluxion
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 public class HttpCookieHandlingSpec extends Specification{
@@ -52,7 +53,7 @@ public class HttpCookieHandlingSpec extends Specification{
 
 	then: "the server was started"
 	server
-	!server.start().get(5, TimeUnit.SECONDS)
+	!server.start().get(Duration.ofSeconds(5))
 
 	when: "a request with URI is sent onto the server"
 	def client = NetStreams.httpClient {
@@ -71,7 +72,7 @@ public class HttpCookieHandlingSpec extends Specification{
 	then: "data with cookies was received"
 	def value = ""
 	try {
-	  def receivedCookies = cookieResponse.get(5, TimeUnit.SECONDS)
+	  def receivedCookies = cookieResponse.get(Duration.ofSeconds(5))
 	  value = receivedCookies.get("cookie1")[0].value()
 	} catch (RuntimeException ex) {
 	  println ex.getMessage();

@@ -76,7 +76,7 @@ class HeartbeatWatchdog {
 	}
 
 	public void start() {
-		this.pausable = Timer.global().schedule(sessionReaper, (heartbeatTimeoutNs * 3) / 2, TimeUnit.NANOSECONDS);
+		this.pausable = Timer.global().schedule(sessionReaper, (heartbeatTimeoutNs * 3000) / 2);
 
 		logger.debug("HeartbeatWatchdog started");
 	}

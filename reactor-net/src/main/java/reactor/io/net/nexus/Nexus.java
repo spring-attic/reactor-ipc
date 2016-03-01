@@ -18,6 +18,7 @@ package reactor.io.net.nexus;
 
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -281,7 +282,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					Exceptions.failWithCancel();
 				}
 			}
-		}, _period, TimeUnit.MILLISECONDS);
+		}, _period);
 
 		this.cannons.submit(p.map(new GraphMapper()));
 
@@ -406,7 +407,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 						Exceptions.failWithCancel();
 					}
 				}
-			}, systemStatsPeriod, TimeUnit.MILLISECONDS);
+			}, systemStatsPeriod);
 		}
 
 		return server.start();

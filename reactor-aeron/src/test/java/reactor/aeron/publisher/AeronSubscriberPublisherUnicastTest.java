@@ -129,7 +129,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client.cancel();
 
-		TestSubscriber.await(TIMEOUT_SECS, "AeronFlux should be dead", () -> !publisher.alive());
+		TestSubscriber.await(TIMEOUT, "AeronFlux should be dead", () -> !publisher.alive());
 
 		aeronSubscriber.shutdown();
 	}
@@ -157,7 +157,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		public void onComplete() {
 			try {
 				completeReceivedLatch.countDown();
-				canReturnLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS);
+				canReturnLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
@@ -173,7 +173,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		HangingOnCompleteSubscriber client = new HangingOnCompleteSubscriber();
 		Buffer.bufferToString(publisher).subscribe(client);
 
-		assertTrue(client.completeReceivedLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
+		assertTrue(client.completeReceivedLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS));
 
 		AeronFlux publisher2 = new AeronFlux(createContext("publisher2"));
 
@@ -203,7 +203,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		client.awaitAndAssertValues("1", "2", "3");
 		client.assertComplete();
 
-		TestSubscriber.await(TIMEOUT_SECS, () -> "Publisher hasn't been terminated", publisher::isTerminated);
+		TestSubscriber.await(TIMEOUT, () -> "Publisher hasn't been terminated", publisher::isTerminated);
 
 		client.request(1);
 	}
@@ -221,9 +221,9 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client.request(1);
 
-		client.await(TIMEOUT_SECS).assertError();
+		client.await(TIMEOUT).assertError();
 
-		TestSubscriber.await(TIMEOUT_SECS, () -> "Publisher hasn't been terminated", publisher::isTerminated);
+		TestSubscriber.await(TIMEOUT, () -> "Publisher hasn't been terminated", publisher::isTerminated);
 
 		client.request(1);
 	}

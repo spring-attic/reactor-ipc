@@ -17,6 +17,7 @@ package reactor.io.net.tcp;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -268,7 +269,7 @@ public class SmokeTests {
 			  windows.getAndIncrement()
 		  )
 		  .flatMap(s ->
-				  s.take(2, TimeUnit.SECONDS)
+				  s.take(Duration.ofSeconds(2))
 				   .reduceWith(Buffer::new, Buffer::append)
 		  )
 				.doOnNext(d ->
@@ -294,7 +295,7 @@ public class SmokeTests {
 			return request.writeWith(bufferStream.doOnNext(d -> integer.getAndIncrement())
 			                                     .take(takeCount)
 			                                     .doOnNext(d -> integerPostTake.getAndIncrement())
-			                                     .timeout(2, TimeUnit.SECONDS, Fluxion.<Buffer>empty().doOnComplete(() -> System.out.println(
+			                                     .timeout(Duration.ofSeconds(2), Fluxion.<Buffer>empty().doOnComplete(() -> System.out.println(
 					                                     "timeout after 2 ")))
 			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Fluxion.just(
 									GpdistCodec.class.equals(codec.getClass()) ?
@@ -315,7 +316,7 @@ public class SmokeTests {
 		                                       .flatMap(Fluxion::buffer)
 		                                       .subscribeWith(Promise.ready());
 
-		List<String> res = content.await(20, TimeUnit.SECONDS);
+		List<String> res = content.await(Duration.ofSeconds(20));
 		httpClient.shutdown().get();
 		return res;
 	}

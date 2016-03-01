@@ -15,6 +15,7 @@
  */
 package reactor.aeron.publisher;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class AeronProcessorTest {
 
-	protected final long TIMEOUT_SECS = 5L;
+	protected final Duration TIMEOUT = Duration.ofSeconds(5);
 
 	private String CHANNEL = "udp://localhost:" + SocketUtils.findAvailableUdpPort();
 
@@ -57,14 +58,14 @@ public class AeronProcessorTest {
 		if (processor != null) {
 			processor.shutdown();
 
-			TestSubscriber.await(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
+			TestSubscriber.await(TIMEOUT, "Processor didn't terminate within timeout interval",
 					() -> processor.isTerminated());
 		}
 
-		AeronTestUtils.awaitMediaDriverIsTerminated((int) TIMEOUT_SECS);
+		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT);
 
 		assertTrue(threadSnapshot.takeAndCompare(new String[] {"hash", "global"},
-				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
+				TIMEOUT.toMillis()));
 	}
 
 	@Test
@@ -92,7 +93,7 @@ public class AeronProcessorTest {
 
 			subscriber.awaitAndAssertValues("Live").assertComplete();
 
-			TestSubscriber.await(TIMEOUT_SECS, "Processor didn't terminate within timeout interval",
+			TestSubscriber.await(TIMEOUT, "Processor didn't terminate within timeout interval",
 					processor::isTerminated);
 		} finally {
 			aeron.close();

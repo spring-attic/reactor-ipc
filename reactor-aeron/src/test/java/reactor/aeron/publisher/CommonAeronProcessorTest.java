@@ -15,6 +15,7 @@
  */
 package reactor.aeron.publisher;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +45,7 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class CommonAeronProcessorTest {
 
-	protected static final int TIMEOUT_SECS = 5;
+	protected static final Duration TIMEOUT = Duration.ofSeconds(5);
 
 	private ThreadSnapshot threadSnapshot;
 
@@ -59,10 +60,10 @@ public abstract class CommonAeronProcessorTest {
 
 	@After
 	public void doTeardown() throws InterruptedException {
-		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
+		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT);
 
 		assertTrue(threadSnapshot.takeAndCompare(new String[] {"hash", "global"},
-				TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
+				TIMEOUT.toMillis()));
 	}
 
 	protected Context createContext() {
@@ -159,7 +160,7 @@ public abstract class CommonAeronProcessorTest {
 		TestSubscriber<String> subscriber = new TestSubscriber<String>();
 		Buffer.bufferToString(processor).subscribe(subscriber);
 
-		subscriber.await(TIMEOUT_SECS).assertErrorWith(t -> assertThat(t.getMessage(), is("Something went wrong")));
+		subscriber.await(TIMEOUT).assertErrorWith(t -> assertThat(t.getMessage(), is("Something went wrong")));
 	}
 
 	@Test
@@ -172,7 +173,7 @@ public abstract class CommonAeronProcessorTest {
 		Fluxion<Buffer> sourceStream = Fluxion.error(new RuntimeException());
 		sourceStream.subscribe(processor);
 
-		subscriber.await(TIMEOUT_SECS).assertErrorWith(t -> assertThat(t.getMessage(), is("")));
+		subscriber.await(TIMEOUT).assertErrorWith(t -> assertThat(t.getMessage(), is("")));
 	}
 
 	@Test
@@ -209,7 +210,7 @@ public abstract class CommonAeronProcessorTest {
 		client.awaitAndAssertValues("Hello").cancel();
 
 		assertTrue("Subscription wasn't cancelled",
-				subscriptionCancelledLatch.await(TIMEOUT_SECS, TimeUnit.SECONDS));
+				subscriptionCancelledLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS));
 	}
 
 	@Test
@@ -250,8 +251,8 @@ public abstract class CommonAeronProcessorTest {
 		subscriber.request(1);
 		remoteSubscriber.request(1);
 
-		subscriber.await(TIMEOUT_SECS).assertError();
-		remoteSubscriber.await(TIMEOUT_SECS).assertError();
+		subscriber.await(TIMEOUT).assertError();
+		remoteSubscriber.await(TIMEOUT).assertError();
 	}
 
 }

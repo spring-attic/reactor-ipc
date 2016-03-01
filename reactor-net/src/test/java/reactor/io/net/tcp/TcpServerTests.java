@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -381,7 +382,7 @@ public class TcpServerTests {
 		broadcaster
 
 		  //transform 10 data in a [] of 10 elements or wait up to 1 Second before emitting whatever the list contains
-		  .buffer(10, 1, TimeUnit.SECONDS)
+		  .buffer(10, Duration.ofSeconds(1))
 		  .log("broadcaster")
 		  .subscribe(processor);
 
@@ -403,7 +404,7 @@ public class TcpServerTests {
 				Fluxion.from(processor)
 				  //split each microbatch data into individual data
 				  .flatMap(Fluxion::fromIterable)
-				  .take(5, TimeUnit.SECONDS)
+				  .take(Duration.ofSeconds(5))
 				  .concatWith(Fluxion.just("end\n"))
 			  );
 		});

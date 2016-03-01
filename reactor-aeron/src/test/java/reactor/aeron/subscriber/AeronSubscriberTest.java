@@ -22,7 +22,7 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.aeron.utils.ThreadSnapshot;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import static org.junit.Assert.assertTrue;
 
@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class AeronSubscriberTest {
 
-	private static final int TIMEOUT_SECS = 5;
+	private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
 	private ThreadSnapshot threadSnapshot;
 
@@ -44,9 +44,9 @@ public class AeronSubscriberTest {
 
 	@After
 	public void doTearDown() throws InterruptedException {
-		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT_SECS);
+		AeronTestUtils.awaitMediaDriverIsTerminated(TIMEOUT);
 
-		assertTrue(threadSnapshot.takeAndCompare(new String[] {"global"}, TimeUnit.SECONDS.toMillis(TIMEOUT_SECS)));
+		assertTrue(threadSnapshot.takeAndCompare(new String[] {"global"}, TIMEOUT.toMillis()));
 	}
 
 	@Test

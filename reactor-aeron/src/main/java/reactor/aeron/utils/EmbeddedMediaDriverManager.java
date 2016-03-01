@@ -16,6 +16,7 @@
 package reactor.aeron.utils;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -102,7 +103,7 @@ public final class EmbeddedMediaDriverManager {
 			if (canShutdownMediaDriver() || System.nanoTime() - startNs > shutdownTimeoutNs) {
 				doShutdown();
 			} else {
-				timer.submit(this, retryShutdownMillis, TimeUnit.MILLISECONDS);
+				timer.submit(this, retryShutdownMillis);
 			}
 		}
 
@@ -180,7 +181,7 @@ public final class EmbeddedMediaDriverManager {
 			aeron.close();
 
 			Timer timer = Timer.global();
-			timer.submit(new RetryShutdownTask(timer), retryShutdownMillis, TimeUnit.MILLISECONDS);
+			timer.submit(new RetryShutdownTask(timer), retryShutdownMillis);
 		}
 	}
 
