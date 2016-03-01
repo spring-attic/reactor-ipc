@@ -91,7 +91,7 @@ public class AeronProcessorTest {
 			Buffer.bufferToString(processor).subscribe(subscriber);
 			subscriber.request(1);
 
-			subscriber.awaitAndAssertValues("Live").assertComplete();
+			subscriber.awaitAndAssertNextValues("Live").assertComplete();
 
 			TestSubscriber.await(TIMEOUT, "Processor didn't terminate within timeout interval",
 					processor::isTerminated);
@@ -120,7 +120,7 @@ public class AeronProcessorTest {
 		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(1);
 
-		subscriber.awaitAndAssertValues("Live").assertComplete();
+		subscriber.awaitAndAssertNextValues("Live").assertComplete();
 	}
 
 	@Test
@@ -135,7 +135,7 @@ public class AeronProcessorTest {
 		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(1);
 
-		subscriber.awaitAndAssertValues("Live").assertComplete();
+		subscriber.awaitAndAssertNextValues("Live").assertComplete();
 	}
 
 	protected Context createAeronContext() {

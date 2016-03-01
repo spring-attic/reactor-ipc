@@ -86,11 +86,11 @@ public abstract class CommonAeronProcessorTest {
 				Buffer.wrap("Harder"),
 				Buffer.wrap("Extra")).subscribe(processor);
 
-		subscriber.awaitAndAssertValues("Live", "Hard", "Die", "Harder");
+		subscriber.awaitAndAssertNextValues("Live", "Hard", "Die", "Harder");
 
 		subscriber.request(1);
 
-		subscriber.awaitAndAssertValues("Extra");
+		subscriber.awaitAndAssertNextValues("Extra");
 	}
 
 	@Test
@@ -106,13 +106,13 @@ public abstract class CommonAeronProcessorTest {
 		Buffer.bufferToString(processor).subscribe(subscriber);
 
 		subscriber.request(1);
-		subscriber.awaitAndAssertValues("One");
+		subscriber.awaitAndAssertNextValues("One");
 
 		subscriber.request(1);
-		subscriber.awaitAndAssertValues("Two");
+		subscriber.awaitAndAssertNextValues("Two");
 
 		subscriber.request(1);
-		subscriber.awaitAndAssertValues("Three").assertComplete();
+		subscriber.awaitAndAssertNextValues("Three").assertComplete();
 	}
 
 	@Test
@@ -142,8 +142,8 @@ public abstract class CommonAeronProcessorTest {
 		TestSubscriber<String> subscriber2 = new TestSubscriber<String>();
 		Buffer.bufferToString(emitter).subscribe(subscriber2);
 
-		subscriber1.awaitAndAssertValues("Live", "Hard", "Die", "Harder").assertComplete();
-		subscriber2.awaitAndAssertValues("Live", "Hard", "Die", "Harder").assertComplete();
+		subscriber1.awaitAndAssertNextValues("Live", "Hard", "Die", "Harder").assertComplete();
+		subscriber2.awaitAndAssertNextValues("Live", "Hard", "Die", "Harder").assertComplete();
 	}
 
 	@Test
@@ -207,7 +207,7 @@ public abstract class CommonAeronProcessorTest {
 
 		processor.onNext(Buffer.wrap("Hello"));
 
-		client.awaitAndAssertValues("Hello").cancel();
+		client.awaitAndAssertNextValues("Hello").cancel();
 
 		assertTrue("Subscription wasn't cancelled",
 				subscriptionCancelledLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS));
@@ -231,8 +231,8 @@ public abstract class CommonAeronProcessorTest {
 		subscriber.request(1);
 		remoteSubscriber.request(1);
 
-		subscriber.awaitAndAssertValues("Live").assertComplete();
-		remoteSubscriber.awaitAndAssertValues("Live").assertComplete();
+		subscriber.awaitAndAssertNextValues("Live").assertComplete();
+		remoteSubscriber.awaitAndAssertNextValues("Live").assertComplete();
 	}
 
 	@Test

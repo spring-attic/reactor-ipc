@@ -50,7 +50,7 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 
 		client.request(3);
 
-		client.awaitAndAssertValueCount(3);
+		client.awaitAndAssertNextValueCount(3);
 
 		client.cancel();
 
@@ -64,7 +64,7 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 
 		client2.request(6);
 
-		client2.awaitAndAssertValueCount(6);
+		client2.awaitAndAssertNextValueCount(6);
 
 		client2.cancel();
 

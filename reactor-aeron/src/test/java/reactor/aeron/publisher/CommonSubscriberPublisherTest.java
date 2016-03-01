@@ -89,7 +89,7 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
 
-		clientSubscriber.awaitAndAssertValues("One", "Two", "Three").assertComplete();
+		clientSubscriber.awaitAndAssertNextValues("One", "Two", "Three").assertComplete();
 	}
 
 	@Test
@@ -183,7 +183,7 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(1);
-		client.awaitAndAssertValueCount(1);
+		client.awaitAndAssertNextValueCount(1);
 		client.cancel();
 
 
@@ -202,7 +202,7 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(1);
-		client.awaitAndAssertValueCount(1);
+		client.awaitAndAssertNextValueCount(1);
 		client.cancel();
 
 

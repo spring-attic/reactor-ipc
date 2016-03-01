@@ -57,7 +57,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client1.request(3);
 
-		client1.awaitAndAssertValues("1", "2", "3");
+		client1.awaitAndAssertNextValues("1", "2", "3");
 
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client1).toString());
@@ -71,7 +71,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client2.request(6);
 
-		client2.awaitAndAssertValues("1", "2", "3", "4", "5", "6").assertComplete();
+		client2.awaitAndAssertNextValues("1", "2", "3", "4", "5", "6").assertComplete();
 
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 		System.out.println(ReactiveStateUtils.scan(client2).toString());
@@ -79,7 +79,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client1.request(3);
 
-		client1.awaitAndAssertValues("4", "5", "6").assertComplete();
+		client1.awaitAndAssertNextValues("4", "5", "6").assertComplete();
 
 		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
 	}
@@ -96,7 +96,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
-		client.awaitAndAssertValues("1", "2", "3");
+		client.awaitAndAssertNextValues("1", "2", "3");
 
 		client.cancel();
 
@@ -109,7 +109,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		Thread.sleep(1000);
 
 		client2.request(6);
-		client2.awaitAndAssertValues("1", "2", "3", "4", "5", "6").assertComplete();
+		client2.awaitAndAssertNextValues("1", "2", "3", "4", "5", "6").assertComplete();
 	}
 
 
@@ -125,7 +125,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(3);
-		client.awaitAndAssertValues("1", "2", "3");
+		client.awaitAndAssertNextValues("1", "2", "3");
 
 		client.cancel();
 
@@ -182,7 +182,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client2.request(3);
 
-		client2.awaitAndAssertValueCount(3).assertComplete();
+		client2.awaitAndAssertNextValueCount(3).assertComplete();
 
 		client.canReturnLatch.countDown();
 	}
@@ -200,7 +200,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client.request(3);
 
-		client.awaitAndAssertValues("1", "2", "3");
+		client.awaitAndAssertNextValues("1", "2", "3");
 		client.assertComplete();
 
 		TestSubscriber.await(TIMEOUT, () -> "Publisher hasn't been terminated", publisher::isTerminated);
