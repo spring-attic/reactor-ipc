@@ -65,7 +65,6 @@ ext {
 			"http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/",
 			"http://next.projectreactor.io/core/docs/api/",
 			"http://next.projectreactor.io/ext/docs/api/",
-			"http://next.projectreactor.io/stream/docs/api/"
 	] as String[]
 }
 
