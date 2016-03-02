@@ -41,7 +41,6 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.core.state.Recyclable;
 import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.util.Assert;
 import reactor.core.util.Exceptions;
@@ -55,8 +54,7 @@ import reactor.core.util.PlatformDependent;
  *
  * @author Stephane Maldini
  */
-public class Buffer implements Recyclable,
-                               Comparable<Buffer>,
+public class Buffer implements Comparable<Buffer>,
                                Iterable<Byte>,
                                ReadableByteChannel,
                                WritableByteChannel {
@@ -478,7 +476,9 @@ public class Buffer implements Recyclable,
 		return num;
 	}
 
-	@Override
+	/**
+	 * Reset this {@link Buffer} for reuse
+	 */
 	public void recycle() {
 		if (null != buffer) {
 			buffer.position(0);
