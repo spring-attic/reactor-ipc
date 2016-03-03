@@ -225,7 +225,7 @@ public class SubscriberThreadingPOCTest {
 
 		SchedulerGroup group = SchedulerGroup.async();
 		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
-		Flux.publishOn(dataPublisher, group).subscribe(processor);
+		Flux.from(dataPublisher).publishOn(group).subscribe(processor);
 
 		SignalPollerForPOC signalPoller = new SignalPollerForPOC(processor);
 		Thread signalPollerThread = new Thread(signalPoller, "signal-poller");
