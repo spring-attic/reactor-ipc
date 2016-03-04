@@ -91,9 +91,9 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	@Override
 	protected Mono<Void> doStart(
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
-		return client.start(inoutChannelFluxion -> {
+		return client.start(inoutChannelFlux -> {
 			final NettyHttpChannel ch =
-					((NettyHttpChannel) inoutChannelFluxion);
+					((NettyHttpChannel) inoutChannelFlux);
 			return handler.apply(ch);
 		});
 	}
@@ -102,9 +102,9 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler,
 			final Reconnect reconnect) {
-		return client.start(inoutChannelFluxion -> {
+		return client.start(inoutChannelFlux -> {
 			final NettyHttpChannel ch =
-					((NettyHttpChannel) inoutChannelFluxion);
+					((NettyHttpChannel) inoutChannelFlux);
 			return handler.apply(ch);
 		}, reconnect);
 	}

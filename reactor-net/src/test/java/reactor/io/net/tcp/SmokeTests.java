@@ -548,7 +548,7 @@ public class SmokeTests {
 
 	/*
 
-	Fluxion<Buffer> bufferStream = Streams
+	Flux<Buffer> bufferStream = Streams
 				.wrap(processor)
 				.window(windowBatch, 2, TimeUnit.SECONDS)
 				.flatMap(s -> s

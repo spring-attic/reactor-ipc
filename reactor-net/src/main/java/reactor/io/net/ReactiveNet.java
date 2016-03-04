@@ -47,7 +47,7 @@ import reactor.io.net.udp.DatagramServer;
  *      .flatMap(self -> new StringCodec('\n').decode(self))
  *      .consume(log::info);
  *
- *    //Push anything from the publisher returned, here a simple Reactor Fluxion. By default a Buffer is expected
+ *    //Push anything from the publisher returned, here a simple Reactor Flux. By default a Buffer is expected
  *    //Will close after write
  *    return connection.writeWith(Flux.just(Buffer.wrap("hello\n")));
  * });
@@ -55,7 +55,7 @@ import reactor.io.net.udp.DatagramServer;
  * //We can also preconfigure global codecs and other custom client/server parameter with the Function signature:
  * ReactiveNet.tcpServer(spec -> spec.preprocessor(CodecPreprocessor.from(kryoCodec)).listen(1235)).start( intput -> {
  *      input.subscribe(Subscribers.unbounded(log::info));
- *      return input.writeWith(Flux.interval(1l));
+ *      return input.writeWith(Flux.interval(1_000l));
  * });
  *
  * //Assigning the same codec to a client and a server greatly improve readability and provide for extended type

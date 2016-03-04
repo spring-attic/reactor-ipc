@@ -21,7 +21,7 @@ import reactor.core.util.Exceptions
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.net.NetStreams
-import reactor.rx.net.http.HttpChannelFluxion
+import reactor.rx.net.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -45,7 +45,7 @@ class HttpSpec extends Specification {
 
 	//prepare post request consumer on /test/* and capture the URL parameter "param"
 	server.post('/test/{param}') {
-	  HttpChannelFluxion<String, String> req
+	  HttpChannelFlux<String, String> req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
@@ -67,7 +67,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http post request-reply flow
-	def content = client.post('/test/World') { HttpChannelFluxion<String, String> req ->
+	def content = client.post('/test/World') { HttpChannelFlux<String, String> req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -101,7 +101,7 @@ class HttpSpec extends Specification {
 
 	//prepare post request consumer on /test/* and capture the URL parameter "param"
 	server.post('/test/{param}') {
-	  HttpChannelFluxion<String, String> req
+	  HttpChannelFlux<String, String> req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
@@ -127,7 +127,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http post request-reply flow
-	def content = client.post('/test/World') { HttpChannelFluxion<String, String> req ->
+	def content = client.post('/test/World') { HttpChannelFlux<String, String> req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -171,13 +171,13 @@ class HttpSpec extends Specification {
 
 	CountDownLatch errored = new CountDownLatch(1)
 
-	server.get('/test') { HttpChannelFluxion<String, String> req -> throw new Exception()
-	}.get('/test2') { HttpChannelFluxion<String, String> req ->
+	server.get('/test') { HttpChannelFlux<String, String> req -> throw new Exception()
+	}.get('/test2') { HttpChannelFlux<String, String> req ->
 	  req.writeWith(Flux.error(new Exception())).log("writeWith").doOnError({
 		errored
 				.countDown()
 	  })
-	}.get('/test3') { HttpChannelFluxion<String, String> req -> return Flux.error(new Exception())
+	}.get('/test3') { HttpChannelFlux<String, String> req -> return Flux.error(new Exception())
 	}
 
 	then: "the server was started"
@@ -263,7 +263,7 @@ class HttpSpec extends Specification {
 	//prepare websocket request consumer on /test/* and capture the URL parameter "param"
 	server
 			.get('/test/{param}') {
-	  HttpChannelFluxion<String, String> req
+	  HttpChannelFlux<String, String> req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
@@ -293,7 +293,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http websocket request-reply flow
-	def content = client.ws('/test/World') { HttpChannelFluxion<String, String> req ->
+	def content = client.ws('/test/World') { HttpChannelFlux<String, String> req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 

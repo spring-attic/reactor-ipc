@@ -34,10 +34,10 @@ import reactor.io.net.ReactiveChannelHandler;
  *
  * @author Stephane Maldini
  */
-public class ChannelFluxion<IN, OUT> extends Flux<IN> implements
+public class ChannelFlux<IN, OUT> extends Flux<IN> implements
                                                        ReactiveChannel<IN, OUT> {
 
-	protected static final Logger log = Logger.getLogger(ChannelFluxion.class);
+	protected static final Logger log = Logger.getLogger(ChannelFlux.class);
 
 
 	private final ReactiveChannel<IN, OUT> actual;
@@ -53,8 +53,8 @@ public class ChannelFluxion<IN, OUT> extends Flux<IN> implements
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> ChannelFluxion<IN, OUT> wrap(final ReactiveChannel<IN, OUT> actual, Timer timer, long prefetch){
-		return new ChannelFluxion<>(actual, timer, prefetch);
+	public static <IN, OUT> ChannelFlux<IN, OUT> wrap(final ReactiveChannel<IN, OUT> actual, Timer timer, long prefetch){
+		return new ChannelFlux<>(actual, timer, prefetch);
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class ChannelFluxion<IN, OUT> extends Flux<IN> implements
 	 * @return
 	 */
 	public static <IN, OUT> ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>> wrap(
-			final ReactiveChannelHandler<IN, OUT, ChannelFluxion<IN, OUT>> actual,
+			final ReactiveChannelHandler<IN, OUT, ChannelFlux<IN, OUT>> actual,
 			final Timer timer,
 			final long prefetch){
 
@@ -76,7 +76,7 @@ public class ChannelFluxion<IN, OUT> extends Flux<IN> implements
 		return stream -> actual.apply(wrap(stream, timer, prefetch));
 	}
 
-	protected ChannelFluxion(final ReactiveChannel<IN, OUT> actual,
+	protected ChannelFlux(final ReactiveChannel<IN, OUT> actual,
 							final Timer timer,
 	                        long prefetch) {
 

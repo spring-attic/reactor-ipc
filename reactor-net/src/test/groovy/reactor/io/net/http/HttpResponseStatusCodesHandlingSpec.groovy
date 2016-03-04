@@ -3,7 +3,7 @@ package reactor.io.net.http
 import reactor.core.publisher.Flux
 import reactor.io.net.preprocessor.CodecPreprocessor
 import reactor.rx.net.NetStreams
-import reactor.rx.net.http.HttpChannelFluxion
+import reactor.rx.net.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -20,7 +20,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             }
 
         when: "the server is prepared"
-            server.post('/test') { HttpChannelFluxion<String, String> req ->
+            server.post('/test') { HttpChannelFlux<String, String> req ->
                 req.writeWith(
                         req.log('server-received')
                 )
@@ -36,7 +36,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             }
 
             def replyReceived = ""
-            def content = client.get('/unsupportedURI') { HttpChannelFluxion<String, String> req ->
+            def content = client.get('/unsupportedURI') { HttpChannelFlux<String, String> req ->
                 //prepare content-type
                 req.header('Content-Type', 'text/plain')
 

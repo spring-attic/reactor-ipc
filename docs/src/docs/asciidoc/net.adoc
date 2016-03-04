@@ -90,18 +90,18 @@ Of course there is always the choice to provide for a pool of threads or any _As
 *Reactor Net* has the following artifacts:
 
 ****
-* `ReactorChannel` and its direct implementations `ChannelFluxion` and `HttpChannel`
+* `ReactorChannel` and its direct implementations `ChannelFlux` and `HttpChannelFlux`
 ** Represents a direct connection between the application and the remote host
 ** Contains non blocking IO write and read operations
-** Reactor drivers will directly expose `ChannelFluxion` to access the `Stream` functional API for read operations
+** Reactor drivers will directly expose `ChannelFlux` to access the `Stream` functional API for read operations
 * `ReactorPeer` and `ReactorChannelHandler` for common network component (client/server) contract
 ** Provides for `start` and `shutdown` operations
-** Binds a `ReactorChannelHandler` on `start` to listen to the requesting `ChannelFluxion`
-** `ReactorChannelHandler` is a function accepting `ChannelFluxion` requests and returning a `Publisher` for connection close management
+** Binds a `ReactorChannelHandler` on `start` to listen to the requesting `ChannelFlux`
+** `ReactorChannelHandler` is a function accepting `ChannelFlux` requests and returning a `Publisher` for connection close management
 * `ReactorClient` for common client contract
 ** Extends `ReactorPeer` to provide a _reconnect_ friendly start operation
 * `NetStreams` and `Spec` to create any client or server
-** Looks like `Streams`, `BiStreams` and other `Reactor Fluxion` Factories
+** Looks like `Streams`, `BiStreams` and other `Reactor Flux` Factories
 ** `NetStreams` factories will accept `Function<Spec,Spec>` called *once* on creation to customize the configuration of the network component.
 * *HTTP/WS/UDP/TCP* protocol `ReactorPeer` implementations
 ** `HttpServer` & `HttpClient` will provide routing extensions

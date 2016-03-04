@@ -51,7 +51,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> get(String url,
+	public final Mono<HttpChannelFlux<IN, OUT>> get(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.GET, url, handler);
 	}
@@ -62,7 +62,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> get(String url) {
+	public final Mono<HttpChannelFlux<IN, OUT>> get(String url) {
 
 		return request(Method.GET, url, null);
 	}
@@ -75,7 +75,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> post(String url,
+	public final Mono<HttpChannelFlux<IN, OUT>> post(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.POST, url, handler);
 	}
@@ -88,7 +88,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> put(String url,
+	public final Mono<HttpChannelFlux<IN, OUT>> put(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.PUT, url, handler);
 	}
@@ -101,7 +101,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> delete(String url,
+	public final Mono<HttpChannelFlux<IN, OUT>> delete(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.DELETE, url, handler);
 	}
@@ -113,7 +113,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> delete(String url) {
+	public final Mono<HttpChannelFlux<IN, OUT>> delete(String url) {
 		return request(Method.DELETE, url, null);
 	}
 
@@ -123,7 +123,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> ws(String url) {
+	public final Mono<HttpChannelFlux<IN, OUT>> ws(String url) {
 		return request(Method.WS, url, null);
 	}
 
@@ -137,7 +137,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannelFluxion<IN, OUT>> ws(String url,
+	public final Mono<HttpChannelFlux<IN, OUT>> ws(String url,
 			final ReactorHttpHandler<IN, OUT> handler) {
 		return request(Method.WS, url, handler);
 	}
@@ -152,16 +152,16 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public Mono<HttpChannelFluxion<IN, OUT>> request(Method method,
+	public Mono<HttpChannelFlux<IN, OUT>> request(Method method,
 			String url,
 			final ReactorHttpHandler<IN, OUT> handler){
 
 		return peer.request(method, url,
-						HttpChannelFluxion.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
-				).map(new Function<HttpChannel<IN, OUT>, HttpChannelFluxion<IN, OUT>>() {
+						HttpChannelFlux.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				).map(new Function<HttpChannel<IN, OUT>, HttpChannelFlux<IN, OUT>>() {
 			@Override
-			public HttpChannelFluxion<IN, OUT> apply(HttpChannel<IN, OUT> channel) {
-				return HttpChannelFluxion.wrap(channel, peer.getDefaultTimer(), peer.getDefaultPrefetchSize());
+			public HttpChannelFlux<IN, OUT> apply(HttpChannel<IN, OUT> channel) {
+				return HttpChannelFlux.wrap(channel, peer.getDefaultTimer(), peer.getDefaultPrefetchSize());
 			}
 		});
 	}

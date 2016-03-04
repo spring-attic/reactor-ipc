@@ -48,7 +48,7 @@ import reactor.rx.net.udp.ReactorDatagramServer;
  *      .flatMap(self -> IOStreams.decode(new StringCodec('\n'), self))
  *      .consume(log::info);
  *
- *    //Push anything from the publisher returned, here a simple Reactor Fluxion. By default a Buffer is expected
+ *    //Push anything from the publisher returned, here a simple Reactor Flux. By default a Buffer is expected
  *    //Will close after write
  *    return connection.writeWith(Streams.just(Buffer.wrap("hello\n")));
  * });
@@ -56,7 +56,7 @@ import reactor.rx.net.udp.ReactorDatagramServer;
  * //We can also preconfigure global codecs and other custom client/server parameter with the Function signature:
  * NetStreams.tcpServer(spec -> spec.codec(kryoCodec).listen(1235)).start( intput -> {
  *      input.consume(log::info);
- *      return input.writeWith(Fluxion.interval(1l));
+ *      return input.writeWith(Flux.interval(1_000l));
  * });
  *
  * //Assigning the same codec to a client and a server greatly improve readability and provide for extended type safety.
@@ -95,7 +95,7 @@ public enum NetStreams {
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpServer<Buffer, Buffer> tcpServer() {
 		return  ReactorTcpServer.create(ReactiveNet.tcpServer());
@@ -108,7 +108,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -130,7 +130,7 @@ public enum NetStreams {
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
 	 * @param port the port to listen on loopback
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpServer<Buffer, Buffer> tcpServer(int port) {
 		return  ReactorTcpServer.create(ReactiveNet.tcpServer(port));
@@ -144,7 +144,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -166,7 +166,7 @@ public enum NetStreams {
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpServer<Buffer, Buffer> tcpServer(String bindAddress) {
 		return  ReactorTcpServer.create(ReactiveNet.tcpServer(bindAddress));
@@ -180,7 +180,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -203,7 +203,7 @@ public enum NetStreams {
 	 *
 	 * @param port        the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpServer<Buffer, Buffer> tcpServer(final String bindAddress, final int port) {
 		return  ReactorTcpServer.create(ReactiveNet.tcpServer(bindAddress, port));
@@ -217,7 +217,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -243,7 +243,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorTcpServer<IN, OUT> tcpServer(
 	  Function<? super Spec.TcpServerSpec<IN, OUT>, ? extends Spec.TcpServerSpec<IN, OUT>> configuringFunction
@@ -257,7 +257,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -284,7 +284,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorTcpServer<IN, OUT> tcpServer(
 	  Class<? extends TcpServer> serverFactory,
@@ -300,7 +300,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -321,7 +321,7 @@ public enum NetStreams {
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpClient<Buffer, Buffer> tcpClient() {
 		return ReactorTcpClient.create(ReactiveNet.tcpClient());
@@ -335,7 +335,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -357,7 +357,7 @@ public enum NetStreams {
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
 	 * @param bindAddress the address to connect to on port 12012
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpClient<Buffer, Buffer> tcpClient(String bindAddress) {
 		return ReactorTcpClient.create(ReactiveNet.tcpClient(bindAddress));
@@ -371,7 +371,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -393,7 +393,7 @@ public enum NetStreams {
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
 	 * @param port the port to connect to on "loopback"
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpClient<Buffer, Buffer> tcpClient(int port) {
 		return ReactorTcpClient.create(ReactiveNet.tcpClient(port));
@@ -407,7 +407,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -430,7 +430,7 @@ public enum NetStreams {
 	 *
 	 * @param bindAddress the address to connect to
 	 * @param port        the port to connect to
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorTcpClient<Buffer, Buffer> tcpClient(final String bindAddress, final int port) {
 		return ReactorTcpClient.create(ReactiveNet.tcpClient(bindAddress, port));
@@ -444,7 +444,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -470,7 +470,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorTcpClient<IN, OUT> tcpClient(
 	  Function<? super Spec.TcpClientSpec<IN, OUT>, ? extends Spec.TcpClientSpec<IN, OUT>> configuringFunction
@@ -483,7 +483,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.tcp.TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -510,7 +510,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorTcpClient<IN, OUT> tcpClient(
 	  Class<? extends TcpClient> clientFactory,
@@ -606,7 +606,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.http.HttpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -632,7 +632,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorHttpClient<IN, OUT> httpClient(
 	  Function<? super Spec.HttpClientSpec<IN, OUT>, ? extends Spec.HttpClientSpec<IN, OUT>> configuringFunction
@@ -649,7 +649,7 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link reactor.io.net.http.HttpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFluxion} to consume data from
+	 * - onNext {@link ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
 	 * From the emitted {@link ReactiveChannel}, one can decide to add in-channel consumers to read any incoming
@@ -676,7 +676,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorHttpClient<IN, OUT> httpClient(
 	  Class<? extends HttpClient> clientFactory,
@@ -711,7 +711,7 @@ public enum NetStreams {
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorDatagramServer<Buffer, Buffer> udpServer() {
 		return ReactorDatagramServer.create(ReactiveNet.udpServer());
@@ -742,7 +742,7 @@ public enum NetStreams {
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorDatagramServer<Buffer, Buffer> udpServer(String bindAddress) {
 		return ReactorDatagramServer.create(ReactiveNet.udpServer(bindAddress));
@@ -774,7 +774,7 @@ public enum NetStreams {
 	 * By default the type of emitted data or received data is {@link Buffer}
 	 *
 	 * @param port the port to listen on the passed bind address
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorDatagramServer<Buffer, Buffer> udpServer(int port) {
 		return ReactorDatagramServer.create(ReactiveNet.udpServer(port));
@@ -807,7 +807,7 @@ public enum NetStreams {
 	 *
 	 * @param port        the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static ReactorDatagramServer<Buffer, Buffer> udpServer(final String bindAddress, final int port) {
 		return ReactorDatagramServer.create(ReactiveNet.udpServer(bindAddress, port));
@@ -843,7 +843,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorDatagramServer<IN, OUT> udpServer(
 	  Function<? super Spec.DatagramServerSpec<IN, OUT>, ? extends Spec.DatagramServerSpec<IN, OUT>>
@@ -881,7 +881,7 @@ public enum NetStreams {
 	 *                            this type.
 	 * @param <OUT>               the given output type received by this peer. Any configured codec encoder must match
 	 *                            this type.
-	 * @return a new Stream of ChannelFluxion, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> ReactorDatagramServer<IN, OUT> udpServer(
 	  Class<? extends DatagramServer> serverFactory,

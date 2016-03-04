@@ -27,7 +27,7 @@ import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.Reconnect;
 import reactor.io.net.tcp.TcpClient;
-import reactor.rx.net.ChannelFluxion;
+import reactor.rx.net.ChannelFlux;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.ReactorPeer;
 
@@ -60,9 +60,9 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelFluxion<IN, OUT>> handler) {
+	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelFlux<IN, OUT>> handler) {
 		return peer.start(
-				ChannelFluxion.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 		);
 	}
 
@@ -88,7 +88,7 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 			ReactorChannelHandler<IN, OUT> handler, Reconnect reconnect) {
 		return Flux.from(
 				peer.start(
-				ChannelFluxion.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 				, reconnect)
 		);
 	}
