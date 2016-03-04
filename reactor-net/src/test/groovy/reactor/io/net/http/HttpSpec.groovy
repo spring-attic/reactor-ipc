@@ -312,10 +312,11 @@ class HttpSpec extends Specification {
 	}
 	.take(1000)
 			.toList()
+			.cache()
 			.doOnError {
-	  //something failed during the request or the reply processing
-	  println "Failed requesting server: $it"
-	}
+	  			//something failed during the request or the reply processing
+	  			println "Failed requesting server: $it"
+			}
 
 
 	println "server: $serverRes / client: $clientRes"
