@@ -49,7 +49,7 @@ client.start( input -> {
 
 	//write data
 	input.writeWith(
-		Fluxion.range(1, 10)
+		Flux.range(1, 10)
 			.map( it -> new Pojo("test" + it) )
 			.log("send")
 			.map(codec)

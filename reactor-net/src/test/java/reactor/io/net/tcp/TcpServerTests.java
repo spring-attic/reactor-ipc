@@ -40,6 +40,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
@@ -56,7 +57,6 @@ import reactor.io.net.impl.netty.NettyServerSocketOptions;
 import reactor.io.net.impl.netty.tcp.NettyTcpClient;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Broadcaster;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -372,7 +372,7 @@ public class TcpServerTests {
 	@Ignore
 	public void test5() throws Exception {
 		//Hot stream of data, could be injected from anywhere
-		Broadcaster<String> broadcaster = Broadcaster.<String>create();
+		EmitterProcessor<String> broadcaster = EmitterProcessor.<String>create().connect();
 
 		//Get a reference to the tail of the operation pipeline (microbatching + partitioning)
 		final Processor<List<String>, List<String>> processor = WorkQueueProcessor.create(false);
