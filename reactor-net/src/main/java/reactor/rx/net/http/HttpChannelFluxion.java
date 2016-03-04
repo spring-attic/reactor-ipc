@@ -72,12 +72,7 @@ public class HttpChannelFluxion<IN, OUT> extends ChannelFluxion<IN, OUT> impleme
 
 		if(actual == null) return null;
 
-		return new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-			@Override
-			public Publisher<Void> apply(HttpChannel<IN, OUT> stream) {
-					return actual.apply(wrap(stream, timer, prefetch));
-			}
-		};
+		return stream -> actual.apply(wrap(stream, timer, prefetch));
 	}
 
 	protected HttpChannelFluxion(HttpChannel<IN, OUT> actual, Timer timer, long prefetch) {

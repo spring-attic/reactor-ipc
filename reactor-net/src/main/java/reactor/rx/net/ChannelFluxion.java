@@ -20,21 +20,21 @@ import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.ReactiveChannel;
 import reactor.io.net.ReactiveChannelHandler;
-import reactor.rx.Fluxion;
 
 /**
  * An abstract {@link ReactiveChannel} implementation that handles the basic interaction and behave as a {@link
- * Fluxion}.
+ * Flux}.
  *
  * @author Stephane Maldini
  */
-public class ChannelFluxion<IN, OUT> extends Fluxion<IN> implements
+public class ChannelFluxion<IN, OUT> extends Flux<IN> implements
                                                        ReactiveChannel<IN, OUT> {
 
 	protected static final Logger log = Logger.getLogger(ChannelFluxion.class);
@@ -73,12 +73,7 @@ public class ChannelFluxion<IN, OUT> extends Fluxion<IN> implements
 
 		if(actual == null) return null;
 
-		return new ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>>() {
-			@Override
-			public Publisher<Void> apply(ReactiveChannel<IN, OUT> stream) {
-				return actual.apply(wrap(stream, timer, prefetch));
-			}
-		};
+		return stream -> actual.apply(wrap(stream, timer, prefetch));
 	}
 
 	protected ChannelFluxion(final ReactiveChannel<IN, OUT> actual,
@@ -91,19 +86,19 @@ public class ChannelFluxion<IN, OUT> extends Fluxion<IN> implements
 	}
 
 	@Override
-	public Fluxion<IN> input() {
+	public Flux<IN> input() {
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public Mono<Void> writeWith(final Publisher<? extends OUT> source) {
-		final Fluxion<? extends OUT> sourceStream;
+		final Flux<? extends OUT> sourceStream;
 
-		if (Fluxion.class.isAssignableFrom(source.getClass())) {
-			sourceStream = ((Fluxion<? extends OUT>) source);
+		if (Flux.class.isAssignableFrom(source.getClass())) {
+			sourceStream = ((Flux<? extends OUT>) source);
 		} else {
-			sourceStream = new Fluxion<OUT>() {
+			sourceStream = new Flux<OUT>() {
 				@Override
 				public void subscribe(Subscriber<? super OUT> subscriber) {
 					source.subscribe(subscriber);

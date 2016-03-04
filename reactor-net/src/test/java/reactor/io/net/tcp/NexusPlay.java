@@ -21,13 +21,13 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
 import reactor.core.publisher.EmitterProcessor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
 import reactor.io.net.ReactiveNet;
 import reactor.io.net.nexus.Nexus;
-import reactor.rx.Fluxion;
 
 /**
  * @author Stephane Maldini
@@ -65,7 +65,7 @@ public class NexusPlay {
 				// =========================================================
 
 				FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
-				Fluxion<Integer> dispatched = Fluxion.from(p)
+				Flux<Integer> dispatched = p
 				                                   .dispatchOn(SchedulerGroup.async("semi-fast",  8192, 4));
 
 				//slow subscribers
@@ -87,7 +87,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = Fluxion.from(p).dispatchOn(SchedulerGroup.async("semi-slow", 1024, 4));
+				dispatched = p.dispatchOn(SchedulerGroup.async("semi-slow", 1024, 4));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -110,7 +110,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = Fluxion.from(p).dispatchOn(SchedulerGroup.async("slow", 1024, 3));
+				dispatched = p.dispatchOn(SchedulerGroup.async("slow", 1024, 3));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {

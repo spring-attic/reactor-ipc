@@ -56,7 +56,6 @@ import reactor.io.net.impl.netty.NettyClientSocketOptions;
 import reactor.io.net.impl.netty.tcp.NettyTcpClient;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Fluxion;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.tcp.ReactorTcpClient;
 
@@ -123,13 +122,13 @@ public class TcpClientTests {
 		);
 
 		client.startAndAwait(conn -> {
-			Fluxion.from(conn.input()).log("conn").consume(s -> {
+			Flux.from(conn.input()).log("conn").consume(s -> {
 				latch.countDown();
 			});
 
-			Fluxion.from(conn.writeWith(Fluxion.just("Hello World!"))).subscribe();
+			Flux.from(conn.writeWith(Flux.just("Hello World!"))).subscribe();
 
-			return Fluxion.never();
+			return Flux.never();
 		});
 
 		latch.await(30, TimeUnit.SECONDS);
@@ -150,9 +149,9 @@ public class TcpClientTests {
 
 		client.start(input -> {
 			input.consume(d -> latch.countDown());
-			input.writeWith(Fluxion.just("Hello")).subscribe();
+			input.writeWith(Flux.just("Hello")).subscribe();
 
-			return Fluxion.never();
+			return Flux.never();
 		}).get(Duration.ofSeconds(5));
 
 		latch.await(5, TimeUnit.SECONDS);
@@ -181,12 +180,12 @@ public class TcpClientTests {
 			});
 
 			input.writeWith(
-			  Fluxion.range(1, messages)
+			  Flux.range(1, messages)
 				.map(i -> "Hello World!")
 				.publishOn(SchedulerGroup.io("test-line-feed"))
 			).subscribe();
 
-			return Fluxion.never();
+			return Flux.never();
 		}).get(Duration.ofSeconds(5));
 
 		assertTrue("Expected messages not received. Received " + strings.size() + " messages: " + strings,
@@ -336,9 +335,9 @@ public class TcpClientTests {
 
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {
-				  allWrites.add(connection.writeBufferWith(Fluxion.just(Buffer.wrap("a")).delay(750)));
+				  allWrites.add(connection.writeBufferWith(Flux.just(Buffer.wrap("a")).delay(750)));
 			  }
-			  return Fluxion.merge(allWrites);
+			  return Flux.merge(allWrites);
 		  }
 		);
 		System.out.println("Started");
@@ -370,8 +369,8 @@ public class TcpClientTests {
 			latch.countDown();
 			System.out.println("resp: " + resp);
 
-			return Fluxion.from(resp
-					.writeWith(Fluxion.just(
+			return Flux.from(resp
+					.writeWith(Flux.just(
 							NettyBuffer.create(new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.GET, "/"))))
 			).doOnComplete(()-> latch.countDown());
 		});

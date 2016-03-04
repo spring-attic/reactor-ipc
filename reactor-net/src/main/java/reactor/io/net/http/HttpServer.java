@@ -165,16 +165,13 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	public final HttpServer<IN, OUT> ws(String path,
 			final ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> handler,
 			final String protocols) {
-		return route(ChannelMappings.get(path), new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-			@Override
-			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
-				String connection = channel.headers()
-				                           .get(HttpHeaders.CONNECTION);
-				if (connection != null && connection.equals(HttpHeaders.UPGRADE)) {
-					onWebsocket(channel, protocols);
-				}
-				return handler.apply(channel);
+		return route(ChannelMappings.get(path), channel -> {
+			String connection = channel.headers()
+			                           .get(HttpHeaders.CONNECTION);
+			if (connection != null && connection.equals(HttpHeaders.UPGRADE)) {
+				onWebsocket(channel, protocols);
 			}
+			return handler.apply(channel);
 		});
 	}
 

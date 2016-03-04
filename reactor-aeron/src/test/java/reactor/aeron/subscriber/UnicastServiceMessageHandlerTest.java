@@ -23,9 +23,9 @@ import reactor.aeron.utils.SignalType;
 import reactor.aeron.utils.TestAeronInfra;
 import reactor.aeron.utils.TestSignalSender;
 import reactor.core.publisher.EmitterProcessor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.io.buffer.Buffer;
-import reactor.rx.Fluxion;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -66,7 +66,7 @@ public class UnicastServiceMessageHandlerTest {
 
 	@Test
 	public void testItWorks() throws InterruptedException {
-		Fluxion.just(1, 2, 3, 4, 5).map(i -> Buffer.wrap("" + i)).subscribe(processor);
+		Flux.just(1, 2, 3, 4, 5).map(i -> Buffer.wrap("" + i)).subscribe(processor);
 
 		String sessionId1 = "udp://192.168.1.1:12000" + "/1";
 		handler.handleMore(sessionId1, 1);

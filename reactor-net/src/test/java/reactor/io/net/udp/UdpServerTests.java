@@ -25,6 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
@@ -32,7 +33,6 @@ import reactor.io.net.config.ServerSocketOptions;
 import reactor.io.net.impl.netty.udp.NettyDatagramServer;
 import reactor.io.net.preprocessor.CodecPreprocessor;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Fluxion;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.udp.ReactorDatagramServer;
 
@@ -78,7 +78,7 @@ public class UdpServerTests {
 					latch.countDown();
 				}
 			});
-			return Fluxion.never();
+			return Flux.never();
 		}).doOnSuccess(v -> {
 			try {
 				DatagramChannel udp = DatagramChannel.open();
@@ -131,7 +131,7 @@ public class UdpServerTests {
 						latch.countDown();
 					}
 				});
-				return Fluxion.never();
+				return Flux.never();
 			}).doOnSuccess(v -> {
 				try {
 					for (Enumeration<NetworkInterface> ifaces =

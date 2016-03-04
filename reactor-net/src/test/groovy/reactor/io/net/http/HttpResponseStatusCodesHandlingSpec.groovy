@@ -1,13 +1,12 @@
 package reactor.io.net.http
 
+import reactor.core.publisher.Flux
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.rx.Fluxion
 import reactor.rx.net.NetStreams
 import reactor.rx.net.http.HttpChannelFluxion
 import spock.lang.Specification
 
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 
 /**
  * @author Anatoly Kadyshev
@@ -43,7 +42,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
 
                 //return a producing stream to send some data along the request
                 req.writeWith(
-                    Fluxion
+                    Flux
                             .just("Hello")
                             .log('client-send')
                 )

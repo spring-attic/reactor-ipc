@@ -15,14 +15,13 @@
  */
 package reactor.io.net.http
 
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.util.Exceptions
 import reactor.io.net.impl.netty.http.NettyHttpServer
 import reactor.io.net.preprocessor.CodecPreprocessor
-import reactor.rx.Fluxion
 import reactor.rx.net.NetStreams
 import reactor.rx.net.http.HttpChannelFluxion
-import rx.Observable
 import spock.lang.Specification
 
 import java.time.Duration
@@ -52,7 +51,7 @@ class HttpSpec extends Specification {
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
 
-		req.writeWith(Fluxion.empty())
+		req.writeWith(Flux.empty())
 
 	}
 
@@ -133,7 +132,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.writeWith(Fluxion
+	  req.writeWith(Flux
 			  .just("Hello")
 			  .log('client-send'))
 
@@ -142,7 +141,7 @@ class HttpSpec extends Specification {
 	  replies
 			  .log('client-received')
 	}
-	.next()
+	.publishNext()
 			.doOnError {
 	  //something failed during the request or the reply processing
 	  println "Failed requesting server: $it"
@@ -174,11 +173,11 @@ class HttpSpec extends Specification {
 
 	server.get('/test') { HttpChannelFluxion<String, String> req -> throw new Exception()
 	}.get('/test2') { HttpChannelFluxion<String, String> req ->
-	  req.writeWith(Fluxion.convert(Observable.error(new Exception()))).flux().log("writeWith").doOnError({
+	  req.writeWith(Flux.error(new Exception())).log("writeWith").doOnError({
 		errored
 				.countDown()
 	  })
-	}.get('/test3') { HttpChannelFluxion<String, String> req -> return Fluxion.error(new Exception())
+	}.get('/test3') { HttpChannelFluxion<String, String> req -> return Flux.error(new Exception())
 	}
 
 	then: "the server was started"
@@ -232,7 +231,7 @@ class HttpSpec extends Specification {
 	client
 			.get('/test3')
 			.flatMap { replies ->
-	  Fluxion.just(replies.responseStatus().code)
+	  Flux.just(replies.responseStatus().code)
 			  .log("received-status-3")
 	}
 	.next()
@@ -299,7 +298,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.writeWith(Fluxion
+	  req.writeWith(Flux
 			  .range(1, 1000)
 			  .useCapacity(1)
 			  .map { it.toString() }
@@ -311,7 +310,6 @@ class HttpSpec extends Specification {
 			  .log('client-received')
 			  .doOnNext { clientRes++ }
 	}
-	.as(Fluxion.&from)
 	.take(1000)
 			.toList()
 			.doOnError {

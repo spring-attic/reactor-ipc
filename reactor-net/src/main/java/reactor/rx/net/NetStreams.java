@@ -83,14 +83,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -117,14 +117,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -153,14 +153,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -189,14 +189,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -226,14 +226,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -266,14 +266,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -309,14 +309,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -344,14 +344,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -380,14 +380,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -416,14 +416,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -453,14 +453,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -492,14 +492,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -615,14 +615,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -658,14 +658,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -699,14 +699,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -729,14 +729,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -761,14 +761,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -793,14 +793,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -826,14 +826,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}
@@ -863,14 +863,14 @@ public enum NetStreams {
 	 * To reply data on the active connection, {@link ReactiveChannel#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
-	 * Note that {@link reactor.rx.Fluxion#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode.
 	 * If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
 	 * every
 	 * capacity batch size and read will pause when capacity number of elements have been dispatched.
 	 * <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 * Apart from dispatching the write, it is possible to use {@link reactor.rx.Fluxion#subscribeWith} to process requests
+	 * Apart from dispatching the write, it is possible to use {@link reactor.core.publisher.Flux#subscribeWith} to process requests
 	 * asynchronously.
 	 * <p>
 	 * By default the type of emitted data or received data is {@link Buffer}

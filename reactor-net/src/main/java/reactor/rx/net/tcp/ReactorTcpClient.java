@@ -19,6 +19,7 @@ package reactor.rx.net.tcp;
 import java.net.InetSocketAddress;
 
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.tuple.Tuple2;
 import reactor.io.net.ReactiveChannel;
@@ -26,7 +27,6 @@ import reactor.io.net.ReactiveChannelHandler;
 import reactor.io.net.ReactivePeer;
 import reactor.io.net.Reconnect;
 import reactor.io.net.tcp.TcpClient;
-import reactor.rx.Fluxion;
 import reactor.rx.net.ChannelFluxion;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.ReactorPeer;
@@ -84,9 +84,9 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 	 * @param reconnect the reconnection strategy to use when disconnects happen
 	 * @return a Publisher of reconnected address and accumulated number of attempt pairs
 	 */
-	public Fluxion<Tuple2<InetSocketAddress, Integer>> start(
+	public Flux<Tuple2<InetSocketAddress, Integer>> start(
 			ReactorChannelHandler<IN, OUT> handler, Reconnect reconnect) {
-		return Fluxion.from(
+		return Flux.from(
 				peer.start(
 				ChannelFluxion.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 				, reconnect)

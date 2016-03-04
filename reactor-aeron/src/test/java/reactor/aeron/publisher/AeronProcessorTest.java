@@ -24,10 +24,10 @@ import org.junit.Test;
 import reactor.aeron.Context;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.aeron.utils.ThreadSnapshot;
+import reactor.core.publisher.Flux;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.net.tcp.support.SocketUtils;
-import reactor.rx.Fluxion;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 
@@ -83,9 +83,9 @@ public class AeronProcessorTest {
 					.receiverChannel(CHANNEL)
 					.aeron(aeron));
 
-			Fluxion.just(
+			Flux.just(
 					Buffer.wrap("Live"))
-					.subscribe(processor);
+			    .subscribe(processor);
 
 			TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
 			Buffer.bufferToString(processor).subscribe(subscriber);
@@ -112,7 +112,7 @@ public class AeronProcessorTest {
 	public void testCreate() throws InterruptedException {
 		processor = AeronProcessor.create(createAeronContext());
 
-		Fluxion.just(
+		Flux.just(
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
@@ -127,7 +127,7 @@ public class AeronProcessorTest {
 	public void testShare() throws InterruptedException {
 		processor = AeronProcessor.share(createAeronContext());
 
-		Fluxion.just(
+		Flux.just(
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 

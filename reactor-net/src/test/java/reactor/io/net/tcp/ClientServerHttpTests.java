@@ -30,14 +30,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.preprocessor.CodecPreprocessor;
-import reactor.rx.Fluxion;
-import reactor.rx.Promise;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -99,9 +99,9 @@ public class ClientServerHttpTests {
 		Runnable runner1 = new Runnable() {
 			public void run() {
 				try {
-					Promise<List<String>> clientDataPromise1 = getClientDataPromise();
+					Mono<List<String>> clientDataPromise1 = getClientDataPromise();
 					latch1.countDown();
-					data1.addAll(clientDataPromise1.await());
+					data1.addAll(clientDataPromise1.get());
 				} catch (Exception ie) {
 				}
 			}
@@ -124,9 +124,9 @@ public class ClientServerHttpTests {
 		Runnable runner2 = new Runnable() {
 			public void run() {
 				try {
-					Promise<List<String>> clientDataPromise2 = getClientDataPromise();
+					Mono<List<String>> clientDataPromise2 = getClientDataPromise();
 					latch2.countDown();
-					data2.addAll(clientDataPromise2.await());
+					data2.addAll(clientDataPromise2.get());
 				} catch (Exception ie) {
 					ie.printStackTrace();
 				}
@@ -248,7 +248,7 @@ public class ClientServerHttpTests {
 	private void setupFakeProtocolListener() throws Exception {
 		broadcaster = TopicProcessor.create();
 		final Processor<List<String>, List<String>> processor = WorkQueueProcessor.create(false);
-		Fluxion.from(broadcaster)
+		Flux.from(broadcaster)
 		      .buffer(5)
 		      .subscribe(processor);
 
@@ -258,10 +258,10 @@ public class ClientServerHttpTests {
 
 		httpServer.get("/data", (request) -> {
 			request.responseHeaders().removeTransferEncodingChunked();
-			return request.writeWith(Fluxion.from(processor)
+			return request.writeWith(Flux.from(processor)
 			                               .log("server")
-			                               .timeout(Duration.ofSeconds(2), Fluxion.empty())
-			                               .concatWith(Fluxion.just(new ArrayList<String>()))
+			                               .timeout(Duration.ofSeconds(2), Flux.empty())
+			                               .concatWith(Flux.just(new ArrayList<String>()))
 			                               .useCapacity(1L)
 
 			);
@@ -271,19 +271,19 @@ public class ClientServerHttpTests {
 	}
 
 	private List<String> getClientData() throws Exception {
-		return getClientDataPromise().await();
+		return getClientDataPromise().get();
 	}
 
-	private Promise<List<String>> getClientDataPromise() throws Exception {
+	private Mono<List<String>> getClientDataPromise() throws Exception {
 		ReactorHttpClient<String, String> httpClient = NetStreams.httpClient(t ->
 			t.httpProcessor(CodecPreprocessor.string()).connect("localhost", httpServer.getListenAddress().getPort())
 		);
 
 		return httpClient.get("/data")
-		                 .then(s ->  s.log("client").next())
-		                 .as(Fluxion::from)
+		                 .flatMap(s ->  s.log("client").next())
 		                 .toList()
-		                 .subscribeWith(Promise.ready());
+		                 .cache()
+		                 .subscribe();
 	}
 
 	private List<List<String>> getClientDatas(int threadCount, Sender sender, int count) throws Exception {
@@ -297,9 +297,9 @@ public class ClientServerHttpTests {
 				public void run() {
 					try {
 						latch.await();
-						Promise<List<String>> clientDataPromise = getClientDataPromise();
+						Mono<List<String>> clientDataPromise = getClientDataPromise();
 						promiseLatch.countDown();
-						datas.add(clientDataPromise.await(Duration.ofSeconds(10)));
+						datas.add(clientDataPromise.get(Duration.ofSeconds(10)));
 					} catch (Exception ie) {
 						ie.printStackTrace();
 					}

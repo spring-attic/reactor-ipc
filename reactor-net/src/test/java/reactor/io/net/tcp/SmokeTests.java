@@ -35,6 +35,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
@@ -44,8 +46,6 @@ import reactor.io.net.ReactiveNet;
 import reactor.io.net.impl.netty.NettyClientSocketOptions;
 import reactor.io.net.impl.netty.NettyServerSocketOptions;
 import reactor.io.net.preprocessor.CodecPreprocessor;
-import reactor.rx.Fluxion;
-import reactor.rx.Promise;
 import reactor.rx.net.NetStreams;
 import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
@@ -263,7 +263,7 @@ public class SmokeTests {
 
 		processor = TopicProcessor.create(false);
 		workProcessor = WorkQueueProcessor.create(false);
-		Fluxion<Buffer> bufferStream = Fluxion
+		Flux<Buffer> bufferStream = Flux
 		  .from(processor)
 		  .window(windowBatch)
 		  .doOnNext(d ->
@@ -278,7 +278,7 @@ public class SmokeTests {
 				)
 		  //.log("log", LogOperator.REQUEST)
 		  .subscribeWith(workProcessor)
-		  .as(Fluxion::from);
+		  .as(Flux::from);
 
 		httpServer = NetStreams.httpServer(server -> server.httpProcessor(CodecPreprocessor.from(codec))
 		                                                   .listen(port)
@@ -298,9 +298,10 @@ public class SmokeTests {
 			return request.writeWith(bufferStream.doOnNext(d -> integer.getAndIncrement())
 			                                     .take(takeCount)
 			                                     .doOnNext(d -> integerPostTake.getAndIncrement())
-			                                     .timeout(Duration.ofSeconds(2), Fluxion.<Buffer>empty().doOnComplete(() -> System.out.println(
+			                                     .timeout(Duration.ofSeconds(2), Flux.<Buffer>empty().doOnComplete(() -> System.out.println(
 					                                     "timeout after 2 ")))
-			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Fluxion.just(
+			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Flux
+							.just(
 									GpdistCodec.class.equals(codec.getClass()) ?
 											Buffer.wrap(new byte[0]) : Buffer.wrap("END"))
 			                                                                                                           .doOnComplete(
@@ -315,11 +316,11 @@ public class SmokeTests {
 	private List<String> getClientDataPromise() throws Exception {
 		ReactorHttpClient<String, String> httpClient = NetStreams.httpClient(clientFactory);
 
-		Promise<List<String>> content = httpClient.get("/data")
-		                                       .flatMap(Fluxion::buffer)
-		                                       .subscribeWith(Promise.ready());
+		Mono<List<String>> content = httpClient.get("/data")
+		                                       .then(f -> f.toList())
+		                                       .cache();
 
-		List<String> res = content.await(Duration.ofSeconds(20));
+		List<String> res = content.get(Duration.ofSeconds(20));
 		httpClient.shutdown().get();
 		return res;
 	}

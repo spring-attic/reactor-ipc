@@ -189,12 +189,7 @@ public abstract class HttpClient<IN, OUT>
 				final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
 			return
 					HttpClient.this.request(method, url, handler != null ?
-					new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-				@Override
-				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
-					return handler.apply(preprocessor.transform(conn));
-				}
-			} : null).map(new Function<HttpChannel<IN, OUT>, HttpChannel<NEWIN, NEWOUT>>() {
+							(ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>) conn -> handler.apply(preprocessor.transform(conn)) : null).map(new Function<HttpChannel<IN, OUT>, HttpChannel<NEWIN, NEWOUT>>() {
 				@Override
 				public HttpChannel<NEWIN, NEWOUT> apply(HttpChannel<IN, OUT> channel) {
 					return preprocessor.transform(channel);
@@ -206,23 +201,13 @@ public abstract class HttpClient<IN, OUT>
 		protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
 				final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
 				Reconnect reconnect) {
-			return HttpClient.this.start(new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-				@Override
-				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
-					return handler.apply(preprocessor.transform(conn));
-				}
-			}, reconnect);
+			return HttpClient.this.start(conn -> handler.apply(preprocessor.transform(conn)), reconnect);
 		}
 
 		@Override
 		protected Mono<Void> doStart(
 				final ReactiveChannelHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
-			return HttpClient.this.start(new ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-				@Override
-				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
-					return handler.apply(preprocessor.transform(conn));
-				}
-			});
+			return HttpClient.this.start(conn -> handler.apply(preprocessor.transform(conn)));
 		}
 
 		@Override

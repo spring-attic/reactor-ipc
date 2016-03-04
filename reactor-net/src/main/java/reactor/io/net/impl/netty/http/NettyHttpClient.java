@@ -91,13 +91,10 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	@Override
 	protected Mono<Void> doStart(
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
-		return client.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
-			@Override
-			public Publisher<Void> apply(ReactiveChannel<Buffer, Buffer> inoutChannelFluxion) {
-				final NettyHttpChannel ch =
-						((NettyHttpChannel) inoutChannelFluxion);
-				return handler.apply(ch);
-			}
+		return client.start(inoutChannelFluxion -> {
+			final NettyHttpChannel ch =
+					((NettyHttpChannel) inoutChannelFluxion);
+			return handler.apply(ch);
 		});
 	}
 
@@ -105,13 +102,10 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
 			final ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler,
 			final Reconnect reconnect) {
-		return client.start(new ReactiveChannelHandler<Buffer, Buffer, ReactiveChannel<Buffer, Buffer>>() {
-			@Override
-			public Publisher<Void> apply(ReactiveChannel<Buffer, Buffer> inoutChannelFluxion) {
-				final NettyHttpChannel ch =
-						((NettyHttpChannel) inoutChannelFluxion);
-				return handler.apply(ch);
-			}
+		return client.start(inoutChannelFluxion -> {
+			final NettyHttpChannel ch =
+					((NettyHttpChannel) inoutChannelFluxion);
+			return handler.apply(ch);
 		}, reconnect);
 	}
 
@@ -212,45 +206,37 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 
 		@Override
 		public void subscribe(final Subscriber<? super HttpChannel<Buffer, Buffer>> subscriber) {
-			doStart(new ReactiveChannelHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>() {
-				@Override
-				public Publisher<Void> apply(HttpChannel<Buffer, Buffer> c) {
-					try {
-						URI uri = currentURI;
-						NettyHttpChannel ch = (NettyHttpChannel) c;
-						ch.getNettyRequest()
-						  .setUri(uri.getPath() + (
-								  uri.getQuery() == null ? "" :
-										  "?" + uri.getQuery()))
-						  .setMethod(new HttpMethod(method.getName()))
-						  .headers()
-						  .add(HttpHeaders.Names.HOST, uri.getHost())
-						  .add(HttpHeaders.Names.ACCEPT, "*/*");
+			doStart(c -> {
+				try {
+					URI uri = currentURI;
+					NettyHttpChannel ch = (NettyHttpChannel) c;
+					ch.getNettyRequest()
+					  .setUri(uri.getPath() + (
+							  uri.getQuery() == null ? "" :
+									  "?" + uri.getQuery()))
+					  .setMethod(new HttpMethod(method.getName()))
+					  .headers()
+					  .add(HttpHeaders.Names.HOST, uri.getHost())
+					  .add(HttpHeaders.Names.ACCEPT, "*/*");
 
-						ch.delegate()
-						  .pipeline()
-						  .fireUserEventTriggered(new NettyHttpClientHandler.ChannelInputSubscriberEvent(subscriber));
+					ch.delegate()
+					  .pipeline()
+					  .fireUserEventTriggered(new NettyHttpClientHandler.ChannelInputSubscriberEvent(subscriber));
 
-						if (handler != null) {
-							return handler.apply(ch);
-						}
-						else {
-							ch.headers()
-							  .removeTransferEncodingChunked();
-							return ch.writeHeaders();
-						}
+					if (handler != null) {
+						return handler.apply(ch);
 					}
-					catch (Throwable t) {
-						return Mono.error(t);
+					else {
+						ch.headers()
+						  .removeTransferEncodingChunked();
+						return ch.writeHeaders();
 					}
 				}
-
-			}).subscribe(Subscribers.unbounded(null, new Consumer<Throwable>() {
-				@Override
-				public void accept(Throwable reason) {
-					EmptySubscription.error(subscriber, reason);
+				catch (Throwable t) {
+					return Mono.error(t);
 				}
-			}));
+			}).subscribe(Subscribers.unbounded(null,
+					(Consumer<Throwable>) reason -> EmptySubscription.error(subscriber, reason)));
 		}
 	}
 

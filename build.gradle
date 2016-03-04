@@ -218,14 +218,10 @@ project('reactor-net') {
 		//Codec Preprocessor
 		optional project(':reactor-codec')
 
-	  	//Stream support
-		optional "io.projectreactor:reactor-stream:$reactorVersion"
-
 		//Default reactor-net impl
 		optional "io.netty:netty-all:$nettyVersion"
 
 		// Testing
-		testCompile "io.projectreactor:reactor-stream:$reactorVersion"
 		testCompile "org.apache.httpcomponents:fluent-hc:4.3.6"
 		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
 	  	testCompile "io.reactivex:rxjava:$rxJavaVersion"
