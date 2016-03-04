@@ -82,32 +82,6 @@ public enum ReactiveNet {
 	public static final Class<? extends HttpClient>     DEFAULT_HTTP_CLIENT_TYPE;
 	public static final Class<? extends DatagramServer> DEFAULT_UDP_SERVER_TYPE;
 
-	// Marker interfaces to avoid complicated generic dance for Java < 8 Users.
-
-	public interface TcpServerFactory<IN, OUT>
-			extends Function<Spec.TcpServerSpec<IN, OUT>, Spec.TcpServerSpec<IN, OUT>> {
-
-	}
-
-	public interface TcpClientFactory<IN, OUT>
-			extends Function<Spec.TcpClientSpec<IN, OUT>, Spec.TcpClientSpec<IN, OUT>> {
-
-	}
-
-	public interface HttpServerFactory<IN, OUT>
-			extends Function<Spec.HttpServerSpec<IN, OUT>, Spec.HttpServerSpec<IN, OUT>> {
-
-	}
-
-	public interface HttpClientFactory<IN, OUT>
-			extends Function<Spec.HttpClientSpec<IN, OUT>, Spec.HttpClientSpec<IN, OUT>> {
-
-	}
-
-	public interface UdpServerFactory<IN, OUT>
-			extends Function<Spec.DatagramServerSpec<IN, OUT>, Spec.DatagramServerSpec<IN, OUT>> {
-
-	}
 
 	/**
 	 * Bind a new TCP server to "loopback" on port {@literal 12012}. By default the default server implementation is
@@ -437,7 +411,7 @@ public enum ReactiveNet {
 
 	/**
 	 * Build a Netty HTTP Server with the passed factory
-	 * @param configuringFunction a factory to build server configuration (see also {@link HttpServerFactory}
+	 * @param configuringFunction a factory to build server configuration
 	 * @param <IN> incoming data type
 	 * @param <OUT> outgoing data type
 	 * @return a Netty HTTP server with the passed factory
@@ -448,7 +422,7 @@ public enum ReactiveNet {
 
 	/**
 	 * @param serverFactory a target implementation server class
-	 * @param configuringFunction a factory to build server configuration (see also {@link HttpServerFactory}
+	 * @param configuringFunction a factory to build server configuration
 	 * @param <IN> incoming data type
 	 * @param <OUT> outgoing data type
 	 * @return a simple HTTP server

@@ -564,7 +564,7 @@ public enum NetStreams {
 	/**
 	 * Build a Netty HTTP Server with the passed factory
 	 *
-	 * @param configuringFunction a factory to build server configuration (see also {@link ReactiveNet.HttpServerFactory}
+	 * @param configuringFunction a factory to build server configuration
 	 * @param <IN>                incoming data type
 	 * @param <OUT>               outgoing data type
 	 * @return a Netty HTTP server with the passed factory
@@ -578,7 +578,7 @@ public enum NetStreams {
 
 	/**
 	 * @param serverFactory       a target implementation server class
-	 * @param configuringFunction a factory to build server configuration (see also {@link ReactiveNet.HttpServerFactory}
+	 * @param configuringFunction a factory to build server configuration
 	 * @param <IN>                incoming data type
 	 * @param <OUT>               outgoing data type
 	 * @return a simple HTTP server

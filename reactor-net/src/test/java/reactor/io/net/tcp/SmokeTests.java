@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.junit.After;
@@ -43,6 +44,7 @@ import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.net.ReactiveNet;
+import reactor.io.net.Spec;
 import reactor.io.net.impl.netty.NettyClientSocketOptions;
 import reactor.io.net.impl.netty.NettyServerSocketOptions;
 import reactor.io.net.preprocessor.CodecPreprocessor;
@@ -90,7 +92,7 @@ public class SmokeTests {
 
 	private NettyClientSocketOptions nettyOptions;
 
-	private final ReactiveNet.HttpClientFactory<String, String> clientFactory =
+	private final Function<Spec.HttpClientSpec<String, String>, Spec.HttpClientSpec<String, String>> clientFactory =
 	  spec -> spec
 		.options(nettyOptions)
 		.httpProcessor(CodecPreprocessor.string())
