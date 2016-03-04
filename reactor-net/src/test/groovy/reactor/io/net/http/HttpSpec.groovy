@@ -280,10 +280,10 @@ class HttpSpec extends Specification {
 
 		res
 	}
+	server.start().get(Duration.ofSeconds(5))
 
 	then: "the server was started"
 	server
-	!server.start().get(Duration.ofSeconds(5))
 
 	when: "data is sent with Reactor HTTP support"
 
