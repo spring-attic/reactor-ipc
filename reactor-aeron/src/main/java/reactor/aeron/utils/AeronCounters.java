@@ -19,7 +19,7 @@ import uk.co.real_logic.aeron.CncFileDescriptor;
 import uk.co.real_logic.agrona.DirectBuffer;
 import uk.co.real_logic.agrona.IoUtil;
 import uk.co.real_logic.agrona.concurrent.AtomicBuffer;
-import uk.co.real_logic.agrona.concurrent.CountersManager;
+import uk.co.real_logic.agrona.concurrent.CountersReader;
 
 import java.io.File;
 import java.nio.MappedByteBuffer;
@@ -30,7 +30,7 @@ import java.util.function.BiConsumer;
  */
 class AeronCounters {
 
-	private final CountersManager countersManager;
+	private final CountersReader counters;
 
 	private final MappedByteBuffer cncByteBuffer;
 
@@ -45,9 +45,9 @@ class AeronCounters {
 			throw new IllegalStateException("CNC version not supported: version=" + cncVersion);
 		}
 
-		AtomicBuffer labelsBuffer = CncFileDescriptor.createCounterLabelsBuffer(cncByteBuffer, metaDataBuffer);
-		AtomicBuffer valuesBuffer = CncFileDescriptor.createCounterValuesBuffer(cncByteBuffer, metaDataBuffer);
-		countersManager = new CountersManager(labelsBuffer, valuesBuffer);
+		AtomicBuffer labelsBuffer = CncFileDescriptor.createCountersMetaDataBuffer(cncByteBuffer, metaDataBuffer);
+		AtomicBuffer valuesBuffer = CncFileDescriptor.createCountersValuesBuffer(cncByteBuffer, metaDataBuffer);
+		counters = new CountersReader(labelsBuffer, valuesBuffer);
 	}
 
 	public void shutdown() {
@@ -55,7 +55,7 @@ class AeronCounters {
 	}
 
 	public void forEach(BiConsumer<Integer, String> consumer) {
-		countersManager.forEach(consumer);
+		counters.forEach(consumer);
 	}
 
 }

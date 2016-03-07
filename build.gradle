@@ -51,7 +51,7 @@ ext {
 	protobufVersion = '2.6.1'
 	kryoVersion = '3.0.3'
 	snappyVersion = '1.1.1.6'
-	aeronVersion = '0.9.2'
+	aeronVersion = '0.9.4'
   	rxJavaVersion = '1.0.14'
 
 	// Testing

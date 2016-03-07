@@ -35,7 +35,7 @@ public class AeronTestUtils {
 
 		System.setProperty(Configuration.TERM_BUFFER_LENGTH_PROP_NAME, bufferLength);
 		System.setProperty(Configuration.TERM_BUFFER_MAX_LENGTH_PROP_NAME, bufferLength);
-		System.setProperty(Configuration.COUNTER_VALUES_BUFFER_LENGTH_PROP_NAME, bufferLength);
+		System.setProperty(Configuration.COUNTERS_VALUES_BUFFER_LENGTH_PROP_NAME, bufferLength);
 		System.setProperty(Configuration.PUBLICATION_LINGER_PROP_NAME,
 				String.valueOf(TimeUnit.MILLISECONDS.toNanos(500)));
 
