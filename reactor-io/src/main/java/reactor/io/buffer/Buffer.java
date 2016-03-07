@@ -178,8 +178,7 @@ public class Buffer implements Comparable<Buffer>,
 							RandomAccessFile file = new RandomAccessFile(path, "r");
 							return new FileContext(file);
 						} catch (FileNotFoundException e) {
-							Exceptions.fail(e);
-							return null;
+							throw Exceptions.fail(e);
 						}
 					}
 				},

@@ -279,7 +279,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				}
 				else {
 					log.info("State Monitoring stopping on " + ReactiveStateUtils.getName(o));
-					Exceptions.failWithCancel();
+					throw Exceptions.failWithCancel();
 				}
 			}
 		}, _period);
@@ -404,7 +404,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 					}
 					else {
 						log.info("System Monitoring Stopped");
-						Exceptions.failWithCancel();
+						throw Exceptions.failWithCancel();
 					}
 				}
 			}, systemStatsPeriod);
@@ -753,8 +753,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ReactiveChannel<Bu
 				                                                .getBytes("UTF-8"));
 			}
 			catch (UnsupportedEncodingException e) {
-				Exceptions.fail(e);
-				return null;
+				throw Exceptions.fail(e);
 			}
 		}
 	}

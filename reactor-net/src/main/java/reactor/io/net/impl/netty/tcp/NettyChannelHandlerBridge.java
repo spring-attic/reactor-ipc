@@ -494,7 +494,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		public void onComplete() {
 			if (!TERMINATED.compareAndSet(this, 0, 1)) {
 				drain();
-				Exceptions.failWithCancel();
+				throw Exceptions.failWithCancel();
 			}
 			drain();
 		}
@@ -663,7 +663,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		public void onNext(final Object w) {
 			BaseSubscriber.super.onNext(w);
 			if (subscription == null) {
-				Exceptions.failWithCancel();
+				throw Exceptions.failWithCancel();
 			}
 			try {
 				ChannelFuture cf = doOnWrite(w, ctx);
@@ -796,7 +796,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		public void onNext(Object w) {
 			BaseSubscriber.super.onNext(w);
 			if (subscription == null) {
-				Exceptions.failWithCancel();
+				throw Exceptions.failWithCancel();
 			}
 			try {
 				ChannelFuture cf = doOnWrite(w, ctx);
@@ -815,7 +815,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			catch (Throwable t) {
 				log.error("Write error for "+w, t);
 				onError(t);
-				Exceptions.failWithCancel();
+				throw Exceptions.failWithCancel();
 			}
 		}
 
