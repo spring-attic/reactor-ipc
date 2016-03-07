@@ -15,6 +15,7 @@
  */
 package reactor.aeron;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -220,7 +221,7 @@ public class Context {
 	}
 
 	public void validate() {
-		Assert.notNull(senderChannel, "'senderChannel' should be provided");
+		Objects.requireNonNull(senderChannel, "'senderChannel' should be provided");
 		Assert.isTrue(streamId != serviceRequestStreamId, "streamId should != serviceRequestStreamId");
 	}
 

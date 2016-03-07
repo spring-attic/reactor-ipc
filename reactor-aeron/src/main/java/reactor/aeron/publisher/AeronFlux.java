@@ -15,6 +15,7 @@
  */
 package reactor.aeron.publisher;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -116,7 +117,7 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 	}
 
 	protected AeronFlux(Context context) {
-		Assert.notNull(context.receiverChannel(), "'receiverChannel' should be provided");
+		Objects.requireNonNull(context.receiverChannel(), "'receiverChannel' should be provided");
 		context.validate();
 
 		this.context = context;

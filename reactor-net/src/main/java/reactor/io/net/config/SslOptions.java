@@ -17,6 +17,7 @@
 package reactor.io.net.config;
 
 import java.io.File;
+import java.util.Objects;
 import java.util.function.Supplier;
 import javax.net.ssl.TrustManager;
 
@@ -72,8 +73,7 @@ public class SslOptions {
 	}
 
 	public SslOptions keyManagerFactoryAlgorithm(String keyManagerFactoryAlgorithm) {
-		Assert.notNull(keyManagerFactoryAlgorithm, "KeyManagerFactory algorithm cannot be null");
-		this.keyManagerFactoryAlgorithm = keyManagerFactoryAlgorithm;
+		this.keyManagerFactoryAlgorithm = Objects.requireNonNull(keyManagerFactoryAlgorithm, "KeyManagerFactory algorithm cannot be null");
 		return this;
 	}
 
@@ -100,8 +100,7 @@ public class SslOptions {
 	}
 
 	public SslOptions trustManagerFactoryAlgorithm(String trustManagerFactoryAlgorithm) {
-		Assert.notNull(trustManagerFactoryAlgorithm, "TrustManagerFactory algorithm cannot be null");
-		this.trustManagerFactoryAlgorithm = trustManagerFactoryAlgorithm;
+		this.trustManagerFactoryAlgorithm = Objects.requireNonNull(trustManagerFactoryAlgorithm, "TrustManagerFactory algorithm cannot be null");
 		return this;
 	}
 
@@ -110,8 +109,7 @@ public class SslOptions {
 	}
 
 	public SslOptions sslProtocol(String sslProtocol) {
-		Assert.notNull(sslProtocol, "SSL protocol cannot be null");
-		this.sslProtocol = sslProtocol;
+		this.sslProtocol = Objects.requireNonNull(sslProtocol, "SSL protocol cannot be null");
 		return this;
 	}
 

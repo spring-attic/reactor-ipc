@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -42,7 +43,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.SubscriberWithContext;
-import reactor.core.util.Assert;
 import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
 
@@ -1413,7 +1413,7 @@ public class Buffer implements Comparable<Buffer>,
 	 * @return A list of {@link View Views} pointing to the slices.
 	 */
 	public List<View> slice(int... positions) {
-		Assert.notNull(positions, "Positions cannot be null.");
+		Objects.requireNonNull(positions, "Positions cannot be null.");
 		if (positions.length == 0) {
 			return Collections.emptyList();
 		}
