@@ -44,11 +44,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
-import reactor.io.netty.config.ServerSocketOptions;
-import reactor.io.netty.udp.NettyDatagramServer;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.io.netty.SocketUtils;
 import reactor.io.netty.ReactiveNet;
+import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.preprocessor.CodecPreprocessor;
+import reactor.io.netty.util.SocketUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -81,13 +80,12 @@ public class UdpServerTests {
 		final int port = SocketUtils.findAvailableUdpPort();
 		final CountDownLatch latch = new CountDownLatch(4);
 
-		final DatagramServer<byte[], byte[]> server = ReactiveNet.udpServer(
+		final DatagramServer server = ReactiveNet.udpServer(
 		  s -> s.listen(port)
-		        .preprocessor(CodecPreprocessor.byteArray())
 		);
 
 		server.start(ch -> {
-			ch.input().log().consume(bytes -> {
+			CodecPreprocessor.byteArray().apply(ch).input().log().consume(bytes -> {
 				if (bytes.length == 1024) {
 					latch.countDown();
 				}
@@ -125,21 +123,19 @@ public class UdpServerTests {
 		final InetAddress multicastGroup = InetAddress.getByName("230.0.0.1");
 		final NetworkInterface multicastInterface = findMulticastEnabledIPv4Interface();
 		log.info("Using network interface '{}' for multicast", multicastInterface);
-		final Collection<DatagramServer<byte[], byte[]>> servers = new ArrayList<>();
+		final Collection<DatagramServer> servers = new ArrayList<>();
 
 		for (int i = 0; i < 4; i++) {
-			DatagramServer<byte[], byte[]> server = ReactiveNet.udpServer(
-			  NettyDatagramServer.class,
+			DatagramServer server = ReactiveNet.udpServer(
 			  spec -> spec
 				.listen(port)
 				.options(new ServerSocketOptions()
 				  .reuseAddr(true)
 				  .protocolFamily(StandardProtocolFamily.INET))
-				.preprocessor(CodecPreprocessor.byteArray())
 			);
 
 			server.start(ch -> {
-				ch.input().log().consume(bytes -> {
+				CodecPreprocessor.byteArray().apply(ch).input().log().consume(bytes -> {
 					//log.info("{} got {} bytes", ++count, bytes.length);
 					if (bytes.length == 1024) {
 						latch.countDown();

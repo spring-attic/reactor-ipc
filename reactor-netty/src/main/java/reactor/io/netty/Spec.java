@@ -361,8 +361,8 @@ public interface Spec {
 	 * @author Jon Brisbin
 	 * @author Stephane Maldini
 	 */
-	class DatagramServerSpec<IN, OUT>
-	  extends PeerSpec<IN, OUT, ChannelFlux<IN, OUT>, DatagramServerSpec<IN, OUT>, DatagramServer<IN, OUT>> {
+	class DatagramServerSpec
+	  extends PeerSpec<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, DatagramServerSpec, DatagramServer> {
 		protected final Constructor<? extends DatagramServer> serverImplCtor;
 
 		private NetworkInterface multicastInterface;
@@ -391,16 +391,16 @@ public interface Spec {
 		 * @param iface the {@link NetworkInterface} to use for multicast.
 		 * @return {@literal this}
 		 */
-		public DatagramServerSpec<IN, OUT> multicastInterface(NetworkInterface iface) {
+		public DatagramServerSpec multicastInterface(NetworkInterface iface) {
 			this.multicastInterface = iface;
 			return this;
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public DatagramServer<IN, OUT> get() {
+		public DatagramServer get() {
 			try {
-				DatagramServer<Buffer, Buffer> server =
+				return
 						serverImplCtor.newInstance(
 				  timer,
 				  listenAddress,
@@ -408,12 +408,6 @@ public interface Spec {
 				  options
 				);
 
-				if(preprocessor != null && (options == null || !options.isRaw())) {
-					return server.preprocessor(preprocessor);
-				}
-				else {
-					return (DatagramServer<IN, OUT>)server;
-				}
 			} catch (Throwable t) {
 				throw new IllegalStateException(t);
 			}
