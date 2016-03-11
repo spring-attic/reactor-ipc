@@ -194,7 +194,7 @@ project('reactor-io') {
   }
 }
 
-project('reactor-net') {
+project('reactor-netty') {
 	description = 'Reactor TCP components'
 
 	apply plugin: 'osgi'
@@ -218,7 +218,7 @@ project('reactor-net') {
 		//Codec Preprocessor
 		optional project(':reactor-codec')
 
-		//Default reactor-net impl
+		//Default reactor-netty impl
 		optional "io.netty:netty-all:$nettyVersion"
 
 		// Testing
@@ -261,7 +261,7 @@ project('reactor-aeron') {
 		compile "uk.co.real-logic:aeron-driver:$aeronVersion",
 				"uk.co.real-logic:aeron-client:$aeronVersion"
 
-		testCompile project(':reactor-net')
+		testCompile project(':reactor-netty')
 		testCompile "org.reactivestreams:reactive-streams-tck:1.0.0"
 		testCompile "org.mockito:mockito-core:1.10.19"
     }

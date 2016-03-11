@@ -138,6 +138,6 @@ public interface ResponseHeaders extends Headers, WritableHeaders<ResponseHeader
 	 */
 	String WWW_AUTHENTICATE = "WWW-Authenticate";
 
-	public long getContentLength();
+	long getContentLength();
 
 }

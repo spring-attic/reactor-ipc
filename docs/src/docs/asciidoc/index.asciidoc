@@ -13,8 +13,8 @@ include::20to25.adoc[]
 = *reactor-io*
 include::core-bytebuffer.adoc[]
 
-[[reactor-net]]
-= *reactor-net*
+[[reactor-netty]]
+= *reactor-netty*
 include::net.adoc[]
 include::net-tcp.adoc[]
 include::net-http.adoc[]

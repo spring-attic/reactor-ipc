@@ -243,7 +243,7 @@ public class TcpClientTests {
 	public void connectionWillAttemptToReconnectWhenItIsDropped() throws InterruptedException, IOException {
 		final CountDownLatch connectionLatch = new CountDownLatch(1);
 		final CountDownLatch reconnectionLatch = new CountDownLatch(1);
-		TcpClient<Buffer, Buffer> tcpClient = ReactiveNet.<Buffer, Buffer>tcpClient(s -> s
+		TcpClient<Buffer, Buffer> tcpClient = ReactiveNet.tcpClient(s -> s
 			.connect("localhost", abortServerPort)
 		);
 
@@ -268,7 +268,7 @@ public class TcpClientTests {
 		final AtomicLong totalDelay = new AtomicLong();
 		final long start = System.currentTimeMillis();
 
-		TcpClient<Buffer, Buffer> client = ReactiveNet.<Buffer, Buffer>tcpClient(s -> s
+		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(s -> s
 			.connect("localhost", timeoutServerPort)
 		);
 
@@ -324,7 +324,7 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(1);
 		long start = System.currentTimeMillis();
 
-		TcpClient<Buffer, Buffer> client = ReactiveNet.<Buffer, Buffer>tcpClient(s ->
+		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(s ->
 			s.connect("localhost", echoServerPort)
 		);
 

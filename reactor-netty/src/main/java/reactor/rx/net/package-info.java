@@ -15,6 +15,6 @@
  */
 
 /**
- * Stream and Promise Composition API for Reactive Network (reactor-net) components
+ * Stream and Promise Composition API for Reactive Network (reactor-netty) components
  */
 package reactor.rx.net;

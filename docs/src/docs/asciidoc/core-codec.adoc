@@ -2,7 +2,7 @@
 == Codecs and Buffer
 
 Byte manipulation is a core concern that applies to a lot of data pipeline configurations.
-It is extensively used by <<net.adoc#net-overview, reactor-net>> to marshall and unmarshall bytes received or sent over IO.
+It is extensively used by <<net.adoc#net-overview, reactor-netty>> to marshall and unmarshall bytes received or sent over IO.
 
 The `reactor.io.buffer.Buffer` is a decorator for Java `ByteBuffer` handling, adding a series of operations. The goal is to minimize
 byte copy by playing with the ByteBuffer limits and reading or overwritting pre-allocated bytes. Tracking the ByteBuffer positions can

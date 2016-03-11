@@ -34,7 +34,7 @@ import reactor.rx.net.tcp.ReactorTcpServer;
 import reactor.rx.net.udp.ReactorDatagramServer;
 
 /**
- * A Streams add-on to work with network facilities from reactor-net, e.g.:
+ * A Streams add-on to work with network facilities from reactor-netty, e.g.:
  * <p>
  * <pre>
  * {@code

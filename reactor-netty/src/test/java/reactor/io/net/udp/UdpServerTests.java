@@ -114,7 +114,7 @@ public class UdpServerTests {
 		final Collection<ReactorDatagramServer<byte[], byte[]>> servers = new ArrayList<>();
 
 		for (int i = 0; i < 4; i++) {
-			ReactorDatagramServer<byte[], byte[]> server = NetStreams.<byte[], byte[]>udpServer(
+			ReactorDatagramServer<byte[], byte[]> server = NetStreams.udpServer(
 			  NettyDatagramServer.class,
 			  spec -> spec
 				.listen(port)
