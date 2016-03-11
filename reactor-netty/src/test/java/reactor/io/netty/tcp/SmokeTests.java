@@ -43,11 +43,13 @@ import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
+import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Spec;
+import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.impl.netty.NettyClientSocketOptions;
 import reactor.io.netty.impl.netty.NettyServerSocketOptions;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.rx.net.http.ReactorHttpServer;
+import reactor.io.netty.http.HttpServer;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -59,7 +61,7 @@ import static org.junit.Assert.assertThat;
 @Ignore
 public class SmokeTests {
 	private Processor<Buffer, Buffer>         processor;
-	private ReactorHttpServer<Buffer, Buffer> httpServer;
+	private HttpServer<Buffer, Buffer> httpServer;
 
 	private final AtomicInteger postReduce         = new AtomicInteger();
 	private final AtomicInteger windows            = new AtomicInteger();
@@ -279,7 +281,7 @@ public class SmokeTests {
 		  .subscribeWith(workProcessor)
 		  .as(Flux::from);
 
-		httpServer = NetStreams.httpServer(server -> server.httpProcessor(CodecPreprocessor.from(codec))
+		httpServer = ReactiveNet.httpServer(server -> server.httpProcessor(CodecPreprocessor.from(codec))
 		                                                   .listen(port)
 		                                                   .options(new NettyServerSocketOptions().eventLoopGroup(
 				                                                   new NioEventLoopGroup(10)))
@@ -313,10 +315,10 @@ public class SmokeTests {
 	}
 
 	private List<String> getClientDataPromise() throws Exception {
-		ReactorHttpClient<String, String> httpClient = NetStreams.httpClient(clientFactory);
+		HttpClient<String, String> httpClient = ReactiveNet.httpClient(clientFactory);
 
 		Mono<List<String>> content = httpClient.get("/data")
-		                                       .then(f -> f.toList())
+		                                       .then(f -> f.input().toList())
 		                                       .cache();
 
 		List<String> res = content.get(Duration.ofSeconds(20));

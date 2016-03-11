@@ -49,7 +49,6 @@ import reactor.io.netty.impl.netty.udp.NettyDatagramServer;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.support.SocketUtils;
 import reactor.io.netty.ReactiveNet;
-import reactor.rx.net.udp.ReactorDatagramServer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -82,13 +81,13 @@ public class UdpServerTests {
 		final int port = SocketUtils.findAvailableUdpPort();
 		final CountDownLatch latch = new CountDownLatch(4);
 
-		final ReactorDatagramServer<byte[], byte[]> server = NetStreams.udpServer(
+		final DatagramServer<byte[], byte[]> server = ReactiveNet.udpServer(
 		  s -> s.listen(port)
 		        .preprocessor(CodecPreprocessor.byteArray())
 		);
 
 		server.start(ch -> {
-			ch.log().consume(bytes -> {
+			ch.input().log().consume(bytes -> {
 				if (bytes.length == 1024) {
 					latch.countDown();
 				}
@@ -126,10 +125,10 @@ public class UdpServerTests {
 		final InetAddress multicastGroup = InetAddress.getByName("230.0.0.1");
 		final NetworkInterface multicastInterface = findMulticastEnabledIPv4Interface();
 		log.info("Using network interface '{}' for multicast", multicastInterface);
-		final Collection<ReactorDatagramServer<byte[], byte[]>> servers = new ArrayList<>();
+		final Collection<DatagramServer<byte[], byte[]>> servers = new ArrayList<>();
 
 		for (int i = 0; i < 4; i++) {
-			ReactorDatagramServer<byte[], byte[]> server = NetStreams.udpServer(
+			DatagramServer<byte[], byte[]> server = ReactiveNet.udpServer(
 			  NettyDatagramServer.class,
 			  spec -> spec
 				.listen(port)
@@ -140,7 +139,7 @@ public class UdpServerTests {
 			);
 
 			server.start(ch -> {
-				ch.log().consume(bytes -> {
+				ch.input().log().consume(bytes -> {
 					//log.info("{} got {} bytes", ++count, bytes.length);
 					if (bytes.length == 1024) {
 						latch.countDown();
@@ -187,7 +186,7 @@ public class UdpServerTests {
 		latch.await(5, TimeUnit.SECONDS);
 		assertThat("latch was not counted down enough: "+latch.getCount()+" left on "+(4 ^ 2), latch.getCount() == 0 );
 
-		for (ReactorDatagramServer s : servers) {
+		for (DatagramServer s : servers) {
 			s.shutdown().get();
 		}
 	}

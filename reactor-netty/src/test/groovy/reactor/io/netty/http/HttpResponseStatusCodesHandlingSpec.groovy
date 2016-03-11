@@ -18,7 +18,7 @@ package reactor.io.netty.http
 import reactor.core.publisher.Flux
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.ReactiveNet
-import reactor.rx.net.http.HttpChannelFlux
+import reactor.io.netty.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -30,7 +30,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
 
     def "http status code 404 is handled by the client"() {
         given: "a simple HttpServer"
-            def server = NetStreams.httpServer {
+            def server = ReactiveNet.httpServer {
                 it.httpProcessor(CodecPreprocessor.string()).listen(0)
             }
 
@@ -46,7 +46,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
           !server.start().get(Duration.ofSeconds(5))
 
         when: "a request with unsupported URI is sent onto the server"
-            def client = NetStreams.httpClient {
+            def client = ReactiveNet.httpClient {
                 it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
             }
 

@@ -26,16 +26,16 @@ import org.junit.Before;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.io.buffer.Buffer;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveNet;
-import reactor.rx.net.http.ReactorHttpHandler;
-import reactor.rx.net.http.ReactorHttpServer;
 
 /**
  * @author tjreactive
  * @author smaldini
  */
 public class PostAndGetTests {
-	private ReactorHttpServer<Buffer, Buffer> httpServer;
+
+	private HttpServer<Buffer, Buffer> httpServer;
 
 	@Before
 	public void setup() throws InterruptedException {
@@ -43,13 +43,13 @@ public class PostAndGetTests {
 	}
 
 	private void setupServer() throws InterruptedException {
-		httpServer = NetStreams.httpServer(server -> server.listen(0));
+		httpServer = ReactiveNet.httpServer(server -> server.listen(0));
 		httpServer.get("/get/{name}", getHandler());
 		httpServer.post("/post", postHandler());
 		httpServer.start().get();
 	}
 
-	ReactorHttpHandler<Buffer, Buffer> getHandler() {
+	ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> getHandler() {
 		return channel -> {
 			channel.headers().entries().forEach(entry1 -> System.out.println(String.format("header [%s=>%s]", entry1
 			  .getKey
@@ -64,17 +64,17 @@ public class PostAndGetTests {
 		};
 	}
 
-	ReactorHttpHandler<Buffer, Buffer> postHandler() {
+	ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> postHandler() {
 		return channel -> {
 
 			channel.headers().entries().forEach(entry -> System.out.println(String.format("header [%s=>%s]", entry
 				.getKey(),
 			  entry.getValue())));
 
-			return channel.writeWith(channel
-			  .take(1)
-			  .log("received")
-			  .flatMap(data -> {
+			return channel.writeWith(channel.input()
+			                                .take(1)
+			                                .log("received")
+			                                .flatMap(data -> {
 				  final StringBuilder response = new StringBuilder().append("hello ").append(new String(data.asBytes
 				    ()));
 				  System.out.println(String.format("%s from thread %s", response.toString(), Thread.currentThread()));

@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono
 import reactor.io.netty.http.model.Cookie
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.ReactiveNet
-import reactor.rx.net.http.HttpChannelFlux
+import reactor.io.netty.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -54,7 +54,7 @@ public class HttpCookieHandlingSpec extends Specification{
 	}
 
 	given: "a http server setting cookie 1.0"
-	def server = NetStreams.httpServer {
+	def server = ReactiveNet.httpServer {
 	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
 	}
 
@@ -70,7 +70,7 @@ public class HttpCookieHandlingSpec extends Specification{
 	!server.start().get(Duration.ofSeconds(5))
 
 	when: "a request with URI is sent onto the server"
-	def client = NetStreams.httpClient {
+	def client = ReactiveNet.httpClient {
 	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
 	}
 	def cookieResponse = client.get('/test').then {

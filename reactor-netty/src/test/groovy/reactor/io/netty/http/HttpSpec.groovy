@@ -22,7 +22,7 @@ import reactor.io.netty.http.HttpException
 import reactor.io.netty.impl.netty.http.NettyHttpServer
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.ReactiveNet
-import reactor.rx.net.http.HttpChannelFlux
+import reactor.io.netty.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -38,7 +38,7 @@ class HttpSpec extends Specification {
 	given: "a simple HttpServer"
 
 	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
-	def server = NetStreams.httpServer {
+	def server = ReactiveNet.httpServer {
 	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
 	}
 
@@ -63,7 +63,7 @@ class HttpSpec extends Specification {
 	when: "data is sent with Reactor HTTP support"
 
 	//Prepare a client using default impl (Netty) to connect on http://localhost:port/ and assign global codec to send/receive String data
-	def client = NetStreams.httpClient {
+	def client = ReactiveNet.httpClient {
 	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
 	}
 
@@ -94,7 +94,7 @@ class HttpSpec extends Specification {
 	given: "a simple HttpServer"
 
 	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
-	def server = NetStreams.httpServer {
+	def server = ReactiveNet.httpServer {
 	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
 	}
 
@@ -123,7 +123,7 @@ class HttpSpec extends Specification {
 	when: "data is sent with Reactor HTTP support"
 
 	//Prepare a client using default impl (Netty) to connect on http://localhost:port/ and assign global codec to send/receive String data
-	def client = NetStreams.httpClient {
+	def client = ReactiveNet.httpClient {
 	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
 	}
 
@@ -164,7 +164,7 @@ class HttpSpec extends Specification {
 	given: "a simple HttpServer"
 
 	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
-	def server = NetStreams.httpServer {
+	def server = ReactiveNet.httpServer {
 	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
 	}
 
@@ -186,7 +186,7 @@ class HttpSpec extends Specification {
 	!server.start().get(Duration.ofSeconds(5))
 
 	when:
-	def client = NetStreams.httpClient {
+	def client = ReactiveNet.httpClient {
 	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
 	}
 
@@ -252,7 +252,7 @@ class HttpSpec extends Specification {
 	given: "a simple HttpServer"
 
 	//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
-	def server = NetStreams.httpServer {
+	def server = ReactiveNet.httpServer {
 	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
 	}
 
@@ -289,7 +289,7 @@ class HttpSpec extends Specification {
 	when: "data is sent with Reactor HTTP support"
 
 	//Prepare a client using default impl (Netty) to connect on http://localhost:port/ and assign global codec to send/receive String data
-	def client = NetStreams.httpClient {
+	def client = ReactiveNet.httpClient {
 	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
 	}
 

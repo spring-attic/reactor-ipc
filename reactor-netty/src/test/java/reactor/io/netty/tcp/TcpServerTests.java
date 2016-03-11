@@ -50,18 +50,17 @@ import reactor.io.codec.Frame;
 import reactor.io.codec.FrameCodec;
 import reactor.io.codec.LengthFieldCodec;
 import reactor.io.codec.StandardCodecs;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
+import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.impl.netty.NettyBuffer;
 import reactor.io.netty.impl.netty.NettyServerSocketOptions;
 import reactor.io.netty.impl.netty.tcp.NettyTcpClient;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.support.SocketUtils;
 import reactor.io.netty.ReactiveNet;
-import reactor.rx.net.ReactorChannelHandler;
-import reactor.rx.net.http.ReactorHttpServer;
-import reactor.rx.net.tcp.ReactorTcpClient;
-import reactor.rx.net.tcp.ReactorTcpServer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
@@ -133,14 +132,14 @@ public class TcpServerTests {
 		  });
 
 		final CountDownLatch latch = new CountDownLatch(1);
-		final ReactorTcpClient<Pojo, Pojo> client = NetStreams.tcpClient(s ->
+		final TcpClient<Pojo, Pojo> client = ReactiveNet.tcpClient(s ->
 			s
 			  .ssl(clientOpts)
 			  .connect("localhost", port)
 			  .preprocessor(CodecPreprocessor.json(Pojo.class))
 		);
 
-		final ReactorTcpServer<Pojo, Pojo> server = NetStreams.tcpServer(s ->
+		final TcpServer<Pojo, Pojo> server = ReactiveNet.tcpServer(s ->
 			s
 			  .ssl(serverOpts)
 			  .listen("localhost", port)
@@ -148,7 +147,7 @@ public class TcpServerTests {
 		);
 
 		server.start(channel -> {
-			channel.log("conn")
+			channel.input().log("conn")
 			       .consume(data -> {
 				       if ("John Doe".equals(data.getName())) {
 					       latch.countDown();
@@ -170,7 +169,7 @@ public class TcpServerTests {
 	public void tcpServerHandlesLengthFieldData() throws InterruptedException {
 		final int port = SocketUtils.findAvailableTcpPort();
 
-		ReactorTcpServer<byte[], byte[]> server = NetStreams.tcpServer(s ->
+		TcpServer<byte[], byte[]> server = ReactiveNet.tcpServer(s ->
 			s
 			  .options(new ServerSocketOptions()
 				.backlog(1000)
@@ -183,7 +182,7 @@ public class TcpServerTests {
 		System.out.println(latch.getCount());
 
 		server.start(ch -> {
-			  ch.consume(new Consumer<byte[]>() {
+			  ch.input().consume(new Consumer<byte[]>() {
 				  long num = 1;
 
 				  @Override
@@ -228,7 +227,7 @@ public class TcpServerTests {
 	public void tcpServerHandlesFrameData() throws InterruptedException {
 		final int port = SocketUtils.findAvailableTcpPort();
 
-		ReactorTcpServer<Frame, Frame> server = NetStreams.tcpServer(spec ->
+		TcpServer<Frame, Frame> server = ReactiveNet.tcpServer(spec ->
 			spec
 			  .options(new ServerSocketOptions()
 			    .backlog(1000)
@@ -239,7 +238,7 @@ public class TcpServerTests {
 		);
 
 		server.start(ch -> {
-			ch.consume(frame -> {
+			ch.input().consume(frame -> {
 				short prefix = frame.getPrefix().readShort();
 				assertThat("prefix is not 128: "+prefix, prefix == 128);
 				Buffer data = frame.getData();
@@ -271,11 +270,11 @@ public class TcpServerTests {
 		final int port = SocketUtils.findAvailableTcpPort();
 		final CountDownLatch latch = new CountDownLatch(1);
 
-		ReactorTcpClient<Buffer, Buffer> client = NetStreams.tcpClient(NettyTcpClient.class, s ->
+		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(NettyTcpClient.class, s ->
 			s.connect("localhost", port)
 		);
 
-		ReactorTcpServer<Buffer, Buffer> server = NetStreams.tcpServer(s ->
+		TcpServer<Buffer, Buffer> server = ReactiveNet.tcpServer(s ->
 			s.listen(port)
 			  .preprocessor(CodecPreprocessor.passthrough())
 		);
@@ -300,19 +299,19 @@ public class TcpServerTests {
 		final int port = SocketUtils.findAvailableTcpPort();
 		final CountDownLatch latch = new CountDownLatch(2);
 
-		final ReactorTcpClient<String, String> client = NetStreams.tcpClient(s -> s.connect("localhost", port)
+		final TcpClient<String, String> client = ReactiveNet.tcpClient(s -> s.connect("localhost", port)
 		                                                                    .preprocessor(CodecPreprocessor.linefeed()));
 
-		ReactorChannelHandler<String, String>
+		ChannelFluxHandler<String, String, ChannelFlux<String, String>>
 				serverHandler = ch -> {
-			ch.consume(data -> {
+			ch.input().consume(data -> {
 				log.info("data " + data + " on " + ch);
 				latch.countDown();
 			});
 			return Flux.never();
 		};
 
-		ReactorTcpServer<String, String> server = NetStreams.tcpServer(s ->
+		TcpServer<String, String> server = ReactiveNet.tcpServer(s ->
 			s
 			  .options(new NettyServerSocketOptions()
 			    .pipelineConfigurer(pipeline -> pipeline.addLast(new LineBasedFrameDecoder(8 * 1024))))
@@ -335,14 +334,14 @@ public class TcpServerTests {
 		final int port = SocketUtils.findAvailableTcpPort();
 		final CountDownLatch latch = new CountDownLatch(msgs);
 
-		ReactorTcpServer<NettyBuffer, NettyBuffer> server = NetStreams.tcpServer(spec -> spec
+		TcpServer<NettyBuffer, NettyBuffer> server = ReactiveNet.tcpServer(spec -> spec
 			.listen(port)
 			.options(new ServerSocketOptions())
 		);
 
 		log.info("Starting raw server on tcp://localhost:{}", port);
 		server.start(ch -> {
-			ch.consume(byteBuf -> {
+			ch.input().consume(byteBuf -> {
 				byteBuf.getByteBuf().forEachByte(value -> {
 					if (value == '\n') {
 						latch.countDown();
@@ -386,7 +385,7 @@ public class TcpServerTests {
 
 
 		//create a server dispatching data on the default shared dispatcher, and serializing/deserializing as string
-		ReactorHttpServer<String, String> httpServer = NetStreams.httpServer(server -> server
+		HttpServer<String, String> httpServer = ReactiveNet.httpServer(server -> server
 		  .httpProcessor(CodecPreprocessor.string())
 		  .listen(0)
 		  );
@@ -425,23 +424,23 @@ public class TcpServerTests {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		ReactorTcpServer<String, String> server =
-		  NetStreams.tcpServer(s ->
+		TcpServer<String, String> server =
+		  ReactiveNet.tcpServer(s ->
 			  s
 				.preprocessor(CodecPreprocessor.string())
 				.listen(0)
 		  );
 
 		server.start(ch -> {
-			ch.log("channel").consume(trip -> {
+			ch.input().log("channel").consume(trip -> {
 				countDownLatch.countDown();
 			});
 			return Flux.never();
 		}).get();
 
 		System.out.println("PORT +"+server.getListenAddress().getPort());
-		ReactorTcpClient<String, String> client =
-		  NetStreams.tcpClient(s ->
+		TcpClient<String, String> client =
+		  ReactiveNet.tcpClient(s ->
 			  s
 				.preprocessor(CodecPreprocessor.string())
 				.connect("127.0.0.1", server.getListenAddress().getPort())
@@ -458,13 +457,13 @@ public class TcpServerTests {
 	@Test
 	@Ignore
 	public void proxyTest() throws Exception {
-		ReactorHttpServer<Buffer, Buffer> server = NetStreams.httpServer();
+		HttpServer<Buffer, Buffer> server = ReactiveNet.httpServer();
 		server.get("/search/{search}", requestIn ->
-			NetStreams.httpClient()
+			ReactiveNet.httpClient()
 			  .get("foaas.herokuapp.com/life/" + requestIn.param("search"))
 			  .flatMap(repliesOut ->
 				  requestIn
-					.writeWith(repliesOut)
+					.writeWith(repliesOut.input())
 			  )
 		);
 		server.start().get();
@@ -475,15 +474,15 @@ public class TcpServerTests {
 	@Test
 	@Ignore
 	public void wsTest() throws Exception {
-		ReactorHttpServer<Buffer, Buffer> server = NetStreams.httpServer();
+		HttpServer<Buffer, Buffer> server = ReactiveNet.httpServer();
 		server.get("/search/{search}", requestIn ->
-			NetStreams.httpClient()
+			ReactiveNet.httpClient()
 			  .ws("ws://localhost:3000", requestOut ->
 				  requestOut.writeWith(Flux.just(Buffer.wrap("ping")))
 			  )
 			  .flatMap(repliesOut ->
 				  requestIn
-					.writeWith(repliesOut.useCapacity(100))
+					.writeWith(repliesOut.input().useCapacity(100))
 			  )
 		);
 		server.start().get();

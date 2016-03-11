@@ -22,7 +22,7 @@ import reactor.io.codec.json.JsonCodec
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.tcp.support.SocketUtils
 import reactor.io.netty.ReactiveNet
-import reactor.rx.net.tcp.ReactorTcpServer
+import reactor.io.netty.tcp.TcpServer
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -41,7 +41,7 @@ class NettyTcpServerSpec extends Specification {
 	def "NettyTcpServer responds to requests from clients"() {
 		given: "a simple TcpServer"
 			def dataLatch = new CountDownLatch(1)
-			def server = NetStreams.tcpServer(port)
+			def server = ReactiveNet.tcpServer(port)
 
 		when: "the server is started"
 			server.start { conn ->
@@ -64,7 +64,7 @@ class NettyTcpServerSpec extends Specification {
 	def "NettyTcpServer can encode and decode JSON"() {
 		given: "a TcpServer with JSON defaultCodec"
 			def dataLatch = new CountDownLatch(1)
-			ReactorTcpServer<Pojo, Pojo> server = NetStreams. tcpServer {
+			TcpServer<Pojo, Pojo> server = ReactiveNet. tcpServer {
 				it.
 						listen(port).
 						preprocessor(CodecPreprocessor.json(Pojo))
@@ -97,14 +97,14 @@ class NettyTcpServerSpec extends Specification {
 		given: "a TcpServer and a TcpClient"
 			def latch = new CountDownLatch(10)
 
-			def server = NetStreams.tcpServer(port)
-			def client = NetStreams.tcpClient("localhost", port)
+			def server = ReactiveNet.tcpServer(port)
+			def client = ReactiveNet.tcpClient("localhost", port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 
 		when: "the client/server are prepared"
 			server.start { input ->
 				input.writeWith(
-						Flux.from(codec.decode(input))
+						Flux.from(codec.decode(input.input()))
 								.log('serve')
 								.map(codec)
 								.useCapacity(5l)
@@ -112,7 +112,7 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-			  Flux.from(codec.decode(input))
+			  codec.decode(input.input())
 						.log('receive')
 						.consume { latch.countDown() }
 
@@ -141,8 +141,8 @@ class NettyTcpServerSpec extends Specification {
 			def elem = 10
 			def latch = new CountDownLatch(elem)
 
-			ReactorTcpServer<Buffer, Buffer> server = NetStreams.tcpServer(port)
-			def client = NetStreams.tcpClient("localhost", port)
+			TcpServer<Buffer, Buffer> server = ReactiveNet.tcpServer(port)
+			def client = ReactiveNet.tcpClient("localhost", port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 			def i = 0
 

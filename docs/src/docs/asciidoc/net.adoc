@@ -14,8 +14,8 @@ import reactor.io.netty.tcp.TcpClient;
 
 CountDownLatch latch = new CountDownLatch(10);
 
-TcpServer<Buffer, Buffer> server = NetStreams.tcpServer(port);
-TcpClient<Buffer, Buffer> client = NetStreams.tcpClient("localhost", port);
+TcpServer<Buffer, Buffer> server = ReactiveNet.tcpServer(port);
+TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient("localhost", port);
 
 final JsonCodec<Pojo, Pojo> codec = new JsonCodec<Pojo, Pojo>(Pojo.class);
 

@@ -55,10 +55,7 @@ import reactor.io.netty.impl.netty.NettyBuffer;
 import reactor.io.netty.impl.netty.NettyClientSocketOptions;
 import reactor.io.netty.impl.netty.tcp.NettyTcpClient;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.io.netty.tcp.TcpClient;
 import reactor.io.netty.tcp.support.SocketUtils;
-import reactor.io.netty.ReactiveNet;
-import reactor.rx.net.tcp.ReactorTcpClient;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -143,13 +140,13 @@ public class TcpClientTests {
 	public void testTcpClientWithInetSocketAddress() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);
 
-		ReactorTcpClient<String, String> client = NetStreams.tcpClient(NettyTcpClient.class, spec -> spec
+		TcpClient<String, String> client = ReactiveNet.tcpClient(NettyTcpClient.class, spec -> spec
 			.preprocessor(CodecPreprocessor.string())
 			.connect(new InetSocketAddress(echoServerPort))
 		);
 
 		client.start(input -> {
-			input.consume(d -> latch.countDown());
+			input.input().consume(d -> latch.countDown());
 			input.writeWith(Flux.just("Hello")).subscribe();
 
 			return Flux.never();
@@ -168,14 +165,14 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(messages);
 		final List<String> strings = new ArrayList<String>();
 
-		ReactorTcpClient<String, String> client = NetStreams.tcpClient(s ->
+		TcpClient<String, String> client = ReactiveNet.tcpClient(s ->
 			s
 			  .preprocessor(CodecPreprocessor.linefeed())
 			  .connect("localhost", echoServerPort)
 		);
 
 		client.start(input -> {
-			input.log("received").consume(s -> {
+			input.input().log("received").consume(s -> {
 				strings.add(s);
 				latch.countDown();
 			});
@@ -201,7 +198,7 @@ public class TcpClientTests {
 
 	@Test
 	public void closingPromiseIsFulfilled() throws InterruptedException {
-		ReactorTcpClient<Buffer, Buffer> client = NetStreams.tcpClient(NettyTcpClient.class, spec -> spec
+		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(NettyTcpClient.class, spec -> spec
 			.connect("localhost", abortServerPort)
 		);
 
@@ -215,7 +212,7 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicLong totalDelay = new AtomicLong();
 
-		NetStreams.<Buffer, Buffer>tcpClient(s -> s
+		ReactiveNet.<Buffer, Buffer>tcpClient(s -> s
 			.connect("localhost", abortServerPort + 3)
 		)
 		  .start(null, (currentAddress, attempt) -> {
