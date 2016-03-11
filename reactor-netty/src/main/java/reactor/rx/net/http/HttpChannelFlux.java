@@ -23,16 +23,16 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
-import reactor.io.net.ReactiveChannelHandler;
-import reactor.io.net.http.BaseHttpChannel;
-import reactor.io.net.http.HttpChannel;
-import reactor.io.net.http.model.Cookie;
-import reactor.io.net.http.model.HttpHeaders;
-import reactor.io.net.http.model.Method;
-import reactor.io.net.http.model.Protocol;
-import reactor.io.net.http.model.ResponseHeaders;
-import reactor.io.net.http.model.Status;
-import reactor.io.net.http.model.Transfer;
+import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.netty.http.BaseHttpChannel;
+import reactor.io.netty.http.HttpChannel;
+import reactor.io.netty.http.model.Cookie;
+import reactor.io.netty.http.model.HttpHeaders;
+import reactor.io.netty.http.model.Method;
+import reactor.io.netty.http.model.Protocol;
+import reactor.io.netty.http.model.ResponseHeaders;
+import reactor.io.netty.http.model.Status;
+import reactor.io.netty.http.model.Transfer;
 import reactor.rx.net.ChannelFlux;
 
 /**
@@ -67,8 +67,8 @@ public class HttpChannelFlux<IN, OUT> extends ChannelFlux<IN, OUT> implements Ht
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> ReactiveChannelHandler<IN, OUT, HttpChannel<IN, OUT>> wrapHttp(
-			final ReactiveChannelHandler<IN, OUT, HttpChannelFlux<IN, OUT>> actual, final Timer timer, final long prefetch){
+	public static <IN, OUT> RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> wrapHttp(
+			final RemoteFluxHandler<IN, OUT, HttpChannelFlux<IN, OUT>> actual, final Timer timer, final long prefetch){
 
 		if(actual == null) return null;
 

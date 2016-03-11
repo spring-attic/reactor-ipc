@@ -46,7 +46,7 @@ ext {
 	logbackVersion = '1.1.2'
 
 	// Libraries
-	nettyVersion = '4.0.33.Final'
+	nettyVersion = '4.1.0.CR3'
 	jacksonDatabindVersion = '2.5.1'
 	protobufVersion = '2.6.1'
 	kryoVersion = '3.0.3'
@@ -63,8 +63,8 @@ ext {
 			"http://docs.oracle.com/javaee/6/api/",
 			"http://fasterxml.github.io/jackson-databind/javadoc/2.5/",
 			"http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/",
-			"http://next.projectreactor.io/core/docs/api/",
-			"http://next.projectreactor.io/ext/docs/api/",
+			"http://projectreactor.io/core/docs/api/",
+			"http://projectreactor.io/ext/docs/api/",
 	] as String[]
 }
 
@@ -219,7 +219,7 @@ project('reactor-netty') {
 		optional project(':reactor-codec')
 
 		//Default reactor-netty impl
-		optional "io.netty:netty-all:$nettyVersion"
+		compile "io.netty:netty-all:$nettyVersion"
 
 		// Testing
 		testCompile "org.apache.httpcomponents:fluent-hc:4.3.6"

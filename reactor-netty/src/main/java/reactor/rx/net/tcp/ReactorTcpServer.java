@@ -19,14 +19,14 @@ package reactor.rx.net.tcp;
 import java.net.InetSocketAddress;
 
 import reactor.core.publisher.Mono;
-import reactor.io.net.ReactiveChannelHandler;
-import reactor.io.net.ReactivePeer;
-import reactor.io.net.tcp.TcpServer;
+import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.netty.ReactivePeer;
+import reactor.io.netty.tcp.TcpServer;
 import reactor.rx.net.ChannelFlux;
 import reactor.rx.net.ReactorPeer;
 
 /**
- * A network-aware client that will publish its connection once available to the {@link ReactiveChannelHandler} passed.
+ * A network-aware client that will publish its connection once available to the {@link RemoteFluxHandler} passed.
  *
  * @param <IN>   the type of the received data
  * @param <OUT>  the type of replied data
@@ -56,7 +56,7 @@ public final class ReactorTcpServer<IN, OUT> extends ReactorPeer<IN, OUT, TcpSer
 	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Mono<Void> start(ReactiveChannelHandler<IN, OUT, ChannelFlux<IN, OUT>> handler) {
+	public Mono<Void> start(RemoteFluxHandler<IN, OUT, ChannelFlux<IN, OUT>> handler) {
 		return peer.start(
 				ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 		);

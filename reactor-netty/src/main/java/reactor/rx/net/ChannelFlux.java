@@ -25,24 +25,23 @@ import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.ReactiveChannel;
-import reactor.io.net.ReactiveChannelHandler;
+import reactor.io.ipc.RemoteFlux;
+import reactor.io.ipc.RemoteFluxHandler;
 
 /**
- * An abstract {@link ReactiveChannel} implementation that handles the basic interaction and behave as a {@link
+ * An abstract {@link RemoteFlux} implementation that handles the basic interaction and behave as a {@link
  * Flux}.
  *
  * @author Stephane Maldini
  */
-public class ChannelFlux<IN, OUT> extends Flux<IN> implements
-                                                       ReactiveChannel<IN, OUT> {
+public class ChannelFlux<IN, OUT> extends Flux<IN> implements RemoteFlux<IN, OUT> {
 
 	protected static final Logger log = Logger.getLogger(ChannelFlux.class);
 
 
-	private final ReactiveChannel<IN, OUT> actual;
-	private final Timer                    timer;
-	private final long                     prefetch;
+	private final RemoteFlux<IN, OUT> actual;
+	private final Timer               timer;
+	private final long                prefetch;
 
 	/**
 	 *
@@ -53,7 +52,7 @@ public class ChannelFlux<IN, OUT> extends Flux<IN> implements
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> ChannelFlux<IN, OUT> wrap(final ReactiveChannel<IN, OUT> actual, Timer timer, long prefetch){
+	public static <IN, OUT> ChannelFlux<IN, OUT> wrap(final RemoteFlux<IN, OUT> actual, Timer timer, long prefetch){
 		return new ChannelFlux<>(actual, timer, prefetch);
 	}
 
@@ -66,8 +65,8 @@ public class ChannelFlux<IN, OUT> extends Flux<IN> implements
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> ReactiveChannelHandler<IN, OUT, ReactiveChannel<IN, OUT>> wrap(
-			final ReactiveChannelHandler<IN, OUT, ChannelFlux<IN, OUT>> actual,
+	public static <IN, OUT> RemoteFluxHandler<IN, OUT, RemoteFlux<IN, OUT>> wrap(
+			final RemoteFluxHandler<IN, OUT, ChannelFlux<IN, OUT>> actual,
 			final Timer timer,
 			final long prefetch){
 
@@ -76,7 +75,7 @@ public class ChannelFlux<IN, OUT> extends Flux<IN> implements
 		return stream -> actual.apply(wrap(stream, timer, prefetch));
 	}
 
-	protected ChannelFlux(final ReactiveChannel<IN, OUT> actual,
+	protected ChannelFlux(final RemoteFlux<IN, OUT> actual,
 							final Timer timer,
 	                        long prefetch) {
 

@@ -16,7 +16,6 @@
 package reactor.aeron.publisher;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
@@ -27,7 +26,7 @@ import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.publisher.Flux;
 import reactor.core.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
-import reactor.io.net.tcp.support.SocketUtils;
+import reactor.io.netty.tcp.support.SocketUtils;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 

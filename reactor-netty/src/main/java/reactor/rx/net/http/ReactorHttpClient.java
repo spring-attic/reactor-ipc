@@ -19,10 +19,10 @@ package reactor.rx.net.http;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
-import reactor.io.net.ReactiveChannelHandler;
-import reactor.io.net.http.HttpChannel;
-import reactor.io.net.http.HttpClient;
-import reactor.io.net.http.model.Method;
+import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.netty.http.HttpChannel;
+import reactor.io.netty.http.HttpClient;
+import reactor.io.netty.http.model.Method;
 import reactor.rx.net.ReactorPeer;
 
 /**
@@ -47,7 +47,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * HTTP GET the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
+	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -71,7 +71,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * HTTP POST the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
+	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -84,7 +84,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * HTTP PUT the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
+	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -97,7 +97,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
+	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -133,7 +133,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 *
 	 * precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
+	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -148,7 +148,7 @@ public final class ReactorHttpClient<IN, OUT> extends ReactorPeer<IN, OUT, HttpC
 	 * write data to it.
 	 * @param method the HTTP method to send
 	 * @param url the target remote URL
-	 * @param handler the {@link ReactiveChannelHandler} to invoke on open channel
+	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
