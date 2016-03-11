@@ -74,7 +74,7 @@ class HttpSpec extends Specification {
 
 	}.then { replies ->
 	  //successful request, listen for the first returned next reply and pass it downstream
-	  replies.log('client-received').next()
+	  replies.input().log('client-received').next()
 	}
 	.doOnError {
 	  //something failed during the request or the reply processing
