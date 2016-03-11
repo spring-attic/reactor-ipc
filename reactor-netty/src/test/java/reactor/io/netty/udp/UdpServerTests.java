@@ -47,7 +47,7 @@ import reactor.core.util.Logger;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.udp.NettyDatagramServer;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.io.netty.tcp.support.SocketUtils;
+import reactor.io.netty.SocketUtils;
 import reactor.io.netty.ReactiveNet;
 
 import static org.hamcrest.MatcherAssert.assertThat;

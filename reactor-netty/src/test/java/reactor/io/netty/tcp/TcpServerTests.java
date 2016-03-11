@@ -58,7 +58,7 @@ import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.io.netty.tcp.support.SocketUtils;
+import reactor.io.netty.util.SocketUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;

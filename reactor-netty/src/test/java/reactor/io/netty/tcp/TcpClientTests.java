@@ -52,7 +52,7 @@ import reactor.io.netty.NettyBuffer;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.config.ClientSocketOptions;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.io.netty.tcp.support.SocketUtils;
+import reactor.io.netty.SocketUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;

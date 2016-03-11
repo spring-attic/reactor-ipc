@@ -20,7 +20,7 @@ import reactor.core.publisher.Flux
 import reactor.io.buffer.Buffer
 import reactor.io.codec.json.JsonCodec
 import reactor.io.netty.preprocessor.CodecPreprocessor
-import reactor.io.netty.tcp.support.SocketUtils
+import reactor.io.netty.SocketUtils
 import reactor.io.netty.ReactiveNet
 import reactor.io.netty.tcp.TcpServer
 import spock.lang.Specification

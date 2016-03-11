@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.io.netty.tcp.support;
+package reactor.io.netty.util;
 
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
