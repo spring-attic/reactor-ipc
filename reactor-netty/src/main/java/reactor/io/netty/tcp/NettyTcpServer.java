@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty.tcp;
+package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
@@ -48,9 +48,9 @@ import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.config.CommonSocketOptions;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
-import reactor.io.netty.impl.netty.NettyChannel;
-import reactor.io.netty.impl.netty.NettyServerSocketOptions;
-import reactor.io.netty.impl.netty.internal.NettyNativeDetector;
+import reactor.io.netty.NettyChannel;
+import reactor.io.netty.NettyServerSocketOptions;
+import reactor.io.netty.internal.NettyNativeDetector;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
 

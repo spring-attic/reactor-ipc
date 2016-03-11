@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.io.netty.impl.netty;
+package reactor.io.netty;
 
 import io.netty.buffer.ByteBuf;
 import reactor.io.buffer.Buffer;

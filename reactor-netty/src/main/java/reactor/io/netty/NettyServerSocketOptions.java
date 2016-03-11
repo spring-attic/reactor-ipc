@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty;
+package reactor.io.netty;
 
 import java.util.function.Consumer;
 

@@ -45,7 +45,7 @@ import reactor.core.publisher.SchedulerGroup;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.io.netty.config.ServerSocketOptions;
-import reactor.io.netty.impl.netty.udp.NettyDatagramServer;
+import reactor.io.netty.udp.NettyDatagramServer;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.support.SocketUtils;
 import reactor.io.netty.ReactiveNet;

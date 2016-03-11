@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty.http;
+package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -49,8 +49,11 @@ import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.model.Method;
-import reactor.io.netty.impl.netty.NettyChannel;
-import reactor.io.netty.impl.netty.tcp.NettyTcpClient;
+import reactor.io.netty.NettyChannel;
+import reactor.io.netty.http.NettyHttpChannel;
+import reactor.io.netty.http.NettyHttpClientHandler;
+import reactor.io.netty.http.NettyHttpWSClientHandler;
+import reactor.io.netty.tcp.NettyTcpClient;
 
 /**
  * A Netty-based {@code HttpClient}.

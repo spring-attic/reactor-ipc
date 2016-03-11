@@ -51,9 +51,9 @@ import reactor.core.tuple.Tuple;
 import reactor.core.util.PlatformDependent;
 import reactor.io.buffer.Buffer;
 import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.impl.netty.NettyBuffer;
-import reactor.io.netty.impl.netty.NettyClientSocketOptions;
-import reactor.io.netty.impl.netty.tcp.NettyTcpClient;
+import reactor.io.netty.NettyBuffer;
+import reactor.io.netty.NettyClientSocketOptions;
+import reactor.io.netty.tcp.NettyTcpClient;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.support.SocketUtils;
 

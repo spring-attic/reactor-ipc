@@ -18,7 +18,7 @@ package reactor.io.netty.http
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.util.Exceptions
-import reactor.io.netty.impl.netty.http.NettyHttpServer
+import reactor.io.netty.http.NettyHttpServer
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.ReactiveNet
 import spock.lang.Specification

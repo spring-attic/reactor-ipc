@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty.http;
+package reactor.io.netty.http;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -32,7 +32,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.impl.netty.NettyChannel;
+import reactor.io.netty.NettyChannel;
 
 /**
  * @author Stephane Maldini

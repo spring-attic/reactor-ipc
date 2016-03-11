@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty.udp;
+package reactor.io.netty.udp;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -52,10 +52,10 @@ import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.config.ServerSocketOptions;
-import reactor.io.netty.impl.netty.NettyChannel;
-import reactor.io.netty.impl.netty.NettyServerSocketOptions;
-import reactor.io.netty.impl.netty.internal.NettyNativeDetector;
-import reactor.io.netty.impl.netty.tcp.NettyChannelHandlerBridge;
+import reactor.io.netty.NettyChannel;
+import reactor.io.netty.NettyServerSocketOptions;
+import reactor.io.netty.internal.NettyNativeDetector;
+import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 import reactor.io.netty.udp.DatagramServer;
 
 /**

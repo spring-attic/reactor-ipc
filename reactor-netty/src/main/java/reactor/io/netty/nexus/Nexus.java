@@ -54,7 +54,7 @@ import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.impl.netty.http.NettyHttpServer;
+import reactor.io.netty.http.NettyHttpServer;
 
 import static reactor.core.util.ReactiveStateUtils.property;
 

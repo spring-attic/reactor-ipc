@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty.http;
+package reactor.io.netty.http;
 
 import java.io.IOException;
 import java.util.Map;
@@ -42,8 +42,8 @@ import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpException;
 import reactor.io.netty.http.model.Cookie;
-import reactor.io.netty.impl.netty.NettyChannel;
-import reactor.io.netty.impl.netty.tcp.NettyChannelHandlerBridge;
+import reactor.io.netty.NettyChannel;
+import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 
 /**
  * @author Stephane Maldini
@@ -219,7 +219,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 
 		@Override
 		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-			tcpStream.emitWriter(Flux.just(getNettyRequest()), s);
+			tcpStream.emitWriter(just(getNettyRequest()), s);
 		}
 
 		@Override

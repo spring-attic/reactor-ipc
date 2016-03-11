@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty.http;
+package reactor.io.netty.http;
 
 import java.util.Collections;
 import java.util.HashMap;

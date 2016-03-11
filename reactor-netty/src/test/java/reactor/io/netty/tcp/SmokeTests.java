@@ -46,8 +46,8 @@ import reactor.io.codec.Codec;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Spec;
 import reactor.io.netty.http.HttpClient;
-import reactor.io.netty.impl.netty.NettyClientSocketOptions;
-import reactor.io.netty.impl.netty.NettyServerSocketOptions;
+import reactor.io.netty.NettyClientSocketOptions;
+import reactor.io.netty.NettyServerSocketOptions;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.http.HttpServer;
 

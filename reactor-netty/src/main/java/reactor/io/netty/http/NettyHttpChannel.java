@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.impl.netty.http;
+package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
 
@@ -46,7 +46,7 @@ import reactor.io.netty.http.model.Protocol;
 import reactor.io.netty.http.model.ResponseHeaders;
 import reactor.io.netty.http.model.Status;
 import reactor.io.netty.http.model.Transfer;
-import reactor.io.netty.impl.netty.NettyChannel;
+import reactor.io.netty.NettyChannel;
 
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 
