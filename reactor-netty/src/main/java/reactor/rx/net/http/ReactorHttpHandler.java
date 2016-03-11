@@ -16,16 +16,16 @@
 
 package reactor.rx.net.http;
 
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveClient;
 import reactor.io.netty.ReactivePeer;
 
 /**
- * A {@link RemoteFlux} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization
+ * A {@link ChannelFlux} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization
  * and receives
- * all connected {@link RemoteFlux}. The {@link #apply} implementation must return a Publisher to complete or error
- * in order to close the {@link RemoteFlux}.
+ * all connected {@link ChannelFlux}. The {@link #apply} implementation must return a Publisher to complete or error
+ * in order to close the {@link ChannelFlux}.
  *
  * @param <IN>  the type of the received data
  * @param <OUT> the type of replied data
@@ -33,5 +33,5 @@ import reactor.io.netty.ReactivePeer;
  * @since  2.5
  */
 public interface ReactorHttpHandler<IN, OUT>
-		extends RemoteFluxHandler<IN, OUT, HttpChannelFlux<IN, OUT>>{
+		extends ChannelFluxHandler<IN, OUT, HttpChannelFlux<IN, OUT>> {
 }

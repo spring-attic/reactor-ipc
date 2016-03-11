@@ -21,7 +21,7 @@ import reactor.core.util.Exceptions
 import reactor.io.netty.http.HttpException
 import reactor.io.netty.impl.netty.http.NettyHttpServer
 import reactor.io.netty.preprocessor.CodecPreprocessor
-import reactor.rx.net.NetStreams
+import reactor.io.netty.ReactiveNet
 import reactor.rx.net.http.HttpChannelFlux
 import spock.lang.Specification
 

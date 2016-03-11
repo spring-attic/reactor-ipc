@@ -47,8 +47,8 @@ import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.core.util.WaitStrategy;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.http.HttpChannel;
@@ -62,8 +62,8 @@ import static reactor.core.util.ReactiveStateUtils.property;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class Nexus extends ReactivePeer<Buffer, Buffer, RemoteFlux<Buffer, Buffer>>
-		implements RemoteFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, Loopback {
+public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>
+		implements ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, Loopback {
 
 	private static final Logger log            = Logger.getLogger(Nexus.class);
 	private static final String API_STREAM_URL = "/nexus/stream";
@@ -146,7 +146,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, RemoteFlux<Buffer,
 	}
 
 	/**
-	 * @see this#start(RemoteFluxHandler)
+	 * @see this#start(ChannelFluxHandler)
 	 */
 	public final void startAndAwait() throws InterruptedException {
 		start().get();
@@ -156,7 +156,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, RemoteFlux<Buffer,
 	}
 
 	/**
-	 * @see this#start(RemoteFluxHandler)
+	 * @see this#start(ChannelFluxHandler)
 	 */
 	public final Mono<Void> start() throws InterruptedException {
 		return start(null);
@@ -374,7 +374,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, RemoteFlux<Buffer,
 	}
 
 	@Override
-	protected Mono<Void> doStart(RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler) {
+	protected Mono<Void> doStart(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler) {
 
 		if (logExtensionEnabled) {
 			FluxProcessor<Event, Event> p =

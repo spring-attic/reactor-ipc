@@ -17,7 +17,7 @@
 package reactor.rx.net;
 
 import reactor.core.publisher.Mono;
-import reactor.io.ipc.RemoteFlux;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.ReactivePeer;
 
 /**
@@ -29,7 +29,7 @@ import reactor.io.netty.ReactivePeer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public abstract class ReactorPeer<IN, OUT, PEER extends ReactivePeer<IN, OUT, ? extends RemoteFlux<IN, OUT>>> {
+public abstract class ReactorPeer<IN, OUT, PEER extends ReactivePeer<IN, OUT, ? extends ChannelFlux<IN, OUT>>> {
 
 	protected final PEER peer;
 

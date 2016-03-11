@@ -19,7 +19,7 @@ import java.util.function.Function;
 
 import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Spec;
 import reactor.io.netty.http.HttpClient;
@@ -80,7 +80,7 @@ public enum NetStreams {
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -108,13 +108,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -144,13 +144,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -180,13 +180,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -217,13 +217,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -257,13 +257,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when server is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -300,13 +300,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -335,13 +335,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -371,13 +371,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -407,13 +407,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -444,13 +444,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -483,13 +483,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link TcpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -606,13 +606,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link HttpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -649,13 +649,13 @@ public enum NetStreams {
 	 * <p>
 	 * A {@link HttpClient} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit:
-	 * - onNext {@link ChannelFlux} to consume data from
+	 * - onNext {@link reactor.rx.net.ChannelFlux} to consume data from
 	 * - onComplete when client is shutdown
 	 * - onError when any error (more specifically IO error) occurs
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -693,10 +693,10 @@ public enum NetStreams {
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * <p>
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -723,10 +723,10 @@ public enum NetStreams {
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * <p>
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -755,10 +755,10 @@ public enum NetStreams {
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * <p>
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -787,10 +787,10 @@ public enum NetStreams {
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * <p>
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -820,10 +820,10 @@ public enum NetStreams {
 	 * library dependencies are on the classpath.
 	 * <p>
 	 * <p>
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -857,10 +857,10 @@ public enum NetStreams {
 	 * Bind a new UDP server to the specified bind address and port.
 	 * <p>
 	 * <p>
-	 * From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming
+	 * From the emitted {@link reactor.io.ipc.ChannelFlux}, one can decide to add in-channel consumers to read any incoming
 	 * data.
 	 * <p>
-	 * To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link org
+	 * To reply data on the active connection, {@link reactor.io.ipc.ChannelFlux#writeWith} can subscribe to any passed {@link org
 	 * .reactivestreams.Publisher}.
 	 * <p>
 	 * Note that {@link reactor.core.publisher.Flux#getCapacity} will be used to switch on/off a channel in auto-read / flush on
@@ -892,16 +892,16 @@ public enum NetStreams {
 	}
 
 	/**
-	 * Utils to read the RemoteFlux underlying channel
+	 * Utils to read the ChannelFlux underlying channel
 	 */
 
 	@SuppressWarnings("unchecked")
-	public static <E, IN, OUT> E delegate(RemoteFlux<IN, OUT> channelStream) {
+	public static <E, IN, OUT> E delegate(reactor.io.ipc.ChannelFlux<IN, OUT> channelStream) {
 		return (E) delegate(channelStream, Object.class);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <E, IN, OUT> E delegate(RemoteFlux<IN, OUT> channelStream, Class<E> clazz) {
+	public static <E, IN, OUT> E delegate(ChannelFlux<IN, OUT> channelStream, Class<E> clazz) {
 		Assert.isTrue(
 		  clazz.isAssignableFrom(channelStream.delegate().getClass()),
 		  "Underlying channel is not of the given type: " + clazz.getName()

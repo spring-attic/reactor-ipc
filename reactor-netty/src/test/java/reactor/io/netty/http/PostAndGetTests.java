@@ -26,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.io.buffer.Buffer;
-import reactor.rx.net.NetStreams;
+import reactor.io.netty.ReactiveNet;
 import reactor.rx.net.http.ReactorHttpHandler;
 import reactor.rx.net.http.ReactorHttpServer;
 

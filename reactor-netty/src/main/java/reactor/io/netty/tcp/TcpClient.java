@@ -24,9 +24,9 @@ import reactor.core.publisher.Mono;
 import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple2;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.Preprocessor;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveClient;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.Reconnect;
@@ -42,7 +42,7 @@ import reactor.io.netty.config.SslOptions;
  * @author Stephane Maldini
  */
 public abstract class TcpClient<IN, OUT>
-		extends ReactiveClient<IN, OUT, RemoteFlux<IN, OUT>>
+		extends ReactiveClient<IN, OUT, ChannelFlux<IN, OUT>>
 		implements Introspectable {
 
 	private final InetSocketAddress   connectAddress;
@@ -97,34 +97,36 @@ public abstract class TcpClient<IN, OUT>
 	}
 
 	@Override
-	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> doPreprocessor(
-			Function<RemoteFlux<IN, OUT>, ? extends RemoteFlux<NEWIN, NEWOUT>> preprocessor) {
+	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> doPreprocessor(
+			Function<ChannelFlux<IN, OUT>, ? extends ChannelFlux<NEWIN, NEWOUT>> preprocessor) {
 		return new PreprocessedTcpClient<>(preprocessor);
 	}
 
-	private final class PreprocessedTcpClient<NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>>
+	private final class PreprocessedTcpClient<NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>>
 			extends TcpClient<NEWIN, NEWOUT> {
 
-		private final Function<RemoteFlux<IN, OUT>, ? extends NEWCONN>
+		private final Function<ChannelFlux<IN, OUT>, ? extends NEWCONN>
 				preprocessor;
 
-		public PreprocessedTcpClient(Function<RemoteFlux<IN, OUT>, ? extends NEWCONN> preprocessor) {
+		public PreprocessedTcpClient(Function<ChannelFlux<IN, OUT>, ? extends NEWCONN> preprocessor) {
 			super(TcpClient.this.getDefaultTimer(), TcpClient.this.getConnectAddress(), TcpClient.this.getOptions(), TcpClient.this.getSslOptions());
 			this.preprocessor = preprocessor;
 		}
 
 		@Override
 		protected Mono<Void> doStart(
-				RemoteFluxHandler<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> handler) {
-			RemoteFluxHandler<IN, OUT, RemoteFlux<IN, OUT>> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
+				ChannelFluxHandler<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> handler) {
+			ChannelFluxHandler<IN, OUT, ChannelFlux<IN, OUT>>
+					p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return TcpClient.this.start(p);
 		}
 
 		@Override
 		protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
-				RemoteFluxHandler<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> handler,
+				ChannelFluxHandler<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> handler,
 				Reconnect reconnect) {
-			RemoteFluxHandler<IN, OUT, RemoteFlux<IN, OUT>> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
+			ChannelFluxHandler<IN, OUT, ChannelFlux<IN, OUT>>
+					p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return TcpClient.this.start(p, reconnect);
 		}
 

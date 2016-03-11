@@ -49,14 +49,14 @@ import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.Sequence;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.impl.netty.NettyBuffer;
 import reactor.io.netty.impl.netty.NettyChannel;
 
 /**
  * Netty {@link io.netty.channel.ChannelInboundHandler} implementation that passes data to a Reactor {@link
- * RemoteFlux}.
+ * ChannelFlux}.
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
@@ -66,8 +66,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandlerBridge.class);
 
-	protected final RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler;
-	protected final NettyChannel                                                  reactorNettyChannel;
+	protected final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler;
+	protected final NettyChannel                                                    reactorNettyChannel;
 
 	protected ChannelInputSubscriber channelSubscriber;
 
@@ -75,7 +75,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	protected static final AtomicIntegerFieldUpdater<NettyChannelHandlerBridge> CHANNEL_REF =
 			AtomicIntegerFieldUpdater.newUpdater(NettyChannelHandlerBridge.class, "channelRef");
 
-	public NettyChannelHandlerBridge(RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+	public NettyChannelHandlerBridge(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			NettyChannel reactorNettyChannel) {
 		this.handler = handler;
 		this.reactorNettyChannel = reactorNettyChannel;
@@ -883,7 +883,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 	}
 
-	public RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> getHandler() {
+	public ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> getHandler() {
 		return handler;
 	}
 

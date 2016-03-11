@@ -36,10 +36,10 @@ import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.timer.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
+import reactor.io.netty.ReactiveNet;
+import reactor.io.netty.http.HttpClient;
+import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.rx.net.NetStreams;
-import reactor.rx.net.http.ReactorHttpClient;
-import reactor.rx.net.http.ReactorHttpServer;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -49,8 +49,8 @@ import static org.junit.Assert.assertThat;
  */
 @Ignore
 public class ClientServerHttpTests {
-	private ReactorHttpServer<List<String>, List<String>> httpServer;
-	private Processor<String, String>                     broadcaster;
+	private HttpServer<List<String>, List<String>> httpServer;
+	private Processor<String, String>              broadcaster;
 
 	@Test
 	public void testSingleConsumerWithOneSession() throws Exception {
@@ -252,7 +252,7 @@ public class ClientServerHttpTests {
 		      .subscribe(processor);
 
 		DummyListCodec codec = new DummyListCodec();
-		httpServer = NetStreams.httpServer(server -> server
+		httpServer = ReactiveNet.httpServer(server -> server
 				.httpProcessor(CodecPreprocessor.from(codec)).listen(0));
 
 		httpServer.get("/data", (request) -> {
@@ -274,12 +274,12 @@ public class ClientServerHttpTests {
 	}
 
 	private Mono<List<String>> getClientDataPromise() throws Exception {
-		ReactorHttpClient<String, String> httpClient = NetStreams.httpClient(t ->
+		HttpClient<String, String> httpClient = ReactiveNet.httpClient(t ->
 			t.httpProcessor(CodecPreprocessor.string()).connect("localhost", httpServer.getListenAddress().getPort())
 		);
 
 		return httpClient.get("/data")
-		                 .flatMap(s ->  s.log("client").next())
+		                 .flatMap(s ->  s.input().log("client").next())
 		                 .toList()
 		                 .cache()
 		                 .subscribe();

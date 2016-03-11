@@ -30,7 +30,7 @@ import reactor.core.tuple.Tuple;
 import reactor.core.tuple.Tuple2;
 import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.config.ClientSocketOptions;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
@@ -56,15 +56,15 @@ public interface Spec {
 	//   Client and Server Specifications
 	//
 	abstract class PeerSpec<IN, OUT,
-	  CONN extends RemoteFlux<IN, OUT>,
+	  CONN extends ChannelFlux<IN, OUT>,
 	  S extends PeerSpec<IN, OUT, CONN, S, N>,
 	  N extends ReactivePeer<IN, OUT, CONN>>
 	  implements Supplier<N> {
 
-		protected ServerSocketOptions                                                                    options;
-		protected InetSocketAddress                                                                      listenAddress;
-		protected Timer                                                                                  timer;
-		protected Preprocessor<Buffer, Buffer, RemoteFlux<Buffer, Buffer>, IN, OUT, RemoteFlux<IN, OUT>> preprocessor;
+		protected ServerSocketOptions                                                                      options;
+		protected InetSocketAddress                                                                        listenAddress;
+		protected Timer                                                                                    timer;
+		protected Preprocessor<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, IN, OUT, ChannelFlux<IN, OUT>> preprocessor;
 
 		/**
 		 * Set the common {@link ServerSocketOptions} for channels made in this server.
@@ -137,7 +137,7 @@ public interface Spec {
 		 * @return {@literal this}
 		 */
 		@SuppressWarnings("unchecked")
-		public S preprocessor(Preprocessor<Buffer, Buffer, RemoteFlux<Buffer, Buffer>, IN, OUT, RemoteFlux<IN, OUT>> preprocessor) {
+		public S preprocessor(Preprocessor<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, IN, OUT, ChannelFlux<IN, OUT>> preprocessor) {
 			Assert.notNull(preprocessor, "Preprocessor cannot be null.");
 			this.preprocessor = preprocessor;
 			return (S) this;
@@ -163,7 +163,7 @@ public interface Spec {
 
 		private SslOptions sslOptions = null;
 		private Timer      timer      = null;
-		protected Preprocessor<Buffer, Buffer, RemoteFlux<Buffer, Buffer>, IN, OUT, RemoteFlux<IN, OUT>> preprocessor;
+		protected Preprocessor<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, IN, OUT, ChannelFlux<IN, OUT>> preprocessor;
 
 		/**
 		 * Create a {@code TcpClient.Spec} using the given implementation class.
@@ -253,7 +253,7 @@ public interface Spec {
 		 * @return {@literal this}
 		 */
 		@SuppressWarnings("unchecked")
-		public TcpClientSpec<IN, OUT> preprocessor(Preprocessor<Buffer, Buffer, RemoteFlux<Buffer,Buffer>, IN, OUT, RemoteFlux<IN, OUT>> preprocessor) {
+		public TcpClientSpec<IN, OUT> preprocessor(Preprocessor<Buffer, Buffer, ChannelFlux<Buffer,Buffer>, IN, OUT, ChannelFlux<IN, OUT>> preprocessor) {
 			Assert.notNull(preprocessor, "Preprocessor cannot be null.");
 			this.preprocessor = preprocessor;
 			return this;
@@ -292,7 +292,7 @@ public interface Spec {
 	 * @author Stephane Maldini
 	 */
 	class TcpServerSpec<IN, OUT>
-	  extends PeerSpec<IN, OUT, RemoteFlux<IN, OUT>, TcpServerSpec<IN, OUT>, TcpServer<IN, OUT>> {
+	  extends PeerSpec<IN, OUT, ChannelFlux<IN, OUT>, TcpServerSpec<IN, OUT>, TcpServer<IN, OUT>> {
 
 		private final Constructor<? extends TcpServer> serverImplConstructor;
 
@@ -362,7 +362,7 @@ public interface Spec {
 	 * @author Stephane Maldini
 	 */
 	class DatagramServerSpec<IN, OUT>
-	  extends PeerSpec<IN, OUT, RemoteFlux<IN, OUT>, DatagramServerSpec<IN, OUT>, DatagramServer<IN, OUT>> {
+	  extends PeerSpec<IN, OUT, ChannelFlux<IN, OUT>, DatagramServerSpec<IN, OUT>, DatagramServer<IN, OUT>> {
 		protected final Constructor<? extends DatagramServer> serverImplCtor;
 
 		private NetworkInterface multicastInterface;

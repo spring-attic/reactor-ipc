@@ -57,7 +57,7 @@ import reactor.io.netty.impl.netty.NettyServerSocketOptions;
 import reactor.io.netty.impl.netty.tcp.NettyTcpClient;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.support.SocketUtils;
-import reactor.rx.net.NetStreams;
+import reactor.io.netty.ReactiveNet;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.http.ReactorHttpServer;
 import reactor.rx.net.tcp.ReactorTcpClient;

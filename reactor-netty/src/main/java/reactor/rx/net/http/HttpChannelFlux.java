@@ -23,7 +23,7 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.http.BaseHttpChannel;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.model.Cookie;
@@ -67,8 +67,8 @@ public class HttpChannelFlux<IN, OUT> extends ChannelFlux<IN, OUT> implements Ht
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> wrapHttp(
-			final RemoteFluxHandler<IN, OUT, HttpChannelFlux<IN, OUT>> actual, final Timer timer, final long prefetch){
+	public static <IN, OUT> ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> wrapHttp(
+			final ChannelFluxHandler<IN, OUT, HttpChannelFlux<IN, OUT>> actual, final Timer timer, final long prefetch){
 
 		if(actual == null) return null;
 

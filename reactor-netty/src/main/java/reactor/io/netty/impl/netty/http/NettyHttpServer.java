@@ -33,8 +33,8 @@ import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpChannel;
@@ -68,10 +68,10 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Loopb
 
 	@Override
 	protected Mono<Void> doStart(
-			final RemoteFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> defaultHandler) {
-		return server.start(new RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>>() {
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> defaultHandler) {
+		return server.start(new ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>() {
 			@Override
-			public Publisher<Void> apply(RemoteFlux<Buffer, Buffer> ch) {
+			public Publisher<Void> apply(ChannelFlux<Buffer, Buffer> ch) {
 				NettyHttpChannel request = (NettyHttpChannel) ch;
 
 				try {
@@ -162,7 +162,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Loopb
 	}
 
 	protected void bindChannel(
-			RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			SocketChannel nativeChannel) {
 
 		NettyChannel netChannel =
@@ -191,7 +191,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Loopb
 
 		@Override
 		protected void bindChannel(
-				RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+				ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 				SocketChannel nativeChannel) {
 			NettyHttpServer.this.bindChannel(handler, nativeChannel);
 		}

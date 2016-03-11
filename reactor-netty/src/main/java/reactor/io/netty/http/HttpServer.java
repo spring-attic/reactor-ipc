@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.http.model.HttpHeaders;
 import reactor.io.netty.http.routing.ChannelMappings;
@@ -83,7 +83,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 */
 	@SuppressWarnings("unchecked")
 	public HttpServer<IN, OUT> route(final Predicate<HttpChannel> condition,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> serviceFunction) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> serviceFunction) {
 
 		if (this.channelMappings == null) {
 			this.channelMappings = ChannelMappings.newMappings();
@@ -103,7 +103,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> get(String path,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.get(path), handler);
 		return this;
 	}
@@ -118,7 +118,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> post(String path,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.post(path), handler);
 		return this;
 	}
@@ -133,7 +133,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> put(String path,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.put(path), handler);
 		return this;
 	}
@@ -148,7 +148,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> ws(String path,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return ws(path, handler, null);
 	}
 
@@ -163,7 +163,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> ws(String path,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler,
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler,
 			final String protocols) {
 		return route(ChannelMappings.get(path), channel -> {
 			String connection = channel.headers()
@@ -185,7 +185,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @return {@code this}
 	 */
 	public final HttpServer<IN, OUT> delete(String path,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		route(ChannelMappings.delete(path), handler);
 		return this;
 	}
@@ -231,7 +231,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> path, final String filepath,
 			final Function<HttpChannel<IN, OUT>, HttpChannel<IN, OUT>> interceptor) {
 		final Publisher<Buffer> file = Buffer.readFile(filepath);
-		route(path, new RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+		route(path, new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
 				if(interceptor != null){
@@ -281,7 +281,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 */
 	public final HttpServer<IN, OUT> directory(final String path, final String directory,
 			final Function<HttpChannel<IN, OUT>, HttpChannel<IN, OUT>> interceptor) {
-		route(ChannelMappings.prefix(path), new RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+		route(ChannelMappings.prefix(path), new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
 				String strippedPrefix = channel.uri()
@@ -328,7 +328,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 			return null;
 		}
 
-		final Iterator<? extends RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> selected =
+		final Iterator<? extends ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> selected =
 				channelMappings.apply(ch)
 				               .iterator();
 
@@ -336,7 +336,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 			return null;
 		}
 
-		RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> channelHandler = selected.next();
+		ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> channelHandler = selected.next();
 
 		if (!selected.hasNext()) {
 			return channelHandler.apply(ch);
@@ -368,8 +368,8 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 
 		@Override
 		public HttpServer<NEWIN, NEWOUT> route(Predicate<HttpChannel> condition,
-				final RemoteFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> serviceFunction) {
-			HttpServer.this.route(condition, new RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> serviceFunction) {
+			HttpServer.this.route(condition, new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 				@Override
 				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
 					return serviceFunction.apply(preprocessor.transform(conn));
@@ -389,8 +389,8 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		}
 
 		@Override
-		protected Mono<Void> doStart(final RemoteFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
-			return HttpServer.this.start(null != handler ? new RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
+		protected Mono<Void> doStart(final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
+			return HttpServer.this.start(null != handler ? new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
 				@Override
 				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
 					return handler.apply(preprocessor.transform(conn));

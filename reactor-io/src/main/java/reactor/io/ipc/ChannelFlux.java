@@ -24,7 +24,7 @@ import reactor.core.publisher.Mono;
 import reactor.io.buffer.Buffer;
 
 /**
- * A {@link RemoteFlux} is a virtual connection that often matches with a Socket or a Channel (e.g. Netty).
+ * A {@link ChannelFlux} is a virtual connection that often matches with a Socket or a Channel (e.g. Netty).
  * Implementations handle interacting inbound (received data) and errors by subscribing to {@link #input()}.
  * <p>
  * Writing and "flushing" is controlled by sinking 1 or more {@link #writeWith(Publisher)}
@@ -34,7 +34,7 @@ import reactor.io.buffer.Buffer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface RemoteFlux<IN, OUT>  {
+public interface ChannelFlux<IN, OUT>  {
 
 	/**
 	 * Get the address of the remote peer.

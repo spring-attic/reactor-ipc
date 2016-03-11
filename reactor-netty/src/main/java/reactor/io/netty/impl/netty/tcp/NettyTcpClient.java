@@ -52,8 +52,8 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.config.ClientSocketOptions;
 import reactor.io.netty.config.CommonSocketOptions;
@@ -185,10 +185,10 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected Mono<Void> doStart(final RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler) {
+	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler) {
 
-		final RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> targetHandler =
-				null == handler ? (RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>>) PING :
+		final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> targetHandler =
+				null == handler ? (ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>) PING :
 						handler;
 
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
@@ -216,7 +216,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 	}
 
 	@Override
-	protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(final RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+	protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			final Reconnect reconnect) {
 
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
@@ -253,7 +253,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 		  .addFirst(new SslHandler(ssl));
 	}
 
-	protected void bindChannel(RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			SocketChannel ch) throws Exception {
 
 		if (null != getSslOptions()) {

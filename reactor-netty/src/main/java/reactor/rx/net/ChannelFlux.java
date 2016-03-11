@@ -25,23 +25,22 @@ import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 
 /**
- * An abstract {@link RemoteFlux} implementation that handles the basic interaction and behave as a {@link
+ * An abstract {@link reactor.io.ipc.ChannelFlux} implementation that handles the basic interaction and behave as a {@link
  * Flux}.
  *
  * @author Stephane Maldini
  */
-public class ChannelFlux<IN, OUT> extends Flux<IN> implements RemoteFlux<IN, OUT> {
+public class ChannelFlux<IN, OUT> extends Flux<IN> implements reactor.io.ipc.ChannelFlux<IN, OUT> {
 
 	protected static final Logger log = Logger.getLogger(ChannelFlux.class);
 
 
-	private final RemoteFlux<IN, OUT> actual;
-	private final Timer               timer;
-	private final long                prefetch;
+	private final reactor.io.ipc.ChannelFlux<IN, OUT> actual;
+	private final Timer                               timer;
+	private final long                                prefetch;
 
 	/**
 	 *
@@ -52,8 +51,8 @@ public class ChannelFlux<IN, OUT> extends Flux<IN> implements RemoteFlux<IN, OUT
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> ChannelFlux<IN, OUT> wrap(final RemoteFlux<IN, OUT> actual, Timer timer, long prefetch){
-		return new ChannelFlux<>(actual, timer, prefetch);
+	public static <IN, OUT> ChannelFlux wrap(final reactor.io.ipc.ChannelFlux<IN, OUT> actual, Timer timer, long prefetch){
+		return new ChannelFlux(actual, timer, prefetch);
 	}
 
 	/**
@@ -65,8 +64,8 @@ public class ChannelFlux<IN, OUT> extends Flux<IN> implements RemoteFlux<IN, OUT
 	 * @param <OUT>
 	 * @return
 	 */
-	public static <IN, OUT> RemoteFluxHandler<IN, OUT, RemoteFlux<IN, OUT>> wrap(
-			final RemoteFluxHandler<IN, OUT, ChannelFlux<IN, OUT>> actual,
+	public static <IN, OUT> ChannelFluxHandler<IN, OUT, reactor.io.ipc.ChannelFlux<IN, OUT>> wrap(
+			final ChannelFluxHandler<IN, OUT, ChannelFlux> actual,
 			final Timer timer,
 			final long prefetch){
 
@@ -75,7 +74,7 @@ public class ChannelFlux<IN, OUT> extends Flux<IN> implements RemoteFlux<IN, OUT
 		return stream -> actual.apply(wrap(stream, timer, prefetch));
 	}
 
-	protected ChannelFlux(final RemoteFlux<IN, OUT> actual,
+	protected ChannelFlux(final reactor.io.ipc.ChannelFlux<IN, OUT> actual,
 							final Timer timer,
 	                        long prefetch) {
 

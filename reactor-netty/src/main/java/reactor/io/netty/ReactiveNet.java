@@ -21,6 +21,7 @@ import java.util.function.Function;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.impl.netty.http.NettyHttpClient;
@@ -32,7 +33,6 @@ import reactor.io.netty.nexus.Nexus;
 import reactor.io.netty.tcp.TcpClient;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.netty.udp.DatagramServer;
-import reactor.io.ipc.RemoteFlux;
 
 /**
  * Reactive Client/Server Network facilities <p>
@@ -88,14 +88,14 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to "loopback" on port {@literal 12012}. By default the default server implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> To reply data on the active connection, {@link
-	 * RemoteFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
+	 * ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
 	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpServer<Buffer, Buffer> tcpServer() {
 		return tcpServer(DEFAULT_BIND_ADDRESS);
@@ -105,10 +105,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty first is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -117,7 +117,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on loopback
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpServer<Buffer, Buffer> tcpServer(int port) {
 		return tcpServer(DEFAULT_BIND_ADDRESS, port);
@@ -127,10 +127,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty first is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
-	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from -
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
-	 * {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -139,7 +139,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpServer<Buffer, Buffer> tcpServer(String bindAddress) {
 		return tcpServer(bindAddress, DEFAULT_PORT);
@@ -149,10 +149,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -162,7 +162,7 @@ public enum ReactiveNet {
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpServer<Buffer, Buffer> tcpServer(final String bindAddress, final int port) {
 		return tcpServer(new Function<Spec.TcpServerSpec<Buffer, Buffer>, Spec.TcpServerSpec<Buffer, Buffer>>() {
@@ -178,10 +178,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to the specified bind address and port. By default the default server implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -192,7 +192,7 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> TcpServer<IN, OUT> tcpServer(Function<? super Spec.TcpServerSpec<IN, OUT>, ? extends Spec.TcpServerSpec<IN, OUT>> configuringFunction) {
 		return tcpServer(DEFAULT_TCP_SERVER_TYPE, configuringFunction);
@@ -200,10 +200,10 @@ public enum ReactiveNet {
 
 	/**
 	 * Bind a new TCP server to the specified bind address and port. <p> A {@link TcpServer} is a specific kind of
-	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from -
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
-	 * {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -215,7 +215,7 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> TcpServer<IN, OUT> tcpServer(Class<? extends TcpServer> serverFactory,
 			Function<? super Spec.TcpServerSpec<IN, OUT>, ? extends Spec.TcpServerSpec<IN, OUT>> configuringFunction) {
@@ -227,10 +227,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP client to the localhost on port 12012. By default the default client implementation is scanned
 	 * from the classpath on Class init. Support for Netty first is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -238,7 +238,7 @@ public enum ReactiveNet {
 	 * receiving IO events.
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpClient<Buffer, Buffer> tcpClient() {
 		return tcpClient(DEFAULT_BIND_ADDRESS);
@@ -248,10 +248,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP client to the specified connect address and port 12012. By default the default client
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of
-	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from -
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
-	 * {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -260,7 +260,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress the address to connect to on port 12012
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpClient<Buffer, Buffer> tcpClient(String bindAddress) {
 		return tcpClient(bindAddress, DEFAULT_PORT);
@@ -270,10 +270,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP client to "loopback" on the the specified port. By default the default client implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -282,7 +282,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to connect to on "loopback"
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpClient<Buffer, Buffer> tcpClient(int port) {
 		return tcpClient(DEFAULT_BIND_ADDRESS, port);
@@ -292,10 +292,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -305,7 +305,7 @@ public enum ReactiveNet {
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress the address to connect to
 	 * @param port the port to connect to
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static TcpClient<Buffer, Buffer> tcpClient(final String bindAddress, final int port) {
 		return tcpClient(new Function<Spec.TcpClientSpec<Buffer, Buffer>, Spec.TcpClientSpec<Buffer, Buffer>>() {
@@ -321,10 +321,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -335,7 +335,7 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> TcpClient<IN, OUT> tcpClient(Function<? super Spec.TcpClientSpec<IN, OUT>, ? extends Spec.TcpClientSpec<IN, OUT>> configuringFunction) {
 		return tcpClient(DEFAULT_TCP_CLIENT_TYPE, configuringFunction);
@@ -343,10 +343,10 @@ public enum ReactiveNet {
 
 	/**
 	 * Bind a new TCP client to the specified connect address and port. <p> A {@link TcpClient} is a specific kind of
-	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from -
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
-	 * {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -358,7 +358,7 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> TcpClient<IN, OUT> tcpClient(Class<? extends TcpClient> clientFactory,
 			Function<? super Spec.TcpClientSpec<IN, OUT>, ? extends Spec.TcpClientSpec<IN, OUT>> configuringFunction) {
@@ -451,10 +451,10 @@ public enum ReactiveNet {
 	 * Bind a new HTTP client to the specified connect address and port. By default the default server implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
 	 * dependencies are on the classpath. <p> A {@link HttpClient} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -465,7 +465,7 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> HttpClient<IN, OUT> httpClient(Function<? super Spec.HttpClientSpec<IN, OUT>, ? extends Spec.HttpClientSpec<IN, OUT>> configuringFunction) {
 		return httpClient(DEFAULT_HTTP_CLIENT_TYPE, configuringFunction);
@@ -475,10 +475,10 @@ public enum ReactiveNet {
 	 * Bind a new HTTP client to the specified connect address and port. By default the default server implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
 	 * dependencies are on the classpath. <p> A {@link HttpClient} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -490,7 +490,7 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> HttpClient<IN, OUT> httpClient(Class<? extends HttpClient> clientFactory,
 			Function<? super Spec.HttpClientSpec<IN, OUT>, ? extends Spec.HttpClientSpec<IN, OUT>> configuringFunction) {
@@ -503,8 +503,8 @@ public enum ReactiveNet {
 	/**
 	 * Bind a new UDP server to the "loopback" address. By default the default server implementation is scanned from the
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
-	 * classpath. <p> <p> From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read
-	 * any incoming data. <p> To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to
+	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
+	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
 	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
 	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
 	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
@@ -512,7 +512,7 @@ public enum ReactiveNet {
 	 * they have beem receiving IO events.
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static DatagramServer<Buffer, Buffer> udpServer() {
 		return udpServer(DEFAULT_BIND_ADDRESS);
@@ -521,8 +521,8 @@ public enum ReactiveNet {
 	/**
 	 * Bind a new UDP server to the given bind address. By default the default server implementation is scanned from the
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
-	 * classpath. <p> <p> From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to read
-	 * any incoming data. <p> To reply data on the active connection, {@link RemoteFlux#writeWith} can subscribe to
+	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
+	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
 	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
 	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
 	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
@@ -531,7 +531,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static DatagramServer<Buffer, Buffer> udpServer(String bindAddress) {
 		return udpServer(bindAddress, DEFAULT_PORT);
@@ -540,9 +540,9 @@ public enum ReactiveNet {
 	/**
 	 * Bind a new UDP server to the "loopback" address and specified port. By default the default server implementation
 	 * is scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
-	 * dependencies are on the classpath. <p> <p> From the emitted {@link RemoteFlux}, one can decide to add
+	 * dependencies are on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add
 	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
-	 * RemoteFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
+	 * ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
 	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
@@ -550,7 +550,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on the passed bind address
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static DatagramServer<Buffer, Buffer> udpServer(int port) {
 		return udpServer(DEFAULT_BIND_ADDRESS, port);
@@ -559,8 +559,8 @@ public enum ReactiveNet {
 	/**
 	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
-	 * on the classpath. <p> <p> From the emitted {@link RemoteFlux}, one can decide to add in-channel consumers to
-	 * read any incoming data. <p> To reply data on the active connection, {@link RemoteFlux#writeWith} can
+	 * on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to
+	 * read any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can
 	 * subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link
 	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
 	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
@@ -570,7 +570,7 @@ public enum ReactiveNet {
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static DatagramServer<Buffer, Buffer> udpServer(final String bindAddress, final int port) {
 		return udpServer(new Function<Spec.DatagramServerSpec<Buffer, Buffer>, Spec.DatagramServerSpec<Buffer, Buffer>>() {
@@ -585,9 +585,9 @@ public enum ReactiveNet {
 	/**
 	 * Bind a new UDP server to the specified bind address and port. By default the default server implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
-	 * dependencies are on the classpath. <p> <p> From the emitted {@link RemoteFlux}, one can decide to add
+	 * dependencies are on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add
 	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
-	 * RemoteFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
+	 * ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
 	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
@@ -597,16 +597,16 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> DatagramServer<IN, OUT> udpServer(Function<? super Spec.DatagramServerSpec<IN, OUT>, ? extends Spec.DatagramServerSpec<IN, OUT>> configuringFunction) {
 		return udpServer(DEFAULT_UDP_SERVER_TYPE, configuringFunction);
 	}
 
 	/**
-	 * Bind a new UDP server to the specified bind address and port. <p> <p> From the emitted {@link RemoteFlux},
+	 * Bind a new UDP server to the specified bind address and port. <p> <p> From the emitted {@link ChannelFlux},
 	 * one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the active connection,
-	 * {@link RemoteFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
+	 * {@link ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
 	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
 	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
 	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
@@ -616,7 +616,7 @@ public enum ReactiveNet {
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
 	 * @param <IN> the given input type received by this peer. Any configured codec decoder must match this type.
 	 * @param <OUT> the given output type received by this peer. Any configured codec encoder must match this type.
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static <IN, OUT> DatagramServer<IN, OUT> udpServer(Class<? extends DatagramServer> serverFactory,
 			Function<? super Spec.DatagramServerSpec<IN, OUT>, ? extends Spec.DatagramServerSpec<IN, OUT>> configuringFunction) {
@@ -630,14 +630,14 @@ public enum ReactiveNet {
 	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
-	 * {@link RemoteFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
+	 * {@link ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
 	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
 	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
 	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
 	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus nexus() {
 		return nexus(DEFAULT_BIND_ADDRESS);
@@ -647,10 +647,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -659,7 +659,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on loopback
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus nexus(int port) {
 		return nexus(DEFAULT_BIND_ADDRESS, port);
@@ -669,10 +669,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
-	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from -
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
-	 * {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -681,7 +681,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus nexus(String bindAddress) {
 		return nexus(bindAddress, DEFAULT_PORT);
@@ -692,10 +692,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -705,7 +705,7 @@ public enum ReactiveNet {
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus nexus(final String bindAddress, final int port) {
 		return nexus(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
@@ -722,10 +722,10 @@ public enum ReactiveNet {
 	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
-	 * org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from - onComplete
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -734,7 +734,7 @@ public enum ReactiveNet {
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus nexus(
 			Function<? super Spec.HttpServerSpec<Buffer, Buffer>, ? extends Spec.HttpServerSpec<Buffer, Buffer>>
@@ -744,10 +744,10 @@ public enum ReactiveNet {
 
 	/**
 	 * Bind a new TCP client to the specified connect address and port. <p> A {@link TcpClient} is a specific kind of
-	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link RemoteFlux} to consume data from -
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
-	 * {@link RemoteFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link RemoteFlux#writeWith} can subscribe to any passed {@link
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -757,7 +757,7 @@ public enum ReactiveNet {
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param consoleFactory the given implementation class for this peer
 	 * @param configuringFunction a function will apply and return a {@link Spec} to customize the peer
-	 * @return a new Stream of RemoteFlux, typically a peer of connections.
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus nexus(Class<? extends HttpServer> consoleFactory,
 			Function<? super Spec.HttpServerSpec<Buffer, Buffer>, ? extends Spec.HttpServerSpec<Buffer, Buffer>>
@@ -766,16 +766,16 @@ public enum ReactiveNet {
 	}
 
 	/**
-	 * Utils to read the RemoteFlux underlying channel
+	 * Utils to read the ChannelFlux underlying channel
 	 */
 
 	@SuppressWarnings("unchecked")
-	public static <E, IN, OUT> E delegate(RemoteFlux<IN, OUT> channel) {
+	public static <E, IN, OUT> E delegate(ChannelFlux<IN, OUT> channel) {
 		return (E) delegate(channel, Object.class);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <E, IN, OUT> E delegate(RemoteFlux<IN, OUT> channel, Class<E> clazz) {
+	public static <E, IN, OUT> E delegate(ChannelFlux<IN, OUT> channel, Class<E> clazz) {
 		Assert.isTrue(clazz.isAssignableFrom(channel.delegate()
 		                                                  .getClass()),
 				"Underlying channel is not of the given type: " + clazz.getName());

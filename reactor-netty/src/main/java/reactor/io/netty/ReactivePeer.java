@@ -23,17 +23,17 @@ import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 
 /**
  * Abstract base class that implements common functionality shared by clients and servers.
  * <p> A Peer is network component with start and shutdown capabilities. On Start it will
- * require a {@link RemoteFluxHandler} to process the incoming {@link
- * RemoteFlux}, regardless of being a server or a client.
+ * require a {@link ChannelFluxHandler} to process the incoming {@link
+ * ChannelFlux}, regardless of being a server or a client.
  * @author Stephane Maldini
  */
-public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
+public abstract class ReactivePeer<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 		implements Completable {
 
 	private final   Timer         defaultTimer;
@@ -57,7 +57,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 	 * ReactivePeer} is started
 	 */
 	public final Mono<Void> start(
-			final RemoteFluxHandler<IN, OUT, CONN> handler) {
+			final ChannelFluxHandler<IN, OUT, CONN> handler) {
 
 		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
 			throw new IllegalStateException("Peer already started");
@@ -67,11 +67,11 @@ public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 	}
 
 	/**
-	 * @see this#start(RemoteFluxHandler)
+	 * @see this#start(ChannelFluxHandler)
 	 * @param handler
 	 * @throws InterruptedException
 	 */
-	public final void startAndAwait(final RemoteFluxHandler<IN, OUT, CONN> handler)
+	public final void startAndAwait(final ChannelFluxHandler<IN, OUT, CONN> handler)
 			throws InterruptedException {
 		start(handler).get();
 	}
@@ -107,7 +107,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>, P extends ReactivePeer<NEWIN, NEWOUT, NEWCONN>> P preprocessor(
+	public final <NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>, P extends ReactivePeer<NEWIN, NEWOUT, NEWCONN>> P preprocessor(
 			final Function<CONN, NEWCONN> preprocessor){
 
 		checkPreprocessor(preprocessor);
@@ -125,8 +125,8 @@ public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 	 * @param <NEWOUT>
 	 * @return
 	 */
-	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> doPreprocessor(
-			final Function<CONN, ? extends RemoteFlux<NEWIN, NEWOUT>> preprocessor
+	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> doPreprocessor(
+			final Function<CONN, ? extends ChannelFlux<NEWIN, NEWOUT>> preprocessor
 	){
 		return new PreprocessedReactivePeer<>(preprocessor);
 	}
@@ -157,7 +157,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 	}
 
 	protected abstract Mono<Void> doStart(
-			RemoteFluxHandler<IN, OUT, CONN> handler);
+			ChannelFluxHandler<IN, OUT, CONN> handler);
 
 	protected abstract Mono<Void> doShutdown();
 
@@ -175,7 +175,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 		return !started.get();
 	}
 
-	private final class PreprocessedReactivePeer<NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>>
+	private final class PreprocessedReactivePeer<NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>>
 			extends ReactivePeer<NEWIN, NEWOUT, NEWCONN> {
 
 		private final Function<CONN, ? extends NEWCONN> preprocessor;
@@ -187,8 +187,8 @@ public abstract class ReactivePeer<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 
 		@Override
 		protected Mono<Void> doStart(
-				final RemoteFluxHandler<NEWIN, NEWOUT, NEWCONN> handler) {
-			RemoteFluxHandler<IN, OUT, CONN> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
+				final ChannelFluxHandler<NEWIN, NEWOUT, NEWCONN> handler) {
+			ChannelFluxHandler<IN, OUT, CONN> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return ReactivePeer.this.start(p);
 		}
 

@@ -21,15 +21,15 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 
 /**
- * A callback listening for all connected {@link RemoteFlux}. The {@link #apply} implementation must
- * return a {@link Publisher} to complete or error in order to close the {@link RemoteFlux} associated resources.
+ * A callback listening for all connected {@link ChannelFlux}. The {@link #apply} implementation must
+ * return a {@link Publisher} to complete or error in order to close the {@link ChannelFlux} associated resources.
  *
  * @param <IN>  the type of the received data
  * @param <OUT> the type of replied data
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface RemoteFluxHandler<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
+public interface ChannelFluxHandler<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 		extends Function<CONN, Publisher<Void>> {
 
 

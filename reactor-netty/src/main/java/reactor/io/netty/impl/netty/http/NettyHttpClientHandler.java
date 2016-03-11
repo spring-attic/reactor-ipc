@@ -37,8 +37,8 @@ import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpException;
 import reactor.io.netty.http.model.Cookie;
@@ -60,7 +60,7 @@ public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 	private boolean discardBody = false;
 
 	public NettyHttpClientHandler(
-			RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			NettyChannel tcpStream) {
 		super(handler, tcpStream);
 		this.tcpStream = tcpStream;

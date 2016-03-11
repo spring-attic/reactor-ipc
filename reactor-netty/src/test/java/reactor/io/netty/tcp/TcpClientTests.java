@@ -57,7 +57,7 @@ import reactor.io.netty.impl.netty.tcp.NettyTcpClient;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.TcpClient;
 import reactor.io.netty.tcp.support.SocketUtils;
-import reactor.rx.net.NetStreams;
+import reactor.io.netty.ReactiveNet;
 import reactor.rx.net.tcp.ReactorTcpClient;
 
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -19,22 +19,22 @@ package reactor.io.netty;
 import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 
 /**
- * A {@link RemoteFlux} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization
+ * A {@link ChannelFlux} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization
  * and receives
- * all connected {@link RemoteFlux}. The {@link #apply} implementation must return a Publisher to complete or error
- * in order to close the {@link RemoteFlux}.
+ * all connected {@link ChannelFlux}. The {@link #apply} implementation must return a Publisher to complete or error
+ * in order to close the {@link ChannelFlux}.
  *
  * @param <IN>  the type of the received data
  * @param <OUT> the type of replied data
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface Preprocessor<IN, OUT, CONN extends RemoteFlux<IN, OUT>,
-		NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>>
+public interface Preprocessor<IN, OUT, CONN extends ChannelFlux<IN, OUT>,
+		NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>>
 		extends Function<CONN, NEWCONN> {
 
 	/**
@@ -46,11 +46,11 @@ public interface Preprocessor<IN, OUT, CONN extends RemoteFlux<IN, OUT>,
 	 * @param <NEWOUT>
 	 * @param <NEWCONN>
 	 */
-	final class PreprocessedHandler<IN, OUT, CONN extends RemoteFlux<IN,OUT>, NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>>
-			implements RemoteFluxHandler<IN, OUT, CONN> {
+	final class PreprocessedHandler<IN, OUT, CONN extends ChannelFlux<IN,OUT>, NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>>
+			implements ChannelFluxHandler<IN, OUT, CONN> {
 
 		private final Function<? super CONN, ? extends NEWCONN> preprocessor;
-		private final RemoteFluxHandler<NEWIN, NEWOUT, NEWCONN>
+		private final ChannelFluxHandler<NEWIN, NEWOUT, NEWCONN>
 				handler;
 
 		/**
@@ -66,15 +66,15 @@ public interface Preprocessor<IN, OUT, CONN extends RemoteFlux<IN, OUT>,
 		 * @param <NEWCONN>
 		 * @return
 		 */
-		public static <IN, OUT, CONN extends RemoteFlux<IN,OUT>, NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>> PreprocessedHandler<IN, OUT, CONN, NEWIN, NEWOUT,NEWCONN> create(
-				RemoteFluxHandler<NEWIN, NEWOUT, NEWCONN> handler,
+		public static <IN, OUT, CONN extends ChannelFlux<IN,OUT>, NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>> PreprocessedHandler<IN, OUT, CONN, NEWIN, NEWOUT,NEWCONN> create(
+				ChannelFluxHandler<NEWIN, NEWOUT, NEWCONN> handler,
 				Function<? super CONN, ? extends NEWCONN> preprocessor
 		){
 			return new PreprocessedHandler<>(preprocessor, handler);
 		}
 
 		private PreprocessedHandler(Function<? super CONN, ? extends NEWCONN> preprocessor,
-				RemoteFluxHandler<NEWIN, NEWOUT, NEWCONN> handler) {
+				ChannelFluxHandler<NEWIN, NEWOUT, NEWCONN> handler) {
 			this.preprocessor = preprocessor;
 			this.handler = handler;
 		}

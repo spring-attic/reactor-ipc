@@ -49,8 +49,8 @@ import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.impl.netty.NettyChannel;
 import reactor.io.netty.impl.netty.NettyServerSocketOptions;
@@ -149,7 +149,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Mono<Void> doStart(final RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> channelHandler) {
+	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> channelHandler) {
 		return new Mono<Void>(){
 
 			@Override
@@ -251,7 +251,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 		};
 	}
 
-	protected void bindChannel(RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			Object _ioChannel) {
 		DatagramChannel ioChannel = (DatagramChannel) _ioChannel;
 		NettyChannel netChannel = new NettyChannel(

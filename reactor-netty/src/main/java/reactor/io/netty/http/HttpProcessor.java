@@ -16,7 +16,7 @@
 
 package reactor.io.netty.http;
 
-import reactor.io.ipc.RemoteFlux;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.ReactiveClient;
 import reactor.io.netty.ReactivePeer;
 
@@ -24,7 +24,7 @@ import reactor.io.netty.ReactivePeer;
  * A {@link HttpChannel} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization
  * and receives
  * all connected {@link HttpChannel}. The implementation must return a Publisher to complete or error
- * in order to close the {@link RemoteFlux}.
+ * in order to close the {@link ChannelFlux}.
  *
  * @param <IN>  the type of the received data
  * @param <OUT> the type of replied data

@@ -18,7 +18,7 @@ package reactor.io.netty.http
 import reactor.core.publisher.Mono
 import reactor.io.netty.http.model.Cookie
 import reactor.io.netty.preprocessor.CodecPreprocessor
-import reactor.rx.net.NetStreams
+import reactor.io.netty.ReactiveNet
 import reactor.rx.net.http.HttpChannelFlux
 import spock.lang.Specification
 

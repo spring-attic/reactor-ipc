@@ -41,8 +41,8 @@ import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.config.ClientSocketOptions;
 import reactor.io.netty.config.SslOptions;
@@ -89,7 +89,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 
 	@Override
 	protected Mono<Void> doStart(
-			final RemoteFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
 		return client.start(inoutChannelFlux -> {
 			final NettyHttpChannel ch =
 					((NettyHttpChannel) inoutChannelFlux);
@@ -99,7 +99,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 
 	@Override
 	protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
-			final RemoteFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler,
 			final Reconnect reconnect) {
 		return client.start(inoutChannelFlux -> {
 			final NettyHttpChannel ch =
@@ -111,7 +111,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	@Override
 	public Mono<? extends HttpChannel<Buffer, Buffer>> request(final Method method,
 			final String url,
-			final RemoteFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
 		final URI currentURI;
 		try {
 			Assert.isTrue(method != null && url != null);
@@ -158,7 +158,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	}
 
 	protected void bindChannel(
-			RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			Object nativeChannel) {
 		SocketChannel ch = (SocketChannel) nativeChannel;
 
@@ -191,13 +191,13 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 
 	private class PostRequestPublisher extends Mono<HttpChannel<Buffer, Buffer>> {
 
-		private final URI currentURI;
-		private final Method                                                              method;
-		private final RemoteFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler;
+		private final URI                                                             currentURI;
+		private final Method                                                          method;
+		private final ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler;
 
 		public PostRequestPublisher(URI currentURI,
 				Method method,
-				RemoteFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
+				ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
 			this.currentURI = currentURI;
 			this.method = method;
 			this.handler = handler;
@@ -263,7 +263,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 
 		@Override
 		protected void bindChannel(
-				RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler,
+				ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 				SocketChannel nativeChannel) {
 
 			URI currentURI = lastURI;

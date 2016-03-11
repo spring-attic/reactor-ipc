@@ -22,18 +22,17 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.tuple.Tuple2;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.tcp.TcpClient;
-import reactor.rx.net.ChannelFlux;
 import reactor.rx.net.ReactorChannelHandler;
 import reactor.rx.net.ReactorPeer;
 
 /**
  * A network-aware client that will publish its connection once available to the {@link
- * RemoteFluxHandler} passed.
+ * ChannelFluxHandler} passed.
  * @param <IN> the type of the received data
  * @param <OUT> the type of replied data
  * @author Stephane Maldini
@@ -60,9 +59,9 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Mono<Void> start(RemoteFluxHandler<IN, OUT, ChannelFlux<IN, OUT>> handler) {
+	public Mono<Void> start(ChannelFluxHandler<IN, OUT, reactor.rx.net.ChannelFlux> handler) {
 		return peer.start(
-				ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				reactor.rx.net.ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 		);
 	}
 
@@ -77,7 +76,7 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 
 	/**
 	 * Open a channel to the configured address and return a {@link Publisher} that will
-	 * be populated by the {@link RemoteFlux} every time a connection or reconnection
+	 * be populated by the {@link ChannelFlux} every time a connection or reconnection
 	 * is made. <p> The returned {@link Publisher} will typically complete when all
 	 * reconnect options have been used, or error if anything wrong happened during the
 	 * (re)connection process.
@@ -88,7 +87,7 @@ public final class ReactorTcpClient<IN, OUT> extends ReactorPeer<IN, OUT, TcpCli
 			ReactorChannelHandler<IN, OUT> handler, Reconnect reconnect) {
 		return Flux.from(
 				peer.start(
-				ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
+				reactor.rx.net.ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 				, reconnect)
 		);
 	}

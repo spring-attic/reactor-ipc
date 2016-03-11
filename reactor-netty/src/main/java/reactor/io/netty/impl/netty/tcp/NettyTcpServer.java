@@ -43,8 +43,8 @@ import reactor.core.timer.Timer;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.config.CommonSocketOptions;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
@@ -152,7 +152,7 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 	}
 
 	@Override
-	protected Mono<Void> doStart(final RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>>
+	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>
 			handler) {
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
@@ -231,7 +231,7 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 		return shutdown;
 	}
 
-	protected void bindChannel(RemoteFluxHandler<Buffer, Buffer, RemoteFlux<Buffer, Buffer>> handler, SocketChannel
+	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler, SocketChannel
 	  nativeChannel) {
 
 		NettyChannel netChannel = new NettyChannel(

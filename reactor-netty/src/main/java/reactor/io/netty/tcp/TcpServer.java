@@ -23,9 +23,9 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.Preprocessor;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
@@ -37,7 +37,7 @@ import reactor.io.netty.config.SslOptions;
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
-public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, RemoteFlux<IN, OUT>>
+public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ChannelFlux<IN, OUT>>
 		implements Introspectable {
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
@@ -88,7 +88,7 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, RemoteFlu
 	}
 
 	@Override
-	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> doPreprocessor(Function<RemoteFlux<IN, OUT>, ? extends RemoteFlux<NEWIN, NEWOUT>> preprocessor) {
+	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> doPreprocessor(Function<ChannelFlux<IN, OUT>, ? extends ChannelFlux<NEWIN, NEWOUT>> preprocessor) {
 		return new PreprocessedTcpServer<>(preprocessor);
 	}
 
@@ -102,12 +102,12 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, RemoteFlu
 		return 0;
 	}
 
-	private final class PreprocessedTcpServer<NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>>
+	private final class PreprocessedTcpServer<NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>>
 			extends TcpServer<NEWIN, NEWOUT> {
 
-		private final Function<RemoteFlux<IN, OUT>, ? extends NEWCONN> preprocessor;
+		private final Function<ChannelFlux<IN, OUT>, ? extends NEWCONN> preprocessor;
 
-		public PreprocessedTcpServer(Function<RemoteFlux<IN, OUT>, ? extends NEWCONN> preprocessor) {
+		public PreprocessedTcpServer(Function<ChannelFlux<IN, OUT>, ? extends NEWCONN> preprocessor) {
 			super(TcpServer.this.getDefaultTimer(),
 					TcpServer.this.getListenAddress(),
 					TcpServer.this.getOptions(),
@@ -116,8 +116,8 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, RemoteFlu
 		}
 
 		@Override
-		protected Mono<Void> doStart(RemoteFluxHandler<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> handler) {
-			RemoteFluxHandler<IN, OUT, RemoteFlux<IN, OUT>> p =
+		protected Mono<Void> doStart(ChannelFluxHandler<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> handler) {
+			ChannelFluxHandler<IN, OUT, ChannelFlux<IN, OUT>> p =
 					Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return TcpServer.this.start(p);
 		}

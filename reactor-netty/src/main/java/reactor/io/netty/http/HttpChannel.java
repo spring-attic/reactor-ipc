@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
-import reactor.io.ipc.RemoteFlux;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.http.model.Cookie;
 import reactor.io.netty.http.model.HttpHeaders;
 import reactor.io.netty.http.model.Method;
@@ -37,7 +37,7 @@ import reactor.io.netty.http.model.Transfer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface HttpChannel<IN, OUT> extends RemoteFlux<IN, OUT> {
+public interface HttpChannel<IN, OUT> extends ChannelFlux<IN, OUT> {
 
 	String WS_SCHEME    = "ws";
 	String WSS_SCHEME   = "wss";

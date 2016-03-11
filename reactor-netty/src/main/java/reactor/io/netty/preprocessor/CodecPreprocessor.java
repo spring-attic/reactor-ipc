@@ -32,8 +32,8 @@ import reactor.io.codec.StandardCodecs;
 import reactor.io.codec.StringCodec;
 import reactor.io.codec.compress.GzipCodec;
 import reactor.io.codec.json.JsonCodec;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.Preprocessor;
-import reactor.io.ipc.RemoteFlux;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpProcessor;
 import reactor.io.netty.http.model.Cookie;
@@ -49,7 +49,7 @@ import reactor.io.netty.http.model.Transfer;
  * @since 2.5
  */
 public final class CodecPreprocessor<IN, OUT>
-		implements Preprocessor<Buffer, Buffer, RemoteFlux<Buffer, Buffer>, IN, OUT, RemoteFlux<IN, OUT>>,
+		implements Preprocessor<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, IN, OUT, ChannelFlux<IN, OUT>>,
 		           HttpProcessor<Buffer, Buffer, HttpChannel<Buffer, Buffer>, IN, OUT, HttpChannel<IN, OUT>> {
 
 	static {
@@ -213,7 +213,7 @@ public final class CodecPreprocessor<IN, OUT>
 	}
 
 	@Override
-	public RemoteFlux<IN, OUT> apply(final RemoteFlux<Buffer, Buffer> channel) {
+	public ChannelFlux<IN, OUT> apply(final ChannelFlux<Buffer, Buffer> channel) {
 		if(channel == null) return null;
 		return new CodecChannel<>(decoder, encoder, channel);
 	}
@@ -224,15 +224,15 @@ public final class CodecPreprocessor<IN, OUT>
 		return new CodecHttpChannel<>(decoder, encoder, channel);
 	}
 
-	private static class CodecChannel<IN, OUT> implements RemoteFlux<IN, OUT> {
+	private static class CodecChannel<IN, OUT> implements ChannelFlux<IN, OUT> {
 
 		private final Codec<Buffer, IN, ?> decoder;
 		private final Codec<Buffer, ?, OUT> encoder;
 
-		private final RemoteFlux<Buffer, Buffer> channel;
+		private final ChannelFlux<Buffer, Buffer> channel;
 
 		public CodecChannel(Codec<Buffer, IN, ?> decoder, Codec<Buffer, ?, OUT> encoder,
-				RemoteFlux<Buffer, Buffer> channel) {
+				ChannelFlux<Buffer, Buffer> channel) {
 			this.encoder = encoder;
 			this.decoder = decoder;
 			this.channel = channel;

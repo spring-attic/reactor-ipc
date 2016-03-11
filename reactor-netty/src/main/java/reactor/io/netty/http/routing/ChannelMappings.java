@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 import org.reactivestreams.Publisher;
 import reactor.core.converter.DependencyUtils;
 import reactor.core.util.Assert;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.model.Method;
 import reactor.io.netty.http.model.Protocol;
@@ -33,7 +33,7 @@ import reactor.io.netty.http.model.Protocol;
  * @author Stephane Maldini
  */
 public abstract class ChannelMappings<IN, OUT>
-		implements Function<HttpChannel<IN, OUT>, Iterable<? extends RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>>>{
+		implements Function<HttpChannel<IN, OUT>, Iterable<? extends ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>>>{
 
 	private static final boolean FORCE_SIMPLE_MAPPINGS =
 			Boolean.parseBoolean(System.getProperty("reactor.net.forceSimpleMappings", "false"));
@@ -202,7 +202,7 @@ public abstract class ChannelMappings<IN, OUT>
 	 * @return
 	 */
 	public abstract ChannelMappings<IN, OUT> add(Predicate<? super HttpChannel<IN, OUT>> condition,
-			RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler);
+			ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler);
 
 
 	/**
@@ -211,15 +211,15 @@ public abstract class ChannelMappings<IN, OUT>
 	 * @param <OUT>
 	 */
 	public static final class HttpHandlerMapping<IN, OUT>
-			implements RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>,
+			implements ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>,
 			           Predicate<HttpChannel<IN, OUT>>{
 
-		private final Predicate<? super HttpChannel<IN, OUT>>               condition;
-		private final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler;
-		private final Function<? super String, Map<String, Object>>         resolver;
+		private final Predicate<? super HttpChannel<IN, OUT>>           condition;
+		private final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler;
+		private final Function<? super String, Map<String, Object>>     resolver;
 
 		HttpHandlerMapping(Predicate<? super HttpChannel<IN, OUT>> condition,
-				RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler,
+				ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler,
 				Function<? super String, Map<String, Object>>         resolver) {
 			this.condition = condition;
 			this.handler = handler;
@@ -248,7 +248,7 @@ public abstract class ChannelMappings<IN, OUT>
 		 *
 		 * @return
 		 */
-		public RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> getHandler() {
+		public ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> getHandler() {
 			return handler;
 		}
 	}
@@ -260,14 +260,14 @@ public abstract class ChannelMappings<IN, OUT>
 				new CopyOnWriteArrayList<>();
 
 		@Override
-		public Iterable<? extends RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> apply(
+		public Iterable<? extends ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> apply(
 				final HttpChannel<IN, OUT> channel) {
 
-			return new Iterable<RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>>() {
+			return new Iterable<ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>>() {
 				@Override
-				public Iterator<RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> iterator() {
+				public Iterator<ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> iterator() {
 					final Iterator<HttpHandlerMapping<IN, OUT>> iterator = handlers.iterator();
-					return new Iterator<RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>>() {
+					return new Iterator<ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>>() {
 
 						HttpHandlerMapping<IN, OUT> cached;
 
@@ -285,7 +285,7 @@ public abstract class ChannelMappings<IN, OUT>
 						}
 
 						@Override
-						public RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> next() {
+						public ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> next() {
 							HttpHandlerMapping<IN, OUT> cursor = cached;
 							if(cursor != null){
 								cached = null;
@@ -301,7 +301,7 @@ public abstract class ChannelMappings<IN, OUT>
 
 		@Override
 		public ChannelMappings<IN, OUT> add(Predicate<? super HttpChannel<IN, OUT>> condition,
-				RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+				ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 
 			handlers.add(new HttpHandlerMapping<>(condition, handler, null));
 			return this;

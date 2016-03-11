@@ -47,8 +47,6 @@ import reactor.io.netty.Spec;
 import reactor.io.netty.impl.netty.NettyClientSocketOptions;
 import reactor.io.netty.impl.netty.NettyServerSocketOptions;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
-import reactor.rx.net.NetStreams;
-import reactor.rx.net.http.ReactorHttpClient;
 import reactor.rx.net.http.ReactorHttpServer;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;

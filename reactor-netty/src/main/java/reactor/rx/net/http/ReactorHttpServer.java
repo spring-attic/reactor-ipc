@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 import java.util.function.Predicate;
 
 import reactor.core.publisher.Mono;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpServer;
@@ -51,7 +51,7 @@ public final class ReactorHttpServer<IN, OUT> extends ReactorPeer<IN, OUT, HttpS
 	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Mono<Void> start(RemoteFluxHandler<IN, OUT, HttpChannelFlux<IN, OUT>> handler) {
+	public Mono<Void> start(ChannelFluxHandler<IN, OUT, HttpChannelFlux<IN, OUT>> handler) {
 		return peer.start(
 				HttpChannelFlux.wrapHttp(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 		);

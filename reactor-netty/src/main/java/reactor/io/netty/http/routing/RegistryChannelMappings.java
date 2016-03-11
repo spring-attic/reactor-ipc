@@ -25,7 +25,7 @@ import reactor.bus.selector.Selector;
 import reactor.bus.selector.Selectors;
 import reactor.bus.selector.UriPathSelector;
 import reactor.core.converter.DependencyUtils;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.model.Method;
 import reactor.io.netty.http.model.Protocol;
@@ -45,7 +45,7 @@ public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
 			Registries.create();
 
 	@Override
-	public Iterable<? extends RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> apply(
+	public Iterable<? extends ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> apply(
 			HttpChannel<IN, OUT> channel) {
 		return routedWriters.selectValues(channel);
 	}
@@ -53,7 +53,7 @@ public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public ChannelMappings<IN, OUT> add(Predicate<? super HttpChannel<IN, OUT>> condition,
-			RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 
 		Selector<HttpChannel<IN, OUT>> selector;
 

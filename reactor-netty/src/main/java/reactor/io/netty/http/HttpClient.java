@@ -24,7 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple2;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveClient;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.config.ClientSocketOptions;
@@ -48,12 +48,12 @@ public abstract class HttpClient<IN, OUT>
 	 * HTTP GET the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<? extends HttpChannel<IN, OUT>> get(String url,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.GET, url, handler);
 	}
 
@@ -72,12 +72,12 @@ public abstract class HttpClient<IN, OUT>
 	 * HTTP POST the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<? extends HttpChannel<IN, OUT>> post(String url,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.POST, url, handler);
 	}
 
@@ -85,12 +85,12 @@ public abstract class HttpClient<IN, OUT>
 	 * HTTP PUT the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<? extends HttpChannel<IN, OUT>> put(String url,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.PUT, url, handler);
 	}
 
@@ -98,12 +98,12 @@ public abstract class HttpClient<IN, OUT>
 	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<? extends HttpChannel<IN, OUT>> delete(String url,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.DELETE, url, handler);
 	}
 
@@ -134,12 +134,12 @@ public abstract class HttpClient<IN, OUT>
 	 *
 	 * precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<? extends HttpChannel<IN, OUT>> ws(String url,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
 		return request(Method.WS, url, handler);
 	}
 
@@ -149,13 +149,13 @@ public abstract class HttpClient<IN, OUT>
 	 * write data to it.
 	 * @param method the HTTP method to send
 	 * @param url the target remote URL
-	 * @param handler the {@link RemoteFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public abstract Mono<? extends HttpChannel<IN, OUT>> request(Method method,
 			String url,
-			final RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler);
+			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler);
 
 	/**
 	 *
@@ -186,10 +186,10 @@ public abstract class HttpClient<IN, OUT>
 		@Override
 		public Mono<? extends HttpChannel<NEWIN, NEWOUT>> request(Method method,
 				String url,
-				final RemoteFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
+				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
 			return
 					HttpClient.this.request(method, url, handler != null ?
-							(RemoteFluxHandler<IN, OUT, HttpChannel<IN, OUT>>) conn -> handler.apply(preprocessor.transform(conn)) : null).map(new Function<HttpChannel<IN, OUT>, HttpChannel<NEWIN, NEWOUT>>() {
+							(ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>) conn -> handler.apply(preprocessor.transform(conn)) : null).map(new Function<HttpChannel<IN, OUT>, HttpChannel<NEWIN, NEWOUT>>() {
 				@Override
 				public HttpChannel<NEWIN, NEWOUT> apply(HttpChannel<IN, OUT> channel) {
 					return preprocessor.transform(channel);
@@ -199,14 +199,14 @@ public abstract class HttpClient<IN, OUT>
 
 		@Override
 		protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
-				final RemoteFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
+				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
 				Reconnect reconnect) {
 			return HttpClient.this.start(conn -> handler.apply(preprocessor.transform(conn)), reconnect);
 		}
 
 		@Override
 		protected Mono<Void> doStart(
-				final RemoteFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
+				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
 			return HttpClient.this.start(conn -> handler.apply(preprocessor.transform(conn)));
 		}
 

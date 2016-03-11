@@ -41,17 +41,17 @@ import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.RemoteFlux;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.impl.netty.tcp.NettyChannelHandlerBridge;
 
 /**
- * {@link RemoteFlux} implementation that delegates to Netty.
+ * {@link ChannelFlux} implementation that delegates to Netty.
  * @author Stephane Maldini
  * @since 2.5
  */
 public class NettyChannel
 		extends Flux<Buffer>
-		implements RemoteFlux<Buffer, Buffer>, Loopback, Completable {
+		implements ChannelFlux<Buffer, Buffer>, Loopback, Completable {
 
 	private final Channel ioChannel;
 	private final long    prefetch;

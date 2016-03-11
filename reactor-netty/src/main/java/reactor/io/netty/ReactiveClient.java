@@ -22,21 +22,21 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple2;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.ChannelFluxHandler;
 
 /**
  * A network-aware client that will publish its connection once available to the {@link
- * RemoteFluxHandler} passed.
+ * ChannelFluxHandler} passed.
  * @param <IN> the type of the received data
  * @param <OUT> the type of replied data
  * @param <CONN> the channel implementation
  * @author Stephane Maldini
  */
-public abstract class ReactiveClient<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
+public abstract class ReactiveClient<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 		extends ReactivePeer<IN, OUT, CONN> {
 
-	public static final RemoteFluxHandler PING = new RemoteFluxHandler() {
+	public static final ChannelFluxHandler PING = new ChannelFluxHandler() {
 		@Override
 		public Object apply(Object o) {
 			return Flux.empty();
@@ -49,7 +49,7 @@ public abstract class ReactiveClient<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 
 	/**
 	 * Open a channel to the configured address and return a {@link Publisher} that will
-	 * be populated by the {@link RemoteFlux} every time a connection or reconnection
+	 * be populated by the {@link ChannelFlux} every time a connection or reconnection
 	 * is made. <p> The returned {@link Publisher} will typically complete when all
 	 * reconnect options have been used, or error if anything wrong happened during the
 	 * (re)connection process.
@@ -57,7 +57,7 @@ public abstract class ReactiveClient<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 	 * @return a Publisher of reconnected address and accumulated number of attempt pairs
 	 */
 	public final Flux<Tuple2<InetSocketAddress, Integer>> start(
-			RemoteFluxHandler<IN, OUT, CONN> handler, Reconnect reconnect) {
+			ChannelFluxHandler<IN, OUT, CONN> handler, Reconnect reconnect) {
 		if (!started.compareAndSet(false, true)) {
 			throw new IllegalStateException("Client already started");
 		}
@@ -66,7 +66,7 @@ public abstract class ReactiveClient<IN, OUT, CONN extends RemoteFlux<IN, OUT>>
 	}
 
 	protected abstract Flux<Tuple2<InetSocketAddress, Integer>> doStart(
-			RemoteFluxHandler<IN, OUT, CONN> handler, Reconnect reconnect);
+			ChannelFluxHandler<IN, OUT, CONN> handler, Reconnect reconnect);
 
 
 }

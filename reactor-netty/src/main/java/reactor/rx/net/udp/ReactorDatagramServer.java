@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 
 import reactor.core.publisher.Mono;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.udp.DatagramServer;
 import reactor.rx.net.ChannelFlux;
@@ -50,7 +50,7 @@ public class ReactorDatagramServer<IN, OUT> extends ReactorPeer<IN, OUT, Datagra
 	 * @return a {@link Mono<Void>} that will be complete when the {@link
 	 * ReactivePeer} is started
 	 */
-	public Mono<Void> start(RemoteFluxHandler<IN, OUT, ChannelFlux<IN, OUT>> handler) {
+	public Mono<Void> start(ChannelFluxHandler<IN, OUT, ChannelFlux<IN, OUT>> handler) {
 		return peer.start(
 				ChannelFlux.wrap(handler, peer.getDefaultTimer(), peer.getDefaultPrefetchSize())
 		);

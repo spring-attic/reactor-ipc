@@ -25,9 +25,9 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.timer.Timer;
+import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.Preprocessor;
-import reactor.io.ipc.RemoteFlux;
-import reactor.io.ipc.RemoteFluxHandler;
+import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.config.ServerSocketOptions;
 
@@ -36,7 +36,7 @@ import reactor.io.netty.config.ServerSocketOptions;
  * @author Stephane Maldini
  */
 public abstract class DatagramServer<IN, OUT>
-		extends ReactivePeer<IN, OUT, RemoteFlux<IN, OUT>> {
+		extends ReactivePeer<IN, OUT, ChannelFlux<IN, OUT>> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
@@ -123,26 +123,27 @@ public abstract class DatagramServer<IN, OUT>
 	}
 
 	@Override
-	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> doPreprocessor(
-			Function<RemoteFlux<IN, OUT>, ? extends RemoteFlux<NEWIN, NEWOUT>> preprocessor) {
+	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> doPreprocessor(
+			Function<ChannelFlux<IN, OUT>, ? extends ChannelFlux<NEWIN, NEWOUT>> preprocessor) {
 		return new PreprocessedDatagramServer<>(preprocessor);
 	}
 
-	private final class PreprocessedDatagramServer<NEWIN, NEWOUT, NEWCONN extends RemoteFlux<NEWIN, NEWOUT>>
+	private final class PreprocessedDatagramServer<NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>>
 			extends DatagramServer<NEWIN, NEWOUT> {
 
-		private final Function<RemoteFlux<IN, OUT>, ? extends NEWCONN>
+		private final Function<ChannelFlux<IN, OUT>, ? extends NEWCONN>
 				preprocessor;
 
-		public PreprocessedDatagramServer(Function<RemoteFlux<IN, OUT>, ? extends NEWCONN> preprocessor) {
+		public PreprocessedDatagramServer(Function<ChannelFlux<IN, OUT>, ? extends NEWCONN> preprocessor) {
 			super(DatagramServer.this.getDefaultTimer(), DatagramServer.this.getListenAddress(), DatagramServer.this.getMulticastInterface(), DatagramServer.this.getOptions());
 			this.preprocessor = preprocessor;
 		}
 
 		@Override
 		protected Mono<Void> doStart(
-				RemoteFluxHandler<NEWIN, NEWOUT, RemoteFlux<NEWIN, NEWOUT>> handler) {
-			RemoteFluxHandler<IN, OUT, RemoteFlux<IN, OUT>> p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
+				ChannelFluxHandler<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> handler) {
+			ChannelFluxHandler<IN, OUT, ChannelFlux<IN, OUT>>
+					p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
 			return DatagramServer.this.start(p);
 		}
 
