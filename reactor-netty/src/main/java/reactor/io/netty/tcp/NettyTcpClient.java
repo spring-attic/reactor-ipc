@@ -59,7 +59,6 @@ import reactor.io.netty.config.ClientSocketOptions;
 import reactor.io.netty.config.CommonSocketOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.NettyChannel;
-import reactor.io.netty.NettyClientSocketOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 import reactor.io.netty.tcp.TcpClient;
 import reactor.io.netty.tcp.TcpServer;
@@ -74,7 +73,6 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 
 	private static final Logger log = Logger.getLogger(NettyTcpClient.class);
 
-	private final NettyClientSocketOptions nettyOptions;
 	private final Bootstrap                bootstrap;
 	private final EventLoopGroup           ioGroup;
 	private final Supplier<ChannelFuture>  connectionSupplier;
@@ -102,15 +100,8 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 		super(timer, connectAddress, options, sslOptions);
 		this.connectAddress = connectAddress;
 
-		if (options instanceof NettyClientSocketOptions) {
-			this.nettyOptions = (NettyClientSocketOptions) options;
-		}
-		else {
-			this.nettyOptions = null;
-
-		}
-		if (null != nettyOptions && null != nettyOptions.eventLoopGroup()) {
-			this.ioGroup = nettyOptions.eventLoopGroup();
+		if (null != options && null != options.eventLoopGroup()) {
+			this.ioGroup = options.eventLoopGroup();
 		}
 		else {
 			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
@@ -235,7 +226,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 	@Override
 	protected Mono<Void> doShutdown() {
 
-		if (nettyOptions != null && nettyOptions.eventLoopGroup() != null) {
+		if (getOptions() != null && getOptions().eventLoopGroup() != null) {
 			return Mono.empty();
 		}
 
@@ -268,8 +259,8 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 
 		ChannelPipeline pipeline = ch.pipeline();
 
-		if (null != nettyOptions && null != nettyOptions.pipelineConfigurer()) {
-			nettyOptions.pipelineConfigurer()
+		if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+			getOptions().pipelineConfigurer()
 			            .accept(pipeline);
 		}
 		if (log.isDebugEnabled()) {

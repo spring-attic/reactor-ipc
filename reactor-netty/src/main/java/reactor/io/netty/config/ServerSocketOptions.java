@@ -17,6 +17,10 @@
 package reactor.io.netty.config;
 
 import java.net.ProtocolFamily;
+import java.util.function.Consumer;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 
 /**
  * Encapsulates configuration options for server sockets.
@@ -28,7 +32,8 @@ public class ServerSocketOptions extends CommonSocketOptions<ServerSocketOptions
 	private int            backlog        = 1000;
 	private boolean        reuseAddr      = true;
 	private ProtocolFamily protocolFamily = null;
-
+	private Consumer<ChannelPipeline> pipelineConfigurer;
+	private EventLoopGroup            eventLoopGroup;
 
 	/**
 	 * Returns the configured pending connection backlog for the socket.
@@ -47,6 +52,24 @@ public class ServerSocketOptions extends CommonSocketOptions<ServerSocketOptions
 	 */
 	public ServerSocketOptions backlog(int backlog) {
 		this.backlog = backlog;
+		return this;
+	}
+
+	public EventLoopGroup eventLoopGroup() {
+		return eventLoopGroup;
+	}
+
+	public ServerSocketOptions eventLoopGroup(EventLoopGroup eventLoopGroup) {
+		this.eventLoopGroup = eventLoopGroup;
+		return this;
+	}
+
+	public Consumer<ChannelPipeline> pipelineConfigurer() {
+		return pipelineConfigurer;
+	}
+
+	public ServerSocketOptions pipelineConfigurer(Consumer<ChannelPipeline> pipelineConfigurer) {
+		this.pipelineConfigurer = pipelineConfigurer;
 		return this;
 	}
 

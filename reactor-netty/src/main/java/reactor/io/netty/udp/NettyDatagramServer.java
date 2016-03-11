@@ -51,12 +51,10 @@ import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.NettyChannel;
-import reactor.io.netty.NettyServerSocketOptions;
-import reactor.io.netty.util.NettyNativeDetector;
+import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.tcp.NettyChannelHandlerBridge;
-import reactor.io.netty.udp.DatagramServer;
+import reactor.io.netty.util.NettyNativeDetector;
 
 /**
  * {@link DatagramServer} implementation built on Netty.
@@ -68,7 +66,6 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 
 	private final static Logger log = Logger.getLogger(NettyDatagramServer.class);
 
-	private final    NettyServerSocketOptions nettyOptions;
 	private final    Bootstrap                bootstrap;
 	private final    EventLoopGroup           ioGroup;
 	private volatile DatagramChannel       channel;
@@ -79,14 +76,8 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 			final ServerSocketOptions options) {
 		super(timer, listenAddress, multicastInterface, options);
 
-		if (options instanceof NettyServerSocketOptions) {
-			this.nettyOptions = (NettyServerSocketOptions) options;
-		} else {
-			this.nettyOptions = null;
-		}
-
-		if (null != nettyOptions && null != nettyOptions.eventLoopGroup()) {
-			this.ioGroup = nettyOptions.eventLoopGroup();
+		if (null != options && null != options.eventLoopGroup()) {
+			this.ioGroup = options.eventLoopGroup();
 		} else {
 			int ioThreadCount = DEFAULT_UDP_THREAD_COUNT;
 			this.ioGroup =
@@ -157,8 +148,8 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 				ChannelFuture future = bootstrap.handler(new ChannelInitializer<DatagramChannel>() {
 					@Override
 					public void initChannel(final DatagramChannel ch) throws Exception {
-						if (null != nettyOptions && null != nettyOptions.pipelineConfigurer()) {
-							nettyOptions.pipelineConfigurer().accept(ch.pipeline());
+						if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+							getOptions().pipelineConfigurer().accept(ch.pipeline());
 						}
 
 						bindChannel(channelHandler, ch);
@@ -189,7 +180,7 @@ public class NettyDatagramServer extends DatagramServer<Buffer, Buffer> {
 		return new NettyChannel.FuturePublisher<ChannelFuture>(channel.close()){
 			@Override
 			protected void doComplete(ChannelFuture future, Subscriber<? super Void> s) {
-				if (null == nettyOptions || null == nettyOptions.eventLoopGroup()) {
+				if (null == getOptions() || null == getOptions().eventLoopGroup()) {
 					new NettyChannel.FuturePublisher<>(ioGroup.shutdownGracefully()).subscribe(s);
 				}
 				else {

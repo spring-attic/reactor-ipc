@@ -45,11 +45,11 @@ import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Spec;
+import reactor.io.netty.config.ClientSocketOptions;
+import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.http.HttpClient;
-import reactor.io.netty.NettyClientSocketOptions;
-import reactor.io.netty.NettyServerSocketOptions;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.http.HttpServer;
+import reactor.io.netty.preprocessor.CodecPreprocessor;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -89,7 +89,7 @@ public class SmokeTests {
 		this.port = port;
 	}*/
 
-	private NettyClientSocketOptions nettyOptions;
+	private ClientSocketOptions nettyOptions;
 
 	private final Function<Spec.HttpClientSpec<String, String>, Spec.HttpClientSpec<String, String>> clientFactory =
 	  spec -> spec
@@ -181,7 +181,7 @@ public class SmokeTests {
 		int fulltotalints = 0;
 
 		nettyOptions =
-		  new NettyClientSocketOptions().eventLoopGroup(new NioEventLoopGroup(10));
+		  new ClientSocketOptions().eventLoopGroup(new NioEventLoopGroup(10));
 
 		for (int t = 0; t < iter; t++) {
 			List<Integer> clientDatas = new ArrayList<>();
@@ -228,7 +228,7 @@ public class SmokeTests {
 		int fulltotalints = 0;
 
 		nettyOptions =
-		  new NettyClientSocketOptions().eventLoopGroup(new NioEventLoopGroup(10));
+		  new ClientSocketOptions().eventLoopGroup(new NioEventLoopGroup(10));
 
 		for (int t = 0; t < iter; t++) {
 			int size = 0;
@@ -283,7 +283,7 @@ public class SmokeTests {
 
 		httpServer = ReactiveNet.httpServer(server -> server.httpProcessor(CodecPreprocessor.from(codec))
 		                                                   .listen(port)
-		                                                   .options(new NettyServerSocketOptions().eventLoopGroup(
+		                                                   .options(new ServerSocketOptions().eventLoopGroup(
 				                                                   new NioEventLoopGroup(10)))
 		);
 

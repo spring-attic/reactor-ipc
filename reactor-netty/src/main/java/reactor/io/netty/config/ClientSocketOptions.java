@@ -16,8 +16,34 @@
 
 package reactor.io.netty.config;
 
+import java.util.function.Consumer;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+
 /**
  * @author Jon Brisbin
  */
 public class ClientSocketOptions extends CommonSocketOptions<ClientSocketOptions> {
+
+	private Consumer<ChannelPipeline> pipelineConfigurer;
+	private EventLoopGroup eventLoopGroup;
+
+	public EventLoopGroup eventLoopGroup() {
+		return eventLoopGroup;
+	}
+
+	public ClientSocketOptions eventLoopGroup(EventLoopGroup eventLoopGroup) {
+		this.eventLoopGroup = eventLoopGroup;
+		return this;
+	}
+
+	public Consumer<ChannelPipeline> pipelineConfigurer() {
+		return pipelineConfigurer;
+	}
+
+	public ClientSocketOptions pipelineConfigurer(Consumer<ChannelPipeline> pipelineConfigurer) {
+		this.pipelineConfigurer = pipelineConfigurer;
+		return this;
+	}
 }

@@ -52,15 +52,13 @@ import reactor.io.codec.LengthFieldCodec;
 import reactor.io.codec.StandardCodecs;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.netty.NettyBuffer;
+import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.NettyBuffer;
-import reactor.io.netty.NettyServerSocketOptions;
-import reactor.io.netty.tcp.NettyTcpClient;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.support.SocketUtils;
-import reactor.io.netty.ReactiveNet;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
@@ -313,7 +311,7 @@ public class TcpServerTests {
 
 		TcpServer<String, String> server = ReactiveNet.tcpServer(s ->
 			s
-			  .options(new NettyServerSocketOptions()
+			  .options(new ServerSocketOptions()
 			    .pipelineConfigurer(pipeline -> pipeline.addLast(new LineBasedFrameDecoder(8 * 1024))))
 			  .listen(port)
 			  .preprocessor(CodecPreprocessor.string())

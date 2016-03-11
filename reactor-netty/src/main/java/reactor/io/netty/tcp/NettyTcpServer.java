@@ -49,7 +49,6 @@ import reactor.io.netty.config.CommonSocketOptions;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.NettyChannel;
-import reactor.io.netty.NettyServerSocketOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
@@ -64,7 +63,6 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 
 	private final static Logger log = Logger.getLogger(NettyTcpServer.class);
 
-	private final NettyServerSocketOptions nettyOptions;
 	private final ServerBootstrap          bootstrap;
 	private final EventLoopGroup           selectorGroup;
 	private final EventLoopGroup           ioGroup;
@@ -79,20 +77,14 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 	                         final SslOptions sslOptions) {
 		super(timer, listenAddress, options, sslOptions);
 
-		if (options instanceof NettyServerSocketOptions) {
-			this.nettyOptions = (NettyServerSocketOptions) options;
-		} else {
-			this.nettyOptions = null;
-		}
-
 		int selectThreadCount = DEFAULT_TCP_SELECT_COUNT;
 		int ioThreadCount = DEFAULT_TCP_THREAD_COUNT;
 
 		this.selectorGroup = NettyNativeDetector.newEventLoopGroup(selectThreadCount, ExecutorUtils.newNamedFactory
 		  ("reactor-tcp-select"));
 
-		if (null != nettyOptions && null != nettyOptions.eventLoopGroup()) {
-			this.ioGroup = nettyOptions.eventLoopGroup();
+		if (null != options && null != options.eventLoopGroup()) {
+			this.ioGroup = options.eventLoopGroup();
 		} else {
 			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory("reactor-tcp-io"));
 		}
@@ -158,14 +150,14 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
 			public void initChannel(final SocketChannel ch) throws Exception {
-				if (nettyOptions != null) {
+				if (getOptions() != null) {
 					SocketChannelConfig config = ch.config();
-					config.setReceiveBufferSize(nettyOptions.rcvbuf());
-					config.setSendBufferSize(nettyOptions.sndbuf());
-					config.setKeepAlive(nettyOptions.keepAlive());
-					config.setReuseAddress(nettyOptions.reuseAddr());
-					config.setSoLinger(nettyOptions.linger());
-					config.setTcpNoDelay(nettyOptions.tcpNoDelay());
+					config.setReceiveBufferSize(getOptions().rcvbuf());
+					config.setSendBufferSize(getOptions().sndbuf());
+					config.setKeepAlive(getOptions().keepAlive());
+					config.setReuseAddress(getOptions().reuseAddr());
+					config.setSoLinger(getOptions().linger());
+					config.setTcpNoDelay(getOptions().tcpNoDelay());
 				}
 
 				if (log.isDebugEnabled()) {
@@ -185,8 +177,8 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 					ch.pipeline().addLast(new SslHandler(ssl));
 				}
 
-				if (null != nettyOptions && null != nettyOptions.pipelineConfigurer()) {
-					nettyOptions.pipelineConfigurer().accept(ch.pipeline());
+				if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+					getOptions().pipelineConfigurer().accept(ch.pipeline());
 				}
 
 				bindChannel(handler, ch);
@@ -219,13 +211,8 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 
 		final Mono<Void> shutdown = new NettyChannel.FuturePublisher<Future<?>>(selectorGroup.shutdownGracefully());
 
-		if (null == nettyOptions || null == nettyOptions.eventLoopGroup()) {
-			return shutdown.then(new Function<Void, Mono<? extends Void>>() {
-				@Override
-				public Mono<? extends Void> apply(Void aVoid) {
-					return new NettyChannel.FuturePublisher<Future<?>>(ioGroup.shutdownGracefully());
-				}
-			});
+		if (null == getOptions() || null == getOptions().eventLoopGroup()) {
+			return shutdown.then(aVoid -> new NettyChannel.FuturePublisher<Future<?>>(ioGroup.shutdownGracefully()));
 		}
 
 		return shutdown;

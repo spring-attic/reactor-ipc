@@ -31,9 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
-import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
@@ -50,10 +48,9 @@ import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple;
 import reactor.core.util.PlatformDependent;
 import reactor.io.buffer.Buffer;
-import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.NettyBuffer;
-import reactor.io.netty.NettyClientSocketOptions;
-import reactor.io.netty.tcp.NettyTcpClient;
+import reactor.io.netty.ReactiveNet;
+import reactor.io.netty.config.ClientSocketOptions;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.support.SocketUtils;
 
@@ -351,13 +348,8 @@ public class TcpClientTests {
 	public void nettyNetChannelAcceptsNettyChannelHandlers() throws InterruptedException {
 		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(NettyTcpClient.class,
 		  spec -> spec
-			.options(new NettyClientSocketOptions()
-			  .pipelineConfigurer(new Consumer<ChannelPipeline>() {
-				  @Override
-				  public void accept(ChannelPipeline pipeline) {
-					  pipeline.addLast(new HttpClientCodec());
-				  }
-			  }))
+			.options(new ClientSocketOptions()
+			  .pipelineConfigurer(pipeline -> pipeline.addLast(new HttpClientCodec())))
 			.connect("www.google.com", 80)
 		);
 
