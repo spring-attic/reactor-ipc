@@ -18,11 +18,9 @@ package reactor.io.netty.http
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.util.Exceptions
-import reactor.io.netty.http.HttpException
 import reactor.io.netty.impl.netty.http.NettyHttpServer
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.ReactiveNet
-import reactor.io.netty.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -46,8 +44,7 @@ class HttpSpec extends Specification {
 
 	//prepare post request consumer on /test/* and capture the URL parameter "param"
 	server.post('/test/{param}') {
-	  HttpChannelFlux<String, String> req
-		->
+	   req ->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
@@ -68,7 +65,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http post request-reply flow
-	def content = client.post('/test/World') { HttpChannelFlux<String, String> req ->
+	def content = client.post('/test/World') { req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -102,7 +99,7 @@ class HttpSpec extends Specification {
 
 	//prepare post request consumer on /test/* and capture the URL parameter "param"
 	server.post('/test/{param}') {
-	  HttpChannelFlux<String, String> req
+	  req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
@@ -110,6 +107,7 @@ class HttpSpec extends Specification {
 
 		req
 				.writeWith(req
+				.input()
 				.log('server-received')
 				.map { it + ' ' + req.param('param') + '!' }
 				.log('server-reply'))
@@ -128,7 +126,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http post request-reply flow
-	def content = client.post('/test/World') { HttpChannelFlux<String, String> req ->
+	def content = client.post('/test/World') { req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -140,6 +138,7 @@ class HttpSpec extends Specification {
 	}.flatMap { replies ->
 	  //successful request, listen for the first returned next reply and pass it downstream
 	  replies
+			  .input()
 			  .log('client-received')
 	}
 	.publishNext()
@@ -172,13 +171,13 @@ class HttpSpec extends Specification {
 
 	CountDownLatch errored = new CountDownLatch(1)
 
-	server.get('/test') { HttpChannelFlux<String, String> req -> throw new Exception()
-	}.get('/test2') { HttpChannelFlux<String, String> req ->
+	server.get('/test') { req -> throw new Exception()
+	}.get('/test2') { req ->
 	  req.writeWith(Flux.error(new Exception())).log("writeWith").doOnError({
 		errored
 				.countDown()
 	  })
-	}.get('/test3') { HttpChannelFlux<String, String> req -> return Flux.error(new Exception())
+	}.get('/test3') { req -> return Flux.error(new Exception())
 	}
 
 	then: "the server was started"
@@ -216,7 +215,7 @@ class HttpSpec extends Specification {
 	//prepare an http post request-reply flow
 	def content = client
 			.get('/test2')
-			.flatMap { replies -> replies.log("received-status-2")
+			.flatMap { replies -> replies.input().log("received-status-2")
 	}
 	.next()
 			.get(Duration.ofSeconds(3))
@@ -264,14 +263,14 @@ class HttpSpec extends Specification {
 	//prepare websocket request consumer on /test/* and capture the URL parameter "param"
 	server
 			.get('/test/{param}') {
-	  HttpChannelFlux<String, String> req
+	  req
 		->
 
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
 		def res = req
 				.responseHeader("content-type", "text/plain")
-				.writeWith(req.log('server-received')
+				.writeWith(req.input().log('server-received')
 				.useCapacity(1)
 				.doOnNext { serverRes++ }
 				.map { it + ' ' + req.param('param') + '!' }
@@ -294,7 +293,7 @@ class HttpSpec extends Specification {
 	}
 
 	//prepare an http websocket request-reply flow
-	def content = client.ws('/test/World') { HttpChannelFlux<String, String> req ->
+	def content = client.ws('/test/World') { req ->
 	  //prepare content-type
 	  req.header('Content-Type', 'text/plain')
 
@@ -308,6 +307,7 @@ class HttpSpec extends Specification {
 	}.flatMap { replies ->
 	  //successful handshake, listen for the first returned next replies and pass it downstream
 	  replies
+			  .input()
 			  .log('client-received')
 			  .doOnNext { clientRes++ }
 	}

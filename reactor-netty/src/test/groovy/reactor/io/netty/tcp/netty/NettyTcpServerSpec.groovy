@@ -73,7 +73,7 @@ class NettyTcpServerSpec extends Specification {
 		when: "the server is started"
 			server.start { conn ->
 				conn.writeWith(
-						conn.take(1).map { pojo ->
+						conn.input().take(1).map { pojo ->
 							assert pojo.name == "John Doe"
 							new Pojo(name: "Jane Doe")
 						}

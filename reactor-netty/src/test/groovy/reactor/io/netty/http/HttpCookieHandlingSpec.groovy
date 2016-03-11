@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono
 import reactor.io.netty.http.model.Cookie
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.ReactiveNet
-import reactor.io.netty.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -60,9 +59,9 @@ public class HttpCookieHandlingSpec extends Specification{
 
 	when: "server is prepared"
 	server.get("/test"){
-	  HttpChannelFlux<String,String> req ->
+	   req ->
 		req.addResponseCookie("cookie1", getResponseCookie())
-			.writeWith(req.log("server received"))
+			.writeWith(req.input().log("server received"))
 	}
 
 	then: "the server was started"

@@ -18,7 +18,6 @@ package reactor.io.netty.http
 import reactor.core.publisher.Flux
 import reactor.io.netty.preprocessor.CodecPreprocessor
 import reactor.io.netty.ReactiveNet
-import reactor.io.netty.http.HttpChannelFlux
 import spock.lang.Specification
 
 import java.time.Duration
@@ -35,7 +34,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             }
 
         when: "the server is prepared"
-            server.post('/test') { HttpChannelFlux<String, String> req ->
+            server.post('/test') { req ->
                 req.writeWith(
                         req.log('server-received')
                 )
@@ -51,7 +50,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             }
 
             def replyReceived = ""
-            def content = client.get('/unsupportedURI') { HttpChannelFlux<String, String> req ->
+            def content = client.get('/unsupportedURI') { req ->
                 //prepare content-type
                 req.header('Content-Type', 'text/plain')
 
@@ -65,6 +64,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             .flatMap { replies ->
                 //successful request, listen for replies
                 replies
+                        .input()
                         .log('client-received')
                         .doOnNext { s ->
                             replyReceived = s
