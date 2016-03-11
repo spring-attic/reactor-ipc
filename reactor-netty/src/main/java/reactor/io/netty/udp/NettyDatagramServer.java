@@ -54,7 +54,7 @@ import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.NettyChannel;
 import reactor.io.netty.NettyServerSocketOptions;
-import reactor.io.netty.internal.NettyNativeDetector;
+import reactor.io.netty.util.NettyNativeDetector;
 import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 import reactor.io.netty.udp.DatagramServer;
 
