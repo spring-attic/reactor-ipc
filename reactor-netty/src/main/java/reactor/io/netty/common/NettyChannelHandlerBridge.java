@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.tcp;
+package reactor.io.netty.common;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -51,8 +51,8 @@ import reactor.core.util.Sequence;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.NettyBuffer;
-import reactor.io.netty.NettyChannel;
+import reactor.io.netty.common.NettyBuffer;
+import reactor.io.netty.common.NettyChannel;
 
 /**
  * Netty {@link io.netty.channel.ChannelInboundHandler} implementation that passes data to a Reactor {@link

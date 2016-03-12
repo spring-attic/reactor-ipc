@@ -49,7 +49,7 @@ import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.model.Method;
-import reactor.io.netty.NettyChannel;
+import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.http.NettyHttpChannel;
 import reactor.io.netty.http.NettyHttpClientHandler;
 import reactor.io.netty.http.NettyHttpWSClientHandler;

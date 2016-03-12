@@ -46,7 +46,7 @@ import reactor.core.state.Completable;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
-import reactor.io.netty.NettyChannel;
+import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.http.model.Cookie;
 import reactor.io.netty.http.model.HttpHeaders;
 import reactor.io.netty.http.model.Method;

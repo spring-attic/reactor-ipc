@@ -39,7 +39,7 @@ import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.NettyChannel;
+import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.tcp.NettyTcpServer;
 
 /**
@@ -69,36 +69,33 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Loopb
 	@Override
 	protected Mono<Void> doStart(
 			final ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> defaultHandler) {
-		return server.start(new ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>() {
-			@Override
-			public Publisher<Void> apply(ChannelFlux<Buffer, Buffer> ch) {
-				NettyHttpChannel request = (NettyHttpChannel) ch;
+		return server.start(ch -> {
+			NettyHttpChannel request = (NettyHttpChannel) ch;
 
-				try {
-					Publisher<Void> afterHandlers = routeChannel(request);
+			try {
+				Publisher<Void> afterHandlers = routeChannel(request);
 
-					if (afterHandlers == null) {
-						if (defaultHandler != null) {
-							return defaultHandler.apply(request);
-						}
-						else if (request.markHeadersAsFlushed()) {
-							//404
-							request.delegate()
-							       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND));
-						}
-						return Flux.empty();
-
+				if (afterHandlers == null) {
+					if (defaultHandler != null) {
+						return defaultHandler.apply(request);
 					}
-					else {
-						return afterHandlers;
+					else if (request.markHeadersAsFlushed()) {
+						//404
+						request.delegate()
+						       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND));
 					}
+					return Flux.empty();
+
 				}
-				catch (Throwable t) {
-					Exceptions.throwIfFatal(t);
-					return Mono.error(t);
+				else {
+					return afterHandlers;
 				}
-				//500
 			}
+			catch (Throwable t) {
+				Exceptions.throwIfFatal(t);
+				return Mono.error(t);
+			}
+			//500
 		});
 	}
 

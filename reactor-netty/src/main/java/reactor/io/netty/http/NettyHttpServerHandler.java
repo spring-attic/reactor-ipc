@@ -40,10 +40,10 @@ import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.NettyBuffer;
-import reactor.io.netty.NettyChannel;
+import reactor.io.netty.common.NettyBuffer;
+import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.NettyChannelHandlerBridge;
 import reactor.io.netty.http.model.Cookie;
-import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 
 /**
  * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link reactor.io.buffer.Buffer}).

@@ -32,7 +32,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.NettyChannel;
+import reactor.io.netty.common.NettyChannel;
 
 /**
  * @author Stephane Maldini
@@ -50,12 +50,7 @@ final class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-		handshaker.handshake(ctx.channel()).addListener(new ChannelFutureListener() {
-			@Override
-			public void operationComplete(ChannelFuture future) throws Exception {
-				ctx.read();
-			}
-		});
+		handshaker.handshake(ctx.channel()).addListener(future -> ctx.read());
 	}
 
 	@Override

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.io.netty;
+package reactor.io.netty.common;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -42,7 +42,6 @@ import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
-import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 
 /**
  * {@link ChannelFlux} implementation that delegates to Netty.

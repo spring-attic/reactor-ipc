@@ -29,8 +29,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
+import reactor.io.netty.common.NettyBuffer;
 import reactor.io.netty.http.model.Status;
-import reactor.io.netty.NettyBuffer;
 
 /**
  * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link Buffer}).
