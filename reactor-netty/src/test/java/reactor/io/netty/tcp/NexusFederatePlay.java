@@ -19,7 +19,6 @@ import java.util.concurrent.CountDownLatch;
 
 import reactor.core.subscriber.Subscribers;
 import reactor.io.buffer.Buffer;
-import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.nexus.Nexus;
@@ -34,7 +33,7 @@ public class NexusFederatePlay {
 		Nexus nexus2 = Nexus.create(12014);
 		nexus2.startAndAwait();
 
-		Nexus nexus = ReactiveNet.nexus();
+		Nexus nexus = Nexus.create();
 		nexus.withSystemStats()
 		     .federate("ws://localhost:12014/create/stream")
 		     .startAndAwait();

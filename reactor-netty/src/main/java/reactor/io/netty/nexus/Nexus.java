@@ -136,6 +136,23 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		});
 	}
 
+	/**
+	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
+	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
+	 * {@link ChannelFlux#writeWith} can subscribe to any passed {@link Publisher}. <p> Note
+	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
+	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
+	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
+	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static Nexus create() {
+		return Nexus.create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+	}
+
 	private static final Logger log            = Logger.getLogger(Nexus.class);
 	private static final String API_STREAM_URL = "/create/stream";
 
@@ -164,7 +181,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	public static void main(String... args) throws Exception {
 		log.info("Deploying Nexus... ");
 
-		Nexus nexus = ReactiveNet.nexus();
+		Nexus nexus = create();
 
 		final CountDownLatch stopped = new CountDownLatch(1);
 

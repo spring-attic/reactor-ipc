@@ -189,23 +189,6 @@ public enum ReactiveNet {
 
 	//MONITORING FEED SERVER
 
-	/**
-	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
-	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
-	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
-	 * {@link ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note
-	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
-	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
-	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
-	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
-	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
-	 */
-	public static Nexus nexus() {
-		return Nexus.create(DEFAULT_BIND_ADDRESS);
-	}
-
 	// TCP
 
 	/**

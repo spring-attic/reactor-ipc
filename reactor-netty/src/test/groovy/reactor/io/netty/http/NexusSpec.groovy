@@ -15,7 +15,7 @@
  */
 package reactor.io.netty.http
 
-import reactor.io.netty.ReactiveNet
+import reactor.io.netty.nexus.Nexus
 import spock.lang.Ignore
 import spock.lang.Specification
 
@@ -31,7 +31,7 @@ class NexusSpec extends Specification {
 		given: "a simple Console"
 
 			//Listen on localhost using default impl (Netty) and assign a global codec to receive/reply String data
-		def nexus = ReactiveNet.nexus()
+		def nexus = Nexus.create()
 		def c = nexus.logCannon()
 		c.emit("test")
 

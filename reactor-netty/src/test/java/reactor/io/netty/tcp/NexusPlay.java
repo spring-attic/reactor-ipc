@@ -26,7 +26,6 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
-import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.nexus.Nexus;
 
 /**
@@ -37,7 +36,7 @@ public class NexusPlay {
 	public static void main(String... args) throws Exception{
 
 
-		Nexus nexus = ReactiveNet.nexus();
+		Nexus nexus = Nexus.create();
 		nexus.withSystemStats()
 		     .withLogTail()
 		     //.useCapacity(5l)
