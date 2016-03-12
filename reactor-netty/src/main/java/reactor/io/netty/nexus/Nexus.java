@@ -153,44 +153,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		return Nexus.create(ReactiveNet.DEFAULT_BIND_ADDRESS);
 	}
 
-	private static final Logger log            = Logger.getLogger(Nexus.class);
-	private static final String API_STREAM_URL = "/create/stream";
-
-	private final HttpServer<Buffer, Buffer>        server;
-	private final GraphEvent                        lastState;
-	private final SystemEvent                       lastSystemState;
-	private final FluxProcessor<Event, Event>       eventStream;
-	private final SchedulerGroup                    group;
-	private final Function<Event, Event>            lastStateMerge;
-	private final Timer                             timer;
-	private final SignalEmitter<Publisher<Event>> cannons;
-
-	@SuppressWarnings("unused")
-	private volatile FederatedClient[] federatedClients;
-
-	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED =
-			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
-
-	private long                 systemStatsPeriod;
-	private boolean              systemStats;
-	private boolean              logExtensionEnabled;
-	private NexusLoggerExtension logExtension;
-
-	private long websocketCapacity = 1L;
-
-	public static void main(String... args) throws Exception {
-		log.info("Deploying Nexus... ");
-
-		Nexus nexus = create();
-
-		final CountDownLatch stopped = new CountDownLatch(1);
-
-		nexus.startAndAwait();
-
-		log.info("CTRL-C to return...");
-		stopped.await();
-	}
-
 	/**
 	 * @param server
 	 *
@@ -205,6 +167,35 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 		return nexus;
 	}
+
+	public static void main(String... args) throws Exception {
+		log.info("Deploying Nexus... ");
+
+		Nexus nexus = create();
+
+		final CountDownLatch stopped = new CountDownLatch(1);
+
+		nexus.startAndAwait();
+
+		log.info("CTRL-C to return...");
+		stopped.await();
+	}
+	private final HttpServer<Buffer, Buffer>        server;
+	private final GraphEvent                        lastState;
+	private final SystemEvent                       lastSystemState;
+	private final FluxProcessor<Event, Event>       eventStream;
+	private final SchedulerGroup                    group;
+	private final Function<Event, Event>            lastStateMerge;
+	private final Timer                             timer;
+	private final SignalEmitter<Publisher<Event>> cannons;
+
+	@SuppressWarnings("unused")
+	private volatile FederatedClient[] federatedClients;
+	private long                 systemStatsPeriod;
+	private boolean              systemStats;
+	private boolean              logExtensionEnabled;
+	private NexusLoggerExtension logExtension;
+	private long websocketCapacity = 1L;
 
 	private Nexus(Timer defaultTimer, HttpServer<Buffer, Buffer> server) {
 		super(defaultTimer);
@@ -233,29 +224,53 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		                                        .toString());
 	}
 
-	/**
-	 * @see this#start(ChannelFluxHandler)
-	 */
-	public final void startAndAwait() throws InterruptedException {
-		start().get();
-		InetSocketAddress addr = server.getListenAddress();
-		log.info("Nexus Warped. Transmitting signal to troops under http://" + addr.getHostName() + ":" + addr.getPort() +
-				API_STREAM_URL);
+	@Override
+	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
+		channel.responseHeader("Access-Control-Allow-Origin", "*");
+
+		Flux<Event> eventStream = this.eventStream.dispatchOn(group)
+		                                          .map(lastStateMerge);
+
+		Publisher<Void> p;
+		if (channel.isWebsocket()) {
+			p = Flux.concat(NettyHttpServer.upgradeToWebsocket(channel),
+					channel.writeBufferWith(federateAndEncode(channel, eventStream)));
+		}
+		else {
+			p = channel.writeBufferWith(federateAndEncode(channel, eventStream));
+		}
+
+		channel.input()
+		       .subscribe(Subscribers.consumer(new Consumer<Buffer>() {
+			       @Override
+			       public void accept(Buffer buffer) {
+				       String command = buffer.asString();
+				       int indexArg = command.indexOf("\n");
+				       if (indexArg > 0) {
+					       String action = command.substring(0, indexArg);
+					       String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
+					       log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
+//					if(action.equals("pause") && !arg.isEmpty()){
+//						((EmitterProcessor)Nexus.this.eventStream).pause();
+//					}
+//					else if(action.equals("resume") && !arg.isEmpty()){
+//						((EmitterProcessor)Nexus.this.eventStream).resume();
+//					}
+				       }
+			       }
+		       }));
+
+		return p;
 	}
 
-	/**
-	 * @see this#start(ChannelFluxHandler)
-	 */
-	public final Mono<Void> start() throws InterruptedException {
-		return start(null);
+	@Override
+	public Object connectedInput() {
+		return eventStream;
 	}
 
-	/**
-	 * @return
-	 */
-	public final Nexus useCapacity(long capacity) {
-		this.websocketCapacity = capacity;
-		return this;
+	@Override
+	public Object connectedOutput() {
+		return server;
 	}
 
 	/**
@@ -267,41 +282,49 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	}
 
 	/**
+	 * @param urls
+	 *
 	 * @return
 	 */
-	public final Nexus withLogTail() {
-		this.logExtensionEnabled = true;
+	@SuppressWarnings("unchecked")
+	public final Nexus federate(String... urls) {
+		if (urls == null || urls.length == 0) {
+			return this;
+		}
+
+		for (; ; ) {
+			FederatedClient[] clients = federatedClients;
+
+			int n;
+			if (clients != null) {
+				n = clients.length;
+			}
+			else {
+				n = 0;
+			}
+			FederatedClient[] newClients = new FederatedClient[n + urls.length];
+
+			if (n > 0) {
+				System.arraycopy(clients, 0, newClients, 0, n);
+			}
+
+			for (int i = n; i < newClients.length; i++) {
+				newClients[i] = new FederatedClient(urls[i - n]);
+			}
+
+			if (FEDERATED.compareAndSet(this, clients, newClients)) {
+				break;
+			}
+		}
+
 		return this;
 	}
 
 	/**
 	 * @return
 	 */
-	public final Nexus withSystemStats() {
-		return withSystemStats(true, 1);
-	}
-
-	/**
-	 * @param enabled
-	 * @param period
-	 *
-	 * @return
-	 */
-	public final Nexus withSystemStats(boolean enabled, long period) {
-		return withSystemStats(enabled, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * @param enabled
-	 * @param period
-	 * @param unit
-	 *
-	 * @return
-	 */
-	public final Nexus withSystemStats(boolean enabled, long period, TimeUnit unit) {
-		this.systemStatsPeriod = unit == null || period < 1L ? 1000 : TimeUnit.MILLISECONDS.convert(period, unit);
-		this.systemStats = enabled;
-		return this;
+	public HttpServer<Buffer, Buffer> getServer() {
+		return server;
 	}
 
 	/**
@@ -310,15 +333,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	public final SignalEmitter<Object> metricCannon() {
 		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		this.cannons.submit(p.map(new MetricMapper()));
-		return p.startEmitter();
-	}
-
-	/**
-	 * @return
-	 */
-	public final SignalEmitter<Object> streamCannon() {
-		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
-		this.cannons.submit(p.map(new GraphMapper()));
 		return p.startEmitter();
 	}
 
@@ -377,88 +391,75 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	}
 
 	/**
-	 * @param urls
-	 *
-	 * @return
+	 * @see this#start(ChannelFluxHandler)
 	 */
-	@SuppressWarnings("unchecked")
-	public final Nexus federate(String... urls) {
-		if (urls == null || urls.length == 0) {
-			return this;
-		}
-
-		for (; ; ) {
-			FederatedClient[] clients = federatedClients;
-
-			int n;
-			if (clients != null) {
-				n = clients.length;
-			}
-			else {
-				n = 0;
-			}
-			FederatedClient[] newClients = new FederatedClient[n + urls.length];
-
-			if (n > 0) {
-				System.arraycopy(clients, 0, newClients, 0, n);
-			}
-
-			for (int i = n; i < newClients.length; i++) {
-				newClients[i] = new FederatedClient(urls[i - n]);
-			}
-
-			if (FEDERATED.compareAndSet(this, clients, newClients)) {
-				break;
-			}
-		}
-
-		return this;
+	public final Mono<Void> start() throws InterruptedException {
+		return start(null);
 	}
 
-	@Override
-	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
-		channel.responseHeader("Access-Control-Allow-Origin", "*");
-
-		Flux<Event> eventStream = this.eventStream.dispatchOn(group)
-		                                          .map(lastStateMerge);
-
-		Publisher<Void> p;
-		if (channel.isWebsocket()) {
-			p = Flux.concat(NettyHttpServer.upgradeToWebsocket(channel),
-					channel.writeBufferWith(federateAndEncode(channel, eventStream)));
-		}
-		else {
-			p = channel.writeBufferWith(federateAndEncode(channel, eventStream));
-		}
-
-		channel.input()
-		       .subscribe(Subscribers.consumer(new Consumer<Buffer>() {
-			       @Override
-			       public void accept(Buffer buffer) {
-				       String command = buffer.asString();
-				       int indexArg = command.indexOf("\n");
-				       if (indexArg > 0) {
-					       String action = command.substring(0, indexArg);
-					       String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
-					       log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
-//					if(action.equals("pause") && !arg.isEmpty()){
-//						((EmitterProcessor)Nexus.this.eventStream).pause();
-//					}
-//					else if(action.equals("resume") && !arg.isEmpty()){
-//						((EmitterProcessor)Nexus.this.eventStream).resume();
-//					}
-				       }
-			       }
-		       }));
-
-		return p;
+	/**
+	 * @see this#start(ChannelFluxHandler)
+	 */
+	public final void startAndAwait() throws InterruptedException {
+		start().get();
+		InetSocketAddress addr = server.getListenAddress();
+		log.info("Nexus Warped. Transmitting signal to troops under http://" + addr.getHostName() + ":" + addr.getPort() +
+				API_STREAM_URL);
 	}
 
 	/**
 	 * @return
 	 */
-	public HttpServer<Buffer, Buffer> getServer() {
-		return server;
+	public final SignalEmitter<Object> streamCannon() {
+		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
+		this.cannons.submit(p.map(new GraphMapper()));
+		return p.startEmitter();
+	}
+
+	/**
+	 * @return
+	 */
+	public final Nexus useCapacity(long capacity) {
+		this.websocketCapacity = capacity;
+		return this;
+	}
+
+	/**
+	 * @return
+	 */
+	public final Nexus withLogTail() {
+		this.logExtensionEnabled = true;
+		return this;
+	}
+
+	/**
+	 * @return
+	 */
+	public final Nexus withSystemStats() {
+		return withSystemStats(true, 1);
+	}
+
+	/**
+	 * @param enabled
+	 * @param period
+	 *
+	 * @return
+	 */
+	public final Nexus withSystemStats(boolean enabled, long period) {
+		return withSystemStats(enabled, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * @param enabled
+	 * @param period
+	 * @param unit
+	 *
+	 * @return
+	 */
+	public final Nexus withSystemStats(boolean enabled, long period, TimeUnit unit) {
+		this.systemStatsPeriod = unit == null || period < 1L ? 1000 : TimeUnit.MILLISECONDS.convert(period, unit);
+		this.systemStats = enabled;
+		return this;
 	}
 
 	@Override
@@ -513,16 +514,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		return server.shutdown();
 	}
 
-	@Override
-	public Object connectedInput() {
-		return eventStream;
-	}
-
-	@Override
-	public Object connectedOutput() {
-		return server;
-	}
-
 	private Flux<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Flux<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
@@ -535,8 +526,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		return Flux.merge(stream.map(BUFFER_STRING_FUNCTION), mergedUpstreams)
 		           .useCapacity(websocketCapacity);
 	}
-
-	private static final Function<Event, Buffer> BUFFER_STRING_FUNCTION = new StringToBuffer();
 
 	private static class Event {
 
@@ -629,28 +618,28 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 			}
 		}
 
-		public String getMessage() {
-			return message;
-		}
-
 		public String getCategory() {
 			return category;
-		}
-
-		public String getOrigin() {
-			return origin;
-		}
-
-		public String getKind() {
-			return kind;
 		}
 
 		public String getData() {
 			return data;
 		}
 
+		public String getKind() {
+			return kind;
+		}
+
 		public Level getLevel() {
 			return level;
+		}
+
+		public String getMessage() {
+			return message;
+		}
+
+		public String getOrigin() {
+			return origin;
 		}
 
 		public long getThreadId() {
@@ -693,21 +682,26 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 	private final static class SystemEvent extends Event {
 
-		private static final Runtime  runtime  = Runtime.getRuntime();
-		private static final JvmStats jvmStats = new JvmStats();
-
 		private final Map<Thread, ThreadState> threads = new WeakHashMap<>();
-
 		public SystemEvent(String hostname) {
 			super(hostname);
+		}
+
+		public JvmStats getJvmStats() {
+			return jvmStats;
 		}
 
 		public Collection<ThreadState> getThreads() {
 			return threads.values();
 		}
 
-		public JvmStats getJvmStats() {
-			return jvmStats;
+		@Override
+		public String toString() {
+			return "{ " + property("jvmStats", getJvmStats()) +
+					", " + property("threads", getThreads()) +
+					", " + property("type", getType()) +
+					", " + property("timestamp", System.currentTimeMillis()) +
+					", " + property("nexusHost", getNexusHost()) + " }";
 		}
 
 		private SystemEvent scan() {
@@ -723,16 +717,15 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 			return this;
 		}
 
-		@Override
-		public String toString() {
-			return "{ " + property("jvmStats", getJvmStats()) +
-					", " + property("threads", getThreads()) +
-					", " + property("type", getType()) +
-					", " + property("timestamp", System.currentTimeMillis()) +
-					", " + property("nexusHost", getNexusHost()) + " }";
-		}
-
 		final static class JvmStats {
+
+			public int getActiveThreads() {
+				return Thread.activeCount();
+			}
+
+			public int getAvailableProcessors() {
+				return runtime.availableProcessors();
+			}
 
 			public long getFreeMemory() {
 				return runtime.freeMemory(); //bytes
@@ -744,14 +737,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 			public long getUsedMemory() {
 				return runtime.totalMemory(); //bytes
-			}
-
-			public int getActiveThreads() {
-				return Thread.activeCount();
-			}
-
-			public int getAvailableProcessors() {
-				return runtime.availableProcessors();
 			}
 
 			@Override
@@ -772,18 +757,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 				this.thread = thread;
 			}
 
-			public String getName() {
-				return thread.getName();
-			}
-
-			public boolean isAlive() {
-				return thread.isAlive();
-			}
-
-			public boolean isInterrupted() {
-				return thread.isInterrupted();
-			}
-
 			public long getContextHash() {
 				if (thread.getContextClassLoader() != null) {
 					return thread.getContextClassLoader()
@@ -798,6 +771,14 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 				return thread.getId();
 			}
 
+			public String getName() {
+				return thread.getName();
+			}
+
+			public int getPriority() {
+				return thread.getPriority();
+			}
+
 			public Thread.State getState() {
 				return thread.getState();
 			}
@@ -808,12 +789,16 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 				                             .getName() : null;
 			}
 
+			public boolean isAlive() {
+				return thread.isAlive();
+			}
+
 			public boolean isDaemon() {
 				return thread.isDaemon();
 			}
 
-			public int getPriority() {
-				return thread.getPriority();
+			public boolean isInterrupted() {
+				return thread.isInterrupted();
 			}
 
 			@Override
@@ -829,6 +814,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 						", " + property("daemon", isDaemon()) + " }";
 			}
 		}
+		private static final Runtime  runtime  = Runtime.getRuntime();
+		private static final JvmStats jvmStats = new JvmStats();
 	}
 
 	private static class StringToBuffer implements Function<Event, Buffer> {
@@ -873,57 +860,6 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		}
 	}
 
-	private class LastGraphStateMap implements Function<Event, Event>, Introspectable {
-
-		@Override
-		public Event apply(Event event) {
-			if (GraphEvent.class.equals(event.getClass())) {
-				lastState.graph.mergeWith(((GraphEvent) event).graph);
-//				Collection<String> removed = lastState.graph.removeTerminatedNodes();
-//
-//				if(removed != null && !removed.isEmpty()){
-//					return Flux.from(
-//							Arrays.asList(lastState, new RemovedGraphEvent(server.getListenAddress().getHostName(), removed)));
-//				}
-
-				return lastState;
-			}
-			return event;
-		}
-
-		@Override
-		public String getName() {
-			return "ScanIfGraphEvent";
-		}
-
-		@Override
-		public int getMode() {
-			return 0;
-		}
-	}
-
-	private final class MetricMapper implements Function<Object, Event> {
-
-		@Override
-		public Event apply(Object o) {
-			return new MetricEvent(server.getListenAddress()
-			                             .toString());
-		}
-
-	}
-
-	private final class GraphMapper implements Function<Object, Event> {
-
-		@Override
-		public Event apply(Object o) {
-			return new GraphEvent(server.getListenAddress()
-			                            .toString(),
-					ReactiveStateUtils.Graph.class.equals(o.getClass()) ? ((ReactiveStateUtils.Graph) o) :
-							ReactiveStateUtils.scan(o));
-		}
-
-	}
-
 	private static final class FederatedMerger implements Function<FederatedClient, Publisher<Buffer>> {
 
 		private final HttpChannel<Buffer, Buffer> c;
@@ -953,5 +889,61 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 			this.targetAPI = targetAPI;
 			this.client = HttpClient.create();
 		}
+	}
+	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED =
+			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
+	private static final Logger log            = Logger.getLogger(Nexus.class);
+	private static final String API_STREAM_URL = "/create/stream";
+	private static final Function<Event, Buffer> BUFFER_STRING_FUNCTION = new StringToBuffer();
+
+	private class LastGraphStateMap implements Function<Event, Event>, Introspectable {
+
+		@Override
+		public Event apply(Event event) {
+			if (GraphEvent.class.equals(event.getClass())) {
+				lastState.graph.mergeWith(((GraphEvent) event).graph);
+//				Collection<String> removed = lastState.graph.removeTerminatedNodes();
+//
+//				if(removed != null && !removed.isEmpty()){
+//					return Flux.from(
+//							Arrays.asList(lastState, new RemovedGraphEvent(server.getListenAddress().getHostName(), removed)));
+//				}
+
+				return lastState;
+			}
+			return event;
+		}
+
+		@Override
+		public int getMode() {
+			return 0;
+		}
+
+		@Override
+		public String getName() {
+			return "ScanIfGraphEvent";
+		}
+	}
+
+	private final class MetricMapper implements Function<Object, Event> {
+
+		@Override
+		public Event apply(Object o) {
+			return new MetricEvent(server.getListenAddress()
+			                             .toString());
+		}
+
+	}
+
+	private final class GraphMapper implements Function<Object, Event> {
+
+		@Override
+		public Event apply(Object o) {
+			return new GraphEvent(server.getListenAddress()
+			                            .toString(),
+					ReactiveStateUtils.Graph.class.equals(o.getClass()) ? ((ReactiveStateUtils.Graph) o) :
+							ReactiveStateUtils.scan(o));
+		}
+
 	}
 }
