@@ -54,8 +54,8 @@ import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
+import reactor.io.netty.common.NettyChannelHandlerBridge;
 import reactor.io.netty.config.ServerSocketOptions;
-import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 import reactor.io.netty.util.NettyNativeDetector;
 
 /**
