@@ -37,10 +37,10 @@ import reactor.io.netty.NettyChannel;
 /**
  * @author Stephane Maldini
  */
-public class NettyHttpWSClientHandler extends NettyHttpClientHandler {
+final class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 
-	private final WebSocketClientHandshaker handshaker;
-	public NettyHttpWSClientHandler(
+	final WebSocketClientHandshaker handshaker;
+	NettyHttpWSClientHandler(
 			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
 			NettyChannel tcpStream,
 			WebSocketClientHandshaker handshaker) {

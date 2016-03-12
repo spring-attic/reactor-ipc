@@ -35,15 +35,14 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.publisher.Flux;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.http.model.Cookie;
 import reactor.io.netty.NettyBuffer;
 import reactor.io.netty.NettyChannel;
+import reactor.io.netty.http.model.Cookie;
 import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 
 /**
@@ -51,10 +50,10 @@ import reactor.io.netty.tcp.NettyChannelHandlerBridge;
  *
  * @author Stephane Maldini
  */
-public class NettyHttpServerHandler extends NettyChannelHandlerBridge {
+class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
-	private final NettyChannel     tcpStream;
-	protected     NettyHttpChannel request;
+	final NettyChannel     tcpStream;
+	     NettyHttpChannel request;
 
 	public NettyHttpServerHandler(
 			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,

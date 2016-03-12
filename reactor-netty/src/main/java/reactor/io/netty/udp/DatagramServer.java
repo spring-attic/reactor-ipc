@@ -52,31 +52,113 @@ import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.NettyChannel;
+import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 import reactor.io.netty.util.NettyNativeDetector;
 
 /**
- * @author Jon Brisbin
+ *
  * @author Stephane Maldini
  */
-public abstract class DatagramServer
+final public class DatagramServer
 		extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
 		"" + SchedulerGroup.DEFAULT_POOL_SIZE)
 	);
-	protected final Bootstrap      bootstrap;
-	protected final EventLoopGroup ioGroup;
 
-	private final InetSocketAddress   listenAddress;
-	private final NetworkInterface    multicastInterface;
-	private final ServerSocketOptions options;
-	private volatile DatagramChannel channel;
+	/**
+	 * Bind a new UDP server to the "loopback" address. By default the default server implementation is scanned from the
+	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
+	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
+	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
+	 * any passed {@link Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
+	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
+	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
+	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
+	 * they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static DatagramServer create() {
+		return create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+	}
 
-	protected DatagramServer(Timer timer,
+	/**
+	 * Bind a new UDP server to the given bind address. By default the default server implementation is scanned from the
+	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
+	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
+	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
+	 * any passed {@link Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
+	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
+	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
+	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
+	 * they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static DatagramServer create(String bindAddress) {
+		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+	}
+
+	/**
+	 * Bind a new UDP server to the "loopback" address and specified port. By default the default server implementation
+	 * is scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
+	 * dependencies are on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add
+	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
+	 * ChannelFlux#writeWith} can subscribe to any passed {@link Publisher}. <p> Note that
+	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
+	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
+	 * Emitted channels will run on the same thread they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on the passed bind address
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static DatagramServer create(int port) {
+		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+	}
+
+	/**
+	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
+	 * on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to
+	 * read any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can
+	 * subscribe to any passed {@link Publisher}. <p> Note that {@link
+	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
+	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
+	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
+	 * channels will run on the same thread they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on the passed bind address
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static DatagramServer create(final String bindAddress, final int port) {
+		return ReactiveNet.udpServer(serverSpec -> {
+			serverSpec.timer(Timer.globalOrNull());
+			return serverSpec.listen(bindAddress, port);
+		});
+	}
+
+	final Bootstrap      bootstrap;
+	final EventLoopGroup ioGroup;
+
+	final InetSocketAddress   listenAddress;
+	final NetworkInterface    multicastInterface;
+	final ServerSocketOptions options;
+
+	volatile DatagramChannel channel;
+
+	public DatagramServer(Timer timer,
 	                         InetSocketAddress listenAddress,
 	                         NetworkInterface multicastInterface,
 	                         ServerSocketOptions options) {

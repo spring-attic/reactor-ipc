@@ -268,7 +268,7 @@ public class TcpServerTests {
 		final int port = SocketUtils.findAvailableTcpPort();
 		final CountDownLatch latch = new CountDownLatch(1);
 
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(NettyTcpClient.class, s ->
+		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(s ->
 			s.connect("localhost", port)
 		);
 

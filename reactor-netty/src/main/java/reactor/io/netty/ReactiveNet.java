@@ -409,85 +409,6 @@ public enum ReactiveNet {
 	// UDP
 
 	/**
-	 * Bind a new UDP server to the "loopback" address. By default the default server implementation is scanned from the
-	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
-	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
-	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
-	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
-	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
-	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
-	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
-	 * they have beem receiving IO events.
-	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
-	 */
-	public static DatagramServer udpServer() {
-		return udpServer(DEFAULT_BIND_ADDRESS);
-	}
-
-	/**
-	 * Bind a new UDP server to the given bind address. By default the default server implementation is scanned from the
-	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
-	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
-	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
-	 * any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
-	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
-	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
-	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
-	 * they have beem receiving IO events.
-	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
-	 */
-	public static DatagramServer udpServer(String bindAddress) {
-		return udpServer(bindAddress, DEFAULT_PORT);
-	}
-
-	/**
-	 * Bind a new UDP server to the "loopback" address and specified port. By default the default server implementation
-	 * is scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
-	 * dependencies are on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add
-	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
-	 * ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
-	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
-	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
-	 * Emitted channels will run on the same thread they have beem receiving IO events.
-	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @param port the port to listen on the passed bind address
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
-	 */
-	public static DatagramServer udpServer(int port) {
-		return udpServer(DEFAULT_BIND_ADDRESS, port);
-	}
-
-	/**
-	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
-	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
-	 * on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to
-	 * read any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can
-	 * subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link
-	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
-	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
-	 * channels will run on the same thread they have beem receiving IO events.
-	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @param port the port to listen on the passed bind address
-	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
-	 */
-	public static DatagramServer udpServer(final String bindAddress, final int port) {
-		return udpServer(serverSpec -> {
-			serverSpec.timer(Timer.globalOrNull());
-			return serverSpec.listen(bindAddress, port);
-		});
-	}
-
-	/**
 	 * Bind a new UDP server to the specified bind address and port. By default the default server implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
 	 * dependencies are on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add
@@ -591,12 +512,9 @@ public enum ReactiveNet {
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus nexus(final String bindAddress, final int port) {
-		return nexus(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
-			@Override
-			public Spec.HttpServerSpec<Buffer, Buffer> apply(Spec.HttpServerSpec<Buffer, Buffer> serverSpec) {
-				serverSpec.timer(Timer.globalOrNull());
-				return serverSpec.listen(bindAddress, port);
-			}
+		return nexus(serverSpec -> {
+			serverSpec.timer(Timer.globalOrNull());
+			return serverSpec.listen(bindAddress, port);
 		});
 	}
 	// TCP

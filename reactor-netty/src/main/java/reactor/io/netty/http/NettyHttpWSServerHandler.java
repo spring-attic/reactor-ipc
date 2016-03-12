@@ -37,9 +37,9 @@ import reactor.io.netty.NettyBuffer;
  *
  * @author Stephane Maldini
  */
-public class NettyHttpWSServerHandler extends NettyHttpServerHandler {
+final class NettyHttpWSServerHandler extends NettyHttpServerHandler {
 
-	private final WebSocketServerHandshaker handshaker;
+	final WebSocketServerHandshaker handshaker;
 
 	final ChannelFuture handshakerResult;
 

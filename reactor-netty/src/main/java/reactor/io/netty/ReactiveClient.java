@@ -36,12 +36,7 @@ import reactor.io.ipc.ChannelFluxHandler;
 public abstract class ReactiveClient<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 		extends ReactivePeer<IN, OUT, CONN> {
 
-	public static final ChannelFluxHandler PING = new ChannelFluxHandler() {
-		@Override
-		public Object apply(Object o) {
-			return Flux.empty();
-		}
-	};
+	public static final ChannelFluxHandler PING = o -> Flux.empty();
 
 	protected ReactiveClient(Timer defaultEnv, long prefetch) {
 		super(defaultEnv, prefetch);

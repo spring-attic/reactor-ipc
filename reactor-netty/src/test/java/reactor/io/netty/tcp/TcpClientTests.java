@@ -137,7 +137,7 @@ public class TcpClientTests {
 	public void testTcpClientWithInetSocketAddress() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);
 
-		TcpClient<String, String> client = ReactiveNet.tcpClient(NettyTcpClient.class, spec -> spec
+		TcpClient<String, String> client = ReactiveNet.tcpClient(spec -> spec
 			.preprocessor(CodecPreprocessor.string())
 			.connect(new InetSocketAddress(echoServerPort))
 		);
@@ -195,7 +195,7 @@ public class TcpClientTests {
 
 	@Test
 	public void closingPromiseIsFulfilled() throws InterruptedException {
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(NettyTcpClient.class, spec -> spec
+		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(spec -> spec
 			.connect("localhost", abortServerPort)
 		);
 
@@ -346,7 +346,7 @@ public class TcpClientTests {
 
 	@Test
 	public void nettyNetChannelAcceptsNettyChannelHandlers() throws InterruptedException {
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(NettyTcpClient.class,
+		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(
 		  spec -> spec
 			.options(new ClientSocketOptions()
 			  .pipelineConfigurer(pipeline -> pipeline.addLast(new HttpClientCodec())))

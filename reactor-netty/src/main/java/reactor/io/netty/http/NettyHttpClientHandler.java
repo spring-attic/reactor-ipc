@@ -48,11 +48,11 @@ import reactor.io.netty.tcp.NettyChannelHandlerBridge;
 /**
  * @author Stephane Maldini
  */
-public class NettyHttpClientHandler extends NettyChannelHandlerBridge {
+class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 
-	protected final NettyChannel                                    tcpStream;
-	protected       NettyHttpChannel                                httpChannel;
-	protected       Subscriber<? super HttpChannel<Buffer, Buffer>> replySubscriber;
+	final NettyChannel                                    tcpStream;
+	       NettyHttpChannel                                httpChannel;
+	      Subscriber<? super HttpChannel<Buffer, Buffer>> replySubscriber;
 
 	/**
 	 * The body of an HTTP response should be discarded.
