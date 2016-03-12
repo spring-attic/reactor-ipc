@@ -31,20 +31,20 @@ public class NexusFederatePlay {
 
 	public static void main(String... args) throws Exception{
 
-		Nexus nexus2 = ReactiveNet.nexus(12014);
+		Nexus nexus2 = Nexus.create(12014);
 		nexus2.startAndAwait();
 
 		Nexus nexus = ReactiveNet.nexus();
 		nexus.withSystemStats()
-		     .federate("ws://localhost:12014/nexus/stream")
+		     .federate("ws://localhost:12014/create/stream")
 		     .startAndAwait();
 
 
 		nexus.monitor(nexus);
 //
-		HttpClient<Buffer, Buffer> client = ReactiveNet.httpClient();
+		HttpClient<Buffer, Buffer> client = HttpClient.create();
 		client
-		           .ws("ws://localhost:12014/nexus/stream")
+		           .ws("ws://localhost:12014/create/stream")
 				   .subscribe(Subscribers.consumer( (HttpChannel<?, ?> ch) ->
 						   ch.input().subscribe(Subscribers.consumer(System.out::println))
 				   ));

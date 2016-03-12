@@ -55,6 +55,7 @@ import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.http.NettyHttpServer;
+import reactor.io.netty.tcp.TcpServer;
 
 import static reactor.core.util.ReactiveStateUtils.property;
 
@@ -65,8 +66,78 @@ import static reactor.core.util.ReactiveStateUtils.property;
 public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>
 		implements ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, Loopback {
 
+	/**
+	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on loopback
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static Nexus create(int port) {
+		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+	}
+
+	/**
+	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
+	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
+	 * {@link Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
+	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static Nexus create(String bindAddress) {
+		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+	}
+
+	/**
+	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on the passed bind address
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static Nexus create(final String bindAddress, final int port) {
+		return ReactiveNet.nexus(serverSpec -> {
+			serverSpec.timer(Timer.globalOrNull());
+			return serverSpec.listen(bindAddress, port);
+		});
+	}
+
 	private static final Logger log            = Logger.getLogger(Nexus.class);
-	private static final String API_STREAM_URL = "/nexus/stream";
+	private static final String API_STREAM_URL = "/create/stream";
 
 	private final HttpServer<Buffer, Buffer>        server;
 	private final GraphEvent                        lastState;
@@ -123,8 +194,8 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		this.server = server;
 		this.eventStream = EmitterProcessor.create(false);
 		this.lastStateMerge = new LastGraphStateMap();
-		this.timer = Timer.create("nexus-poller");
-		this.group = SchedulerGroup.async("nexus", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
+		this.timer = Timer.create("create-poller");
+		this.group = SchedulerGroup.async("create", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
 			@Override
 			public WaitStrategy get() {
 				return WaitStrategy.blocking();
@@ -378,7 +449,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 		if (logExtensionEnabled) {
 			FluxProcessor<Event, Event> p =
-					TopicProcessor.share("nexus-log-sink", 256, WaitStrategy.blocking());
+					TopicProcessor.share("create-log-sink", 256, WaitStrategy.blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
 			                                              .toString(), p.startEmitter());
@@ -863,7 +934,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 		public FederatedClient(String targetAPI) {
 			this.targetAPI = targetAPI;
-			this.client = ReactiveNet.httpClient();
+			this.client = HttpClient.create();
 		}
 	}
 }

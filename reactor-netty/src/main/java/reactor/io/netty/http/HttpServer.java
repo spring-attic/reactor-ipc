@@ -34,7 +34,9 @@ import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
+import reactor.io.netty.Spec;
 import reactor.io.netty.http.model.HttpHeaders;
 import reactor.io.netty.http.routing.ChannelMappings;
 
@@ -45,6 +47,48 @@ import reactor.io.netty.http.routing.ChannelMappings;
  * @author Stephane Maldini
  */
 public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChannel<IN, OUT>> {
+
+	/**
+	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
+	 * @return a simple HTTP Server
+	 */
+	public static HttpServer<Buffer, Buffer> create() {
+		return create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+	}
+
+	/**
+	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
+	 * @param bindAddress address to listen for (e.g. 0.0.0.0 or 127.0.0.1)
+	 * @return a simple HTTP server
+	 */
+	public static HttpServer<Buffer, Buffer> create(String bindAddress) {
+		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+	}
+
+	/**
+	 * Build a simple Netty HTTP server listening on 127.0.0.1 and the passed port
+	 * @param port the port to listen to
+	 * @return a simple HTTP server
+	 */
+	public static HttpServer<Buffer, Buffer> create(int port) {
+		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+	}
+
+	/**
+	 * Build a simple Netty HTTP server listening othe passed bind address and port
+	 * @param bindAddress address to listen for (e.g. 0.0.0.0 or 127.0.0.1)
+	 * @param port the port to listen to
+	 * @return a simple HTTP server
+	 */
+	public static HttpServer<Buffer, Buffer> create(final String bindAddress, final int port) {
+		return ReactiveNet.httpServer(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
+			@Override
+			public Spec.HttpServerSpec<Buffer, Buffer> apply(Spec.HttpServerSpec<Buffer, Buffer> serverSpec) {
+				serverSpec.timer(Timer.globalOrNull());
+				return serverSpec.listen(bindAddress, port);
+			}
+		});
+	}
 
 	protected ChannelMappings<IN, OUT> channelMappings;
 

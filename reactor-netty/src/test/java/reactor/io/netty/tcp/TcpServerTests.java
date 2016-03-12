@@ -56,6 +56,7 @@ import reactor.io.netty.NettyBuffer;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
+import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.util.SocketUtils;
@@ -455,11 +456,11 @@ public class TcpServerTests {
 	@Test
 	@Ignore
 	public void proxyTest() throws Exception {
-		HttpServer<Buffer, Buffer> server = ReactiveNet.httpServer();
+		HttpServer<Buffer, Buffer> server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
-			ReactiveNet.httpClient()
-			  .get("foaas.herokuapp.com/life/" + requestIn.param("search"))
-			  .flatMap(repliesOut ->
+			HttpClient.create()
+			          .get("foaas.herokuapp.com/life/" + requestIn.param("search"))
+			          .flatMap(repliesOut ->
 				  requestIn
 					.writeWith(repliesOut.input())
 			  )
@@ -472,13 +473,13 @@ public class TcpServerTests {
 	@Test
 	@Ignore
 	public void wsTest() throws Exception {
-		HttpServer<Buffer, Buffer> server = ReactiveNet.httpServer();
+		HttpServer<Buffer, Buffer> server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
-			ReactiveNet.httpClient()
-			  .ws("ws://localhost:3000", requestOut ->
+			HttpClient.create()
+			          .ws("ws://localhost:3000", requestOut ->
 				  requestOut.writeWith(Flux.just(Buffer.wrap("ping")))
 			  )
-			  .flatMap(repliesOut ->
+			          .flatMap(repliesOut ->
 				  requestIn
 					.writeWith(repliesOut.input().useCapacity(100))
 			  )

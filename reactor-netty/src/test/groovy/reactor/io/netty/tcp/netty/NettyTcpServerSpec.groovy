@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux
 import reactor.io.buffer.Buffer
 import reactor.io.codec.json.JsonCodec
 import reactor.io.netty.preprocessor.CodecPreprocessor
+import reactor.io.netty.tcp.TcpClient
 import reactor.io.netty.util.SocketUtils
 import reactor.io.netty.ReactiveNet
 import reactor.io.netty.tcp.TcpServer
@@ -41,7 +42,7 @@ class NettyTcpServerSpec extends Specification {
 	def "NettyTcpServer responds to requests from clients"() {
 		given: "a simple TcpServer"
 			def dataLatch = new CountDownLatch(1)
-			def server = ReactiveNet.tcpServer(port)
+			def server = TcpServer.create(port)
 
 		when: "the server is started"
 			server.start { conn ->
@@ -97,8 +98,8 @@ class NettyTcpServerSpec extends Specification {
 		given: "a TcpServer and a TcpClient"
 			def latch = new CountDownLatch(10)
 
-			def server = ReactiveNet.tcpServer(port)
-			def client = ReactiveNet.tcpClient("localhost", port)
+			def server = TcpServer.create(port)
+			def client = TcpClient.create("localhost", port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 
 		when: "the client/server are prepared"
@@ -141,8 +142,8 @@ class NettyTcpServerSpec extends Specification {
 			def elem = 10
 			def latch = new CountDownLatch(elem)
 
-			TcpServer<Buffer, Buffer> server = ReactiveNet.tcpServer(port)
-			def client = ReactiveNet.tcpClient("localhost", port)
+			TcpServer<Buffer, Buffer> server = TcpServer.create(port)
+			def client = TcpClient.create("localhost", port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 			def i = 0
 

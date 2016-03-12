@@ -23,10 +23,13 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
+import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.Preprocessor;
 import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
+import reactor.io.netty.Spec;
 import reactor.io.netty.config.ServerSocketOptions;
 import reactor.io.netty.config.SslOptions;
 
@@ -46,6 +49,96 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ChannelFl
 
 	public static final int DEFAULT_TCP_SELECT_COUNT =
 			Integer.parseInt(System.getProperty("reactor.tcp.selectThreadCount", "" + DEFAULT_TCP_THREAD_COUNT));
+
+	/**
+	 * Bind a new TCP server to "loopback" on port {@literal 12012}. By default the default server implementation is
+	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
+	 * relevant library dependencies are on the classpath. <p> To reply data on the active connection, {@link
+	 * ChannelFlux#writeWith} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
+	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
+	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
+	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
+	 * Emitted channels will run on the same thread they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static TcpServer<Buffer, Buffer> create() {
+		return create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+	}
+
+	/**
+	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty first is provided as long as the relevant
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on loopback
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static TcpServer<Buffer, Buffer> create(int port) {
+		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+	}
+
+	/**
+	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
+	 * implementation is scanned from the classpath on Class init. Support for Netty first is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
+	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
+	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
+	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static TcpServer<Buffer, Buffer> create(String bindAddress) {
+		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+	}
+
+	/**
+	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
+	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
+	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
+	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
+	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
+	 * receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param port the port to listen on the passed bind address
+	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static TcpServer<Buffer, Buffer> create(final String bindAddress, final int port) {
+		return ReactiveNet.tcpServer(new Function<Spec.TcpServerSpec<Buffer, Buffer>, Spec.TcpServerSpec<Buffer, Buffer>>() {
+			@Override
+			public Spec.TcpServerSpec<Buffer, Buffer> apply(Spec.TcpServerSpec<Buffer, Buffer> serverSpec) {
+				serverSpec.timer(Timer.globalOrNull());
+				return serverSpec.listen(bindAddress, port);
+			}
+		});
+	}
 
 	private final ServerSocketOptions options;
 	private final SslOptions          sslOptions;

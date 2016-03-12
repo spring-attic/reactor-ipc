@@ -24,9 +24,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple2;
+import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveClient;
+import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Reconnect;
+import reactor.io.netty.Spec;
 import reactor.io.netty.config.ClientSocketOptions;
 import reactor.io.netty.http.model.Method;
 
@@ -39,6 +42,19 @@ import reactor.io.netty.http.model.Method;
  */
 public abstract class HttpClient<IN, OUT>
 		extends ReactiveClient<IN, OUT, HttpChannel<IN, OUT>> {
+
+	/**
+	 * @return a simple HTTP client
+	 */
+	public static HttpClient<Buffer, Buffer> create() {
+		return ReactiveNet.httpClient(new Function<Spec.HttpClientSpec<Buffer, Buffer>, Spec.HttpClientSpec<Buffer, Buffer>>() {
+			@Override
+			public Spec.HttpClientSpec<Buffer, Buffer> apply(Spec.HttpClientSpec<Buffer, Buffer> clientSpec) {
+				clientSpec.timer(Timer.globalOrNull());
+				return clientSpec;
+			}
+		});
+	}
 
 	protected HttpClient(Timer timer, ClientSocketOptions options) {
 		super(timer, options != null ? options.prefetch() : 1);
