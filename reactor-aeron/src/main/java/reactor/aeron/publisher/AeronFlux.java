@@ -29,7 +29,6 @@ import reactor.aeron.utils.ServiceMessageType;
 import reactor.core.flow.Producer;
 import reactor.core.publisher.Flux;
 import reactor.core.timer.Timer;
-import reactor.core.util.Assert;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
@@ -170,22 +169,16 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 	}
 
 	private SignalPoller createSignalsPoller(final Subscriber<? super Buffer> subscriber) {
-		return new SignalPoller(context, serviceMessageSender, subscriber, aeronInfra, new Consumer<Boolean>() {
+		return new SignalPoller(context, serviceMessageSender, subscriber, aeronInfra, () -> {
+            heartbeatSender.shutdown();
 
-			@Override
-			public void accept(Boolean isTerminalSignalReceived) {
-				heartbeatSender.shutdown();
+            terminateSession();
 
-				terminateSession();
+            signalPoller = null;
+            subscribed.set(false);
 
-				signalPoller = null;
-				subscribed.set(false);
-
-				if (context.autoCancel() || isTerminalSignalReceived) {
-					shutdown();
-				}
-			}
-		});
+            shutdown();
+        });
 	}
 
 	private void terminateSession() {

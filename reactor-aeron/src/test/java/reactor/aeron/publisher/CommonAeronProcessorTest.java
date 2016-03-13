@@ -90,6 +90,7 @@ public abstract class CommonAeronProcessorTest {
 		subscriber.request(1);
 
 		subscriber.awaitAndAssertNextValues("Extra");
+		subscriber.await();
 	}
 
 	@Test
