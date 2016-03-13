@@ -15,18 +15,9 @@
  */
 package reactor.aeron.publisher;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.function.Consumer;
-
 import org.reactivestreams.Subscriber;
 import reactor.aeron.Context;
-import reactor.aeron.utils.AeronInfra;
-import reactor.aeron.utils.AeronUtils;
-import reactor.aeron.utils.DemandTracker;
-import reactor.aeron.utils.ServiceMessagePublicationFailedException;
-import reactor.aeron.utils.ServiceMessageType;
-import reactor.aeron.utils.SignalType;
+import reactor.aeron.utils.*;
 import reactor.core.flow.MultiProducer;
 import reactor.core.flow.Producer;
 import reactor.core.state.Cancellable;
@@ -37,12 +28,14 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import uk.co.real_logic.aeron.FragmentAssembler;
-import uk.co.real_logic.aeron.Subscription;
-import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
+import uk.co.real_logic.aeron.ControlledFragmentAssembler;
+import uk.co.real_logic.aeron.logbuffer.ControlledFragmentHandler;
 import uk.co.real_logic.aeron.logbuffer.Header;
 import uk.co.real_logic.agrona.DirectBuffer;
 import uk.co.real_logic.agrona.concurrent.IdleStrategy;
+
+import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Signals receiver functionality which polls for signals sent by senders
@@ -55,135 +48,64 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 
 	private final AeronInfra aeronInfra;
 
-	private final Subscriber<? super Buffer> subscriber;
-
-	private final Consumer<Boolean> shutdownTask;
+	private final Runnable shutdownTask;
 
 	private final DemandTracker demandTracker;
 
 	private final Context context;
 
-	private final SignalFragmentHandler signalFragmentHandler;
-
 	private volatile boolean running;
-
-	private volatile uk.co.real_logic.aeron.Subscription signalSub;
 
 	private final ServiceMessageSender serviceMessageSender;
 
-	private abstract class BaseFragmentHandler implements FragmentHandler {
+	private boolean isLastSignalAborted = false;
 
-		private final FragmentAssembler fragmentAssembler = new FragmentAssembler(new FragmentHandler() {
-			@Override
-			public void onFragment(DirectBuffer buffer, int offset, int length, Header header) {
-				doOnFragment(buffer, offset, length, header);
-			}
-		});
+	private final Serializer<Throwable> exceptionSerializer;
 
+	private uk.co.real_logic.aeron.Subscription signalSub;
+
+	protected final Subscriber<? super Buffer> subscriber;
+
+	private final ControlledFragmentHandler fragmentAssembler = new ControlledFragmentAssembler(new ControlledFragmentHandler() {
 		@Override
-		public void onFragment(DirectBuffer buffer, int offset, int length, Header header) {
-			fragmentAssembler.onFragment(buffer, offset, length, header);
-		}
-
-		private void doOnFragment(DirectBuffer buffer, int offset, int length, Header header) {
-			byte[] data = new byte[length - 1];
-			buffer.getBytes(offset + 1, data);
+		public Action onFragment(DirectBuffer buffer, int offset, int length, Header header) {
+			byte[] bytes = new byte[length - 1];
+			buffer.getBytes(offset + 1, bytes);
 			byte signalTypeCode = buffer.getByte(offset);
+			Throwable error = null;
 			try {
-				if (!handleSignal(signalTypeCode, data, header.sessionId())) {
-					logger.error("Message with unknown signal type code of {} and length of {} was ignored",
-							signalTypeCode, data.length);
+				if (signalTypeCode == SignalType.Next.getCode()) {
+					if (demand > 0) {
+						demand--;
+						isLastSignalAborted = false;
+						subscriber.onNext(Buffer.wrap(bytes));
+					} else {
+						isLastSignalAborted = true;
+						return Action.ABORT;
+					}
+				} else if (signalTypeCode == SignalType.Complete.getCode()) {
+					running = false;
+					subscriber.onComplete();
+				} else if (signalTypeCode == SignalType.Error.getCode()) {
+					error = exceptionSerializer.deserialize(bytes);
+				} else {
+					error = Exceptions.fail(new IllegalStateException(
+							String.format("Received message with unknown signal type code of %d and length of %d",
+									signalTypeCode, bytes.length)));
 				}
 			} catch (Throwable t) {
 				Exceptions.throwIfFatal(t);
-				subscriber.onError(t);
+				error = t;
 			}
-		}
 
-		/**
-		 * Handles signal with type code of <code>signalTypeCode</code> and
-		 * content of <code>data</code>
-		 *
-		 * @param signalTypeCode signal type code
-		 * @param data signal data
-		 * @param sessionId Aeron sessionId
-		 * @return true if signal was handled and false otherwise
-		 */
-		abstract boolean handleSignal(byte signalTypeCode, byte[] data, int sessionId);
-
-	}
-
-	/**
-	 * Handler for Next, Complete and Error signals
-	 */
-	private class SignalFragmentHandler extends BaseFragmentHandler {
-
-		/**
-		 * If should read a single message from Aeron.
-		 * Used to check if Complete signal was sent before any events were
-		 * requested via a subscription
-		 */
-		boolean checkForComplete;
-
-		/**
-		 * Message read from Aeron but not yet forwarded into a subscriber
-		 */
-		Buffer reservedNextSignal;
-
-		/**
-		 * Number of Next signals received
-		 */
-		int nextSignalCounter;
-
-		/**
-		 * Complete signal was received from one of senders
-		 */
-		private boolean isTerminalSignalReceived = false;
-
-		@Override
-		boolean handleSignal(byte signalTypeCode, byte[] data, int sessionId) {
-			if (signalTypeCode == SignalType.Next.getCode()) {
-				Buffer buffer = Buffer.wrap(data);
-				if (checkForComplete) {
-					reservedNextSignal = buffer;
-				} else {
-					subscriber.onNext(buffer);
-					nextSignalCounter++;
-				}
-			} else if (signalTypeCode == SignalType.Complete.getCode()) {
-				subscriber.onComplete();
-
-				isTerminalSignalReceived = true;
-			} else if (signalTypeCode == SignalType.Error.getCode()) {
-				Throwable t = context.exceptionSerializer().deserialize(data);
-				subscriber.onError(t);
-
-				isTerminalSignalReceived = true;
-			} else {
-				return false;
+			if (error != null) {
+				running = false;
+				subscriber.onError(error);
 			}
-			return true;
+			return Action.COMMIT;
 		}
+	});
 
-		int getAndResetNextSignalCounter() {
-			int result = nextSignalCounter;
-			nextSignalCounter = 0;
-			return result;
-		}
-
-		public boolean hasReservedNextSignal() {
-			return reservedNextSignal != null;
-		}
-
-		public void processReservedNextSignal() {
-			subscriber.onNext(reservedNextSignal);
-			reservedNextSignal = null;
-		}
-
-		public boolean isTerminalSignalReceived() {
-			return isTerminalSignalReceived;
-		}
-	}
 
 	@Override
 	public int getMode() {
@@ -195,69 +117,47 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 						ServiceMessageSender serviceMessageSender,
 						Subscriber<? super Buffer> subscriber,
 						AeronInfra aeronInfra,
-						Consumer<Boolean> shutdownTask) {
+						Runnable shutdownTask) {
 
 		this.context = context;
 		this.serviceMessageSender = serviceMessageSender;
 		this.subscriber = subscriber;
 		this.aeronInfra = aeronInfra;
 		this.shutdownTask = shutdownTask;
-		this.signalFragmentHandler = new SignalFragmentHandler();
 		this.demandTracker = new DemandTracker();
+		this.exceptionSerializer = context.exceptionSerializer();
 	}
+
+	long demand = 0;
 
 	@Override
 	public void run() {
 		running = true;
 		logger.debug("Signal poller started, sessionId: {}", serviceMessageSender.getSessionId());
 
-		uk.co.real_logic.aeron.Subscription signalSub = aeronInfra.addSubscription(context.receiverChannel(),
-				context.streamId());
-
-		this.signalSub = signalSub;
+		this.signalSub = aeronInfra.addSubscription(context.receiverChannel(), context.streamId());
 
 		setSubscriberSubscription();
 
 		final IdleStrategy idleStrategy = AeronUtils.newBackoffIdleStrategy();
-		final DemandTracker demandTracker = this.demandTracker;
-		boolean isTerminalSignalReceived = false;
-		long demand = 0;
 		try {
 			while (running) {
 				if (demand == 0) {
 					demand = demandTracker.getAndReset();
 				}
 
-				int nFragmentsReceived = 0;
 				int fragmentLimit = (int) Math.min(demand, context.signalPollerFragmentLimit());
-				if (fragmentLimit == 0) {
-					if (!signalFragmentHandler.hasReservedNextSignal()) {
-						checkForTerminalSignal(signalSub);
-					}
-				} else {
-					if (signalFragmentHandler.hasReservedNextSignal()) {
-						signalFragmentHandler.processReservedNextSignal();
-						fragmentLimit--;
-						demand--;
-					}
-					if (fragmentLimit > 0) {
-						nFragmentsReceived = signalSub.poll(signalFragmentHandler, fragmentLimit);
-						demand -= signalFragmentHandler.getAndResetNextSignalCounter();
-					}
+				if (fragmentLimit == 0 && !isLastSignalAborted) {
+					fragmentLimit = 1;
 				}
-				idleStrategy.idle(nFragmentsReceived);
-
-				if (signalFragmentHandler.isTerminalSignalReceived()) {
-					isTerminalSignalReceived = true;
-					running = false;
-					break;
-				}
+				int fragmentsReceived = signalSub.controlledPoll(fragmentAssembler, fragmentLimit);
+				idleStrategy.idle(fragmentsReceived);
 			}
 		} finally {
 			aeronInfra.close(signalSub);
 
 			logger.trace("about to execute shutdownTask");
-			shutdownTask.accept(isTerminalSignalReceived);
+			shutdownTask.run();
 		}
 
 		logger.debug("Signal poller shutdown, sessionId: {}", serviceMessageSender.getSessionId());
@@ -273,12 +173,6 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 			Exceptions.throwIfFatal(t);
 			subscriber.onError(t);
 		}
-	}
-
-	private void checkForTerminalSignal(Subscription nextCompleteSub) {
-		signalFragmentHandler.checkForComplete = true;
-		nextCompleteSub.poll(signalFragmentHandler, 1);
-		signalFragmentHandler.checkForComplete = false;
 	}
 
 	public void shutdown() {

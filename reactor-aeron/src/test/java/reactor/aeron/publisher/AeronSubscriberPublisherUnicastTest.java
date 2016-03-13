@@ -15,9 +15,6 @@
  */
 package reactor.aeron.publisher;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -28,6 +25,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.test.TestSubscriber;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.io.buffer.Buffer;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 
@@ -85,8 +85,8 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 	}
 
 	@Test
-	public void testSubscriptionCancellationDoesNotShutdownPublisherWhenNoAutocancel() throws InterruptedException {
-		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber"));
+	public void testSubscriptionCancellationTerminatesAeronFlux() throws InterruptedException {
+		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber").autoCancel(true));
 
 		Flux.fromIterable(createBuffers(6)).subscribe(aeronSubscriber);
 
@@ -100,38 +100,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client.cancel();
 
-		Thread.sleep(2000);
-
-
-		TestSubscriber<String> client2 = new TestSubscriber<String>(0);
-		Buffer.bufferToString(publisher).subscribe(client2);
-
-		Thread.sleep(1000);
-
-		client2.request(6);
-		client2.awaitAndAssertNextValues("1", "2", "3", "4", "5", "6").assertComplete();
-	}
-
-
-	@Test
-	public void testSubscriptionCancellationShutdownsPublisherWhenAutocancel() throws InterruptedException {
-		AeronSubscriber aeronSubscriber = AeronSubscriber.create(createContext("subscriber").autoCancel(true));
-
-		Flux.fromIterable(createBuffers(6)).subscribe(aeronSubscriber);
-
-		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(true));
-		TestSubscriber<String> client = new TestSubscriber<String>(0);
-
-		Buffer.bufferToString(publisher).subscribe(client);
-
-		client.request(3);
-		client.awaitAndAssertNextValues("1", "2", "3");
-
-		client.cancel();
-
-		TestSubscriber.await(TIMEOUT, "AeronFlux should be dead", () -> !publisher.alive());
-
-		aeronSubscriber.shutdown();
+		TestSubscriber.await(TIMEOUT, "publisher wasn't terminated", publisher::isTerminated);
 	}
 
 	private static class HangingOnCompleteSubscriber implements Subscriber<String> {

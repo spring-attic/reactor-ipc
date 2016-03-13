@@ -16,13 +16,8 @@
 
 package reactor.aeron.publisher;
 
-import org.junit.Test;
 import reactor.aeron.Context;
-import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.aeron.utils.AeronTestUtils;
-import reactor.core.publisher.Flux;
-import reactor.core.test.TestSubscriber;
-import reactor.io.buffer.Buffer;
 
 /**
  * @author Anatoly Kadyshev
@@ -36,43 +31,6 @@ public class AeronSubscriberPublisherMulticastTest extends CommonSubscriberPubli
 		return Context.create().name(name)
 		                    .senderChannel(CHANNEL)
 		                    .receiverChannel(CHANNEL);
-	}
-
-	@Test
-	public void testSubscriptionCancellationDoesNotShutdownPublisherWhenNoAutocancel() throws InterruptedException {
-		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
-		Flux.fromIterable(createBuffers(256))
-		    .subscribe(subscriber);
-
-		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(false));
-		TestSubscriber<String> client = new TestSubscriber<String>(0);
-		Buffer.bufferToString(publisher).subscribe(client);
-
-		client.request(3);
-
-		client.awaitAndAssertNextValueCount(3);
-
-		client.cancel();
-
-		Thread.sleep(3000);
-
-		TestSubscriber<String> client2 = new TestSubscriber<String>(0);
-		Buffer.bufferToString(publisher)
-		  .subscribe(client2);
-
-		Thread.sleep(1000);
-
-		client2.request(6);
-
-		client2.awaitAndAssertNextValueCount(6);
-
-		client2.cancel();
-
-		subscriber.shutdown();
-		publisher.shutdown();
-
-		TestSubscriber.await(TIMEOUT, "Subscriber wasn't terminated", subscriber::isTerminated);
-		TestSubscriber.await(TIMEOUT, "Publisher wasn't terminated", publisher::isTerminated);
 	}
 
 }
