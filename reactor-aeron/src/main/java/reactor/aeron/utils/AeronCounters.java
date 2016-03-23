@@ -28,7 +28,7 @@ import java.util.function.BiConsumer;
 /**
  * Based on <a href="https://github.com/real-logic/Aeron/blob/master/aeron-samples/src/main/java/uk/co/real_logic/aeron/samples/AeronStat.java">AeronCounters.java from Aeron</a>
  */
-class AeronCounters {
+public final class AeronCounters {
 
 	private final CountersReader counters;
 
@@ -56,6 +56,10 @@ class AeronCounters {
 
 	public void forEach(BiConsumer<Integer, String> consumer) {
 		counters.forEach(consumer);
+	}
+
+	public long getCounterValue(int counterId) {
+		return counters.getCounterValue(counterId);
 	}
 
 }
