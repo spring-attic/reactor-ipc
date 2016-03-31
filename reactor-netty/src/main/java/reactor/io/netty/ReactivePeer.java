@@ -67,6 +67,22 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 	}
 
 	/**
+	 * Start this {@literal Peer}.
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
+	 * ReactivePeer} is started
+	 */
+	public final <NEWIN, NEWOUT> Mono<Void> startWithCodec(
+			final ChannelFluxHandler<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> handler,
+			final Function<ChannelFlux<IN, OUT>, ? extends ChannelFlux<NEWIN, NEWOUT>> preprocessor) {
+
+		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
+			throw new IllegalStateException("Peer already started");
+		}
+
+		return doStart(ch -> handler.apply(preprocessor.apply(ch)));
+	}
+
+	/**
 	 * @see this#start(ChannelFluxHandler)
 	 * @param handler
 	 * @throws InterruptedException

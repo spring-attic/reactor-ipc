@@ -27,21 +27,21 @@ import java.util.Set;
  */
 interface ReadableHeaders {
 
-	boolean contains(String name);
+	boolean contains(CharSequence name);
 
-	boolean contains(String name, String value, boolean ignoreCaseValue);
+	boolean contains(CharSequence name, CharSequence value, boolean ignoreCaseValue);
 
 	List<Map.Entry<String, String>> entries();
 
-	String get(String name);
+	String get(CharSequence name);
 
-	List<String> getAll(String name);
+	List<String> getAll(CharSequence name);
 
-	Date getDate() throws ParseException;
+	Long getTimeMillis();
 
-	Date getDateHeader(String name) throws ParseException;
+	Long getTimeMillis(CharSequence name);
 
-	String getHost();
+	CharSequence getHost();
 
 	boolean isEmpty();
 

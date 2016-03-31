@@ -16,25 +16,25 @@
 
 package reactor.io.netty.http;
 
-import io.netty.handler.codec.http.HttpRequest;
-import reactor.io.netty.http.model.HttpHeaders;
-
-import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpUtil;
+import reactor.io.netty.http.model.HttpHeaders;
 
 /**
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-public class NettyHttpHeaders implements HttpHeaders {
+final class NettyHttpHeaders implements HttpHeaders {
 
 	private final HttpRequest                             nettyRequest;
 	private final io.netty.handler.codec.http.HttpHeaders nettyHeaders;
 
-	public NettyHttpHeaders(HttpRequest nettyRequest) {
+	NettyHttpHeaders(HttpRequest nettyRequest) {
 		this.nettyRequest = nettyRequest;
 		this.nettyHeaders = nettyRequest.headers();
 	}
@@ -44,20 +44,14 @@ public class NettyHttpHeaders implements HttpHeaders {
 	}
 
 	@Override
-	public HttpHeaders add(String name, String value) {
+	public HttpHeaders add(CharSequence name, Object value) {
 		nettyHeaders.add(name, value);
 		return this;
 	}
 
 	@Override
-	public HttpHeaders add(String name, Iterable<String> values) {
+	public HttpHeaders add(CharSequence name, Iterable<?> values) {
 		nettyHeaders.add(name, values);
-		return this;
-	}
-
-	@Override
-	public HttpHeaders addDateHeader(String name, Date value) {
-		io.netty.handler.codec.http.HttpHeaders.addDateHeader(nettyRequest, name, value);
 		return this;
 	}
 
@@ -68,83 +62,65 @@ public class NettyHttpHeaders implements HttpHeaders {
 	}
 
 	@Override
-	public HttpHeaders remove(String name) {
+	public HttpHeaders remove(CharSequence name) {
 		nettyHeaders.remove(name);
 		return this;
 	}
 
 	@Override
 	public HttpHeaders removeTransferEncodingChunked() {
-		io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChunked(nettyRequest);
+		HttpUtil.setTransferEncodingChunked(nettyRequest, false);
 		return this;
 	}
 
 	@Override
-	public HttpHeaders set(String name, String value) {
+	public HttpHeaders set(CharSequence name, Object value) {
 		nettyHeaders.set(name, value);
 		return this;
 	}
 
 	@Override
-	public HttpHeaders set(String name, Iterable<String> values) {
+	public HttpHeaders set(CharSequence name, Iterable<?> values) {
 		nettyHeaders.set(name, values);
 		return this;
 	}
 
 	@Override
 	public HttpHeaders contentLength(long length) {
-		io.netty.handler.codec.http.HttpHeaders.setContentLength(nettyRequest, length);
+		HttpUtil.setContentLength(nettyRequest, length);
 		return this;
 	}
 
 	@Override
-	public HttpHeaders date(Date value) {
-		io.netty.handler.codec.http.HttpHeaders.setDate(nettyRequest, value);
-		return this;
-	}
-
-	@Override
-	public HttpHeaders dateHeader(String name, Date value) {
-		io.netty.handler.codec.http.HttpHeaders.setDateHeader(nettyRequest, name, value);
-		return this;
-	}
-
-	@Override
-	public HttpHeaders dateHeader(String name, Iterable<Date> values) {
-		io.netty.handler.codec.http.HttpHeaders.setDateHeader(nettyRequest, name, values);
-		return this;
-	}
-
-	@Override
-	public HttpHeaders host(String value) {
-		io.netty.handler.codec.http.HttpHeaders.setHost(nettyRequest, value);
+	public HttpHeaders host(CharSequence value) {
+		set(HttpHeaders.HOST, value);
 		return this;
 	}
 
 	@Override
 	public HttpHeaders keepAlive(boolean keepAlive) {
-		io.netty.handler.codec.http.HttpHeaders.setKeepAlive(nettyRequest, keepAlive);
+		HttpUtil.setKeepAlive(nettyRequest, keepAlive);
 		return this;
 	}
 
 	@Override
 	public boolean isKeepAlive() {
-		return io.netty.handler.codec.http.HttpHeaders.isKeepAlive(nettyRequest);
+		return HttpUtil.isKeepAlive(nettyRequest);
 	}
 
 	@Override
 	public HttpHeaders transferEncodingChunked() {
-		io.netty.handler.codec.http.HttpHeaders.setTransferEncodingChunked(nettyRequest);
+		HttpUtil.setTransferEncodingChunked(nettyRequest, true);
 		return this;
 	}
 
 	@Override
-	public boolean contains(String name) {
+	public boolean contains(CharSequence name) {
 		return this.nettyHeaders.contains(name);
 	}
 
 	@Override
-	public boolean contains(String name, String value, boolean ignoreCaseValue) {
+	public boolean contains(CharSequence name, CharSequence value, boolean ignoreCaseValue) {
 		return this.nettyHeaders.contains(name, value, ignoreCaseValue);
 	}
 
@@ -154,28 +130,34 @@ public class NettyHttpHeaders implements HttpHeaders {
 	}
 
 	@Override
-	public String get(String name) {
+	public String get(CharSequence name) {
 		return this.nettyHeaders.get(name);
 	}
 
 	@Override
-	public List<String> getAll(String name) {
+	public List<String> getAll(CharSequence name) {
 		return this.nettyHeaders.getAll(name);
 	}
 
 	@Override
-	public Date getDate() throws ParseException {
-		return io.netty.handler.codec.http.HttpHeaders.getDate(this.nettyRequest);
+	public Long getTimeMillis(){
+		return nettyHeaders.getTimeMillis(HttpHeaderNames.DATE);
 	}
 
 	@Override
-	public Date getDateHeader(String name) throws ParseException {
-		return io.netty.handler.codec.http.HttpHeaders.getDateHeader(this.nettyRequest, name);
+	public Long getTimeMillis(CharSequence name){
+		return nettyHeaders.getTimeMillis(name);
+	}
+
+	@Override
+	public HttpHeaders timeMillis(Long timeMillis) {
+		set(HttpHeaderNames.DATE, timeMillis);
+		return this;
 	}
 
 	@Override
 	public String getHost() {
-		return io.netty.handler.codec.http.HttpHeaders.getHost(this.nettyRequest);
+		return get(HttpHeaderNames.HOST);
 	}
 
 	@Override

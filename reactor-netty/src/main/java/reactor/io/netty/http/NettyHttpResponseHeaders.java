@@ -16,27 +16,27 @@
 
 package reactor.io.netty.http;
 
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponse;
-import reactor.io.netty.http.model.ResponseHeaders;
-
-import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpUtil;
+import reactor.io.netty.http.model.ResponseHeaders;
 
 /**
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-public class NettyHttpResponseHeaders implements ResponseHeaders {
+final class NettyHttpResponseHeaders implements ResponseHeaders {
 
 	private final HttpResponse nettyResponse;
 	private final HttpHeaders nettyHeaders;
 
 
-	public NettyHttpResponseHeaders(HttpResponse nettyResponse) {
+	NettyHttpResponseHeaders(HttpResponse nettyResponse) {
 		this.nettyResponse = nettyResponse;
 		this.nettyHeaders = nettyResponse.headers();
 	}
@@ -46,12 +46,12 @@ public class NettyHttpResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public boolean contains(String name) {
+	public boolean contains(CharSequence name) {
 		return this.nettyHeaders.contains(name);
 	}
 
 	@Override
-	public boolean contains(String name, String value, boolean ignoreCaseValue) {
+	public boolean contains(CharSequence name, CharSequence value, boolean ignoreCaseValue) {
 		return this.nettyHeaders.contains(name, value, ignoreCaseValue);
 	}
 
@@ -61,28 +61,23 @@ public class NettyHttpResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public String get(String name) {
+	public String get(CharSequence name) {
 		return this.nettyHeaders.get(name);
 	}
 
 	@Override
-	public List<String> getAll(String name) {
+	public List<String> getAll(CharSequence name) {
 		return this.nettyHeaders.getAll(name);
 	}
 
 	@Override
-	public Date getDate() throws ParseException {
-		return HttpHeaders.getDate(this.nettyResponse);
-	}
-
-	@Override
-	public Date getDateHeader(String name) throws ParseException {
-		return HttpHeaders.getDateHeader(this.nettyResponse, name);
+	public Long getTimeMillis() {
+		return nettyHeaders.getTimeMillis(HttpHeaderNames.DATE);
 	}
 
 	@Override
 	public String getHost() {
-		return HttpHeaders.getHost(this.nettyResponse);
+		return get(HttpHeaderNames.HOST);
 	}
 
 	@Override
@@ -101,20 +96,14 @@ public class NettyHttpResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public ResponseHeaders add(String name, String value) {
+	public ResponseHeaders add(CharSequence name, Object value) {
 		this.nettyHeaders.add(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders add(String name, Iterable<String> values) {
+	public ResponseHeaders add(CharSequence name, Iterable<?> values) {
 		this.nettyHeaders.add(name, values);
-		return this;
-	}
-
-	@Override
-	public ResponseHeaders addDateHeader(String name, Date value) {
-		HttpHeaders.addDateHeader(this.nettyResponse, name, value);
 		return this;
 	}
 
@@ -125,73 +114,66 @@ public class NettyHttpResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public ResponseHeaders remove(String name) {
+	public ResponseHeaders remove(CharSequence name) {
 		this.nettyHeaders.remove(name);
 		return this;
 	}
 
 	@Override
 	public ResponseHeaders removeTransferEncodingChunked() {
-		HttpHeaders.removeTransferEncodingChunked(this.nettyResponse);
+		HttpUtil.setTransferEncodingChunked(this.nettyResponse, false);
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders set(String name, String value) {
+	public ResponseHeaders set(CharSequence name, Object value) {
 		this.nettyHeaders.set(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders set(String name, Iterable<String> values) {
+	public ResponseHeaders set(CharSequence name, Iterable<?> values) {
 		this.nettyHeaders.set(name, values);
 		return this;
 	}
 
 	@Override
 	public ResponseHeaders contentLength(long length) {
-		HttpHeaders.setContentLength(this.nettyResponse, length);
+		HttpUtil.setContentLength(this.nettyResponse, length);
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders date(Date value) {
-		HttpHeaders.setDate(this.nettyResponse, value);
-		return this;
-	}
-
-	@Override
-	public ResponseHeaders dateHeader(String name, Date value) {
-		HttpHeaders.setDateHeader(this.nettyResponse, name, value);
-		return this;
-	}
-
-	@Override
-	public ResponseHeaders dateHeader(String name, Iterable<Date> values) {
-		HttpHeaders.setDateHeader(this.nettyResponse, name, values);
-		return this;
-	}
-
-	@Override
-	public ResponseHeaders host(String value) {
-		HttpHeaders.setHost(this.nettyResponse, value);
+	public ResponseHeaders host(CharSequence value) {
+		set(HttpHeaderNames.HOST, value);
 		return this;
 	}
 
 	@Override
 	public boolean isKeepAlive(){
-		return HttpHeaders.isKeepAlive(this.nettyResponse);
+		return HttpUtil.isKeepAlive(this.nettyResponse);
 	}
 
 	@Override
 	public ResponseHeaders keepAlive(boolean keepAlive) {
-		HttpHeaders.setKeepAlive(this.nettyResponse, keepAlive);
+		HttpUtil.setKeepAlive(this.nettyResponse, keepAlive);
 		return this;
 	}
 
 	@Override
 	public ResponseHeaders transferEncodingChunked() {
-		HttpHeaders.setTransferEncodingChunked(this.nettyResponse);
+		HttpUtil.setTransferEncodingChunked(this.nettyResponse, true);
+		return this;
+	}
+
+	@Override
+	public Long getTimeMillis(CharSequence name) {
+		return nettyHeaders.getTimeMillis(name);
+	}
+
+	@Override
+	public ResponseHeaders timeMillis(Long timeMillis) {
+		set(HttpHeaderNames.DATE, timeMillis);
 		return this;
 	}
 }

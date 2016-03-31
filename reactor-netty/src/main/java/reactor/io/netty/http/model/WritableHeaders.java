@@ -16,38 +16,30 @@
 
 package reactor.io.netty.http.model;
 
-import java.util.Date;
-
 /**
  * @author Sebastien Deleuze
  */
 interface WritableHeaders<T> {
 
-	T add(String name, String value);
+	T add(CharSequence name, Object value);
 
-	T add(String name, Iterable<String> values);
-
-	T addDateHeader(String name, Date value);
+	T add(CharSequence name, Iterable<?> values);
 
 	T clear();
 
-	T remove(String name);
+	T remove(CharSequence name);
 
 	T removeTransferEncodingChunked();
 
-	T set(String name, String value);
+	T set(CharSequence name, Object value);
 
-	T set(String name, Iterable<String> values);
+	T set(CharSequence name, Iterable<?> values);
 
 	T contentLength(long length);
 
-	T date(Date value);
+	T timeMillis(Long timeMillis);
 
-	T dateHeader(String name, Date value);
-
-	T dateHeader(String name, Iterable<Date> values);
-
-	T host(String value);
+	T host(CharSequence value);
 
 	T keepAlive(boolean keepAlive);
 

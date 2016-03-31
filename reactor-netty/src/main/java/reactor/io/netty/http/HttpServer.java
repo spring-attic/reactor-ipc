@@ -90,6 +90,24 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		});
 	}
 
+
+
+	/**
+	 * Start this {@literal Peer}.
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
+	 * HttpClient} is started
+	 */
+	public final <NEWIN, NEWOUT> Mono<Void> startWithHttpCodec(
+			final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
+			final Function<HttpChannel<IN, OUT>, ? extends HttpChannel<NEWIN, NEWOUT>> preprocessor) {
+
+		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
+			throw new IllegalStateException("Peer already started");
+		}
+
+		return doStart(ch -> handler.apply(preprocessor.apply(ch)));
+	}
+
 	protected ChannelMappings<IN, OUT> channelMappings;
 
 	protected HttpServer(Timer timer) {

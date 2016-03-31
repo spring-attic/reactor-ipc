@@ -28,7 +28,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.Preprocessor;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.ReactiveClient;
+import reactor.io.netty.Client;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.Reconnect;
@@ -45,7 +45,7 @@ import reactor.io.netty.config.SslOptions;
  * @author Stephane Maldini
  */
 public abstract class TcpClient<IN, OUT>
-		extends ReactiveClient<IN, OUT, ChannelFlux<IN, OUT>>
+		extends Client<IN, OUT, ChannelFlux<IN, OUT>>
 		implements Introspectable {
 
 	/**

@@ -74,7 +74,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	) {
 		this.tcpStream = tcpStream;
 		this.nettyRequest = request;
-		this.nettyResponse = new DefaultHttpResponse(request.getProtocolVersion(), HttpResponseStatus.OK);
+		this.nettyResponse = new DefaultHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
 		this.headers = new NettyHttpHeaders(request);
 		this.responseHeaders = new NettyHttpResponseHeaders(this.nettyResponse);
 		this.
@@ -249,7 +249,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 
 	@Override
 	public Method method() {
-		return new Method(this.nettyRequest.getMethod().name());
+		return new Method(this.nettyRequest.method().name());
 	}
 
 	@Override
@@ -293,7 +293,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 
 	@Override
 	public Protocol protocol() {
-		HttpVersion version = this.nettyRequest.getProtocolVersion();
+		HttpVersion version = this.nettyRequest.protocolVersion();
 		if (version.equals(HttpVersion.HTTP_1_0)) {
 			return Protocol.HTTP_1_0;
 		} else if (version.equals(HttpVersion.HTTP_1_1)) {
@@ -411,7 +411,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 
 	@Override
 	public String uri() {
-		return this.nettyRequest.getUri();
+		return this.nettyRequest.uri();
 	}
 
 	@Override

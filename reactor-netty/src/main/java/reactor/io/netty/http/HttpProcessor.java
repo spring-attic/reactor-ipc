@@ -17,11 +17,11 @@
 package reactor.io.netty.http;
 
 import reactor.io.ipc.ChannelFlux;
-import reactor.io.netty.ReactiveClient;
+import reactor.io.netty.Client;
 import reactor.io.netty.ReactivePeer;
 
 /**
- * A {@link HttpChannel} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization
+ * A {@link HttpChannel} callback that is attached on {@link ReactivePeer} or {@link Client} initialization
  * and receives
  * all connected {@link HttpChannel}. The implementation must return a Publisher to complete or error
  * in order to close the {@link ChannelFlux}.

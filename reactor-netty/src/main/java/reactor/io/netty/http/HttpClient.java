@@ -26,7 +26,7 @@ import reactor.core.timer.Timer;
 import reactor.core.tuple.Tuple2;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.ReactiveClient;
+import reactor.io.netty.Client;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.Spec;
@@ -41,7 +41,7 @@ import reactor.io.netty.http.model.Method;
  * @author Stephane Maldini
  */
 public abstract class HttpClient<IN, OUT>
-		extends ReactiveClient<IN, OUT, HttpChannel<IN, OUT>> {
+		extends Client<IN, OUT, HttpChannel<IN, OUT>> {
 
 	/**
 	 * @return a simple HTTP client
@@ -58,6 +58,23 @@ public abstract class HttpClient<IN, OUT>
 
 	protected HttpClient(Timer timer, ClientSocketOptions options) {
 		super(timer, options != null ? options.prefetch() : 1);
+	}
+
+
+	/**
+	 * Start this {@literal Peer}.
+	 * @return a {@link Mono<Void>} that will be complete when the {@link
+	 * HttpClient} is started
+	 */
+	public final <NEWIN, NEWOUT> Mono<Void> startWithHttpCodec(
+			final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
+			final Function<HttpChannel<IN, OUT>, ? extends HttpChannel<NEWIN, NEWOUT>> preprocessor) {
+
+		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
+			throw new IllegalStateException("Peer already started");
+		}
+
+		return doStart(ch -> handler.apply(preprocessor.apply(ch)));
 	}
 
 	/**
@@ -172,6 +189,7 @@ public abstract class HttpClient<IN, OUT>
 	public abstract Mono<? extends HttpChannel<IN, OUT>> request(Method method,
 			String url,
 			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler);
+
 
 	/**
 	 *

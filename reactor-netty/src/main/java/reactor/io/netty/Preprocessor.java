@@ -23,7 +23,7 @@ import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 
 /**
- * A {@link ChannelFlux} callback that is attached on {@link ReactivePeer} or {@link ReactiveClient} initialization
+ * A {@link ChannelFlux} callback that is attached on {@link ReactivePeer} or {@link Client} initialization
  * and receives
  * all connected {@link ChannelFlux}. The {@link #apply} implementation must return a Publisher to complete or error
  * in order to close the {@link ChannelFlux}.
