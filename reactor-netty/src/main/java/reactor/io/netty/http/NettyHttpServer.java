@@ -35,10 +35,8 @@ import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.config.SslOptions;
-import reactor.io.netty.http.HttpChannel;
-import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.tcp.NettyTcpServer;
 
@@ -54,7 +52,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Loopb
 	protected NettyTcpServer server;
 
 	protected NettyHttpServer(final Timer timer, final InetSocketAddress listenAddress,
-			final ServerSocketOptions options, final SslOptions sslOptions) {
+			final ServerOptions options, final SslOptions sslOptions) {
 
 		super(timer);
 
@@ -181,7 +179,7 @@ public class NettyHttpServer extends HttpServer<Buffer, Buffer> implements Loopb
 
 		public TcpBridgeServer(Timer timer,
 				InetSocketAddress listenAddress,
-				ServerSocketOptions options,
+				ServerOptions options,
 				SslOptions sslOptions) {
 			super(timer, listenAddress, options, sslOptions);
 		}

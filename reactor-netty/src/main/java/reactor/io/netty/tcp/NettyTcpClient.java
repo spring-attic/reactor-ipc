@@ -56,13 +56,11 @@ import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.common.NettyChannelHandlerBridge;
-import reactor.io.netty.config.ClientSocketOptions;
-import reactor.io.netty.config.CommonSocketOptions;
+import reactor.io.netty.config.ClientOptions;
+import reactor.io.netty.config.NettyOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.util.NettyNativeDetector;
-import reactor.io.netty.tcp.TcpClient;
-import reactor.io.netty.tcp.TcpServer;
 import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
 
 /**
@@ -96,7 +94,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 	 */
 	public NettyTcpClient(Timer timer,
 			InetSocketAddress connectAddress,
-			final ClientSocketOptions options,
+			final ClientOptions options,
 			final SslOptions sslOptions) {
 		super(timer, connectAddress, options, sslOptions);
 		this.connectAddress = connectAddress;
@@ -127,7 +125,7 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 		}
 
 		this.bootstrap = _bootstrap;
-		if(options != null && options.isManaged() || CommonSocketOptions.DEFAULT_MANAGED_PEER){
+		if(options != null && options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER){
 			log.debug("Client is managed.");
 			this.channelGroup = new DefaultChannelGroup(null);
 		}

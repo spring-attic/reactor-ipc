@@ -33,7 +33,7 @@ import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.Spec;
-import reactor.io.netty.config.ClientSocketOptions;
+import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.SslOptions;
 
 /**
@@ -142,13 +142,13 @@ public abstract class TcpClient<IN, OUT>
 		});
 	}
 
-	private final InetSocketAddress   connectAddress;
-	private final ClientSocketOptions options;
-	private final SslOptions          sslOptions;
+	private final InetSocketAddress connectAddress;
+	private final ClientOptions     options;
+	private final SslOptions        sslOptions;
 
 	protected TcpClient(Timer timer,
 	                    InetSocketAddress connectAddress,
-	                    ClientSocketOptions options,
+	                    ClientOptions options,
 	                    SslOptions sslOptions) {
 		super(timer, options != null ? options.prefetch() : Long.MAX_VALUE);
 		this.connectAddress = (null != connectAddress ? connectAddress : new InetSocketAddress("127.0.0.1", 3000));
@@ -166,11 +166,11 @@ public abstract class TcpClient<IN, OUT>
 	}
 
 	/**
-	 * Get the {@link ClientSocketOptions} currently in effect.
+	 * Get the {@link ClientOptions} currently in effect.
 	 *
 	 * @return the client options
 	 */
-	protected ClientSocketOptions getOptions() {
+	protected ClientOptions getOptions() {
 		return this.options;
 	}
 

@@ -50,7 +50,7 @@ import reactor.core.util.PlatformDependent;
 import reactor.io.buffer.Buffer;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.common.NettyBuffer;
-import reactor.io.netty.config.ClientSocketOptions;
+import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.util.SocketUtils;
 
@@ -348,7 +348,7 @@ public class TcpClientTests {
 	public void nettyNetChannelAcceptsNettyChannelHandlers() throws InterruptedException {
 		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(
 		  spec -> spec
-			.options(new ClientSocketOptions()
+			.options(ClientOptions.create()
 			  .pipelineConfigurer(pipeline -> pipeline.addLast(new HttpClientCodec())))
 			.connect("www.google.com", 80)
 		);

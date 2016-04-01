@@ -30,7 +30,7 @@ import reactor.io.netty.Client;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Reconnect;
 import reactor.io.netty.Spec;
-import reactor.io.netty.config.ClientSocketOptions;
+import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.http.model.Method;
 
 /**
@@ -56,7 +56,7 @@ public abstract class HttpClient<IN, OUT>
 		});
 	}
 
-	protected HttpClient(Timer timer, ClientSocketOptions options) {
+	protected HttpClient(Timer timer, ClientOptions options) {
 		super(timer, options != null ? options.prefetch() : 1);
 	}
 

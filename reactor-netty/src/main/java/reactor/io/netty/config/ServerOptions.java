@@ -17,23 +17,26 @@
 package reactor.io.netty.config;
 
 import java.net.ProtocolFamily;
-import java.util.function.Consumer;
-
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
 
 /**
  * Encapsulates configuration options for server sockets.
  *
  * @author Jon Brisbin
+ * @author Stephane Maldini
  */
-public class ServerSocketOptions extends CommonSocketOptions<ServerSocketOptions> {
+public class ServerOptions extends NettyOptions<ServerOptions> {
+
+	public static ServerOptions create() {
+		return new ServerOptions();
+	}
 
 	private int            backlog        = 1000;
 	private boolean        reuseAddr      = true;
 	private ProtocolFamily protocolFamily = null;
-	private Consumer<ChannelPipeline> pipelineConfigurer;
-	private EventLoopGroup            eventLoopGroup;
+
+	ServerOptions(){
+
+	}
 
 	/**
 	 * Returns the configured pending connection backlog for the socket.
@@ -50,26 +53,8 @@ public class ServerSocketOptions extends CommonSocketOptions<ServerSocketOptions
 	 * @param backlog The size of the backlog
 	 * @return {@code this}
 	 */
-	public ServerSocketOptions backlog(int backlog) {
+	public ServerOptions backlog(int backlog) {
 		this.backlog = backlog;
-		return this;
-	}
-
-	public EventLoopGroup eventLoopGroup() {
-		return eventLoopGroup;
-	}
-
-	public ServerSocketOptions eventLoopGroup(EventLoopGroup eventLoopGroup) {
-		this.eventLoopGroup = eventLoopGroup;
-		return this;
-	}
-
-	public Consumer<ChannelPipeline> pipelineConfigurer() {
-		return pipelineConfigurer;
-	}
-
-	public ServerSocketOptions pipelineConfigurer(Consumer<ChannelPipeline> pipelineConfigurer) {
-		this.pipelineConfigurer = pipelineConfigurer;
 		return this;
 	}
 
@@ -88,7 +73,7 @@ public class ServerSocketOptions extends CommonSocketOptions<ServerSocketOptions
 	 * @param reuseAddr {@code true} to enable {@code SO_REUSEADDR}, {@code false} to disable it
 	 * @return {@code this}
 	 */
-	public ServerSocketOptions reuseAddr(boolean reuseAddr) {
+	public ServerOptions reuseAddr(boolean reuseAddr) {
 		this.reuseAddr = reuseAddr;
 		return this;
 	}
@@ -108,7 +93,7 @@ public class ServerSocketOptions extends CommonSocketOptions<ServerSocketOptions
 	 * @param protocolFamily the protocol family for the socket, or null for the system default family
 	 * @return {@code this}
 	 */
-	public ServerSocketOptions protocolFamily(ProtocolFamily protocolFamily) {
+	public ServerOptions protocolFamily(ProtocolFamily protocolFamily) {
 		this.protocolFamily = protocolFamily;
 		return this;
 	}

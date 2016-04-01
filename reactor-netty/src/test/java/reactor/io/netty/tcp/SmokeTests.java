@@ -45,8 +45,8 @@ import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.Spec;
-import reactor.io.netty.config.ClientSocketOptions;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.ClientOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
@@ -89,7 +89,7 @@ public class SmokeTests {
 		this.port = port;
 	}*/
 
-	private ClientSocketOptions nettyOptions;
+	private ClientOptions nettyOptions;
 
 	private final Function<Spec.HttpClientSpec<String, String>, Spec.HttpClientSpec<String, String>> clientFactory =
 	  spec -> spec
@@ -181,7 +181,7 @@ public class SmokeTests {
 		int fulltotalints = 0;
 
 		nettyOptions =
-		  new ClientSocketOptions().eventLoopGroup(new NioEventLoopGroup(10));
+		  ClientOptions.create().eventLoopGroup(new NioEventLoopGroup(10));
 
 		for (int t = 0; t < iter; t++) {
 			List<Integer> clientDatas = new ArrayList<>();
@@ -228,7 +228,7 @@ public class SmokeTests {
 		int fulltotalints = 0;
 
 		nettyOptions =
-		  new ClientSocketOptions().eventLoopGroup(new NioEventLoopGroup(10));
+				ClientOptions.create().eventLoopGroup(new NioEventLoopGroup(10));
 
 		for (int t = 0; t < iter; t++) {
 			int size = 0;
@@ -283,7 +283,7 @@ public class SmokeTests {
 
 		httpServer = ReactiveNet.httpServer(server -> server.httpProcessor(CodecPreprocessor.from(codec))
 		                                                   .listen(port)
-		                                                   .options(new ServerSocketOptions().eventLoopGroup(
+		                                                   .options(ServerOptions.create().eventLoopGroup(
 				                                                   new NioEventLoopGroup(10)))
 		);
 

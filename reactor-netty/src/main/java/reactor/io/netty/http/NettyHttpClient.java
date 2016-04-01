@@ -44,15 +44,10 @@ import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.Reconnect;
-import reactor.io.netty.config.ClientSocketOptions;
+import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.SslOptions;
-import reactor.io.netty.http.HttpChannel;
-import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.model.Method;
 import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.http.NettyHttpChannel;
-import reactor.io.netty.http.NettyHttpClientHandler;
-import reactor.io.netty.http.NettyHttpWSClientHandler;
 import reactor.io.netty.tcp.NettyTcpClient;
 
 /**
@@ -84,7 +79,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 	 * @param sslOptions The SSL configuration options for the client's socket
 	 */
 	public NettyHttpClient(final Timer timer, final InetSocketAddress connectAddress,
-			final ClientSocketOptions options, final SslOptions sslOptions) {
+			final ClientOptions options, final SslOptions sslOptions) {
 		super(timer, options);
 
 		this.client = new TcpBridgeClient(timer, connectAddress, options, sslOptions);
@@ -258,7 +253,7 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 
 		public TcpBridgeClient(Timer timer,
 				InetSocketAddress connectAddress,
-				ClientSocketOptions options,
+				ClientOptions options,
 				SslOptions sslOptions) {
 			super(timer, connectAddress, options, sslOptions);
 			this.connectAddress = connectAddress;

@@ -54,7 +54,7 @@ import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.common.NettyBuffer;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
@@ -170,7 +170,7 @@ public class TcpServerTests {
 
 		TcpServer<byte[], byte[]> server = ReactiveNet.tcpServer(s ->
 			s
-			  .options(new ServerSocketOptions()
+			  .options(ServerOptions.create()
 				.backlog(1000)
 				.reuseAddr(true)
 				.tcpNoDelay(true))
@@ -228,7 +228,7 @@ public class TcpServerTests {
 
 		TcpServer<Frame, Frame> server = ReactiveNet.tcpServer(spec ->
 			spec
-			  .options(new ServerSocketOptions()
+			  .options(ServerOptions.create()
 			    .backlog(1000)
 			    .reuseAddr(true)
 			    .tcpNoDelay(true))
@@ -312,7 +312,7 @@ public class TcpServerTests {
 
 		TcpServer<String, String> server = ReactiveNet.tcpServer(s ->
 			s
-			  .options(new ServerSocketOptions()
+			  .options(ServerOptions.create()
 			    .pipelineConfigurer(pipeline -> pipeline.addLast(new LineBasedFrameDecoder(8 * 1024))))
 			  .listen(port)
 			  .preprocessor(CodecPreprocessor.string())
@@ -335,7 +335,7 @@ public class TcpServerTests {
 
 		TcpServer<NettyBuffer, NettyBuffer> server = ReactiveNet.tcpServer(spec -> spec
 			.listen(port)
-			.options(new ServerSocketOptions())
+			.options(ServerOptions.create())
 		);
 
 		log.info("Starting raw server on tcp://localhost:{}", port);

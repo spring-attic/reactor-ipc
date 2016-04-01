@@ -30,7 +30,7 @@ import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.Spec;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.config.SslOptions;
 
 /**
@@ -140,15 +140,15 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ChannelFl
 		});
 	}
 
-	private final ServerSocketOptions options;
-	private final SslOptions          sslOptions;
+	private final ServerOptions options;
+	private final SslOptions    sslOptions;
 
 	//Carefully reset
 	protected InetSocketAddress listenAddress;
 
 	protected TcpServer(Timer timer,
 			InetSocketAddress listenAddress,
-			ServerSocketOptions options,
+			ServerOptions options,
 			SslOptions sslOptions) {
 		super(timer, options != null ? options.prefetch() : Long.MAX_VALUE);
 		this.listenAddress = listenAddress;
@@ -165,10 +165,10 @@ public abstract class TcpServer<IN, OUT> extends ReactivePeer<IN, OUT, ChannelFl
 	}
 
 	/**
-	 * Get the {@link ServerSocketOptions} currently in effect.
+	 * Get the {@link ServerOptions} currently in effect.
 	 * @return the current server options
 	 */
-	protected ServerSocketOptions getOptions() {
+	protected ServerOptions getOptions() {
 		return options;
 	}
 

@@ -31,8 +31,8 @@ import reactor.core.tuple.Tuple2;
 import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
-import reactor.io.netty.config.ClientSocketOptions;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.ClientOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
@@ -61,20 +61,20 @@ public interface Spec {
 	  N extends ReactivePeer<IN, OUT, CONN>>
 	  implements Supplier<N> {
 
-		protected ServerSocketOptions                                                                      options;
+		protected ServerOptions                                                                            options;
 		protected InetSocketAddress                                                                        listenAddress;
 		protected Timer                                                                                    timer;
 		protected Preprocessor<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, IN, OUT, ChannelFlux<IN, OUT>> preprocessor;
 
 		/**
-		 * Set the common {@link ServerSocketOptions} for channels made in this server.
+		 * Set the common {@link ServerOptions} for channels made in this server.
 		 *
 		 * @param options The options to set when new channels are made.
 		 * @return {@literal this}
 		 */
 		@SuppressWarnings("unchecked")
-		public S options(@Nonnull ServerSocketOptions options) {
-			Assert.notNull(options, "ServerSocketOptions cannot be null.");
+		public S options(@Nonnull ServerOptions options) {
+			Assert.notNull(options, "ServerOptions cannot be null.");
 			this.options = options;
 			return (S) this;
 		}
@@ -159,7 +159,7 @@ public interface Spec {
 
 		private InetSocketAddress connectAddress;
 
-		private ClientSocketOptions options;
+		private ClientOptions options;
 
 		private SslOptions sslOptions = null;
 		private Timer      timer      = null;
@@ -178,7 +178,7 @@ public interface Spec {
 				  .getDeclaredConstructor(
 					Timer.class,
 					InetSocketAddress.class,
-					ClientSocketOptions.class,
+					ClientOptions.class,
 					SslOptions.class
 				  );
 				this.clientImplConstructor.setAccessible(true);
@@ -189,12 +189,12 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the common {@link ClientSocketOptions} for connections made in this client.
+		 * Set the common {@link ClientOptions} for connections made in this client.
 		 *
 		 * @param options The socket options to apply to new connections.
 		 * @return {@literal this}
 		 */
-		public TcpClientSpec<IN, OUT> options(ClientSocketOptions options) {
+		public TcpClientSpec<IN, OUT> options(ClientOptions options) {
 			this.options = options;
 			return this;
 		}
@@ -310,7 +310,7 @@ public interface Spec {
 				this.serverImplConstructor = serverImpl.getDeclaredConstructor(
 				  Timer.class,
 				  InetSocketAddress.class,
-				  ServerSocketOptions.class,
+				  ServerOptions.class,
 				  SslOptions.class
 				);
 				this.serverImplConstructor.setAccessible(true);
@@ -374,7 +374,7 @@ public interface Spec {
 				  Timer.class,
 				  InetSocketAddress.class,
 				  NetworkInterface.class,
-				  ServerSocketOptions.class
+				  ServerOptions.class
 				);
 				this.serverImplCtor.setAccessible(true);
 			} catch (NoSuchMethodException e) {
@@ -428,9 +428,9 @@ public interface Spec {
 
 		private final Constructor<? extends HttpServer> serverImplConstructor;
 
-		protected ServerSocketOptions options;
-		protected InetSocketAddress      listenAddress;
-		protected Timer                  timer;
+		protected ServerOptions     options;
+		protected InetSocketAddress listenAddress;
+		protected Timer             timer;
 		private SslOptions sslOptions = null;
 		protected HttpProcessor<Buffer, Buffer, HttpChannel<Buffer, Buffer>, IN, OUT, HttpChannel<IN, OUT>>
 				httpPreprocessor;
@@ -447,7 +447,7 @@ public interface Spec {
 				this.serverImplConstructor = serverImpl.getDeclaredConstructor(
 				  Timer.class,
 				  InetSocketAddress.class,
-				  ServerSocketOptions.class,
+				  ServerOptions.class,
 				  SslOptions.class
 				);
 				this.serverImplConstructor.setAccessible(true);
@@ -458,14 +458,14 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the common {@link ServerSocketOptions} for channels made in this server.
+		 * Set the common {@link ServerOptions} for channels made in this server.
 		 *
 		 * @param options The options to set when new channels are made.
 		 * @return {@literal this}
 		 */
 		@SuppressWarnings("unchecked")
-		public HttpServerSpec<IN, OUT> options(@Nonnull ServerSocketOptions options) {
-			Assert.notNull(options, "ServerSocketOptions cannot be null.");
+		public HttpServerSpec<IN, OUT> options(@Nonnull ServerOptions options) {
+			Assert.notNull(options, "ServerOptions cannot be null.");
 			this.options = options;
 			return this;
 		}
@@ -574,7 +574,7 @@ public interface Spec {
 		private final Constructor<HttpClient> clientImplConstructor;
 
 		private InetSocketAddress connectAddress;
-		private ClientSocketOptions options    ;
+		private ClientOptions     options    ;
 		private SslOptions          sslOptions = null;
 		protected HttpProcessor<Buffer, Buffer, HttpChannel<Buffer, Buffer>, IN, OUT, HttpChannel<IN, OUT>>
 				httpPreprocessor;
@@ -593,7 +593,7 @@ public interface Spec {
 				  .getDeclaredConstructor(
 					Timer.class,
 					InetSocketAddress.class,
-					ClientSocketOptions.class,
+					ClientOptions.class,
 					SslOptions.class
 				  );
 				this.clientImplConstructor.setAccessible(true);
@@ -604,12 +604,12 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the common {@link ClientSocketOptions} for connections made in this client.
+		 * Set the common {@link ClientOptions} for connections made in this client.
 		 *
 		 * @param options The socket options to apply to new connections.
 		 * @return {@literal this}
 		 */
-		public HttpClientSpec<IN, OUT> options(ClientSocketOptions options) {
+		public HttpClientSpec<IN, OUT> options(ClientOptions options) {
 			this.options = options;
 			return this;
 		}

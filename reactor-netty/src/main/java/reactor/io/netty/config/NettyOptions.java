@@ -16,17 +16,21 @@
 
 package reactor.io.netty.config;
 
+import java.util.function.Consumer;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import reactor.core.util.PlatformDependent;
 import reactor.io.buffer.Buffer;
 
 /**
  * Encapsulates common socket options.
- * @param <SO> A CommonSocketOptions subclass
+ * @param <SO> A NettyOptions subclass
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
 @SuppressWarnings("unchecked")
-public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super SO>> {
+public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 
 	public static final boolean DEFAULT_MANAGED_PEER = Boolean.parseBoolean(System.getProperty("reactor.io.net" +
 			".managed.default",
@@ -41,24 +45,34 @@ public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super
 	private long    prefetch   = Long.MAX_VALUE;
 	private boolean israw      = false;
 	private boolean managed      = DEFAULT_MANAGED_PEER;
+	private Consumer<ChannelPipeline> pipelineConfigurer;
+	private EventLoopGroup            eventLoopGroup;
 
 	/**
-	 * Gets the {@code SO_TIMEOUT} value
-	 * @return the timeout value
+	 *
+	 * @return
 	 */
-	public int timeout() {
-		return timeout;
+	public EventLoopGroup eventLoopGroup() {
+		return eventLoopGroup;
 	}
 
 	/**
-	 * Set the {@code SO_TIMEOUT} value.
-	 * @param timeout The {@code SO_TIMEOUT} value.
-	 * @return {@code this}
+	 *
+	 * @param eventLoopGroup
+	 * @return
 	 */
-	public SO timeout(int timeout) {
-		this.timeout = timeout;
+	public SO eventLoopGroup(EventLoopGroup eventLoopGroup) {
+		this.eventLoopGroup = eventLoopGroup;
 		return (SO) this;
 	}
+
+	/**
+	 * @return false if not managed
+	 */
+	public boolean isManaged() {
+		return managed;
+	}
+
 	/**
 	 * @return false if emitting {@link Buffer}
 	 */
@@ -73,47 +87,6 @@ public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super
 	 */
 	public SO isRaw(boolean israw) {
 		this.israw = israw;
-		return (SO) this;
-	}
-
-	/**
-	 * @return false if not managed
-	 */
-	public boolean isManaged() {
-		return managed;
-	}
-
-	/**
-	 * Set the is managed value.
-	 * @param managed Should the peer be traced
-	 * @return {@code this}
-	 */
-	public SO managed(boolean managed) {
-		this.managed = managed;
-		return (SO) this;
-	}
-
-	/**
-	 * Gets the {@code prefetch} maximum in-flight value
-	 * @return the prefetch value, {@code Long.MAX} if undefined
-	 */
-	public long prefetch() {
-		return prefetch;
-	}
-
-	/**
-	 * Set the Consuming capacity along with eventual flushing strategy each given
-	 * prefetch iteration. Long.MAX will instruct the channels to be unbounded (e.g.
-	 * limited by the dispatcher capacity if any or a slow consumer). When unbounded the
-	 * system will take a maximum of data off the channel incoming connection. Setting a
-	 * value of 10 will however pause the channel after 10 successful reads until the next
-	 * request from the consumer.
-	 * @param prefetch The {@code prefetch} in-flight data over this channel ({@code
-	 * Long.MAX_VALUE} for unbounded).
-	 * @return {@code this}
-	 */
-	public SO prefetch(long prefetch) {
-		this.prefetch = prefetch;
 		return (SO) this;
 	}
 
@@ -155,21 +128,54 @@ public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super
 	}
 
 	/**
-	 * Returns a boolean indicating whether or not {@code TCP_NODELAY} is enabled
-	 * @return {@code true} if {@code TCP_NODELAY} is enabled, {@code false} if it is not
+	 * Set the is managed value.
+	 * @param managed Should the peer be traced
+	 * @return {@code this}
 	 */
-	public boolean tcpNoDelay() {
-		return tcpNoDelay;
+	public SO managed(boolean managed) {
+		this.managed = managed;
+		return (SO) this;
 	}
 
 	/**
-	 * Enables or disables {@code TCP_NODELAY}
-	 * @param tcpNoDelay {@code true} to enable {@code TCP_NODELAY}, {@code false} to
-	 * disable it
+	 *
+	 * @return
+	 */
+	public Consumer<ChannelPipeline> pipelineConfigurer() {
+		return pipelineConfigurer;
+	}
+
+	/**
+	 *
+	 * @param pipelineConfigurer
+	 * @return
+	 */
+	public SO pipelineConfigurer(Consumer<ChannelPipeline> pipelineConfigurer) {
+		this.pipelineConfigurer = pipelineConfigurer;
+		return (SO) this;
+	}
+
+	/**
+	 * Gets the {@code prefetch} maximum in-flight value
+	 * @return the prefetch value, {@code Long.MAX} if undefined
+	 */
+	public long prefetch() {
+		return prefetch;
+	}
+
+	/**
+	 * Set the Consuming capacity along with eventual flushing strategy each given
+	 * prefetch iteration. Long.MAX will instruct the channels to be unbounded (e.g.
+	 * limited by the dispatcher capacity if any or a slow consumer). When unbounded the
+	 * system will take a maximum of data off the channel incoming connection. Setting a
+	 * value of 10 will however pause the channel after 10 successful reads until the next
+	 * request from the consumer.
+	 * @param prefetch The {@code prefetch} in-flight data over this channel ({@code
+	 * Long.MAX_VALUE} for unbounded).
 	 * @return {@code this}
 	 */
-	public SO tcpNoDelay(boolean tcpNoDelay) {
-		this.tcpNoDelay = tcpNoDelay;
+	public SO prefetch(long prefetch) {
+		this.prefetch = prefetch;
 		return (SO) this;
 	}
 
@@ -206,6 +212,43 @@ public abstract class CommonSocketOptions<SO extends CommonSocketOptions<? super
 	 */
 	public SO sndbuf(int sndbuf) {
 		this.sndbuf = sndbuf;
+		return (SO) this;
+	}
+
+	/**
+	 * Returns a boolean indicating whether or not {@code TCP_NODELAY} is enabled
+	 * @return {@code true} if {@code TCP_NODELAY} is enabled, {@code false} if it is not
+	 */
+	public boolean tcpNoDelay() {
+		return tcpNoDelay;
+	}
+
+	/**
+	 * Enables or disables {@code TCP_NODELAY}
+	 * @param tcpNoDelay {@code true} to enable {@code TCP_NODELAY}, {@code false} to
+	 * disable it
+	 * @return {@code this}
+	 */
+	public SO tcpNoDelay(boolean tcpNoDelay) {
+		this.tcpNoDelay = tcpNoDelay;
+		return (SO) this;
+	}
+
+	/**
+	 * Gets the {@code SO_TIMEOUT} value
+	 * @return the timeout value
+	 */
+	public int timeout() {
+		return timeout;
+	}
+
+	/**
+	 * Set the {@code SO_TIMEOUT} value.
+	 * @param timeout The {@code SO_TIMEOUT} value.
+	 * @return {@code this}
+	 */
+	public SO timeout(int timeout) {
+		this.timeout = timeout;
 		return (SO) this;
 	}
 

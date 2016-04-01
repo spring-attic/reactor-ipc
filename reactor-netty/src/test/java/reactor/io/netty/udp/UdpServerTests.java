@@ -45,7 +45,7 @@ import reactor.core.publisher.SchedulerGroup;
 import reactor.core.timer.Timer;
 import reactor.core.util.Logger;
 import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.util.SocketUtils;
 
@@ -129,7 +129,7 @@ public class UdpServerTests {
 			DatagramServer server = ReactiveNet.udpServer(
 			  spec -> spec
 				.listen(port)
-				.options(new ServerSocketOptions()
+				.options(ServerOptions.create()
 				  .reuseAddr(true)
 				  .protocolFamily(StandardProtocolFamily.INET))
 			);

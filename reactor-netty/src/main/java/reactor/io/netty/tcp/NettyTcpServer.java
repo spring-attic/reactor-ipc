@@ -18,7 +18,6 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
-import java.util.function.Function;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -46,12 +45,11 @@ import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.common.NettyChannelHandlerBridge;
-import reactor.io.netty.config.CommonSocketOptions;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.NettyOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.util.NettyNativeDetector;
-import reactor.io.netty.tcp.TcpServer;
 import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
 
 /**
@@ -74,7 +72,7 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 
 	protected NettyTcpServer(Timer timer,
 	                         InetSocketAddress listenAddress,
-	                         final ServerSocketOptions options,
+	                         final ServerOptions options,
 	                         final SslOptions sslOptions) {
 		super(timer, listenAddress, options, sslOptions);
 
@@ -106,7 +104,7 @@ public class NettyTcpServer extends TcpServer<Buffer, Buffer> implements MultiPr
 			  .option(ChannelOption.SO_REUSEADDR, options.reuseAddr());
 		}
 
-		if(options != null && options.isManaged() || CommonSocketOptions.DEFAULT_MANAGED_PEER){
+		if(options != null && options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER){
 			log.debug("Server is managed.");
 			this.channelGroup = new DefaultChannelGroup(null);
 		}

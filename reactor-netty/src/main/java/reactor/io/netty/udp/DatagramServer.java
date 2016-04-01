@@ -55,7 +55,7 @@ import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.ReactivePeer;
 import reactor.io.netty.common.NettyChannelHandlerBridge;
-import reactor.io.netty.config.ServerSocketOptions;
+import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 
 /**
@@ -152,16 +152,16 @@ final public class DatagramServer
 	final Bootstrap      bootstrap;
 	final EventLoopGroup ioGroup;
 
-	final InetSocketAddress   listenAddress;
-	final NetworkInterface    multicastInterface;
-	final ServerSocketOptions options;
+	final InetSocketAddress listenAddress;
+	final NetworkInterface  multicastInterface;
+	final ServerOptions     options;
 
 	volatile DatagramChannel channel;
 
 	public DatagramServer(Timer timer,
 	                         InetSocketAddress listenAddress,
 	                         NetworkInterface multicastInterface,
-	                         ServerSocketOptions options) {
+	                         ServerOptions options) {
 		super(timer, options != null ? options.prefetch() : Long.MAX_VALUE);
 		this.listenAddress = listenAddress;
 		this.multicastInterface = multicastInterface;
@@ -363,11 +363,11 @@ final public class DatagramServer
 	}
 
 	/**
-	 * Get the {@link ServerSocketOptions} currently in effect.
+	 * Get the {@link ServerOptions} currently in effect.
 	 *
 	 * @return the server options in use
 	 */
-	protected ServerSocketOptions getOptions() {
+	protected ServerOptions getOptions() {
 		return options;
 	}
 
