@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'reactor-io-root'
+rootProject.name = 'reactor-io'
 
 include 'reactor-ipc',
 		'reactor-codec',
