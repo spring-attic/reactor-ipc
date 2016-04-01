@@ -15,6 +15,6 @@
  */
 
 /**
- * Configuration of the various TCP parameters for clients and servers.
+ * Configuration of the various Netty parameters for clients and servers.
  */
 package reactor.io.netty.config;
