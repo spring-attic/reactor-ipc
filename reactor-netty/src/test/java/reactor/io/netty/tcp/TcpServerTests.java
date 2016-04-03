@@ -423,19 +423,18 @@ public class TcpServerTests {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		TcpServer<String, String> server =
+		TcpServer<Buffer, Buffer> server =
 		  ReactiveNet.tcpServer(s ->
 			  s
-				.preprocessor(CodecPreprocessor.string())
 				.listen(0)
 		  );
 
-		server.start(ch -> {
+		server.startWithCodec(ch -> {
 			ch.input().log("channel").consume(trip -> {
 				countDownLatch.countDown();
 			});
 			return Flux.never();
-		}).get();
+		}, CodecPreprocessor.string()).get();
 
 		System.out.println("PORT +"+server.getListenAddress().getPort());
 		TcpClient<String, String> client =

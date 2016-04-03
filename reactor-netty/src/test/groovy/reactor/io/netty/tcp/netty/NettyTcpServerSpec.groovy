@@ -67,19 +67,18 @@ class NettyTcpServerSpec extends Specification {
 			def dataLatch = new CountDownLatch(1)
 			TcpServer<Pojo, Pojo> server = ReactiveNet. tcpServer {
 				it.
-						listen(port).
-						preprocessor(CodecPreprocessor.json(Pojo))
+						listen(port)
 			}
 
 		when: "the server is started"
-			server.start { conn ->
+			server.startWithCodec({ conn ->
 				conn.writeWith(
 						conn.input().take(1).map { pojo ->
 							assert pojo.name == "John Doe"
 							new Pojo(name: "Jane Doe")
 						}
 				)
-			}.get()
+			}, CodecPreprocessor.json(Pojo)).get()
 
 			def client = new SimpleClient(port, dataLatch, Buffer.wrap("{\"name\":\"John Doe\"}"))
 			client.start()
