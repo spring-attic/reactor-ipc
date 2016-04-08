@@ -89,7 +89,7 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 				} else if (signalTypeCode == SignalType.Error.getCode()) {
 					error = exceptionSerializer.deserialize(bytes);
 				} else {
-					error = Exceptions.fail(new IllegalStateException(
+					error = Exceptions.propagate(new IllegalStateException(
 							String.format("Received message with unknown signal type code of %d and length of %d",
 									signalTypeCode, bytes.length)));
 				}
