@@ -28,7 +28,7 @@ import reactor.aeron.utils.ServiceMessagePublicationFailedException;
 import reactor.aeron.utils.ServiceMessageType;
 import reactor.core.flow.Producer;
 import reactor.core.publisher.Flux;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;

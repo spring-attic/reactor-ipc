@@ -38,7 +38,7 @@ import io.netty.util.concurrent.Future;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Mono;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;

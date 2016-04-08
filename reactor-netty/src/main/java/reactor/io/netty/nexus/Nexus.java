@@ -40,7 +40,7 @@ import reactor.core.publisher.TopicProcessor;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.Subscribers;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;

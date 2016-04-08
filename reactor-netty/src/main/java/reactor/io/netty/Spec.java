@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.tuple.Tuple;
 import reactor.core.tuple.Tuple2;
 import reactor.core.util.Assert;
@@ -118,7 +118,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.scheduler.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}
@@ -200,7 +200,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.scheduler.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}
@@ -509,7 +509,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.scheduler.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}
@@ -664,7 +664,7 @@ public interface Spec {
 		}
 
 		/**
-		 * Set the default {@link reactor.core.timer.Timer} for timed operations.
+		 * Set the default {@link reactor.core.scheduler.Timer} for timed operations.
 		 *
 		 * @param timer The timer to assign by default
 		 * @return {@literal this}

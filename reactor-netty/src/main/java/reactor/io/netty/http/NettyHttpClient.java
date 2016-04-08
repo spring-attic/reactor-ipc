@@ -35,7 +35,7 @@ import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.subscriber.Subscribers;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.tuple.Tuple2;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;

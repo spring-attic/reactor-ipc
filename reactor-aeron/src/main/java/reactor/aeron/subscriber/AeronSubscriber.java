@@ -27,7 +27,7 @@ import reactor.core.flow.Receiver;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 
@@ -207,8 +207,8 @@ public final class AeronSubscriber
 	private TopicProcessor<Buffer> createTopicProcessor(Context context, boolean multiPublishers) {
 		String name = AeronUtils.makeThreadName(context.name(), "subscriber", "signal-sender");
 		return multiPublishers ?
-				TopicProcessor.<Buffer>share(name, context.ringBufferSize(), context.autoCancel()) :
-				TopicProcessor.<Buffer>create(name, context.ringBufferSize(), context.autoCancel());
+				TopicProcessor.share(name, context.ringBufferSize(), context.autoCancel()) :
+				TopicProcessor.create(name, context.ringBufferSize(), context.autoCancel());
 	}
 
 	public void shutdown() {

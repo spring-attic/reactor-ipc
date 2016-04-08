@@ -29,7 +29,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;

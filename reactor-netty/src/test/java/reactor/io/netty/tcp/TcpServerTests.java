@@ -43,7 +43,7 @@ import org.reactivestreams.Processor;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.WorkQueueProcessor;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Frame;

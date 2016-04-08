@@ -45,7 +45,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.tuple.Tuple;
 import reactor.core.tuple.Tuple2;
 import reactor.core.util.BackpressureUtils;

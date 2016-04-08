@@ -44,7 +44,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.subscriber.Subscribers;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.tuple.Tuple;
 import reactor.core.util.PlatformDependent;
 import reactor.io.buffer.Buffer;

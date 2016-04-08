@@ -22,7 +22,7 @@ import java.util.function.Function;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.state.Introspectable;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.Preprocessor;

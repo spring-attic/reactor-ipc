@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 import reactor.aeron.Context;
 import reactor.core.state.Pausable;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 
 /**

@@ -42,7 +42,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SchedulerGroup;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.config.ServerOptions;

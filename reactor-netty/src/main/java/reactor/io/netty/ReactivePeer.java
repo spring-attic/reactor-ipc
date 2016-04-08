@@ -21,7 +21,7 @@ import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
-import reactor.core.timer.Timer;
+import reactor.core.scheduler.Timer;
 import reactor.core.util.Assert;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
