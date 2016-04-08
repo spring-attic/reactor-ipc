@@ -52,14 +52,6 @@ public final class CodecPreprocessor<IN, OUT>
 		implements Preprocessor<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, IN, OUT, ChannelFlux<IN, OUT>>,
 		           HttpProcessor<Buffer, Buffer, HttpChannel<Buffer, Buffer>, IN, OUT, HttpChannel<IN, OUT>> {
 
-	static {
-		if (!DependencyUtils.hasReactorCodec()) {
-			throw new IllegalStateException("io.projectreactor:reactor-codec dependency is missing from the classpath.");
-		}
-
-	}
-
-
 	/**
 	 *
 	 * @return
