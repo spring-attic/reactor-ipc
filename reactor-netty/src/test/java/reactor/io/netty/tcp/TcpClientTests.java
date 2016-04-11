@@ -177,7 +177,7 @@ public class TcpClientTests {
 			input.writeWith(
 			  Flux.range(1, messages)
 				.map(i -> "Hello World!")
-				.publishOn(SchedulerGroup.io("test-line-feed"))
+				.subscribeOn(SchedulerGroup.io("test-line-feed"))
 			).subscribe();
 
 			return Flux.never();

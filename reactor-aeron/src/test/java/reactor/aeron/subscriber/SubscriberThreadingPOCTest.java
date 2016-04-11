@@ -220,12 +220,12 @@ public class SubscriberThreadingPOCTest {
 	}
 
 	@Test
-	public void testPublishOn() throws InterruptedException {
+	public void testSubscribeOn() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(32);
 
 		SchedulerGroup group = SchedulerGroup.async();
 		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
-		Flux.from(dataPublisher).publishOn(group).subscribe(processor);
+		Flux.from(dataPublisher).subscribeOn(group).subscribe(processor);
 
 		SignalPollerForPOC signalPoller = new SignalPollerForPOC(processor);
 		Thread signalPollerThread = new Thread(signalPoller, "signal-poller");
