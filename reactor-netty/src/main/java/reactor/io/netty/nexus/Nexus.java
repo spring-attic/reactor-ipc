@@ -215,7 +215,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		Flux.merge(cannons)
 		    .subscribe(eventStream);
 
-		this.cannons = cannons.startEmitter();
+		this.cannons = cannons.connectEmitter();
 
 		lastState = new GraphEvent(server.getListenAddress()
 		                                 .toString(), ReactiveStateUtils.createGraph());
@@ -333,7 +333,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	public final SignalEmitter<Object> metricCannon() {
 		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		this.cannons.submit(p.map(new MetricMapper()));
-		return p.startEmitter();
+		return p.connectEmitter();
 	}
 
 	/**
@@ -370,7 +370,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		final long _period = period > 0 ? (unit != null ? TimeUnit.MILLISECONDS.convert(period, unit) : period) : 400L;
 
 		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
-		final SignalEmitter<Object> session = p.startEmitter();
+		final SignalEmitter<Object> session = p.connectEmitter();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
 		timer.schedule(new Consumer<Long>() {
 			@Override
@@ -413,7 +413,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	public final SignalEmitter<Object> streamCannon() {
 		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		this.cannons.submit(p.map(new GraphMapper()));
-		return p.startEmitter();
+		return p.connectEmitter();
 	}
 
 	/**
@@ -470,7 +470,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 					TopicProcessor.share("create-log-sink", 256, WaitStrategy.blocking());
 			cannons.submit(p);
 			logExtension = new NexusLoggerExtension(server.getListenAddress()
-			                                              .toString(), p.startEmitter());
+			                                              .toString(), p.connectEmitter());
 
 			//monitor(p);
 			if (!Logger.enableExtension(logExtension)) {
@@ -482,7 +482,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		if (systemStats) {
 			FluxProcessor<Event, Event> p = FluxProcessor.blocking();
 			this.cannons.submit(p);
-			final SignalEmitter<Event> session = p.startEmitter();
+			final SignalEmitter<Event> session = p.connectEmitter();
 			log.info("System Monitoring Starting");
 			timer.schedule(new Consumer<Long>() {
 				@Override

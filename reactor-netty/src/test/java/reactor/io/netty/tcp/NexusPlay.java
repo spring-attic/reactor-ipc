@@ -80,7 +80,7 @@ public class NexusPlay {
 				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
-				SignalEmitter<Integer> s1 = p.startEmitter();
+				SignalEmitter<Integer> s1 = p.connectEmitter();
 				nexus.monitor(s1);
 
 				// =========================================================
@@ -102,7 +102,7 @@ public class NexusPlay {
 				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
-				SignalEmitter<Integer> s2 = p.startEmitter();
+				SignalEmitter<Integer> s2 = p.connectEmitter();
 
 				nexus.monitor(s2);
 
@@ -122,7 +122,7 @@ public class NexusPlay {
 				}
 
 
-				SignalEmitter<Integer> s3 = p.startEmitter();
+				SignalEmitter<Integer> s3 = p.connectEmitter();
 				nexus.monitor(s3);
 
 
