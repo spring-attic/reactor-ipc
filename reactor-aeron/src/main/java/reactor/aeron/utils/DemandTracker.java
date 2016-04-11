@@ -38,7 +38,7 @@ public final class DemandTracker {
 	 * @return the previous demand
 	 */
 	public long request(long n) {
-		return BackpressureUtils.getAndAdd(requestedUpdater, this, n);
+		return BackpressureUtils.getAndAddCap(requestedUpdater, this, n);
 	}
 
 	/**

@@ -120,7 +120,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 
 		@Override
 		protected void doRequest(long n) {
-			if (BackpressureUtils.getAndAdd(PENDING_UPDATER, this, n) == 0) {
+			if (BackpressureUtils.getAndAddCap(PENDING_UPDATER, this, n) == 0) {
 				super.doRequest(n);
 				if (!tryDrain()) {
 					requestMissing();

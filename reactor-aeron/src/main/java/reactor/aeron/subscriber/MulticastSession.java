@@ -52,7 +52,7 @@ class MulticastSession implements Session {
 	}
 
 	public long requestMore(long n) {
-		return BackpressureUtils.getAndAdd(sequence, n);
+		return BackpressureUtils.getAndAddCap(sequence, n);
 	}
 
 	@Override
