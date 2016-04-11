@@ -65,7 +65,7 @@ public class NexusPlay {
 
 				FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
 				Flux<Integer> dispatched = p
-				                                   .dispatchOn(SchedulerGroup.async("semi-fast",  8192, 4));
+				                                   .publishOn(SchedulerGroup.async("semi-fast",  8192, 4));
 
 				//slow subscribers
 				for(int i = 0; i < 2; i++) {
@@ -86,7 +86,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.dispatchOn(SchedulerGroup.async("semi-slow", 1024, 4));
+				dispatched = p.publishOn(SchedulerGroup.async("semi-slow", 1024, 4));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -109,7 +109,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.dispatchOn(SchedulerGroup.async("slow", 1024, 3));
+				dispatched = p.publishOn(SchedulerGroup.async("slow", 1024, 3));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {

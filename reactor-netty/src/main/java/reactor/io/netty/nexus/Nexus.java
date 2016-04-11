@@ -228,7 +228,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
 		channel.responseHeader("Access-Control-Allow-Origin", "*");
 
-		Flux<Event> eventStream = this.eventStream.dispatchOn(group)
+		Flux<Event> eventStream = this.eventStream.publishOn(group)
 		                                          .map(lastStateMerge);
 
 		Publisher<Void> p;
