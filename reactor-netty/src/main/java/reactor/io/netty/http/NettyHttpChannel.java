@@ -43,7 +43,6 @@ import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
-import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
 import reactor.io.netty.common.NettyChannel;
@@ -386,7 +385,9 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	@Override
 	public Transfer transfer() {
 		if ("chunked".equals(this.headers.get(ResponseHeaders.TRANSFER_ENCODING))) {
-			Assert.isTrue(Protocol.HTTP_1_1.equals(protocol()));
+			if(Protocol.HTTP_1_0.equals(protocol())){
+				throw new IllegalStateException("HTTP Protocol must be 1.1+");
+			}
 			return Transfer.CHUNKED;
 		} else if (this.headers.get(ResponseHeaders.TRANSFER_ENCODING) == null) {
 			return Transfer.NON_CHUNKED;
@@ -400,7 +401,9 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 			case EVENT_STREAM:
 				this.responseHeader(ResponseHeaders.CONTENT_TYPE, "text/event-stream");
 			case CHUNKED:
-				Assert.isTrue(Protocol.HTTP_1_1.equals(protocol()));
+				if(Protocol.HTTP_1_0.equals(protocol())){
+					throw new IllegalStateException("HTTP Protocol must be 1.1+");
+				}
 				this.responseHeader(ResponseHeaders.TRANSFER_ENCODING, "chunked");
 				break;
 			case NON_CHUNKED:

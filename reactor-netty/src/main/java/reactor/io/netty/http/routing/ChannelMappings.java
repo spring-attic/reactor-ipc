@@ -17,13 +17,13 @@ package reactor.io.netty.http.routing;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.reactivestreams.Publisher;
 import reactor.core.converter.DependencyUtils;
-import reactor.core.util.Assert;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.model.Method;
@@ -167,7 +167,6 @@ public abstract class ChannelMappings<IN, OUT>
 	 * @see Predicate
 	 */
 	public static Predicate<HttpChannel> prefix(String prefix) {
-		Assert.notNull(prefix, "Prefix must be provided");
 		return prefix(prefix, Method.GET);
 	}
 
@@ -183,7 +182,7 @@ public abstract class ChannelMappings<IN, OUT>
 	 * @see Predicate
 	 */
 	public static Predicate<HttpChannel> prefix(String prefix, Method method) {
-		Assert.notNull(prefix, "Prefix must be provided");
+		Objects.requireNonNull(prefix, "Prefix must be provided");
 
 		String target = prefix.startsWith("/") ? prefix : "/".concat(prefix);
 		//target = target.endsWith("/") ? target :  prefix.concat("/");

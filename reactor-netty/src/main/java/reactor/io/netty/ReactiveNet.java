@@ -18,7 +18,6 @@ package reactor.io.netty;
 
 import java.util.function.Function;
 
-import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.http.HttpClient;
@@ -226,9 +225,9 @@ public enum ReactiveNet {
 
 	@SuppressWarnings("unchecked")
 	public static <E, IN, OUT> E delegate(ChannelFlux<IN, OUT> channel, Class<E> clazz) {
-		Assert.isTrue(clazz.isAssignableFrom(channel.delegate()
-		                                                  .getClass()),
-				"Underlying channel is not of the given type: " + clazz.getName());
+		if(!clazz.isAssignableFrom(channel.delegate().getClass())){
+			throw new IllegalArgumentException("Underlying channel is not of the given type: " + clazz.getName());
+		}
 
 		return (E) channel.delegate();
 	}

@@ -15,7 +15,6 @@
  */
 package reactor.io.netty.http.model;
 
-import reactor.core.util.Assert;
 
 /**
  * A Model representation of supported HTTP Methods
@@ -41,7 +40,9 @@ public class Method {
 	private final String name;
 
 	public Method(String name) {
-		Assert.isTrue(name != null && name.trim().length() > 0);
+		if(name == null || name.trim().length() == 0){
+			throw new IllegalArgumentException("Name is empty");
+		}
 		this.name = name;
 	}
 

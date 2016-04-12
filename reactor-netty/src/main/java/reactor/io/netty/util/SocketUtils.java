@@ -22,8 +22,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.net.ServerSocketFactory;
 
-import reactor.core.util.Assert;
-
 /**
  * NOTE: This code is a copy of that available in the Spring Framework.
  *
@@ -316,9 +314,15 @@ public final class SocketUtils {
 		 * 		if no available port could be found
 		 */
 		int findAvailablePort(int minPort, int maxPort) {
-			Assert.isTrue(minPort > 0, "'minPort' must be greater than 0");
-			Assert.isTrue(maxPort > minPort, "'maxPort' must be greater than 'minPort'");
-			Assert.isTrue(maxPort <= PORT_RANGE_MAX, "'maxPort' must be less than or equal to " + PORT_RANGE_MAX);
+			if(minPort <= 0){
+				throw new IllegalArgumentException("'minPort' must be greater than 0");
+			}
+			else if(minPort > maxPort){
+				throw new IllegalArgumentException("'maxPort' must be greater than 'minPort'");
+			}
+			else if(maxPort > PORT_RANGE_MAX){
+				throw new IllegalArgumentException("'maxPort' must be less than or equal to " + PORT_RANGE_MAX);
+			}
 
 			int portRange = maxPort - minPort;
 			int candidatePort;
@@ -352,12 +356,21 @@ public final class SocketUtils {
 		 * 		if the requested number of available ports could not be found
 		 */
 		SortedSet<Integer> findAvailablePorts(int numRequested, int minPort, int maxPort) {
-			Assert.isTrue(minPort > 0, "'minPort' must be greater than 0");
-			Assert.isTrue(maxPort > minPort, "'maxPort' must be greater than 'minPort'");
-			Assert.isTrue(maxPort <= PORT_RANGE_MAX, "'maxPort' must be less than or equal to " + PORT_RANGE_MAX);
-			Assert.isTrue(numRequested > 0, "'numRequested' must be greater than 0");
-			Assert.isTrue((maxPort - minPort) >= numRequested,
-			              "'numRequested' must not be greater than 'maxPort' - 'minPort'");
+			if(minPort <= 0){
+				throw new IllegalArgumentException("'minPort' must be greater than 0");
+			}
+			else if(minPort > maxPort){
+				throw new IllegalArgumentException("'maxPort' must be greater than 'minPort'");
+			}
+			else if(maxPort > PORT_RANGE_MAX){
+				throw new IllegalArgumentException("'maxPort' must be less than or equal to " + PORT_RANGE_MAX);
+			}
+			else if(numRequested <= 0){
+				throw new IllegalArgumentException("'numRequested' must be greater than 0");
+			}
+			else if((maxPort - minPort) < numRequested){
+				throw new IllegalArgumentException("'numRequested' must not be greater than 'maxPort' - 'minPort'");
+			}
 
 			final SortedSet<Integer> availablePorts = new TreeSet<Integer>();
 			int attemptCount = 0;

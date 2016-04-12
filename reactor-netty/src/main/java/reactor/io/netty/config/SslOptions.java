@@ -21,8 +21,6 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import javax.net.ssl.TrustManager;
 
-import reactor.core.util.Assert;
-
 /**
  * Helper class encapsulating common SSL configuration options.
  *
@@ -45,8 +43,9 @@ public class SslOptions {
 
 	public SslOptions keystoreFile(String keystoreFile) {
 		this.keystoreFile = new File(keystoreFile);
-		Assert.isTrue(this.keystoreFile.exists(), "No keystore file found at path " + this.keystoreFile
-		  .getAbsolutePath());
+		if(!this.keystoreFile.exists()) {
+			throw new IllegalArgumentException("No keystore file found at path " + this.keystoreFile.getAbsolutePath());
+		}
 		return this;
 	}
 

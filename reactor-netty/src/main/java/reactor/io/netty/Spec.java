@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
@@ -28,7 +29,6 @@ import javax.annotation.Nullable;
 import reactor.core.scheduler.Timer;
 import reactor.core.tuple.Tuple;
 import reactor.core.tuple.Tuple2;
-import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.netty.config.ClientOptions;
@@ -38,10 +38,10 @@ import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpProcessor;
 import reactor.io.netty.http.HttpServer;
+import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.tcp.TcpClient;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.netty.udp.DatagramServer;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
 
 /**
  * Specifications used to build client and servers.
@@ -74,8 +74,7 @@ public interface Spec {
 		 */
 		@SuppressWarnings("unchecked")
 		public S options(@Nonnull ServerOptions options) {
-			Assert.notNull(options, "ServerOptions cannot be null.");
-			this.options = options;
+			this.options = Objects.requireNonNull(options, "ServerOptions cannot be null.");
 			return (S) this;
 		}
 
@@ -138,8 +137,7 @@ public interface Spec {
 		 */
 		@SuppressWarnings("unchecked")
 		public S preprocessor(Preprocessor<Buffer, Buffer, ChannelFlux<Buffer, Buffer>, IN, OUT, ChannelFlux<IN, OUT>> preprocessor) {
-			Assert.notNull(preprocessor, "Preprocessor cannot be null.");
-			this.preprocessor = preprocessor;
+			this.preprocessor = Objects.requireNonNull(preprocessor, "Preprocessor cannot be null.");
 			return (S) this;
 		}
 
@@ -172,10 +170,10 @@ public interface Spec {
 		 */
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		TcpClientSpec(@Nonnull Class<? extends TcpClient> clientImpl) {
-			Assert.notNull(clientImpl, "TcpClient implementation class cannot be null.");
 			try {
-				this.clientImplConstructor = (Constructor<TcpClient>) clientImpl
-				  .getDeclaredConstructor(
+				this.clientImplConstructor = (Constructor<TcpClient>) Objects.requireNonNull(clientImpl,
+						"TcpClient implementation class cannot be null.")
+				                                                             .getDeclaredConstructor(
 					Timer.class,
 					InetSocketAddress.class,
 					ClientOptions.class,
@@ -240,7 +238,9 @@ public interface Spec {
 		 * @return {@literal this}
 		 */
 		public TcpClientSpec<IN, OUT> connect(@Nonnull InetSocketAddress connectAddress) {
-			Assert.state(this.connectAddress == null, "Connect address is already set.");
+			if(this.connectAddress != null) {
+				throw new IllegalStateException("Connect address is already set.");
+			}
 			this.connectAddress = connectAddress;
 			return this;
 		}
@@ -254,8 +254,7 @@ public interface Spec {
 		 */
 		@SuppressWarnings("unchecked")
 		public TcpClientSpec<IN, OUT> preprocessor(Preprocessor<Buffer, Buffer, ChannelFlux<Buffer,Buffer>, IN, OUT, ChannelFlux<IN, OUT>> preprocessor) {
-			Assert.notNull(preprocessor, "Preprocessor cannot be null.");
-			this.preprocessor = preprocessor;
+			this.preprocessor = Objects.requireNonNull(preprocessor, "Preprocessor cannot be null.");
 			return this;
 		}
 
@@ -305,9 +304,10 @@ public interface Spec {
 		 */
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		TcpServerSpec(@Nonnull Class<? extends TcpServer> serverImpl) {
-			Assert.notNull(serverImpl, "TcpServer implementation class cannot be null.");
 			try {
-				this.serverImplConstructor = serverImpl.getDeclaredConstructor(
+				this.serverImplConstructor =
+						Objects.requireNonNull(serverImpl, "TcpServer implementation class cannot be null.")
+						       .getDeclaredConstructor(
 				  Timer.class,
 				  InetSocketAddress.class,
 				  ServerOptions.class,
@@ -368,9 +368,10 @@ public interface Spec {
 		private NetworkInterface multicastInterface;
 
 		DatagramServerSpec(Class<? extends DatagramServer> serverImpl) {
-			Assert.notNull(serverImpl, "NetServer implementation class cannot be null.");
 			try {
-				this.serverImplCtor = serverImpl.getDeclaredConstructor(
+				this.serverImplCtor =
+						Objects.requireNonNull(serverImpl, "NetServer implementation class cannot be null.")
+						       .getDeclaredConstructor(
 				  Timer.class,
 				  InetSocketAddress.class,
 				  NetworkInterface.class,
@@ -442,9 +443,10 @@ public interface Spec {
 		 */
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		HttpServerSpec(@Nonnull Class<? extends HttpServer> serverImpl) {
-			Assert.notNull(serverImpl, "TcpServer implementation class cannot be null.");
 			try {
-				this.serverImplConstructor = serverImpl.getDeclaredConstructor(
+				this.serverImplConstructor =
+						Objects.requireNonNull(serverImpl, "HttpServer implementation class " + "cannot be null.")
+						       .getDeclaredConstructor(
 				  Timer.class,
 				  InetSocketAddress.class,
 				  ServerOptions.class,
@@ -465,8 +467,7 @@ public interface Spec {
 		 */
 		@SuppressWarnings("unchecked")
 		public HttpServerSpec<IN, OUT> options(@Nonnull ServerOptions options) {
-			Assert.notNull(options, "ServerOptions cannot be null.");
-			this.options = options;
+			this.options = Objects.requireNonNull(options, "ServerOptions cannot be null.");
 			return this;
 		}
 
@@ -587,10 +588,10 @@ public interface Spec {
 		 */
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		HttpClientSpec(@Nonnull Class<? extends HttpClient> clientImpl) {
-			Assert.notNull(clientImpl, "TcpClient implementation class cannot be null.");
 			try {
-				this.clientImplConstructor = (Constructor<HttpClient>) clientImpl
-				  .getDeclaredConstructor(
+				this.clientImplConstructor = (Constructor<HttpClient>) Objects.requireNonNull(clientImpl,
+						"HttpClient implementation class cannot be null.")
+				                                                              .getDeclaredConstructor(
 					Timer.class,
 					InetSocketAddress.class,
 					ClientOptions.class,
@@ -644,7 +645,9 @@ public interface Spec {
 		 * @return {@literal this}
 		 */
 		public HttpClientSpec<IN, OUT> connect(@Nonnull InetSocketAddress connectAddress) {
-			Assert.state(this.connectAddress == null, "Connect address is already set.");
+			if(this.connectAddress != null) {
+				throw new IllegalStateException("Connect address is already set.");
+			}
 			this.connectAddress = connectAddress;
 			return this;
 		}
@@ -658,8 +661,7 @@ public interface Spec {
 		 */
 		@SuppressWarnings("unchecked")
 		public HttpClientSpec<IN, OUT> httpProcessor(HttpProcessor<Buffer, Buffer, HttpChannel<Buffer, Buffer>, IN, OUT, HttpChannel<IN, OUT>> httpPreprocessor) {
-			Assert.notNull(httpPreprocessor, "Preprocessor cannot be null.");
-			this.httpPreprocessor = httpPreprocessor;
+			this.httpPreprocessor = Objects.requireNonNull(httpPreprocessor, "Preprocessor cannot be null.");
 			return this;
 		}
 

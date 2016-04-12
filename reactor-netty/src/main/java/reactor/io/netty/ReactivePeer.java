@@ -16,13 +16,13 @@
 
 package reactor.io.netty;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.scheduler.Timer;
-import reactor.core.util.Assert;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 
@@ -149,7 +149,7 @@ public abstract class ReactivePeer<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 
 	protected final void checkPreprocessor(
 			Function<?, ?> preprocessor) {
-		Assert.isTrue(preprocessor != null, "Preprocessor argument must be provided");
+		Objects.requireNonNull("Preprocessor argument must be provided");
 
 		if (started.get()) {
 			throw new IllegalStateException("Peer already started");

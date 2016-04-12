@@ -37,7 +37,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.scheduler.Timer;
 import reactor.core.tuple.Tuple2;
-import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
@@ -112,7 +111,9 @@ public class NettyHttpClient extends HttpClient<Buffer, Buffer> implements Loopb
 			final ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> handler) {
 		final URI currentURI;
 		try {
-			Assert.isTrue(method != null && url != null);
+			if(method == null && url == null){
+				throw new IllegalArgumentException("Method && url cannot be both null");
+			}
 			currentURI = parseURL(method, url);
 			lastURI = currentURI;
 		}
