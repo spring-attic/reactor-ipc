@@ -22,7 +22,6 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.HeartbeatPublicationFailureException;
 import reactor.core.flow.Cancellation;
 import reactor.core.scheduler.Timer;
-import reactor.core.util.Assert;
 
 /**
  * @author Anatoly Kadyshev
@@ -85,7 +84,9 @@ class HeartbeatSender {
 	}
 
 	public void start() {
-		Assert.state(cancellable == null, "Heartbeat sending task was already scheduled");
+		if(cancellable != null){
+			throw new IllegalStateException("Heartbeat sending task was already scheduled");
+		}
 
 		this.cancellable = Timer.global().schedulePeriodically(task,
 				context.heartbeatIntervalMillis(),

@@ -26,7 +26,6 @@ import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.BasicAeronInfra;
 import reactor.aeron.utils.BasicExceptionSerializer;
 import reactor.aeron.utils.Serializer;
-import reactor.core.util.Assert;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import uk.co.real_logic.aeron.Aeron;
@@ -162,7 +161,9 @@ public class Context {
 	}
 
 	public Context senderChannel(String senderChannel) {
-		Assert.isTrue(AeronUtils.isUnicastChannel(senderChannel), "senderChannel should be a unicast channel");
+		if(!AeronUtils.isUnicastChannel(senderChannel)){
+			throw new IllegalArgumentException("senderChannel should be a unicast channel");
+		}
 
 		this.senderChannel = senderChannel;
 		return this;
@@ -184,13 +185,17 @@ public class Context {
 	}
 
 	public Context signalPollerFragmentLimit(int limit) {
-		Assert.isTrue(limit > 0, "limit should be > 0");
+		if(limit <= 0){
+			throw new IllegalArgumentException("limit should be > 0");
+		}
 		this.signalPollerFragmentLimit = limit;
 		return this;
 	}
 
 	public Context serviceMessagePollerFragmentLimit(int limit) {
-		Assert.isTrue(limit > 0, "limit should be > 0");
+		if(limit <= 0){
+			throw new IllegalArgumentException("limit should be > 0");
+		}
 		this.serviceMessagePollerFragmentLimit = limit;
 		return this;
 	}
@@ -222,7 +227,9 @@ public class Context {
 
 	public void validate() {
 		Objects.requireNonNull(senderChannel, "'senderChannel' should be provided");
-		Assert.isTrue(streamId != serviceRequestStreamId, "streamId should != serviceRequestStreamId");
+		if(streamId == serviceRequestStreamId){
+			throw new IllegalArgumentException("streamId should != serviceRequestStreamId");
+		}
 	}
 
 	public String name() {

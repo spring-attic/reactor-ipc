@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import reactor.core.util.Assert;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 
@@ -103,9 +102,10 @@ public abstract class SerializationCodec<E, IN, OUT> extends BufferCodec<IN, OUT
 
 	private String readTypeName(Buffer buffer) {
 		int len = buffer.readInt();
-		Assert.isTrue(buffer.remaining() > len,
-		  "Incomplete buffer. Must contain " + len + " bytes, "
+		if(buffer.remaining() <= len){
+		  throw new IllegalArgumentException("Incomplete buffer. Must contain " + len + " bytes, "
 			+ "but only " + buffer.remaining() + " were found.");
+		}
 		byte[] bytes = new byte[len];
 		buffer.read(bytes);
 		return new String(bytes);

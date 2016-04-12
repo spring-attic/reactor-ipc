@@ -20,7 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import reactor.core.util.Assert;
 import reactor.io.buffer.Buffer;
 
 /**
@@ -57,8 +56,9 @@ public class LengthFieldCodec<IN, OUT> extends BufferCodec<IN, OUT> {
 	 * @param delegate          The delegate {@link Codec}.
 	 */
 	public LengthFieldCodec(int lengthFieldLength, Codec<Buffer, IN, OUT> delegate) {
-		Assert.state(lengthFieldLength == 2 || lengthFieldLength == 4 || lengthFieldLength == 8,
-		  "lengthFieldLength should be 2 (short), 4 (int), or 8 (long).");
+		if(lengthFieldLength != 2 && lengthFieldLength != 4 && lengthFieldLength != 8) {
+			throw new IllegalArgumentException("lengthFieldLength should be 2 (short), 4 (int), or 8 (long).");
+		}
 		this.lengthFieldLength = lengthFieldLength;
 		this.delegate = delegate;
 	}
