@@ -19,7 +19,6 @@ import java.util.function.Consumer;
 
 import reactor.aeron.Context;
 import reactor.aeron.utils.HeartbeatPublicationFailureException;
-import reactor.core.state.Pausable;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Assert;
 
@@ -28,7 +27,7 @@ import reactor.core.util.Assert;
  */
 class HeartbeatSender {
 
-	private volatile Pausable taskPausable;
+	private volatile Runnable cancellable;
 
 	private final Task task;
 
@@ -61,7 +60,7 @@ class HeartbeatSender {
 				failuresCounter = 0;
 			} else {
 				if (++failuresCounter == context.maxHeartbeatPublicationFailures()) {
-					taskPausable.cancel();
+					cancellable.run();
 
 					heartbeatFailedConsumer.accept(new HeartbeatPublicationFailureException(cause));
 				}
@@ -84,16 +83,16 @@ class HeartbeatSender {
 	}
 
 	public void start() {
-		Assert.state(taskPausable == null, "Heartbeat sending task was already scheduled");
+		Assert.state(cancellable == null, "Heartbeat sending task was already scheduled");
 
-		this.taskPausable = Timer.global().schedule(task, context.heartbeatIntervalMillis());
+		this.cancellable = Timer.global().schedule(task, context.heartbeatIntervalMillis());
 	}
 
 	public void shutdown() {
-		if (taskPausable != null) {
-			taskPausable.cancel();
+		if (cancellable != null) {
+			cancellable.run();
 		}
-		taskPausable = null;
+		cancellable = null;
 	}
 
 }
