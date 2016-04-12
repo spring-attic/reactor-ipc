@@ -87,7 +87,7 @@ public final class EmbeddedMediaDriverManager {
 	 */
 	private boolean deleteAeronDirsOnExit = false;
 
-	private class RetryShutdownTask implements Consumer<Long> {
+	private class RetryShutdownTask implements Runnable {
 
 		private final long startNs;
 
@@ -99,22 +99,19 @@ public final class EmbeddedMediaDriverManager {
 		}
 
 		@Override
-		public void accept(Long aLong) {
+		public void run() {
 			if (canShutdownMediaDriver() || System.nanoTime() - startNs > shutdownTimeoutNs) {
 				doShutdown();
 			} else {
-				timer.submit(this, retryShutdownMillis);
+				timer.schedule(this, retryShutdownMillis, TimeUnit.MILLISECONDS);
 			}
 		}
 
 		private boolean canShutdownMediaDriver() {
 			final boolean canShutdownDriver[] = new boolean[] { true };
-			aeronCounters.forEach(new BiConsumer<Integer, String>() {
-				@Override
-				public void accept(Integer id, String label) {
-					if (label.startsWith(AeronUtils.LABEL_PREFIX_SENDER_POS) || label.startsWith(AeronUtils.LABEL_PREFIX_SUBSCRIBER_POS)) {
-						canShutdownDriver[0] = false;
-					}
+			aeronCounters.forEach((id, label) -> {
+				if (label.startsWith(AeronUtils.LABEL_PREFIX_SENDER_POS) || label.startsWith(AeronUtils.LABEL_PREFIX_SUBSCRIBER_POS)) {
+					canShutdownDriver[0] = false;
 				}
 			});
 			return canShutdownDriver[0];
@@ -181,7 +178,7 @@ public final class EmbeddedMediaDriverManager {
 			aeron.close();
 
 			Timer timer = Timer.global();
-			timer.submit(new RetryShutdownTask(timer), retryShutdownMillis);
+			timer.schedule(new RetryShutdownTask(timer), retryShutdownMillis, TimeUnit.MILLISECONDS);
 		}
 	}
 

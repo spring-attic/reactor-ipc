@@ -372,9 +372,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		final SignalEmitter<Object> session = p.connectEmitter();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
-		timer.schedule(new Consumer<Long>() {
-			@Override
-			public void accept(Long aLong) {
+		timer.schedule(() -> {
 				if (!session.isCancelled()) {
 					session.emit(ReactiveStateUtils.scan(o));
 				}
@@ -382,8 +380,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 					log.info("State Monitoring stopping on " + ReactiveStateUtils.getName(o));
 					throw Exceptions.failWithCancel();
 				}
-			}
-		}, _period);
+		}, _period, TimeUnit.MILLISECONDS);
 
 		this.cannons.submit(p.map(new GraphMapper()));
 
@@ -484,9 +481,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 			this.cannons.submit(p);
 			final SignalEmitter<Event> session = p.connectEmitter();
 			log.info("System Monitoring Starting");
-			timer.schedule(new Consumer<Long>() {
-				@Override
-				public void accept(Long aLong) {
+			timer.schedule(() -> {
 					if (!session.isCancelled()) {
 						session.submit(lastSystemState.scan());
 					}
@@ -494,8 +489,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 						log.info("System Monitoring Stopped");
 						throw Exceptions.failWithCancel();
 					}
-				}
-			}, systemStatsPeriod);
+			}, systemStatsPeriod, TimeUnit.MILLISECONDS);
 		}
 
 		return server.start();
@@ -503,7 +497,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 	@Override
 	protected Mono<Void> doShutdown() {
-		timer.cancel();
+		timer.shutdown();
 		this.cannons.finish();
 		this.eventStream.onComplete();
 		if (logExtension != null) {

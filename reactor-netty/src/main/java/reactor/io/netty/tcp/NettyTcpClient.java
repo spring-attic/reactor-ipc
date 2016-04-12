@@ -18,8 +18,8 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLEngine;
 
@@ -55,13 +55,13 @@ import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.Reconnect;
+import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandlerBridge;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.NettyOptions;
 import reactor.io.netty.config.SslOptions;
-import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.util.NettyNativeDetector;
 import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
+import reactor.io.netty.util.NettyNativeDetector;
 
 /**
  * A Netty-based {@code TcpClient}.
@@ -312,16 +312,13 @@ public class NettyTcpClient extends TcpClient<Buffer, Buffer> implements MultiPr
 				log.info("Failed to connect to {}. Attempting reconnect in {}ms.", connectAddress, delay);
 			}
 
-			getDefaultTimer().submit(new Consumer<Long>() {
-				@Override
-				public void accept(Long now) {
+			getDefaultTimer().schedule(() -> {
 					final ChannelFuture channelOpen = connectionSupplier.get();
 					if (null == channelOpen) {
 						throw new IllegalStateException("No connection supplied");
 					}
 					channelOpen.addListener(new AfterOpen(subscriber));
-				}
-			}, delay);
+			}, delay, TimeUnit.MILLISECONDS);
 		}
 
 		private class AfterOpen implements ChannelFutureListener {

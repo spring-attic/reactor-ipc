@@ -18,9 +18,9 @@ package reactor.aeron.subscriber;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import reactor.aeron.Context;
+import reactor.core.flow.Cancellation;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 
@@ -37,16 +37,16 @@ class HeartbeatWatchdog {
 
 	private final SessionTracker<? extends Session> sessionTracker;
 
-	private volatile Runnable cancellable;
+	private volatile Cancellation cancellable;
 
 	private final long heartbeatTimeoutNs;
 
-	class SessionReaper implements Consumer<Long> {
+	class SessionReaper implements Runnable {
 
 		private final List<Session> heartbeatLostSessions = new ArrayList<>();
 
 		@Override
-		public void accept(Long value) {
+		public void run() {
 			long now = System.nanoTime();
 			for (Session session : sessionTracker.getSessions()) {
 				if (session.getLastHeartbeatTimeNs() > 0 &&
@@ -75,14 +75,16 @@ class HeartbeatWatchdog {
 	}
 
 	public void start() {
-		this.cancellable = Timer.global().schedule(sessionReaper, (heartbeatTimeoutNs * 3000) / 2);
+		long period = (heartbeatTimeoutNs * 3000) / 2;
+		this.cancellable = Timer.global().schedulePeriodically(
+				sessionReaper, period, period, TimeUnit .MILLISECONDS);
 
 		logger.debug("HeartbeatWatchdog started");
 	}
 
 	public void shutdown() {
 		if (cancellable != null) {
-			cancellable.run();
+			cancellable.dispose();
 		}
 
 		logger.debug("HeartbeatWatchdog shutdown");

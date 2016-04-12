@@ -194,19 +194,17 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 		if (alive.compareAndSet(true, false)) {
 			// Doing a shutdown via timer to avoid shutting down Aeron in its thread
 			final Timer globalTimer = Timer.global();
-			globalTimer.submit(new Consumer<Long>() {
-				@Override
-				public void accept(Long value) {
+			globalTimer.schedule(() -> {
 					if (signalPoller != null) {
 						signalPoller.shutdown();
 					}
 					executor.shutdown();
 
-					globalTimer.submit(new Consumer<Long>() {
+					globalTimer.schedule(new Runnable() {
 						@Override
-						public void accept(Long aLong) {
+						public void run() {
 							if (!executor.isTerminated()) {
-								globalTimer.submit(this);
+								globalTimer.schedule(this);
 								return;
 							}
 
@@ -217,7 +215,6 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 							terminated = true;
 						}
 					});
-				}
 			});
 		}
 	}

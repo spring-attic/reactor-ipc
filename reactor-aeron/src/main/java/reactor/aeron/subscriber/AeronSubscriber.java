@@ -16,7 +16,6 @@
 package reactor.aeron.subscriber;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
@@ -25,9 +24,9 @@ import reactor.aeron.utils.AeronUtils;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.TopicProcessor;
+import reactor.core.scheduler.Timer;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 
@@ -215,20 +214,18 @@ public final class AeronSubscriber
 		if (alive.compareAndSet(true, false)) {
 			// Doing a shutdown via globalTimer to avoid shutting down Aeron in its thread
 			final Timer globalTimer = Timer.global();
-			globalTimer.submit(new Consumer<Long>() {
-				@Override
-				public void accept(Long aLong) {
+			globalTimer.schedule(() -> {
 					processor.shutdown();
 
 					serviceMessagePoller.shutdown();
 					serviceMessageHandler.shutdown();
 
 					// Waiting till service message poller is terminated to safe shutdown Aeron
-					globalTimer.submit(new Consumer<Long>() {
+					globalTimer.schedule(new Runnable() {
 						@Override
-						public void accept(Long aLong) {
+						public void run() {
 							if (!serviceMessagePoller.isTerminated()) {
-								globalTimer.submit(this);
+								globalTimer.schedule(this);
 								return;
 							}
 
@@ -240,7 +237,6 @@ public final class AeronSubscriber
 							onTerminateTask.run();
 						}
 					});
-				}
 			});
 		}
 	}
