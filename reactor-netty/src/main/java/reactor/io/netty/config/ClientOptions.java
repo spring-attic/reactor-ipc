@@ -91,7 +91,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * @return the eventual remote host
 	 */
 	public InetSocketAddress remoteAddress() {
-		return connectAddress.get();
+		return connectAddress != null ? connectAddress.get() : null;
 	}
 
 	/**
