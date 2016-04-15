@@ -385,7 +385,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	 * @return Stream to signal error or successful write to the client
 	 */
 	@Override
-	public Mono<Void> writeHeaders() {
+	public Mono<Void> sendHeaders() {
 		if (statusAndHeadersSent == 0) {
 			return new PostHeaderWritePublisher();
 		}

@@ -71,7 +71,7 @@ final class MonoPostRequest extends Mono<HttpChannel> {
 				}
 				else {
 					HttpUtil.setTransferEncodingChunked(ch.getNettyResponse(), false);
-					return ch.writeHeaders();
+					return ch.sendHeaders();
 				}
 			}
 			catch (Throwable t) {

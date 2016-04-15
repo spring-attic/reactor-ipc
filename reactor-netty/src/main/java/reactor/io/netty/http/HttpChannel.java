@@ -191,5 +191,5 @@ public interface HttpChannel extends NettyChannel {
 	 *
 	 * @return
 	 */
-	Mono<Void> writeHeaders();
+	Mono<Void> sendHeaders();
 }
