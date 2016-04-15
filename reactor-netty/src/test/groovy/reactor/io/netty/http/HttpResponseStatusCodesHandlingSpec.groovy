@@ -51,7 +51,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
                 req.header('Content-Type', 'text/plain')
 
                 //return a producing stream to send some data along the request
-                req.sendString(
+                req.sendStringBody(
                     Flux
                             .just("Hello")
                             .log('client-send')
@@ -60,7 +60,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             .flatMap { replies ->
                 //successful request, listen for replies
                 replies
-                        .receiveString()
+                        .receiveStringBody()
                         .log('client-received')
                         .doOnNext { s ->
                             replyReceived = s

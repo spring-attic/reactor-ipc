@@ -23,7 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * A {@link ChannelFlux} is a virtual connection that often matches with a Socket or a Channel (e.g. Netty).
+ * A {@link Channel} is a virtual connection that often matches with a Socket or a Channel (e.g. Netty).
  * Implementations handle interacting inbound (received data) and errors by subscribing to {@link #receive()}.
  * <p>
  * Writing and "flushing" is controlled by sinking 1 or more {@link #send(Publisher)}
@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface ChannelFlux<IN, OUT>  {
+public interface Channel<IN, OUT>  {
 
 	/**
 	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).

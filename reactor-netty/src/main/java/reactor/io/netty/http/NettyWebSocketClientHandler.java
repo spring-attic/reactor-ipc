@@ -29,8 +29,7 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
-import reactor.io.ipc.ChannelFlux;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.tcp.TcpChannel;
 
@@ -41,7 +40,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 
 	final WebSocketClientHandshaker handshaker;
 	NettyWebSocketClientHandler(
-			ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
+			ChannelHandler<Buffer, Buffer, NettyChannel> handler,
 			TcpChannel tcpStream,
 			WebSocketClientHandshaker handshaker) {
 		super(handler, tcpStream);

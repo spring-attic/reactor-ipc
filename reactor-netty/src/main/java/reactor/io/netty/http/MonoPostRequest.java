@@ -18,31 +18,30 @@ package reactor.io.netty.http;
 
 import java.net.URI;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpUtil;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.EmptySubscription;
-import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFluxHandler;
 
 /**
  * @author Stephane Maldini
  */
-final class MonoPostRequest extends Mono<HttpChannel> {
+final class MonoPostRequest extends Mono<HttpInbound> {
 
-	private HttpClient                                      client;
-	final   URI                                             currentURI;
-	final   HttpMethod                                      method;
-	final   ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler;
+	private HttpClient                                                client;
+	final   URI                                                       currentURI;
+	final   HttpMethod                                                method;
+	final   Function<? super HttpOutbound, ? extends Publisher<Void>> handler;
 
 	public MonoPostRequest(HttpClient client,
 			URI currentURI,
-			HttpMethod method,
-			ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+			HttpMethod method, Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		this.client = client;
 		this.currentURI = currentURI;
 		this.method = method;
@@ -50,7 +49,7 @@ final class MonoPostRequest extends Mono<HttpChannel> {
 	}
 
 	@Override
-	public void subscribe(final Subscriber<? super HttpChannel> subscriber) {
+	public void subscribe(final Subscriber<? super HttpInbound> subscriber) {
 		client.doStart(c -> {
 			try {
 				URI uri = currentURI;

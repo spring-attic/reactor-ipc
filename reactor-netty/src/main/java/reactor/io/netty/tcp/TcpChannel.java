@@ -20,7 +20,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -37,12 +36,12 @@ import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.Channel;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 
 /**
- * {@link ChannelFlux} implementation that delegates to Netty.
+ * {@link Channel} implementation that delegates to Netty.
  * @author Stephane Maldini
  * @since 2.5
  */
@@ -50,10 +49,10 @@ public class TcpChannel
 		extends Flux<Buffer>
 		implements NettyChannel, Loopback, Completable {
 
-	private final Channel ioChannel;
-	private final long    prefetch;
+	private final io.netty.channel.Channel ioChannel;
+	private final long                     prefetch;
 
-	public TcpChannel(long prefetch, Channel ioChannel) {
+	public TcpChannel(long prefetch, io.netty.channel.Channel ioChannel) {
 		this.prefetch = prefetch;
 		this.ioChannel = ioChannel;
 	}
@@ -79,7 +78,7 @@ public class TcpChannel
 
 	@Override
 	public Object connectedOutput() {
-		Channel parent = ioChannel.parent();
+		io.netty.channel.Channel parent = ioChannel.parent();
 		SocketAddress remote = ioChannel.remoteAddress();
 		SocketAddress local = ioChannel.localAddress();
 		String src = local != null ? local.toString() : "";
@@ -165,7 +164,7 @@ public class TcpChannel
 	}
 
 	@Override
-	public Channel delegate() {
+	public io.netty.channel.Channel delegate() {
 		return ioChannel;
 	}
 

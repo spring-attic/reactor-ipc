@@ -27,16 +27,16 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.reactivestreams.Publisher;
 import reactor.core.converter.DependencyUtils;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 
 /**
  * @author Stephane Maldini
  */
-public abstract class ChannelMappings
-		implements Function<HttpChannel, Iterable<? extends ChannelFluxHandler<Buffer, Buffer, HttpChannel>>> {
+public abstract class HttpMappings
+		implements Function<HttpChannel, Iterable<? extends ChannelHandler<Buffer, Buffer, HttpChannel>>> {
 
 	/**
-	 * An alias for {@link ChannelMappings#http}.
+	 * An alias for {@link HttpMappings#http}.
 	 * <p>
 	 * Creates a {@link Predicate} based on a URI template filtering .
 	 * <p>
@@ -52,7 +52,7 @@ public abstract class ChannelMappings
 	}
 
 	/**
-	 * An alias for {@link ChannelMappings#http}.
+	 * An alias for {@link HttpMappings#http}.
 	 * <p>
 	 * Creates a {@link Predicate} based on a URI template filtering .
 	 * <p>
@@ -82,7 +82,7 @@ public abstract class ChannelMappings
 		}
 
 		if(DependencyUtils.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS) {
-			return new RegistryChannelMappings.HttpSelector(uri, protocol, method);
+			return new RegistryHttpMappings.HttpSelector(uri, protocol, method);
 		}
 		else{
 			return new HttpPredicate(uri, protocol, method);
@@ -93,17 +93,17 @@ public abstract class ChannelMappings
 	 *
 	 * @return
 	 */
-	public static ChannelMappings newMappings() {
+	public static HttpMappings newMappings() {
 		if(DependencyUtils.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS){
-			return new RegistryChannelMappings();
+			return new RegistryHttpMappings();
 		}
 		else{
-			return new SimpleChannelMappings();
+			return new SimpleHttpMappings();
 		}
 	}
 
 	/**
-	 * An alias for {@link ChannelMappings#http}.
+	 * An alias for {@link HttpMappings#http}.
 	 * <p>
 	 * Creates a {@link Predicate} based on a URI template filtering .
 	 * <p>
@@ -119,7 +119,7 @@ public abstract class ChannelMappings
 	}
 
 	/**
-	 * An alias for {@link ChannelMappings#get} prefix ([prefix]/**), useful for file system mapping.
+	 * An alias for {@link HttpMappings#get} prefix ([prefix]/**), useful for file system mapping.
 	 * <p>
 	 * Creates a {@link Predicate} based on a URI template filtering .
 	 * <p>
@@ -134,7 +134,7 @@ public abstract class ChannelMappings
 	}
 
 	/**
-	 * An alias for {@link ChannelMappings#get} prefix (/**), useful for file system mapping.
+	 * An alias for {@link HttpMappings#get} prefix (/**), useful for file system mapping.
 	 * <p>
 	 * Creates a {@link Predicate} based on a URI template filtering .
 	 * <p>
@@ -150,7 +150,7 @@ public abstract class ChannelMappings
 		String target = prefix.startsWith("/") ? prefix : "/".concat(prefix);
 		//target = target.endsWith("/") ? target :  prefix.concat("/");
 		if(DependencyUtils.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS) {
-			return new RegistryChannelMappings.HttpSelector(target+"**", null, method);
+			return new RegistryHttpMappings.HttpSelector(target+"**", null, method);
 		}
 		else{
 			return new HttpPrefixPredicate(target, method);
@@ -158,7 +158,7 @@ public abstract class ChannelMappings
 	}
 
 	/**
-	 * An alias for {@link ChannelMappings#http}.
+	 * An alias for {@link HttpMappings#http}.
 	 * <p>
 	 * Creates a {@link Predicate} based on a URI template filtering .
 	 * <p>
@@ -179,20 +179,20 @@ public abstract class ChannelMappings
 	 * @param handler
 	 * @return
 	 */
-	public abstract ChannelMappings add(Predicate<? super HttpChannel> condition,
-			ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler);
+	public abstract HttpMappings add(Predicate<? super HttpChannel> condition,
+			ChannelHandler<Buffer, Buffer, HttpChannel> handler);
 
 	/**
 	 */
 	static final class HttpHandlerMapping
-			implements ChannelFluxHandler<Buffer, Buffer, HttpChannel>, Predicate<HttpChannel> {
+			implements ChannelHandler<Buffer, Buffer, HttpChannel>, Predicate<HttpChannel> {
 
-		private final Predicate<? super HttpChannel>                  condition;
-		private final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler;
-		private final Function<? super String, Map<String, Object>>   resolver;
+		private final Predicate<? super HttpChannel>                condition;
+		private final ChannelHandler<Buffer, Buffer, HttpChannel>   handler;
+		private final Function<? super String, Map<String, Object>> resolver;
 
 		HttpHandlerMapping(Predicate<? super HttpChannel> condition,
-				ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler,
+				ChannelHandler<Buffer, Buffer, HttpChannel> handler,
 				Function<? super String, Map<String, Object>>         resolver) {
 			this.condition = condition;
 			this.handler = handler;
@@ -204,7 +204,7 @@ public abstract class ChannelMappings
 			return handler.apply(channel.paramsResolver(resolver));
 		}
 
-		ChannelFluxHandler<Buffer, Buffer, HttpChannel> getHandler() {
+		ChannelHandler<Buffer, Buffer, HttpChannel> getHandler() {
 			return handler;
 		}
 
@@ -214,25 +214,25 @@ public abstract class ChannelMappings
 		}
 	}
 
-	final static class SimpleChannelMappings extends ChannelMappings {
+	final static class SimpleHttpMappings extends HttpMappings {
 
 		private final CopyOnWriteArrayList<HttpHandlerMapping> handlers =
 				new CopyOnWriteArrayList<>();
 
 		@Override
-		public ChannelMappings add(Predicate<? super HttpChannel> condition,
-				ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		public HttpMappings add(Predicate<? super HttpChannel> condition,
+				ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
 
 			handlers.add(new HttpHandlerMapping(condition, handler, null));
 			return this;
 		}
 
 		@Override
-		public Iterable<? extends ChannelFluxHandler<Buffer, Buffer, HttpChannel>> apply(final HttpChannel channel) {
+		public Iterable<? extends ChannelHandler<Buffer, Buffer, HttpChannel>> apply(final HttpChannel channel) {
 
-			return (Iterable<ChannelFluxHandler<Buffer, Buffer, HttpChannel>>) () -> {
+			return (Iterable<ChannelHandler<Buffer, Buffer, HttpChannel>>) () -> {
 				final Iterator<HttpHandlerMapping> iterator = handlers.iterator();
-				return new Iterator<ChannelFluxHandler<Buffer, Buffer, HttpChannel>>() {
+				return new Iterator<ChannelHandler<Buffer, Buffer, HttpChannel>>() {
 
 					HttpHandlerMapping cached;
 
@@ -250,7 +250,7 @@ public abstract class ChannelMappings
 					}
 
 					@Override
-					public ChannelFluxHandler<Buffer, Buffer, HttpChannel> next() {
+					public ChannelHandler<Buffer, Buffer, HttpChannel> next() {
 						HttpHandlerMapping cursor = cached;
 						if (cursor != null) {
 							cached = null;

@@ -17,24 +17,23 @@
 package reactor.io.netty.common;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Completable;
-import reactor.io.ipc.ChannelFlux;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.Channel;
+import reactor.io.ipc.ChannelHandler;
 
 /**
  * Abstract base class that implements common functionality shared by clients and servers.
  * <p> A Peer is network component with start and shutdown capabilities. On Start it will
- * require a {@link ChannelFluxHandler} to process the incoming {@link ChannelFlux},
+ * require a {@link ChannelHandler} to process the incoming {@link Channel},
  * regardless of being a server or a client.
  *
  * @author Stephane Maldini
  */
-public abstract class Peer<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
+public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>
 		implements Completable {
 
 	public static final int    DEFAULT_PORT         =
@@ -115,7 +114,7 @@ public abstract class Peer<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 	 * @return a {@link Mono<Void>} that will be complete when the {@link Peer} is started
 	 */
 	public final Mono<Void> start(
-			final ChannelFluxHandler<IN, OUT, CONN> handler) {
+			final ChannelHandler<IN, OUT, CONN> handler) {
 
 		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
 			throw new IllegalStateException("Peer already started");
@@ -125,19 +124,19 @@ public abstract class Peer<IN, OUT, CONN extends ChannelFlux<IN, OUT>>
 	}
 
 	/**
-	 * @see this#start(ChannelFluxHandler)
+	 * @see this#start(ChannelHandler)
 	 *
 	 * @param handler
 	 *
 	 * @throws InterruptedException
 	 */
-	public final void startAndAwait(final ChannelFluxHandler<IN, OUT, CONN> handler)
+	public final void startAndAwait(final ChannelHandler<IN, OUT, CONN> handler)
 			throws InterruptedException {
 		start(handler).get();
 	}
 
 	protected abstract Mono<Void> doStart(
-			ChannelFluxHandler<IN, OUT, CONN> handler);
+			ChannelHandler<IN, OUT, CONN> handler);
 
 	protected abstract Mono<Void> doShutdown();
 

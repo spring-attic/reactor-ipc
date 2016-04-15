@@ -44,7 +44,7 @@ import reactor.core.scheduler.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.Peer;
@@ -135,8 +135,8 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
 	}
 
-	TcpServer       server;
-	ChannelMappings channelMappings;
+	TcpServer    server;
+	HttpMappings httpMappings;
 
 	HttpServer(final ServerOptions options) {
 		super(options.timer());
@@ -157,13 +157,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP DELETE on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer delete(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
-		route(ChannelMappings.delete(path), handler);
+	public final HttpServer delete(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(HttpMappings.delete(path), handler);
 		return this;
 	}
 
@@ -171,7 +171,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param directory the File to serve
 	 * @return {@code this}
@@ -185,7 +185,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param directory the Path to the file to serve
 	 * @return {@code this}
@@ -198,7 +198,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param directory the Path to the file to serve
 	 * @return {@code this}
@@ -206,7 +206,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	public final HttpServer directory(final String path,
 			final String directory,
 			final Function<HttpChannel, HttpChannel> interceptor) {
-		route(ChannelMappings.prefix(path), new ChannelFluxHandler<Buffer, Buffer, HttpChannel>() {
+		route(HttpMappings.prefix(path), new ChannelHandler<Buffer, Buffer, HttpChannel>() {
 			@Override
 			public Publisher<Void> apply(HttpChannel channel) {
 				String strippedPrefix = channel.uri()
@@ -237,13 +237,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param file the File to serve
 	 * @return {@code this}
 	 */
 	public final HttpServer file(String path, final File file) {
-		file(ChannelMappings.get(path), file.getAbsolutePath(), null);
+		file(HttpMappings.get(path), file.getAbsolutePath(), null);
 		return this;
 	}
 
@@ -251,13 +251,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param filepath the Path to the file to serve
 	 * @return {@code this}
 	 */
 	public final HttpServer file(String path, final String filepath) {
-		file(ChannelMappings.get(path), filepath, null);
+		file(HttpMappings.get(path), filepath, null);
 		return this;
 	}
 
@@ -265,7 +265,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param filepath the Path to the file to serve
 	 * @param interceptor a channel pre-intercepting handler e.g. for content type header
@@ -289,13 +289,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer get(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
-		route(ChannelMappings.get(path), handler);
+	public final HttpServer get(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(HttpMappings.get(path), handler);
 		return this;
 	}
 
@@ -318,13 +318,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP POST on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer post(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
-		route(ChannelMappings.post(path), handler);
+	public final HttpServer post(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(HttpMappings.post(path), handler);
 		return this;
 	}
 
@@ -332,13 +332,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for HTTP PUT on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer put(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
-		route(ChannelMappings.put(path), handler);
+	public final HttpServer put(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(HttpMappings.put(path), handler);
 		return this;
 	}
 
@@ -351,13 +351,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 */
 	@SuppressWarnings("unchecked")
 	public HttpServer route(final Predicate<HttpChannel> condition,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> serviceFunction) {
+			final ChannelHandler<Buffer, Buffer, HttpChannel> serviceFunction) {
 
-		if (this.channelMappings == null) {
-			this.channelMappings = ChannelMappings.newMappings();
+		if (this.httpMappings == null) {
+			this.httpMappings = HttpMappings.newMappings();
 		}
 
-		this.channelMappings.add(condition, serviceFunction);
+		this.httpMappings.add(condition, serviceFunction);
 		return this;
 	}
 
@@ -382,12 +382,12 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for WebSocket on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer ws(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final HttpServer ws(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
 		return ws(path, handler, null);
 	}
 
@@ -395,16 +395,16 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * Listen for WebSocket on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
 	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * @param path The {@link HttpMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @param protocols
 	 * @return {@code this}
 	 */
 	public final HttpServer ws(String path,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler,
+			final ChannelHandler<Buffer, Buffer, HttpChannel> handler,
 			final String protocols) {
-		return route(ChannelMappings.get(path), channel -> {
+		return route(HttpMappings.get(path), channel -> {
 			String connection = channel.headers()
 			                           .get(HttpHeaderNames.CONNECTION);
 			if (connection != null && connection.equals(HttpHeaderValues.UPGRADE.toString())) {
@@ -415,7 +415,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	}
 
 	@Override
-	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, HttpChannel> defaultHandler) {
+	protected Mono<Void> doStart(final ChannelHandler<Buffer, Buffer, HttpChannel> defaultHandler) {
 		return server.start(ch -> {
 			NettyHttpChannel request = (NettyHttpChannel) ch;
 
@@ -456,19 +456,19 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 
 	protected Publisher<Void> routeChannel(final HttpChannel ch) {
 
-		if (channelMappings == null) {
+		if (httpMappings == null) {
 			return null;
 		}
 
-		final Iterator<? extends ChannelFluxHandler<Buffer, Buffer, HttpChannel>> selected =
-				channelMappings.apply(ch)
-				               .iterator();
+		final Iterator<? extends ChannelHandler<Buffer, Buffer, HttpChannel>> selected =
+				httpMappings.apply(ch)
+				            .iterator();
 
 		if (!selected.hasNext()) {
 			return null;
 		}
 
-		ChannelFluxHandler<Buffer, Buffer, HttpChannel> channelHandler = selected.next();
+		ChannelHandler<Buffer, Buffer, HttpChannel> channelHandler = selected.next();
 
 		if (!selected.hasNext()) {
 			return channelHandler.apply(ch);
@@ -493,7 +493,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		return server.shutdown();
 	}
 
-	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, SocketChannel nativeChannel) {
+	protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler, SocketChannel nativeChannel) {
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), nativeChannel);
 
@@ -518,7 +518,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		}
 
 		@Override
-		protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
+		protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler,
 				SocketChannel nativeChannel) {
 			HttpServer.this.bindChannel(handler, nativeChannel);
 		}

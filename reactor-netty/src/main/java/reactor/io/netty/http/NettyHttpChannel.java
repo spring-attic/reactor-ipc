@@ -323,7 +323,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	}
 
 	@Override
-	public HttpResponseStatus responseStatus() {
+	public HttpResponseStatus status() {
 		return HttpResponseStatus.valueOf(this.nettyResponse.status()
 		                                                    .code());
 	}
@@ -334,7 +334,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	 * @return this
 	 */
 	@Override
-	public HttpChannel responseStatus(HttpResponseStatus status) {
+	public HttpChannel status(HttpResponseStatus status) {
 		if (statusAndHeadersSent == 0) {
 			doResponseStatus(status);
 		}

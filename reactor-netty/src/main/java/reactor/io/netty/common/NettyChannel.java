@@ -18,20 +18,19 @@ package reactor.io.netty.common;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-import io.netty.channel.Channel;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFlux;
+import reactor.io.ipc.Channel;
 
 /**
  * @author Stephane Maldini
  */
-public interface NettyChannel extends ChannelFlux<Buffer, Buffer> {
+public interface NettyChannel extends Channel<Buffer, Buffer> {
 
 	@Override
-	Channel delegate();
+	io.netty.channel.Channel delegate();
 
 	/**
 	 * Assign event handlers to certain channel lifecycle events.

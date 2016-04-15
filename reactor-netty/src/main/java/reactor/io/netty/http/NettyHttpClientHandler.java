@@ -22,14 +22,11 @@ import java.util.Set;
 
 import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Subscriber;
@@ -39,7 +36,7 @@ import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.tcp.TcpChannel;
@@ -58,7 +55,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	 */
 	private boolean discardBody = false;
 
-	public NettyHttpClientHandler(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, TcpChannel tcpStream) {
+	public NettyHttpClientHandler(ChannelHandler<Buffer, Buffer, NettyChannel> handler, TcpChannel tcpStream) {
 		super(handler, tcpStream);
 		this.tcpStream = tcpStream;
 	}

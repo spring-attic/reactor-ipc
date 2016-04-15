@@ -18,6 +18,7 @@ package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.function.Function;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -34,7 +35,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
@@ -48,6 +49,12 @@ import reactor.io.netty.tcp.TcpClient;
  */
 public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loopback {
 
+
+	final static String WS_SCHEME    = "ws";
+	final static String WSS_SCHEME   = "wss";
+	final static String HTTP_SCHEME  = "http";
+	final static String HTTPS_SCHEME = "https";
+	
 	/**
 	 * @return a simple HTTP client
 	 */
@@ -95,12 +102,12 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannel> delete(String url,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final Mono<HttpInbound> delete(String url,
+			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.DELETE, url, handler);
 	}
 
@@ -112,7 +119,7 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 *
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
 	 */
-	public final Mono<HttpChannel> delete(String url) {
+	public final Mono<HttpInbound> delete(String url) {
 		return request(HttpMethod.DELETE, url, null);
 	}
 
@@ -120,12 +127,12 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * HTTP GET the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannel> get(String url,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final Mono<HttpInbound> get(String url,
+			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.GET, url, handler);
 	}
 
@@ -136,7 +143,7 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 *
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
 	 */
-	public final Mono<HttpChannel> get(String url) {
+	public final Mono<HttpInbound> get(String url) {
 
 		return request(HttpMethod.GET, url, null);
 	}
@@ -155,12 +162,12 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * HTTP POST the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannel> post(String url,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final Mono<HttpInbound> post(String url,
+			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.POST, url, handler);
 	}
 
@@ -168,12 +175,12 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * HTTP PUT the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannel> put(String url,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final Mono<HttpInbound> put(String url,
+			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.PUT, url, handler);
 	}
 
@@ -183,13 +190,13 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * write data to it.
 	 * @param method the HTTP method to send
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public Mono<HttpChannel> request(HttpMethod method,
+	public Mono<HttpInbound> request(HttpMethod method,
 			String url,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		final URI currentURI;
 		try {
 			if (method == null && url == null) {
@@ -211,7 +218,7 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannel> ws(String url) {
+	public final Mono<HttpInbound> ws(String url) {
 		return request(HttpMethod.GET, parseURL(url, true), null);
 	}
 
@@ -221,16 +228,16 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 *
 	 * precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @param handler the {@link ChannelHandler} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpChannel> ws(String url,
-			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final Mono<HttpInbound> ws(String url,
+			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.GET, parseURL(url, true), handler);
 	}
 
-	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, Object nativeChannel) {
+	protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler, Object nativeChannel) {
 		SocketChannel ch = (SocketChannel) nativeChannel;
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
@@ -245,7 +252,7 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		URI currentURI = lastURI;
 		if (currentURI.getScheme() != null && currentURI.getScheme()
 		                                                .toLowerCase()
-		                                                .startsWith(HttpChannel.WS_SCHEME)) {
+		                                                .startsWith(WS_SCHEME)) {
 			pipeline.addLast(new HttpObjectAggregator(8192))
 			        .addLast(new NettyWebSocketClientHandler(handler,
 					        netChannel,
@@ -266,9 +273,9 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	}
 
 	@Override
-	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
-		return client.start(inoutChannelFlux -> {
-			final NettyHttpChannel ch = ((NettyHttpChannel) inoutChannelFlux);
+	protected Mono<Void> doStart(ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+		return client.start(inoutChannel -> {
+			final NettyHttpChannel ch = ((NettyHttpChannel) inoutChannel);
 			return handler.apply(ch);
 		});
 	}
@@ -279,8 +286,8 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	}
 
 	String parseURL(String url, boolean ws) {
-		if (!url.startsWith(HttpChannel.HTTP_SCHEME) && !url.startsWith(HttpChannel.WS_SCHEME)) {
-			final String parsedUrl = (ws ? HttpChannel.WS_SCHEME : HttpChannel.HTTP_SCHEME) + "://";
+		if (!url.startsWith(HTTP_SCHEME) && !url.startsWith(WS_SCHEME)) {
+			final String parsedUrl = (ws ? WS_SCHEME : HTTP_SCHEME) + "://";
 			if (url.startsWith("/")) {
 				return parsedUrl + (lastURI != null && lastURI.getHost() != null ? lastURI.getHost() :
 						"localhost") + url;
@@ -317,9 +324,9 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 				if (port == -1) {
 					if (url != null && url.getScheme() != null && (url.getScheme()
 					                                                  .toLowerCase()
-					                                                  .equals(HttpChannel.HTTPS_SCHEME) || url.getScheme()
+					                                                  .equals(HTTPS_SCHEME) || url.getScheme()
 					                                                                                          .toLowerCase()
-					                                                                                          .equals(HttpChannel.WSS_SCHEME))) {
+					                                                                                          .equals(WSS_SCHEME))) {
 						port = 443;
 					}
 					else {
@@ -334,16 +341,16 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		}
 
 		@Override
-		protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
+		protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler,
 				SocketChannel nativeChannel) {
 
 			URI currentURI = lastURI;
 			try {
 				if (currentURI.getScheme() != null && (currentURI.getScheme()
 				                                                 .toLowerCase()
-				                                                 .equals(HttpChannel.HTTPS_SCHEME) || currentURI.getScheme()
+				                                                 .equals(HTTPS_SCHEME) || currentURI.getScheme()
 				                                                                                                .toLowerCase()
-				                                                                                                .equals(HttpChannel.WSS_SCHEME))) {
+				                                                                                                .equals(WSS_SCHEME))) {
 					nativeChannel.config()
 					             .setAutoRead(true);
 					addSecureHandler(nativeChannel);

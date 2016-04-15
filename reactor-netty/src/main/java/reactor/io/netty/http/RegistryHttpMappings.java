@@ -28,12 +28,12 @@ import reactor.bus.selector.Selectors;
 import reactor.bus.selector.UriPathSelector;
 import reactor.core.converter.DependencyUtils;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 
 /**
  * @author Stephane Maldini
  */
-final class RegistryChannelMappings extends ChannelMappings {
+final class RegistryHttpMappings extends HttpMappings {
 
 	static {
 		if (!DependencyUtils.hasReactorBus()) {
@@ -45,15 +45,15 @@ final class RegistryChannelMappings extends ChannelMappings {
 			Registries.create();
 
 	@Override
-	public Iterable<? extends ChannelFluxHandler<Buffer, Buffer, HttpChannel>> apply(
+	public Iterable<? extends ChannelHandler<Buffer, Buffer, HttpChannel>> apply(
 			HttpChannel channel) {
 		return routedWriters.selectValues(channel);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ChannelMappings add(Predicate<? super HttpChannel> condition,
-			ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+	public HttpMappings add(Predicate<? super HttpChannel> condition,
+			ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
 
 		Selector<HttpChannel> selector;
 

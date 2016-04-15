@@ -47,11 +47,12 @@ import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.core.util.WaitStrategy;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFlux;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.Channel;
+import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
+import reactor.io.netty.http.HttpInbound;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.tcp.TcpServer;
 
@@ -61,17 +62,17 @@ import static reactor.core.util.ReactiveStateUtils.property;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>
-		implements ChannelFluxHandler<Buffer, Buffer, HttpChannel>, Loopback {
+public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
+		implements ChannelHandler<Buffer, Buffer, HttpChannel>, Loopback {
 
 	/**
 	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
-	 * Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
+	 * Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
+	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link Channel#send} can subscribe to any passed {@link
 	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -80,7 +81,7 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on loopback
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static Nexus create(int port) {
 		return create(DEFAULT_BIND_ADDRESS, port);
@@ -90,10 +91,10 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
-	 * {@link Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
+	 * {@link Publisher} that will emit: - onNext {@link Channel} to consume data from -
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
-	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
+	 * {@link Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
+	 * on the active connection, {@link Channel#send} can subscribe to any passed {@link
 	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -102,7 +103,7 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static Nexus create(String bindAddress) {
 		return create(bindAddress, DEFAULT_PORT);
@@ -112,10 +113,10 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
-	 * Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
+	 * Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
-	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
+	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link Channel#send} can subscribe to any passed {@link
 	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -125,7 +126,7 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static Nexus create(final String bindAddress, final int port) {
 		HttpServer server = HttpServer.create(bindAddress, port);
@@ -136,14 +137,14 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
-	 * {@link ChannelFlux#send} can subscribe to any passed {@link Publisher}. <p> Note
+	 * {@link Channel#send} can subscribe to any passed {@link Publisher}. <p> Note
 	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
 	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
 	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
 	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
-	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static Nexus create() {
 		return Nexus.create(DEFAULT_BIND_ADDRESS);
@@ -380,14 +381,14 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	}
 
 	/**
-	 * @see this#start(ChannelFluxHandler)
+	 * @see this#start(ChannelHandler)
 	 */
 	public final Mono<Void> start() throws InterruptedException {
 		return start(null);
 	}
 
 	/**
-	 * @see this#start(ChannelFluxHandler)
+	 * @see this#start(ChannelHandler)
 	 */
 	public final void startAndAwait() throws InterruptedException {
 		start().get();
@@ -452,7 +453,7 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 	}
 
 	@Override
-	protected Mono<Void> doStart(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler) {
+	protected Mono<Void> doStart(ChannelHandler<Buffer, Buffer, Channel<Buffer, Buffer>> handler) {
 
 		if (logExtensionEnabled) {
 			FluxProcessor<Event, Event> p =
@@ -857,7 +858,7 @@ public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer
 		@Override
 		public Publisher<Buffer> apply(FederatedClient o) {
 			return o.client.ws(o.targetAPI)
-			               .flatMap(HttpChannel::receive);
+			               .flatMap(HttpInbound::receiveBody);
 		}
 	}
 

@@ -49,12 +49,12 @@ import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.Sequence;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFlux;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.Channel;
+import reactor.io.ipc.ChannelHandler;
 
 /**
  * Netty {@link io.netty.channel.ChannelInboundHandler} implementation that passes data to a Reactor {@link
- * ChannelFlux}.
+ * Channel}.
  *
  * @author Stephane Maldini
  */
@@ -64,8 +64,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandler.class);
 
-	protected final ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler;
-	protected final NettyChannel                                     nettyChannel;
+	protected final ChannelHandler<Buffer, Buffer, NettyChannel> handler;
+	protected final NettyChannel                                 nettyChannel;
 
 	protected ChannelInputSubscriber channelSubscriber;
 
@@ -73,7 +73,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 	protected static final AtomicIntegerFieldUpdater<NettyChannelHandler> CHANNEL_REF =
 			AtomicIntegerFieldUpdater.newUpdater(NettyChannelHandler.class, "channelRef");
 
-	public NettyChannelHandler(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, NettyChannel nettyChannel) {
+	public NettyChannelHandler(ChannelHandler<Buffer, Buffer, NettyChannel> handler, NettyChannel nettyChannel) {
 		this.handler = handler;
 		this.nettyChannel = nettyChannel;
 	}
@@ -882,7 +882,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		}
 	}
 
-	public ChannelFluxHandler<Buffer, Buffer, NettyChannel> getHandler() {
+	public ChannelHandler<Buffer, Buffer, NettyChannel> getHandler() {
 		return handler;
 	}
 

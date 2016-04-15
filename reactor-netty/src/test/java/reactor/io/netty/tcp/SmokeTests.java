@@ -306,7 +306,7 @@ public class SmokeTests {
 		HttpClient httpClient = HttpClient.create(nettyOptions);
 
 		Mono<List<String>> content = httpClient.get("/data")
-		                                       .then(f -> f.receiveString().toList())
+		                                       .then(f -> f.receiveStringBody().toList())
 		                                       .cache();
 
 		List<String> res = content.get(Duration.ofSeconds(20));

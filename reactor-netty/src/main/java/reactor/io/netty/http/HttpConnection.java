@@ -15,18 +15,18 @@
  */
 package reactor.io.netty.http;
 
+import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.cookie.Cookie;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.io.buffer.Buffer;
 import reactor.io.netty.common.NettyChannel;
 
 /**
@@ -37,85 +37,63 @@ import reactor.io.netty.common.NettyChannel;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface HttpChannel extends NettyChannel, HttpInbound, HttpOutbound {
-
-
-	/**
-	 * add the passed cookie
-	 * @return this
-	 */
-	HttpChannel addResponseCookie(Cookie cookie);
+public interface HttpConnection {
 
 	/**
-	 *
-	 * @param name
-	 * @param value
-	 * @return
+	 * @return Resolved HTTP cookies
 	 */
-	HttpChannel addResponseHeader(CharSequence name, CharSequence value);
-
-	/**
-	 *
-	 * @param key
-	 * @return
-	 */
-	Object param(CharSequence key);
+	Map<CharSequence, Set<Cookie>> cookies();
 
 	/**
 	 *
 	 * @return
 	 */
-	Map<String, Object> params();
+	Channel delegate();
 
 	/**
-	 *
-	 * @param headerResolver
-	 * @return
+	 * @return Resolved HTTP request headers
 	 */
-	HttpChannel paramsResolver(Function<? super String, Map<String, Object>> headerResolver);
-
-	@Override
-	default Flux<Buffer> receiveBody() {
-		return receive();
-	}
+	HttpHeaders headers();
 
 	/**
-	 *
-	 * @param name
-	 * @param value
-	 * @return
+	 * Is the request keepAlive
+	 * @return is keep alive
 	 */
-	HttpChannel responseHeader(CharSequence name, CharSequence value);
-
-	/**
-	 * @return the resolved response HTTP headers
-	 */
-	HttpHeaders responseHeaders();
-
-	/**
-	 *
-	 * @param status
-	 * @return
-	 */
-	HttpChannel status(HttpResponseStatus status);
-
-	/**
-	 *
-	 * @param status
-	 * @return
-	 */
-	default HttpChannel status(int status){
-		return status(HttpResponseStatus.valueOf(status));
-	}
+	boolean isKeepAlive();
 
 	/**
 	 *
 	 * @return
 	 */
-	HttpChannel sse();
+	boolean isWebsocket();
 
-	@Override
-	default Mono<Void> sendBody(Publisher<? extends Buffer> dataStream) {
-		return send(dataStream);
-	}
+	/**
+	 * @return the resolved request method (HTTP 1.1 etc)
+	 */
+	HttpMethod method();
+
+	/**
+	 * Assign event handlers to certain channel lifecycle events.
+	 *
+	 * @return Lifecycle to build the events handlers
+	 */
+	NettyChannel.Lifecycle on();
+
+	/**
+	 * Get the address of the remote peer.
+	 *
+	 * @return the peer's address
+	 */
+	InetSocketAddress remoteAddress();
+
+	/**
+	 * @return the resolved target address
+	 */
+	String uri();
+
+	/**
+	 * @return the resolved request version (HTTP 1.1 etc)
+	 */
+	HttpVersion version();
+
 }

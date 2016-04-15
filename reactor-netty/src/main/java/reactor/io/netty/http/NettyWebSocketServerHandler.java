@@ -87,7 +87,7 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 
 	protected void writeLast(ChannelHandlerContext ctx){
 		ChannelFuture f = ctx.channel().writeAndFlush(new CloseWebSocketFrame());
-	if (!request.isKeepAlive() || request.responseStatus() != HttpResponseStatus.OK) {
+	if (!request.isKeepAlive() || request.status() != HttpResponseStatus.OK) {
 			f.addListener(ChannelFutureListener.CLOSE);
 		}
 	}

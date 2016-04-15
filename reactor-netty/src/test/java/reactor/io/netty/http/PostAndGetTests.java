@@ -26,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 
 /**
  * @author tjreactive
@@ -48,7 +48,7 @@ public class PostAndGetTests {
 		httpServer.start().get();
 	}
 
-	ChannelFluxHandler<Buffer, Buffer, HttpChannel> getHandler() {
+	ChannelHandler<Buffer, Buffer, HttpChannel> getHandler() {
 		return channel -> {
 			channel.headers().entries().forEach(entry1 -> System.out.println(String.format("header [%s=>%s]", entry1
 			  .getKey
@@ -63,7 +63,7 @@ public class PostAndGetTests {
 		};
 	}
 
-	ChannelFluxHandler<Buffer, Buffer, HttpChannel> postHandler() {
+	ChannelHandler<Buffer, Buffer, HttpChannel> postHandler() {
 		return channel -> {
 
 			channel.headers().entries().forEach(entry -> System.out.println(String.format("header [%s=>%s]", entry

@@ -28,12 +28,12 @@ public class HttpException extends RuntimeException {
 	private final HttpChannel channel;
 
 	public HttpException(HttpChannel channel) {
-		super("HTTP request failed with code: " + channel.responseStatus().code());
+		super("HTTP request failed with code: " + channel.status().code());
 		this.channel = channel;
 	}
 
 	public HttpResponseStatus getResponseStatus() {
-		return channel.responseStatus();
+		return channel.status();
 	}
 
 	public HttpChannel getChannel(){

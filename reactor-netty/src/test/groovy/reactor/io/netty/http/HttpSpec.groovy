@@ -17,7 +17,6 @@ package reactor.io.netty.http
 
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.io.netty.common.NettyCodec
 import reactor.io.netty.config.ClientOptions
 import spock.lang.Specification
 
@@ -63,11 +62,11 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.sendString(Mono.just("Hello").log('client-send'))
+	  req.sendStringBody(Mono.just("Hello").log('client-send'))
 
 	}.then { replies ->
 	  //successful request, listen for the first returned next reply and pass it downstream
-	  replies.receive().log('client-received').next()
+	  replies.receiveBody().log('client-received').next()
 	}
 	.doOnError {
 	  //something failed during the request or the reply processing
@@ -116,12 +115,12 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.sendString(Flux.just("Hello")
+	  req.sendStringBody(Flux.just("Hello")
 			  .log('client-send'))
 
 	}.flatMap { replies ->
 	  //successful request, listen for the first returned next reply and pass it downstream
-	  replies.receiveString()
+	  replies.receiveStringBody()
 			  .log('client-received')
 	}
 	.publishNext()
@@ -179,7 +178,7 @@ class HttpSpec extends Specification {
 	client
 			.get('/test')
 			.then { replies ->
-	 			 Mono.just(replies.responseStatus().code())
+	 			 Mono.just(replies.status().code())
 			  .log("received-status-1")
 			}
 			.get(Duration.ofSeconds(5))
@@ -210,7 +209,7 @@ class HttpSpec extends Specification {
 	client
 			.get('/test3')
 			.flatMap { replies ->
-	  Flux.just(replies.responseStatus().code)
+	  Flux.just(replies.status().code)
 			  .log("received-status-3")
 	}
 	.next()
@@ -272,7 +271,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.sendString(Flux
+	  req.sendStringBody(Flux
 			  .range(1, 1000)
 			  .useCapacity(1)
 			  .map { it.toString() }
@@ -281,7 +280,7 @@ class HttpSpec extends Specification {
 	}.flatMap { replies ->
 	  //successful handshake, listen for the first returned next replies and pass it downstream
 	  replies
-			  .receiveString()
+			  .receiveStringBody()
 			  .log('client-received')
 			  .doOnNext { clientRes++ }
 	}

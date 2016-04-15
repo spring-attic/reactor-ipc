@@ -48,7 +48,7 @@ import reactor.io.buffer.Buffer;
 import reactor.io.codec.FrameCodec;
 import reactor.io.codec.LengthFieldCodec;
 import reactor.io.codec.StandardCodecs;
-import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
@@ -273,7 +273,7 @@ public class TcpServerTests {
 
 		final TcpClient client = TcpClient.create("localhost", port);
 
-		ChannelFluxHandler<Buffer, Buffer, NettyChannel>
+		ChannelHandler<Buffer, Buffer, NettyChannel>
 				serverHandler = ch -> {
 			ch.receiveString()
 			  .consume(data -> {
@@ -382,7 +382,7 @@ public class TcpServerTests {
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
 			          .get("foaas.herokuapp.com/life/" + requestIn.param("search"))
-			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive())
+			          .flatMap(repliesOut -> requestIn.send(repliesOut.receiveBody())
 			  )
 		);
 		server.start().get();
@@ -396,9 +396,9 @@ public class TcpServerTests {
 		HttpServer server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
-			          .ws("ws://localhost:3000", requestOut -> requestOut.send(Flux.just(Buffer.wrap("ping")))
+			          .ws("ws://localhost:3000", requestOut -> requestOut.sendBody(Flux.just(Buffer.wrap("ping")))
 			  )
-			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive()
+			          .flatMap(repliesOut -> requestIn.send(repliesOut.receiveBody()
 			                                                          .useCapacity(100))
 			  )
 		);
