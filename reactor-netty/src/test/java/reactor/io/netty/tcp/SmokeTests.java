@@ -28,7 +28,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.junit.After;
@@ -276,7 +275,7 @@ public class SmokeTests {
 				                                                   new NioEventLoopGroup(10)));
 
 		httpServer.get("/data", (request) -> {
-			request.removeTransferEncodingChunked();
+			request.responseTransfer(false);
 
 			request.addResponseHeader("Content-type", "text/plain");
 			request.addResponseHeader("Expires", "0");

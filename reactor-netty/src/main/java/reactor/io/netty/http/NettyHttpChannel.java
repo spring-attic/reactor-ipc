@@ -18,6 +18,7 @@ package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Function;
 
@@ -58,12 +59,12 @@ import reactor.io.netty.tcp.TcpChannel;
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loopback, Completable {
+abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, HttpInbound, HttpOutbound, Loopback,
+                                                                Completable {
 
 	final static AsciiString EVENT_STREAM = new AsciiString("text/event-stream");
 
 	final TcpChannel  tcpStream;
-	final boolean     client;
 	final HttpRequest nettyRequest;
 	final HttpHeaders headers;
 	HttpResponse nettyResponse;
@@ -75,11 +76,9 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	                        HttpRequest request
 	) {
 		if (request == null) {
-			client = true;
 			nettyRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
 		}
 		else {
-			client = false;
 			nettyRequest = request;
 		}
 
@@ -91,7 +90,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	}
 
 	@Override
-	public HttpChannel addCookie(Cookie cookie) {
+	public HttpOutbound addCookie(Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
 			doAddCookie(cookie);
 		}
@@ -107,7 +106,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	 * @return this
 	 */
 	@Override
-	public HttpChannel addHeader(CharSequence name, CharSequence value) {
+	public HttpOutbound addHeader(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
 			doAddHeader(name, value);
 		}
@@ -180,7 +179,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	 * @return this
 	 */
 	@Override
-	public HttpChannel header(CharSequence name, CharSequence value) {
+	public HttpOutbound header(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
 			doAddHeader(name, value);
 		}
@@ -222,7 +221,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	}
 
 	@Override
-	public HttpChannel keepAlive(boolean keepAlive) {
+	public HttpOutbound keepAlive(boolean keepAlive) {
 		HttpUtil.setKeepAlive(nettyResponse, keepAlive);
 		return this;
 	}
@@ -285,14 +284,20 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	}
 
 	@Override
-	public HttpChannel removeTransferEncodingChunked() {
-		if(client) {
-			HttpUtil.setTransferEncodingChunked(nettyRequest, false);
-		}
-		else {
-			HttpUtil.setTransferEncodingChunked(nettyResponse, false);
-		}
+	public HttpChannel responseTransfer(boolean chunked) {
+		HttpUtil.setTransferEncodingChunked(nettyResponse, chunked);
 		return this;
+	}
+
+	@Override
+	public HttpOutbound removeTransferEncodingChunked() {
+		HttpUtil.setTransferEncodingChunked(nettyRequest, false);
+		return this;
+	}
+
+	@Override
+	public Map<CharSequence, Set<Cookie>> cookies() {
+		return null;
 	}
 
 	@Override
@@ -349,7 +354,8 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	 */
 	@Override
 	public HttpChannel sse() {
-		return header(HttpHeaderNames.CONTENT_TYPE, EVENT_STREAM);
+		header(HttpHeaderNames.CONTENT_TYPE, EVENT_STREAM);
+		return this;
 	}
 
 	@Override
@@ -378,6 +384,16 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	@Override
 	public String uri() {
 		return this.nettyRequest.uri();
+	}
+
+	@Override
+	final public Flux<Buffer> receiveBody() {
+		return receive();
+	}
+
+	@Override
+	final public Mono<Void> sendBody(Publisher<? extends Buffer> dataStream) {
+		return send(dataStream);
 	}
 
 	/**

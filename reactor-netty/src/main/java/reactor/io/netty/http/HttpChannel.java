@@ -37,8 +37,7 @@ import reactor.io.netty.common.NettyChannel;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface HttpChannel extends NettyChannel, HttpInbound, HttpOutbound {
-
+public interface HttpChannel extends NettyChannel, HttpConnection {
 
 	/**
 	 * add the passed cookie
@@ -74,10 +73,10 @@ public interface HttpChannel extends NettyChannel, HttpInbound, HttpOutbound {
 	 */
 	HttpChannel paramsResolver(Function<? super String, Map<String, Object>> headerResolver);
 
-	@Override
-	default Flux<Buffer> receiveBody() {
-		return receive();
-	}
+	/**
+	 *
+	 */
+	HttpChannel responseTransfer(boolean chunked);
 
 	/**
 	 *
@@ -91,6 +90,17 @@ public interface HttpChannel extends NettyChannel, HttpInbound, HttpOutbound {
 	 * @return the resolved response HTTP headers
 	 */
 	HttpHeaders responseHeaders();
+
+	/**
+	 * @return
+	 */
+	Mono<Void> sendHeaders();
+
+	/**
+	 *
+	 * @return
+	 */
+	HttpChannel sse();
 
 	/**
 	 *
@@ -109,13 +119,8 @@ public interface HttpChannel extends NettyChannel, HttpInbound, HttpOutbound {
 	}
 
 	/**
-	 *
-	 * @return
+	 * @return the resolved HTTP Response Status
 	 */
-	HttpChannel sse();
+	HttpResponseStatus status();
 
-	@Override
-	default Mono<Void> sendBody(Publisher<? extends Buffer> dataStream) {
-		return send(dataStream);
-	}
 }

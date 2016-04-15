@@ -48,7 +48,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 	final TcpChannel tcpStream;
 	NettyHttpChannel                httpChannel;
-	Subscriber<? super HttpChannel> replySubscriber;
+	Subscriber<? super HttpInbound> replySubscriber;
 
 	/**
 	 * The body of an HTTP response should be discarded.
@@ -187,9 +187,9 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	 */
 	public static final class ChannelInputSubscriberEvent {
 
-		private final Subscriber<? super HttpChannel> clientReplySubscriber;
+		private final Subscriber<? super HttpInbound> clientReplySubscriber;
 
-		public ChannelInputSubscriberEvent(Subscriber<? super HttpChannel> inputSubscriber) {
+		public ChannelInputSubscriberEvent(Subscriber<? super HttpInbound> inputSubscriber) {
 			if (null == inputSubscriber) {
 				throw new IllegalArgumentException("HTTP receive subscriber must not be null.");
 			}
