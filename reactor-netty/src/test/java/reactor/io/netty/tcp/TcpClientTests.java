@@ -43,15 +43,13 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
-import reactor.core.subscriber.Subscribers;
 import reactor.core.scheduler.Timer;
-import reactor.core.tuple.Tuple;
+import reactor.core.subscriber.Subscribers;
 import reactor.core.util.PlatformDependent;
 import reactor.io.buffer.Buffer;
-import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.common.NettyBuffer;
+import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.util.SocketUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -112,16 +110,15 @@ public class TcpClientTests {
 	public void testTcpClient() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);
 
-		TcpClient<String, String> client = ReactiveNet.tcpClient(s ->
-			s.timer(Timer.global()).preprocessor(CodecPreprocessor.string()).connect("localhost", echoServerPort)
-		);
+		TcpClient client = TcpClient.create("localhost", echoServerPort);
 
 		client.startAndAwait(conn -> {
-			Flux.from(conn.input()).log("conn").consume(s -> {
-				latch.countDown();
-			});
+			Flux.from(conn.receive())
+			    .log("conn")
+			    .consume(s -> latch.countDown());
 
-			Flux.from(conn.writeWith(Flux.just("Hello World!"))).subscribe();
+			Flux.from(conn.sendString(Flux.just("Hello World!")))
+			    .subscribe();
 
 			return Flux.never();
 		});
@@ -137,14 +134,14 @@ public class TcpClientTests {
 	public void testTcpClientWithInetSocketAddress() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);
 
-		TcpClient<String, String> client = ReactiveNet.tcpClient(spec -> spec
-			.preprocessor(CodecPreprocessor.string())
-			.connect(new InetSocketAddress(echoServerPort))
-		);
+		TcpClient client = TcpClient.create(ClientOptions.create()
+		                                                 .connect(new InetSocketAddress(echoServerPort)));
 
 		client.start(input -> {
-			input.input().consume(d -> latch.countDown());
-			input.writeWith(Flux.just("Hello")).subscribe();
+			input.receive()
+			     .consume(d -> latch.countDown());
+			input.sendString(Flux.just("Hello"))
+			     .subscribe();
 
 			return Flux.never();
 		}).get(Duration.ofSeconds(5));
@@ -162,23 +159,21 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(messages);
 		final List<String> strings = new ArrayList<String>();
 
-		TcpClient<String, String> client = ReactiveNet.tcpClient(s ->
-			s
-			  .preprocessor(CodecPreprocessor.linefeed())
-			  .connect("localhost", echoServerPort)
-		);
+		TcpClient client = TcpClient.create("localhost", echoServerPort);
 
-		client.start(input -> {
-			input.input().log("received").consume(s -> {
-				strings.add(s);
-				latch.countDown();
-			});
+		client.start(channel -> {
+			channel.receive(NettyCodec.linefeed())
+			       .log("received")
+			       .consume(s -> {
+						strings.add(s);
+						latch.countDown();
+					});
 
-			input.writeWith(
+			channel.send(
 			  Flux.range(1, messages)
 				.map(i -> "Hello World!")
 				.subscribeOn(SchedulerGroup.io("test-line-feed"))
-			).subscribe();
+			, NettyCodec.linefeed()).subscribe();
 
 			return Flux.never();
 		}).get(Duration.ofSeconds(5));
@@ -195,9 +190,7 @@ public class TcpClientTests {
 
 	@Test
 	public void closingPromiseIsFulfilled() throws InterruptedException {
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(spec -> spec
-			.connect("localhost", abortServerPort)
-		);
+		TcpClient client = TcpClient.create("localhost", abortServerPort);
 
 		client.start(null);
 
@@ -209,25 +202,26 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicLong totalDelay = new AtomicLong();
 
-		ReactiveNet.<Buffer, Buffer>tcpClient(s -> s
-			.connect("localhost", abortServerPort + 3)
-		)
-		  .start(null, (currentAddress, attempt) -> {
-			  switch (attempt) {
-				  case 1:
-					  totalDelay.addAndGet(100);
-					  return Tuple.of(currentAddress, 100L);
-				  case 2:
-					  totalDelay.addAndGet(500);
-					  return Tuple.of(currentAddress, 500L);
-				  case 3:
-					  totalDelay.addAndGet(1000);
-					  return Tuple.of(currentAddress, 1000L);
-				  default:
-					  latch.countDown();
-					  return null;
-			  }
-		  }).consume(System.out::println);
+		TcpClient.create("localhost", abortServerPort + 3)
+		         .start(null)
+		         .retryWhen(errors -> errors.zipWith(Flux.range(1, 4), (a, b) -> b)
+		                                    .flatMap(attempt -> {
+			                                    switch (attempt) {
+				                                    case 1:
+					                                    totalDelay.addAndGet(100);
+					                                    return Mono.delay(100L);
+				                                    case 2:
+					                                    totalDelay.addAndGet(500);
+					                                    return Mono.delay(500L);
+				                                    case 3:
+					                                    totalDelay.addAndGet(1000);
+					                                    return Mono.delay(1000L);
+				                                    default:
+					                                    latch.countDown();
+					                                    return Mono.<Long>empty();
+			                                    }
+		                                    }))
+		         .consume(System.out::println);
 
 		latch.await(5, TimeUnit.SECONDS);
 		assertTrue("latch was counted down:"+latch.getCount(), latch.getCount() == 0 );
@@ -238,19 +232,17 @@ public class TcpClientTests {
 	public void connectionWillAttemptToReconnectWhenItIsDropped() throws InterruptedException, IOException {
 		final CountDownLatch connectionLatch = new CountDownLatch(1);
 		final CountDownLatch reconnectionLatch = new CountDownLatch(1);
-		TcpClient<Buffer, Buffer> tcpClient = ReactiveNet.tcpClient(s -> s
-			.connect("localhost", abortServerPort)
-		);
+		TcpClient tcpClient = TcpClient.create("localhost", abortServerPort);
 
 		tcpClient.start(connection -> {
 			System.out.println("Start");
 			connectionLatch.countDown();
-			connection.input().subscribe(Subscribers.unbounded());
+			connection.receive()
+			          .subscribe(Subscribers.unbounded());
 			return Flux.never();
-		}, (currentAddress, attempt) -> {
-			reconnectionLatch.countDown();
-			return null;
-		}).subscribe(Subscribers.unbounded());
+		})
+		         .repeatWhenEmpty(tries -> tries.doOnNext(s -> reconnectionLatch.countDown()))
+		         .subscribe(Subscribers.unbounded());
 
 		assertTrue("Initial connection is made", connectionLatch.await(5, TimeUnit.SECONDS));
 		assertTrue("A reconnect attempt was made", reconnectionLatch.await(5, TimeUnit.SECONDS));
@@ -263,9 +255,7 @@ public class TcpClientTests {
 		final AtomicLong totalDelay = new AtomicLong();
 		final long start = System.currentTimeMillis();
 
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(s -> s
-			.connect("localhost", timeoutServerPort)
-		);
+		TcpClient client = TcpClient.create("localhost", timeoutServerPort);
 
 		client.startAndAwait(p -> {
 			  p.on()
@@ -293,9 +283,7 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(1);
 		long start = System.currentTimeMillis();
 
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(s -> s
-			.connect("localhost", heartbeatServerPort)
-		);
+		TcpClient client = TcpClient.create("localhost", heartbeatServerPort);
 
 		client.startAndAwait(p -> {
 			  p.on()
@@ -319,9 +307,7 @@ public class TcpClientTests {
 		final CountDownLatch latch = new CountDownLatch(1);
 		long start = System.currentTimeMillis();
 
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(s ->
-			s.connect("localhost", echoServerPort)
-		);
+		TcpClient client = TcpClient.create("localhost", echoServerPort);
 
 		client.startAndAwait(connection -> {
 			System.out.println("hello");
@@ -330,7 +316,8 @@ public class TcpClientTests {
 
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {
-				  allWrites.add(connection.writeBufferWith(Flux.just(Buffer.wrap("a")).delay(750)));
+				  allWrites.add(connection.send(Flux.just(Buffer.wrap("a"))
+				                                    .delay(750)));
 			  }
 			  return Flux.merge(allWrites);
 		  }
@@ -346,11 +333,9 @@ public class TcpClientTests {
 
 	@Test
 	public void nettyNetChannelAcceptsNettyChannelHandlers() throws InterruptedException {
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(
-		  spec -> spec
-			.options(ClientOptions.create()
-			  .pipelineConfigurer(pipeline -> pipeline.addLast(new HttpClientCodec())))
-			.connect("www.google.com", 80)
+		TcpClient client = TcpClient.create(ClientOptions.create()
+		                                                 .pipelineConfigurer(pipeline -> pipeline.addLast(new HttpClientCodec()))
+		                                                 .connect("www.google.com", 80)
 		);
 
 
@@ -359,10 +344,10 @@ public class TcpClientTests {
 			latch.countDown();
 			System.out.println("resp: " + resp);
 
-			return Flux.from(resp
-					.writeWith(Flux.just(
-							NettyBuffer.create(new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.GET, "/"))))
-			).doOnComplete(()-> latch.countDown());
+			return Flux.from(resp.send(Flux.just(NettyBuffer.create(new DefaultHttpRequest(HttpVersion.HTTP_1_1,
+					HttpMethod.GET,
+					"/")))))
+			           .doOnComplete(latch::countDown);
 		});
 
 

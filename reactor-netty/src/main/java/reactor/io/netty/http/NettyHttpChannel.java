@@ -26,14 +26,21 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -45,43 +52,46 @@ import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
-import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.http.model.Cookie;
-import reactor.io.netty.http.model.HttpHeaders;
-import reactor.io.netty.http.model.Method;
-import reactor.io.netty.http.model.Protocol;
-import reactor.io.netty.http.model.ResponseHeaders;
-import reactor.io.netty.http.model.Status;
-import reactor.io.netty.http.model.Transfer;
+import reactor.io.netty.tcp.TcpChannel;
 
 /**
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-abstract class NettyHttpChannel extends Flux<Buffer>
-		implements HttpChannel<Buffer, Buffer>, Loopback, Completable {
+abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loopback, Completable {
 
-	private final NettyChannel             tcpStream;
-	private final HttpRequest              nettyRequest;
-	private final NettyHttpHeaders         headers;
-	private       HttpResponse             nettyResponse;
-	private       NettyHttpResponseHeaders responseHeaders;
-	private volatile int statusAndHeadersSent = 0;
-	private Function<? super String, Map<String, Object>> paramsResolver;
-	public NettyHttpChannel(NettyChannel tcpStream,
+	final static AsciiString EVENT_STREAM = new AsciiString("text/event-stream");
+
+	final TcpChannel  tcpStream;
+	final boolean     client;
+	final HttpRequest nettyRequest;
+	final HttpHeaders headers;
+	HttpResponse nettyResponse;
+	HttpHeaders  responseHeaders;
+	volatile int statusAndHeadersSent = 0;
+	Function<? super String, Map<String, Object>> paramsResolver;
+
+	public NettyHttpChannel(TcpChannel tcpStream,
 	                        HttpRequest request
 	) {
+		if (request == null) {
+			client = true;
+			nettyRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
+		}
+		else {
+			client = false;
+			nettyRequest = request;
+		}
+
 		this.tcpStream = tcpStream;
-		this.nettyRequest = request;
-		this.nettyResponse = new DefaultHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
-		this.headers = new NettyHttpHeaders(request);
-		this.responseHeaders = new NettyHttpResponseHeaders(this.nettyResponse);
-		this.
-		responseHeader(ResponseHeaders.TRANSFER_ENCODING, "chunked");
+		this.nettyResponse = new DefaultHttpResponse(nettyRequest.protocolVersion(), HttpResponseStatus.OK);
+		this.headers = nettyRequest.headers();
+		this.responseHeaders = nettyResponse.headers();
+		this.responseHeader(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
 	}
 
 	@Override
-	public HttpChannel<Buffer, Buffer> addCookie(String name, Cookie cookie) {
+	public HttpChannel addCookie(CharSequence name, Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
 			doAddCookie(name, cookie);
 		}
@@ -97,7 +107,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @return this
 	 */
 	@Override
-	public HttpChannel<Buffer, Buffer> addHeader(String name, String value) {
+	public HttpChannel addHeader(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
 			doAddHeader(name, value);
 		}
@@ -108,7 +118,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	}
 
 	@Override
-	public HttpChannel<Buffer, Buffer> addResponseCookie(String name, Cookie cookie) {
+	public HttpChannel addResponseCookie(CharSequence name, Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
 			doAddResponseCookie(name, cookie);
 		}
@@ -126,7 +136,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @return this
 	 */
 	@Override
-	public HttpChannel<Buffer, Buffer> addResponseHeader(String name, String value) {
+	public HttpChannel addResponseHeader(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
 			doAddResponseHeader(name, value);
 		}
@@ -152,43 +162,16 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 		return (SocketChannel) tcpStream.delegate();
 	}
 
-	public void doAddCookie(String name, Cookie cookie) {
-		doAddHeader(ResponseHeaders.SET_COOKIE,
-					ServerCookieEncoder.STRICT.encode(new Cookies.NettyWriteCookie(cookie)));
-	}
-
-	// REQUEST contract
-
-	public void doAddResponseCookie(String name, Cookie cookie) {
-		doAddResponseHeader(ResponseHeaders.SET_COOKIE,
-					ServerCookieEncoder.STRICT.encode(new Cookies.NettyWriteCookie(cookie)));
-	}
-
-	public void doResponseStatus(Status status) {
-		this.nettyResponse.setStatus(HttpResponseStatus.valueOf(status.getCode()));
-	}
-
 	@Override
 	public String getName() {
 		if(isWebsocket()){
-			return Method.WS.getName()+":"+uri();
+			return "ws:" + uri();
 		}
 
-		return  method().getName()+":"+uri();
+		return method().name() + ":" + uri();
 	}
 
-	public HttpRequest getNettyRequest() {
-		return nettyRequest;
-	}
-
-	public HttpResponse getNettyResponse() {
-		return nettyResponse;
-	}
-
-	void setNettyResponse(HttpResponse nettyResponse) {
-		this.nettyResponse = nettyResponse;
-		this.responseHeaders = new NettyHttpResponseHeaders(this.nettyResponse);
-	}
+	// REQUEST contract
 
 	/**
 	 * Register an HTTP request header
@@ -197,7 +180,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @return this
 	 */
 	@Override
-	public HttpChannel<Buffer, Buffer> header(String name, String value) {
+	public HttpChannel header(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
 			doAddHeader(name, value);
 		}
@@ -208,20 +191,18 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	}
 
 	@Override
-	public NettyHttpHeaders headers() {
+	public HttpHeaders headers() {
 		return this.headers;
 	}
 
 	@Override
-	public Flux<Buffer> input() {
+	public Flux<Buffer> receive() {
 		return this;
 	}
 
-	// RESPONSE contract
-
 	@Override
 	public boolean isKeepAlive() {
-		return headers.isKeepAlive();
+		return HttpUtil.isKeepAlive(nettyRequest);
 	}
 
 	@Override
@@ -236,23 +217,25 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 
 	@Override
 	public boolean isWebsocket() {
-		String isWebsocket = headers.get(HttpHeaders.UPGRADE);
+		String isWebsocket = headers.get(HttpHeaderNames.UPGRADE);
 		return isWebsocket != null && isWebsocket.toLowerCase().equals("websocket");
 	}
 
 	@Override
-	public HttpChannel<Buffer, Buffer> keepAlive(boolean keepAlive) {
-		responseHeaders.keepAlive(keepAlive);
+	public HttpChannel keepAlive(boolean keepAlive) {
+		HttpUtil.setKeepAlive(nettyResponse, keepAlive);
 		return this;
 	}
 
 	@Override
-	public Method method() {
-		return new Method(this.nettyRequest.method().name());
+	public HttpMethod method() {
+		return nettyRequest.method();
 	}
 
+	// RESPONSE contract
+
 	@Override
-	public ConsumerSpec on() {
+	public Lifecycle on() {
 		return tcpStream.on();
 	}
 
@@ -262,7 +245,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @return the resolved parameter for the given key name
 	 */
 	@Override
-	public Object param(String key) {
+	public Object param(CharSequence key) {
 		Map<String, Object> params = null;
 		if (paramsResolver != null) {
 			params = this.paramsResolver.apply(uri());
@@ -284,21 +267,32 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @param headerResolver
 	 */
 	@Override
-	public HttpChannel<Buffer, Buffer> paramsResolver(
+	public HttpChannel paramsResolver(
 			Function<? super String, Map<String, Object>> headerResolver) {
 		this.paramsResolver = headerResolver;
 		return this;
 	}
 
 	@Override
-	public Protocol protocol() {
+	public HttpVersion version() {
 		HttpVersion version = this.nettyRequest.protocolVersion();
 		if (version.equals(HttpVersion.HTTP_1_0)) {
-			return Protocol.HTTP_1_0;
+			return HttpVersion.HTTP_1_0;
 		} else if (version.equals(HttpVersion.HTTP_1_1)) {
-			return Protocol.HTTP_1_1;
+			return HttpVersion.HTTP_1_1;
 		}
 		throw new IllegalStateException(version.protocolName() + " not supported");
+	}
+
+	@Override
+	public HttpChannel removeTransferEncodingChunked() {
+		if(client) {
+			HttpUtil.setTransferEncodingChunked(nettyRequest, false);
+		}
+		else {
+			HttpUtil.setTransferEncodingChunked(nettyResponse, false);
+		}
+		return this;
 	}
 
 	@Override
@@ -313,7 +307,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @return this
 	 */
 	@Override
-	public HttpChannel<Buffer, Buffer> responseHeader(String name, String value) {
+	public HttpChannel responseHeader(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
 			doResponseHeader(name, value);
 		}
@@ -324,13 +318,14 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	}
 
 	@Override
-	public NettyHttpResponseHeaders responseHeaders() {
+	public HttpHeaders responseHeaders() {
 		return this.responseHeaders;
 	}
 
 	@Override
-	public Status responseStatus() {
-		return Status.valueOf(this.nettyResponse.status().code());
+	public HttpResponseStatus responseStatus() {
+		return HttpResponseStatus.valueOf(this.nettyResponse.status()
+		                                                    .code());
 	}
 
 	/**
@@ -339,7 +334,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @return this
 	 */
 	@Override
-	public HttpChannel<Buffer, Buffer> responseStatus(Status status) {
+	public HttpChannel responseStatus(HttpResponseStatus status) {
 		if (statusAndHeadersSent == 0) {
 			doResponseStatus(status);
 		}
@@ -353,8 +348,8 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	 * @return the Transfer setting SSE for this http connection (e.g. event-stream)
 	 */
 	@Override
-	public HttpChannel<Buffer, Buffer> sse() {
-		return transfer(Transfer.EVENT_STREAM);
+	public HttpChannel sse() {
+		return header(HttpHeaderNames.CONTENT_TYPE, EVENT_STREAM);
 	}
 
 	@Override
@@ -380,46 +375,9 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 		}
 	}
 
-	// REQUEST contract
-
-	@Override
-	public Transfer transfer() {
-		if ("chunked".equals(this.headers.get(ResponseHeaders.TRANSFER_ENCODING))) {
-			if(Protocol.HTTP_1_0.equals(protocol())){
-				throw new IllegalStateException("HTTP Protocol must be 1.1+");
-			}
-			return Transfer.CHUNKED;
-		} else if (this.headers.get(ResponseHeaders.TRANSFER_ENCODING) == null) {
-			return Transfer.NON_CHUNKED;
-		}
-		throw new IllegalStateException("Can't determine a valide transfer based on headers and protocol");
-	}
-
-	@Override
-	public HttpChannel<Buffer, Buffer> transfer(Transfer transfer) {
-		switch (transfer) {
-			case EVENT_STREAM:
-				this.responseHeader(ResponseHeaders.CONTENT_TYPE, "text/event-stream");
-			case CHUNKED:
-				if(Protocol.HTTP_1_0.equals(protocol())){
-					throw new IllegalStateException("HTTP Protocol must be 1.1+");
-				}
-				this.responseHeader(ResponseHeaders.TRANSFER_ENCODING, "chunked");
-				break;
-			case NON_CHUNKED:
-				this.responseHeaders().remove(ResponseHeaders.TRANSFER_ENCODING);
-		}
-		return this;
-	}
-
 	@Override
 	public String uri() {
 		return this.nettyRequest.uri();
-	}
-
-	@Override
-	public Mono<Void> writeBufferWith(final Publisher<? extends Buffer> dataStream) {
-		return new PostBufferWritePublisher(dataStream);
 	}
 
 	/**
@@ -437,49 +395,76 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 	}
 
 	@Override
-	public Mono<Void> writeWith(final Publisher<? extends Buffer> source) {
+	public Mono<Void> send(final Publisher<? extends Buffer> source) {
 		return new PostWritePublisher(source);
 	}
 
-	// RESPONSE contract
+	// REQUEST contract
 
-	protected Mono<Void> writeWithAfterHeaders(Publisher<? extends Buffer> writer) {
-		return tcpStream.writeWith(writer);
+	protected Mono<Void> sendAfterHeaders(Publisher<? extends Buffer> writer) {
+		return tcpStream.send(writer);
 	}
 
-	protected Publisher<Void> writeWithBufferAfterHeaders(Publisher<? extends Buffer> s) {
-		return tcpStream.writeBufferWith(s);
+	protected Publisher<Void> sendBufferAfterHeaders(Publisher<? extends Buffer> s) {
+		return tcpStream.send(s);
 	}
 
-	protected void doHeader(String name, String value) {
+	protected void doHeader(CharSequence name, CharSequence value) {
 		this.headers.set(name, value);
 	}
 
-	protected void doAddHeader(String name, String value) {
+	protected void doAddHeader(CharSequence name, CharSequence value) {
 		this.headers.add(name, value);
 	}
 
-	protected void doResponseHeader(String name, String value) {
+	protected void doResponseHeader(CharSequence name, CharSequence value) {
 		this.responseHeaders.set(name, value);
 	}
 
-	protected void doAddResponseHeader(String name, String value) {
+	protected void doAddResponseHeader(CharSequence name, CharSequence value) {
 		this.responseHeaders.add(name, value);
 	}
+
+	// RESPONSE contract
 
 	protected abstract void doSubscribeHeaders(Subscriber<? super Void> s);
 
 	protected boolean markHeadersAsFlushed() {
 		return HEADERS_SENT.compareAndSet(this, 0, 1);
 	}
+
+	void doAddCookie(CharSequence name, Cookie cookie) {
+		doAddHeader(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+	}
+
+	void doAddResponseCookie(CharSequence name, Cookie cookie) {
+		doAddResponseHeader(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+	}
+
+	void doResponseStatus(HttpResponseStatus status) {
+		this.nettyResponse.setStatus(HttpResponseStatus.valueOf(status.code()));
+	}
+
+	HttpRequest getNettyRequest() {
+		return nettyRequest;
+	}
+
+	HttpResponse getNettyResponse() {
+		return nettyResponse;
+	}
+
+	void setNettyResponse(HttpResponse nettyResponse) {
+		this.nettyResponse = nettyResponse;
+		this.responseHeaders = nettyResponse.headers();
+	}
 	protected final static AtomicIntegerFieldUpdater<NettyHttpChannel> HEADERS_SENT =
 			AtomicIntegerFieldUpdater.newUpdater(NettyHttpChannel.class, "statusAndHeadersSent");
-	private static final FullHttpResponse CONTINUE =
+	static final           FullHttpResponse                            CONTINUE     =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
 
-	private class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
+	class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
 
-		private final Publisher<? extends Buffer> source;
+		final Publisher<? extends Buffer> source;
 
 		public PostWritePublisher(Publisher<? extends Buffer> source) {
 			this.source = source;
@@ -501,7 +486,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 				doSubscribeHeaders(new PostHeaderWriteSubscriber(s));
 			}
 			else{
-				writeWithAfterHeaders(source).subscribe(s);
+				sendAfterHeaders(source).subscribe(s);
 			}
 		}
 
@@ -510,10 +495,10 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 			return source;
 		}
 
-		private class PostHeaderWriteSubscriber implements Subscriber<Void>, Receiver, Producer {
+		class PostHeaderWriteSubscriber implements Subscriber<Void>, Receiver, Producer {
 
-			private final Subscriber<? super Void> s;
-			private       Subscription             subscription;
+			final Subscriber<? super Void> s;
+			Subscription subscription;
 
 			public PostHeaderWriteSubscriber(Subscriber<? super Void> s) {
 				this.s = s;
@@ -527,7 +512,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 			@Override
 			public void onComplete() {
 				this.subscription = null;
-				writeWithAfterHeaders(source).subscribe(s);
+				sendAfterHeaders(source).subscribe(s);
 			}
 
 			@Override
@@ -554,7 +539,7 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 		}
 	}
 
-	private class PostHeaderWritePublisher extends Mono<Void> implements Loopback {
+	class PostHeaderWritePublisher extends Mono<Void> implements Loopback {
 
 		@Override
 		public Object connectedInput() {
@@ -576,82 +561,4 @@ abstract class NettyHttpChannel extends Flux<Buffer>
 			}
 		}
 	}
-
-	private class PostBufferWritePublisher extends Mono<Void> implements Receiver, Loopback {
-
-		private final Publisher<? extends Buffer> dataStream;
-
-		public PostBufferWritePublisher(Publisher<? extends Buffer> dataStream) {
-			this.dataStream = dataStream;
-		}
-
-		@Override
-		public Object connectedInput() {
-			return NettyHttpChannel.this;
-		}
-
-		@Override
-		public Object connectedOutput() {
-			return NettyHttpChannel.this;
-		}
-
-		@Override
-		public void subscribe(final Subscriber<? super Void> s) {
-			if(markHeadersAsFlushed()){
-				doSubscribeHeaders(new PostHeaderWriteBufferSubscriber(s));
-			}
-			else{
-				writeWithBufferAfterHeaders(dataStream).subscribe(s);
-			}
-		}
-
-		@Override
-		public Object upstream() {
-			return dataStream;
-		}
-
-		private class PostHeaderWriteBufferSubscriber implements Subscriber<Void>, Producer, Receiver {
-
-			private final Subscriber<? super Void> s;
-			private Subscription subscription;
-
-			public PostHeaderWriteBufferSubscriber(Subscriber<? super Void> s) {
-				this.s = s;
-			}
-
-			@Override
-			public Subscriber downstream() {
-				return s;
-			}
-
-			@Override
-			public void onComplete() {
-				this.subscription = null;
-				writeWithBufferAfterHeaders(dataStream).subscribe(s);
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				this.subscription = null;
-				s.onError(t);
-			}
-
-			@Override
-			public void onNext(Void aVoid) {
-				//Ignore
-			}
-
-			@Override
-			public void onSubscribe(Subscription sub) {
-				this.subscription = sub;
-				sub.request(Long.MAX_VALUE);
-			}
-
-			@Override
-			public Object upstream() {
-				return subscription;
-			}
-		}
-	}
-
 }

@@ -31,6 +31,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -42,22 +43,22 @@ import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.common.NettyBuffer;
 import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.common.NettyChannelHandlerBridge;
-import reactor.io.netty.http.model.Cookie;
+import reactor.io.netty.tcp.TcpChannel;
+import reactor.io.netty.common.NettyChannelHandler;
 
 /**
  * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link reactor.io.buffer.Buffer}).
  *
  * @author Stephane Maldini
  */
-class NettyHttpServerHandler extends NettyChannelHandlerBridge {
+class NettyHttpServerHandler extends NettyChannelHandler {
 
-	final NettyChannel     tcpStream;
+	final TcpChannel tcpStream;
 	     NettyHttpChannel request;
 
 	public NettyHttpServerHandler(
-			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
-			NettyChannel tcpStream) {
+			ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
+			TcpChannel tcpStream) {
 		super(handler, tcpStream);
 		this.tcpStream = tcpStream;
 	}
@@ -121,13 +122,13 @@ class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 	}
 
-	NettyHttpWSServerHandler withWebsocketSupport(String url, String protocols){
+	NettyWebSocketServerHandler withWebsocketSupport(String url, String protocols){
 		//prevent further header to be sent for handshaking
 		if(!request.markHeadersAsFlushed()){
 			log.error("Cannot enable websocket if headers have already been sent");
 			return null;
 		}
-		return new NettyHttpWSServerHandler(url, protocols, this);
+		return new NettyWebSocketServerHandler(url, protocols, this);
 	}
 
 	@Override
@@ -141,7 +142,7 @@ class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 
 		public AutoHeaderNettyHttpChannel(Object msg) {
 			super(NettyHttpServerHandler.this.tcpStream, (io.netty.handler.codec.http.HttpRequest) msg);
-			this.cookies = Cookies.newServerRequestHolder(headers().delegate());
+			this.cookies = Cookies.newServerRequestHolder(headers());
 		}
 
 		@Override
@@ -150,7 +151,7 @@ class NettyHttpServerHandler extends NettyChannelHandlerBridge {
 		}
 
 		@Override
-		public Map<String, Set<Cookie>> cookies() {
+		public Map<CharSequence, Set<Cookie>> cookies() {
 			return cookies.getCachedCookies();
 		}
 	}

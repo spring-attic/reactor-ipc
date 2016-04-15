@@ -27,7 +27,6 @@ import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.ReactiveNet;
 
 /**
  * @author tjreactive
@@ -35,7 +34,7 @@ import reactor.io.netty.ReactiveNet;
  */
 public class PostAndGetTests {
 
-	private HttpServer<Buffer, Buffer> httpServer;
+	private HttpServer httpServer;
 
 	@Before
 	public void setup() throws InterruptedException {
@@ -43,13 +42,13 @@ public class PostAndGetTests {
 	}
 
 	private void setupServer() throws InterruptedException {
-		httpServer = ReactiveNet.httpServer(server -> server.listen(0));
+		httpServer = HttpServer.create(0);
 		httpServer.get("/get/{name}", getHandler());
 		httpServer.post("/post", postHandler());
 		httpServer.start().get();
 	}
 
-	ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> getHandler() {
+	ChannelFluxHandler<Buffer, Buffer, HttpChannel> getHandler() {
 		return channel -> {
 			channel.headers().entries().forEach(entry1 -> System.out.println(String.format("header [%s=>%s]", entry1
 			  .getKey
@@ -60,21 +59,21 @@ public class PostAndGetTests {
 
 			StringBuilder response = new StringBuilder().append("hello ").append(channel.params().get("name"));
 			System.out.println(String.format("%s from thread %s", response.toString(), Thread.currentThread()));
-			return channel.writeWith(Flux.just(Buffer.wrap(response.toString())));
+			return channel.send(Flux.just(Buffer.wrap(response.toString())));
 		};
 	}
 
-	ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>> postHandler() {
+	ChannelFluxHandler<Buffer, Buffer, HttpChannel> postHandler() {
 		return channel -> {
 
 			channel.headers().entries().forEach(entry -> System.out.println(String.format("header [%s=>%s]", entry
 				.getKey(),
 			  entry.getValue())));
 
-			return channel.writeWith(channel.input()
-			                                .take(1)
-			                                .log("received")
-			                                .flatMap(data -> {
+			return channel.send(channel.receive()
+			                           .take(1)
+			                           .log("received")
+			                           .flatMap(data -> {
 				  final StringBuilder response = new StringBuilder().append("hello ").append(new String(data.asBytes
 				    ()));
 				  System.out.println(String.format("%s from thread %s", response.toString(), Thread.currentThread()));

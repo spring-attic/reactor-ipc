@@ -14,37 +14,13 @@
  * limitations under the License.
  */
 
-package reactor.io.netty.http.model;
-
-import java.text.ParseException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
- * @author Sebastien Deleuze
+ * Reactive network components are located in this package scope implementing the following exposed contract:
+ * A {@link reactor.io.netty.common.Peer} which accepts a callback on start to receive connections or
+ * {@link reactor.io.ipc.ChannelFlux} that expose receive() {@link org.reactivestreams.Publisher} of receive data.
+ * This receive data will be the received information from a Server perspective and response information from a Client
+ * perspective.
+ * A channel also expose useful methods to write, close and generally control the lifecycle of the underlying
+ * connection.
  */
-interface ReadableHeaders {
-
-	boolean contains(CharSequence name);
-
-	boolean contains(CharSequence name, CharSequence value, boolean ignoreCaseValue);
-
-	List<Map.Entry<String, String>> entries();
-
-	String get(CharSequence name);
-
-	List<String> getAll(CharSequence name);
-
-	Long getTimeMillis();
-
-	Long getTimeMillis(CharSequence name);
-
-	CharSequence getHost();
-
-	boolean isEmpty();
-
-	Set<String> names();
-
-}
+package reactor.io.netty.common;

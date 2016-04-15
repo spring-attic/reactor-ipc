@@ -16,27 +16,27 @@
 
 package reactor.io.netty.http;
 
-import reactor.io.netty.http.model.Status;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * An error for signalling that an error occurred during a communication over HTTP protocol
+ * An error for signalling that an error occurred during a communication over HTTP version
  *
  * @author Anatoly Kadyshev
  */
 public class HttpException extends RuntimeException {
 
-	private final HttpChannel<?, ?> channel;
+	private final HttpChannel channel;
 
-	public HttpException(HttpChannel<?, ?> channel) {
-		super("HTTP request failed with code: " + channel.responseStatus().getCode());
+	public HttpException(HttpChannel channel) {
+		super("HTTP request failed with code: " + channel.responseStatus().code());
 		this.channel = channel;
 	}
 
-	public Status getResponseStatus() {
+	public HttpResponseStatus getResponseStatus() {
 		return channel.responseStatus();
 	}
 
-	public HttpChannel<?, ?> getChannel(){
+	public HttpChannel getChannel(){
 		return channel;
 	}
 }

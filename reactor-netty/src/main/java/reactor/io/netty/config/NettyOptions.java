@@ -17,9 +17,11 @@
 package reactor.io.netty.config;
 
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import reactor.core.scheduler.TimedScheduler;
 import reactor.core.util.PlatformDependent;
 import reactor.io.buffer.Buffer;
 
@@ -36,17 +38,19 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 			".managed.default",
 			"true"));
 
-	private int     timeout    = 30000;
-	private boolean keepAlive  = true;
-	private int     linger     = 5;
-	private boolean tcpNoDelay = true;
-	private int     rcvbuf     = PlatformDependent.SMALL_IO_BUFFER_SIZE;
-	private int     sndbuf     = PlatformDependent.SMALL_IO_BUFFER_SIZE;
-	private long    prefetch   = Long.MAX_VALUE;
-	private boolean israw      = false;
-	private boolean managed      = DEFAULT_MANAGED_PEER;
-	private Consumer<ChannelPipeline> pipelineConfigurer;
-	private EventLoopGroup            eventLoopGroup;
+	private TimedScheduler            timer              = null;
+	private int                       timeout            = 30000;
+	private boolean                   keepAlive          = true;
+	private int                       linger             = 5;
+	private boolean                   tcpNoDelay         = true;
+	private int                       rcvbuf             = PlatformDependent.SMALL_IO_BUFFER_SIZE;
+	private int                       sndbuf             = PlatformDependent.SMALL_IO_BUFFER_SIZE;
+	private long                      prefetch           = Long.MAX_VALUE;
+	private boolean                   israw              = false;
+	private boolean                   managed            = DEFAULT_MANAGED_PEER;
+	private Consumer<ChannelPipeline> pipelineConfigurer = null;
+	private EventLoopGroup            eventLoopGroup     = null;
+	private SslOptions                sslOptions         = null;
 
 	/**
 	 *
@@ -198,6 +202,26 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	}
 
 	/**
+	 * Return eventual {@link SslOptions}
+	 * @return optional {@link SslOptions}
+	 */
+	public SslOptions ssl(){
+		return sslOptions;
+	}
+
+	/**
+	 * Set the options to use for configuring SSL. Setting this to {@code null} means don't use SSL at all (the
+	 * default).
+	 *
+	 * @param sslOptions The options to set when configuring SSL
+	 * @return {@literal this}
+	 */
+	public SO ssl(SslOptions sslOptions) {
+		this.sslOptions = sslOptions;
+		return (SO) this;
+	}
+
+	/**
 	 * Gets the configured {@code SO_SNDBUF} (send buffer) size
 	 * @return The configured send buffer size
 	 */
@@ -252,4 +276,25 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 		return (SO) this;
 	}
 
+	/**
+	 * Set the default {@link reactor.core.scheduler.Timer} for timed operations.
+	 *
+	 * @param timer The timer to assign by default
+	 *
+	 * @return {@literal this}
+	 */
+	@SuppressWarnings("unchecked")
+	public SO timer(TimedScheduler timer) {
+		this.timer = timer;
+		return (SO) this;
+	}
+
+	/**
+	 * Return optional {@link TimedScheduler}
+	 *
+	 * @return optional {@link TimedScheduler}
+	 */
+	public TimedScheduler timer() {
+		return this.timer;
+	}
 }

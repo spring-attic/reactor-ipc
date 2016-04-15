@@ -44,9 +44,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
-import reactor.io.netty.ReactiveNet;
 import reactor.io.netty.config.ServerOptions;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.util.SocketUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -80,12 +78,12 @@ public class UdpServerTests {
 		final int port = SocketUtils.findAvailableUdpPort();
 		final CountDownLatch latch = new CountDownLatch(4);
 
-		final DatagramServer server = ReactiveNet.udpServer(
-		  s -> s.listen(port)
-		);
+		final UdpServer server = UdpServer.create(port);
 
 		server.start(ch -> {
-			CodecPreprocessor.byteArray().apply(ch).input().log().consume(bytes -> {
+			ch.receiveByteArray()
+			  .log()
+			  .consume(bytes -> {
 				if (bytes.length == 1024) {
 					latch.countDown();
 				}
@@ -123,19 +121,19 @@ public class UdpServerTests {
 		final InetAddress multicastGroup = InetAddress.getByName("230.0.0.1");
 		final NetworkInterface multicastInterface = findMulticastEnabledIPv4Interface();
 		log.info("Using network interface '{}' for multicast", multicastInterface);
-		final Collection<DatagramServer> servers = new ArrayList<>();
+		final Collection<UdpServer> servers = new ArrayList<>();
 
 		for (int i = 0; i < 4; i++) {
-			DatagramServer server = ReactiveNet.udpServer(
-			  spec -> spec
-				.listen(port)
-				.options(ServerOptions.create()
-				  .reuseAddr(true)
-				  .protocolFamily(StandardProtocolFamily.INET))
+			UdpServer server = UdpServer.create(ServerOptions.create()
+			                                                 .reuseAddr(true)
+			                                                 .listen(port)
+			                                                 .protocolFamily(StandardProtocolFamily.INET)
 			);
 
 			server.start(ch -> {
-				CodecPreprocessor.byteArray().apply(ch).input().log().consume(bytes -> {
+				ch.receiveByteArray()
+				  .log()
+				  .consume(bytes -> {
 					//log.info("{} got {} bytes", ++count, bytes.length);
 					if (bytes.length == 1024) {
 						latch.countDown();
@@ -182,7 +180,7 @@ public class UdpServerTests {
 		latch.await(5, TimeUnit.SECONDS);
 		assertThat("latch was not counted down enough: "+latch.getCount()+" left on "+(4 ^ 2), latch.getCount() == 0 );
 
-		for (DatagramServer s : servers) {
+		for (UdpServer s : servers) {
 			s.shutdown().get();
 		}
 	}

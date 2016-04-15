@@ -16,18 +16,17 @@
 
 package reactor.io.ipc;
 
-import java.net.InetSocketAddress;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.io.buffer.Buffer;
 
 /**
  * A {@link ChannelFlux} is a virtual connection that often matches with a Socket or a Channel (e.g. Netty).
- * Implementations handle interacting inbound (received data) and errors by subscribing to {@link #input()}.
+ * Implementations handle interacting inbound (received data) and errors by subscribing to {@link #receive()}.
  * <p>
- * Writing and "flushing" is controlled by sinking 1 or more {@link #writeWith(Publisher)}
+ * Writing and "flushing" is controlled by sinking 1 or more {@link #send(Publisher)}
  * that will forward data to outbound.
  * When a drained Publisher completes or error, the channel will automatically "flush" its pending writes.
  *
@@ -37,80 +36,59 @@ import reactor.io.buffer.Buffer;
 public interface ChannelFlux<IN, OUT>  {
 
 	/**
-	 * Get the address of the remote peer.
+	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
 	 *
-	 * @return the peer's address
+	 * @param dataStream the dataStream publishing OUT items to write on this channel
+	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
 	 */
-	InetSocketAddress remoteAddress();
+	Mono<Void> send(Publisher<? extends OUT> dataStream);
 
 	/**
 	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
-	 * If more than one publisher is attached (multiple calls to writeWith()) completion occurs after all publishers
-	 * complete.
+	 *
+	 * @param dataStream the dataStream publishing OLD_OUT items to write on this channel after encoding
+	 * @param encoder an encoding function providing a send-ready {@link Publisher}
+	 *
+	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	default <OLD_OUT> Mono<Void> send(Publisher<? extends OLD_OUT> dataStream,
+			Function<Flux<? extends OLD_OUT>, ? extends Publisher<OUT>> encoder) {
+
+		return send(Flux.from(dataStream)
+		                .as(encoder));
+	}
+
+	/**
+	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
 	 *
 	 * @param dataStream the dataStream publishing OUT items to write on this channel
-	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
+	 *
+	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
 	 */
-	Mono<Void> writeWith(Publisher<? extends OUT> dataStream);
+	default Mono<Void> sendOne(OUT dataStream) {
+		return send(Flux.just(dataStream));
+	}
 
 	/**
-	 * Send bytes to the peer, listen for any error on write and close on terminal signal (complete|error).
-	 * If more than one publisher is attached (multiple calls to writeWith()) completion occurs after all publishers
-	 * complete.
+	 * Get the inbound publisher (incoming tcp traffic for instance)
 	 *
-	 * @param dataStream the dataStream publishing Buffer items to write on this channel
-	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
+	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
 	 */
-	Mono<Void> writeBufferWith(Publisher<? extends Buffer> dataStream);
+	Flux<IN> receive();
 
 	/**
-	 * Get the input publisher (request body or incoming tcp traffic for instance)
+	 * Get the inbound publisher (incoming tcp traffic for instance) and decode its traffic
 	 *
-	 * @return A Publisher to signal reads and stop reading when un-requested.
-	 */
-	Flux<IN> input();
-
-	/**
-	 * Assign event handlers to certain channel lifecycle events.
+	 * @param decoder a decoding function providing a target type {@link Publisher}
 	 *
-	 * @return ConsumerSpec to build the events handlers
+	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
 	 */
-	ConsumerSpec on();
+	default <NEW_IN> Flux<NEW_IN> receive(Function<? super Flux<IN>, ? extends Publisher<NEW_IN>> decoder) {
+		return Flux.from(receive().as(decoder));
+	}
 
 	/**
 	 * @return The underlying IO runtime connection reference (Netty Channel for instance)
 	 */
 	Object delegate();
-
-	/**
-	 * Spec class for assigning multiple event handlers on a channel.
-	 */
-	interface ConsumerSpec {
-		/**
-		 * Assign a {@link Runnable} to be invoked when the channel is closed.
-		 *
-		 * @param onClose the close event handler
-		 * @return {@literal this}
-		 */
-		ConsumerSpec close(Runnable onClose);
-
-		/**
-		 * Assign a {@link Runnable} to be invoked when reads have become idle for the given timeout.
-		 *
-		 * @param idleTimeout the idle timeout
-		 * @param onReadIdle  the idle timeout handler
-		 * @return {@literal this}
-		 */
-		ConsumerSpec readIdle(long idleTimeout, Runnable onReadIdle);
-
-		/**
-		 * Assign a {@link Runnable} to be invoked when writes have become idle for the given timeout.
-		 *
-		 * @param idleTimeout the idle timeout
-		 * @param onWriteIdle the idle timeout handler
-		 * @return {@literal this}
-		 */
-		ConsumerSpec writeIdle(long idleTimeout, Runnable onWriteIdle);
-	}
-
 }

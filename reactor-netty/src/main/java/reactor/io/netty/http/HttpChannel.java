@@ -19,15 +19,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.cookie.Cookie;
 import reactor.core.publisher.Mono;
-import reactor.io.ipc.ChannelFlux;
-import reactor.io.netty.http.model.Cookie;
-import reactor.io.netty.http.model.HttpHeaders;
-import reactor.io.netty.http.model.Method;
-import reactor.io.netty.http.model.Protocol;
-import reactor.io.netty.http.model.ResponseHeaders;
-import reactor.io.netty.http.model.Status;
-import reactor.io.netty.http.model.Transfer;
+import reactor.io.netty.common.NettyChannel;
 
 /**
  *
@@ -37,7 +35,7 @@ import reactor.io.netty.http.model.Transfer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface HttpChannel<IN, OUT> extends ChannelFlux<IN, OUT> {
+public interface HttpChannel extends NettyChannel {
 
 	String WS_SCHEME    = "ws";
 	String WSS_SCHEME   = "wss";
@@ -45,41 +43,10 @@ public interface HttpChannel<IN, OUT> extends ChannelFlux<IN, OUT> {
 	String HTTPS_SCHEME = "https";
 
 	/**
-	 *
-	 * @return
-	 */
-	Map<String, Object> params();
-
-	/**
-	 *
-	 * @param key
-	 * @return
-	 */
-	Object param(String key);
-
-	/**
-	 * @return Resolved HTTP request headers
-	 */
-	HttpHeaders headers();
-
-	/**
-	 * @return Resolved HTTP cookies
-	 */
-	Map<String, Set<Cookie>> cookies();
-
-	/**
 	 * add the passed cookie
 	 * @return this
 	 */
-	HttpChannel<IN, OUT> addCookie(String name, Cookie cookie);
-
-
-	/**
-	 * add the passed cookie
-	 * @return this
-	 */
-	HttpChannel<IN, OUT> addResponseCookie(String name, Cookie cookie);
-
+	HttpChannel addCookie(CharSequence name, Cookie cookie);
 
 	/**
 	 *
@@ -87,7 +54,39 @@ public interface HttpChannel<IN, OUT> extends ChannelFlux<IN, OUT> {
 	 * @param value
 	 * @return
 	 */
-	HttpChannel<IN, OUT> header(String name, String value);
+	HttpChannel addHeader(CharSequence name, CharSequence value);
+
+	/**
+	 * add the passed cookie
+	 * @return this
+	 */
+	HttpChannel addResponseCookie(CharSequence name, Cookie cookie);
+
+	/**
+	 *
+	 * @param name
+	 * @param value
+	 * @return
+	 */
+	HttpChannel addResponseHeader(CharSequence name, CharSequence value);
+
+	/**
+	 * @return Resolved HTTP cookies
+	 */
+	Map<CharSequence, Set<Cookie>> cookies();
+
+	/**
+	 *
+	 * @param name
+	 * @param value
+	 * @return
+	 */
+	HttpChannel header(CharSequence name, CharSequence value);
+
+	/**
+	 * @return Resolved HTTP request headers
+	 */
+	HttpHeaders headers();
 
 	/**
 	 * Is the request keepAlive
@@ -97,23 +96,86 @@ public interface HttpChannel<IN, OUT> extends ChannelFlux<IN, OUT> {
 
 	/**
 	 *
-	 * @param name
-	 * @param value
 	 * @return
 	 */
-	HttpChannel<IN, OUT> addHeader(String name, String value);
+	boolean isWebsocket();
 
 	/**
 	 * set the request keepAlive if true otherwise remove the existing connection keep
 	 * alive header
 	 * @return is keep alive
 	 */
-	HttpChannel<IN, OUT> keepAlive(boolean keepAlive);
+	HttpChannel keepAlive(boolean keepAlive);
 
 	/**
-	 * @return the resolved request protocol (HTTP 1.1 etc)
+	 * @return the resolved request method (HTTP 1.1 etc)
 	 */
-	Protocol protocol();
+	HttpMethod method();
+
+	/**
+	 *
+	 * @param key
+	 * @return
+	 */
+	Object param(CharSequence key);
+
+	/**
+	 *
+	 * @return
+	 */
+	Map<String, Object> params();
+
+	/**
+	 *
+	 * @param headerResolver
+	 * @return
+	 */
+	HttpChannel paramsResolver(Function<? super String, Map<String, Object>> headerResolver);
+
+	/**
+	 *
+	 */
+	HttpChannel removeTransferEncodingChunked();
+
+	/**
+	 *
+	 * @param name
+	 * @param value
+	 * @return
+	 */
+	HttpChannel responseHeader(CharSequence name, CharSequence value);
+
+	/**
+	 * @return the resolved response HTTP headers
+	 */
+	HttpHeaders responseHeaders();
+
+	/**
+	 * @return the resolved HTTP Response Status
+	 */
+	HttpResponseStatus responseStatus();
+
+	/**
+	 *
+	 * @param status
+	 * @return
+	 */
+	HttpChannel responseStatus(HttpResponseStatus status);
+
+	/**
+	 *
+	 * @param status
+	 * @return
+	 */
+	default HttpChannel responseStatus(int status){
+		return responseStatus(HttpResponseStatus.valueOf(status));
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	HttpChannel sse();
 
 	/**
 	 * @return the resolved target address
@@ -121,67 +183,13 @@ public interface HttpChannel<IN, OUT> extends ChannelFlux<IN, OUT> {
 	String uri();
 
 	/**
-	 * @return the resolved request method (HTTP 1.1 etc)
+	 * @return the resolved request version (HTTP 1.1 etc)
 	 */
-	Method method();
-
-	HttpChannel<IN, OUT> paramsResolver(Function<? super String, Map<String, Object>> headerResolver);
-
-	/**
-	 * @return the resolved HTTP Response Status
-	 */
-	Status responseStatus();
-
-	HttpChannel<IN, OUT> responseStatus(Status status);
-
-	/**
-	 * @return the resolved response HTTP headers
-	 */
-	ResponseHeaders responseHeaders();
-
-	/**
-	 *
-	 * @param name
-	 * @param value
-	 * @return
-	 */
-	HttpChannel<IN, OUT> responseHeader(String name, String value);
-
-	/**
-	 *
-	 * @param name
-	 * @param value
-	 * @return
-	 */
-	HttpChannel<IN, OUT> addResponseHeader(String name, String value);
+	HttpVersion version();
 
 	/**
 	 *
 	 * @return
 	 */
 	Mono<Void> writeHeaders();
-
-	/**
-	 *
-	 * @return
-	 */
-	HttpChannel<IN, OUT> sse();
-
-	/**
-	 * @return the Transfer setting for this http connection (e.g. event-stream)
-	 */
-	Transfer transfer();
-
-	/**
-	 * Define the Transfer mode for this http connection
-	 * @param transfer the new transfer mode
-	 * @return this
-	 */
-	HttpChannel<IN, OUT> transfer(Transfer transfer);
-
-	/**
-	 *
-	 * @return
-	 */
-	boolean isWebsocket();
 }

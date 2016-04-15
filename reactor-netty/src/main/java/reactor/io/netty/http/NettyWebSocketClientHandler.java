@@ -17,7 +17,6 @@
 package reactor.io.netty.http;
 
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -33,16 +32,17 @@ import reactor.io.buffer.StringBuffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
 import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.tcp.TcpChannel;
 
 /**
  * @author Stephane Maldini
  */
-final class NettyHttpWSClientHandler extends NettyHttpClientHandler {
+final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 
 	final WebSocketClientHandshaker handshaker;
-	NettyHttpWSClientHandler(
-			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
-			NettyChannel tcpStream,
+	NettyWebSocketClientHandler(
+			ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
+			TcpChannel tcpStream,
 			WebSocketClientHandshaker handshaker) {
 		super(handler, tcpStream);
 		this.handshaker = handshaker;
@@ -78,7 +78,7 @@ final class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 					Flux.<Void>empty().subscribe(s);
 				}
 			};
-			NettyHttpWSClientHandler.super.channelActive(ctx);
+			NettyWebSocketClientHandler.super.channelActive(ctx);
 			super.channelRead(ctx, msg);
 			return;
 		}
@@ -102,7 +102,7 @@ final class NettyHttpWSClientHandler extends NettyHttpClientHandler {
 
 	@Override
 	protected ChannelFuture doOnWrite(Object data, ChannelHandlerContext ctx) {
-		return NettyHttpWSServerHandler.writeWS(data, ctx);
+		return NettyWebSocketServerHandler.writeWS(data, ctx);
 	}
 
 }

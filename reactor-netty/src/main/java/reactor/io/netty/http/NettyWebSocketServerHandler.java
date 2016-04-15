@@ -19,6 +19,8 @@ package reactor.io.netty.http;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
@@ -30,40 +32,39 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import reactor.io.buffer.Buffer;
 import reactor.io.buffer.StringBuffer;
 import reactor.io.netty.common.NettyBuffer;
-import reactor.io.netty.http.model.Status;
 
 /**
  * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link Buffer}).
  *
  * @author Stephane Maldini
  */
-final class NettyHttpWSServerHandler extends NettyHttpServerHandler {
+final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 
 	final WebSocketServerHandshaker handshaker;
 
 	final ChannelFuture handshakerResult;
 
-	public NettyHttpWSServerHandler(String wsUrl,
+	public NettyWebSocketServerHandler(String wsUrl,
 			String protocols,
 			NettyHttpServerHandler originalHandler
 	) {
-		super(originalHandler.getHandler(), originalHandler.getReactorNettyChannel());
+		super(originalHandler.getHandler(), originalHandler.tcpStream);
 		this.request = originalHandler.request;
 
 		// Handshake
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(wsUrl, protocols, true);
 		handshaker = wsFactory.newHandshaker(request.getNettyRequest());
 		if (handshaker == null) {
-			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(reactorNettyChannel.delegate());
+			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(nettyChannel.delegate());
 			handshakerResult = null;
 		}
 		else {
-			request.responseHeaders().removeTransferEncodingChunked();
+			HttpUtil.setTransferEncodingChunked(request.getNettyResponse(), false);
 			handshakerResult = handshaker.handshake(
-					reactorNettyChannel.delegate(),
+					nettyChannel.delegate(),
 					request.getNettyRequest(),
-					request.responseHeaders().delegate(),
-					reactorNettyChannel.delegate().newPromise());
+					request.responseHeaders(),
+					nettyChannel.delegate().newPromise());
 		}
 	}
 
@@ -86,7 +87,7 @@ final class NettyHttpWSServerHandler extends NettyHttpServerHandler {
 
 	protected void writeLast(ChannelHandlerContext ctx){
 		ChannelFuture f = ctx.channel().writeAndFlush(new CloseWebSocketFrame());
-	if (!request.isKeepAlive() || request.responseStatus() != Status.OK) {
+	if (!request.isKeepAlive() || request.responseStatus() != HttpResponseStatus.OK) {
 			f.addListener(ChannelFutureListener.CLOSE);
 		}
 	}

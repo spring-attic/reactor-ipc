@@ -36,10 +36,9 @@ import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
-import reactor.io.netty.ReactiveNet;
+import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -49,8 +48,9 @@ import static org.junit.Assert.assertThat;
  */
 @Ignore
 public class ClientServerHttpTests {
-	private HttpServer<List<String>, List<String>> httpServer;
-	private Processor<String, String>              broadcaster;
+
+	private HttpServer                httpServer;
+	private Processor<String, String> broadcaster;
 
 	@Test
 	public void testSingleConsumerWithOneSession() throws Exception {
@@ -252,19 +252,14 @@ public class ClientServerHttpTests {
 		      .subscribe(processor);
 
 		DummyListCodec codec = new DummyListCodec();
-		httpServer = ReactiveNet.httpServer(server -> server
-				.httpProcessor(CodecPreprocessor.from(codec)).listen(0));
+		httpServer = HttpServer.create(0);
 
-		httpServer.get("/data", (request) -> {
-			request.responseHeaders().removeTransferEncodingChunked();
-			return request.writeWith(Flux.from(processor)
-			                               .log("server")
-			                               .timeout(Duration.ofSeconds(2), Flux.empty())
-			                               .concatWith(Flux.just(new ArrayList<String>()))
-			                               .useCapacity(1L)
-
-			);
-		});
+		httpServer.get("/data",
+				(request) -> request.send(Flux.from(processor)
+				                              .log("server")
+				                              .timeout(Duration.ofSeconds(2), Flux.empty())
+				                              .concatWith(Flux.just(new ArrayList<>()))
+				                              .useCapacity(1L), NettyCodec.from(codec)));
 
 		httpServer.start().get();
 	}
@@ -274,12 +269,14 @@ public class ClientServerHttpTests {
 	}
 
 	private Mono<List<String>> getClientDataPromise() throws Exception {
-		HttpClient<String, String> httpClient = ReactiveNet.httpClient(t ->
-			t.httpProcessor(CodecPreprocessor.string()).connect("localhost", httpServer.getListenAddress().getPort())
-		);
+		HttpClient httpClient = HttpClient.create("localhost",
+				httpServer.getListenAddress()
+				          .getPort());
 
 		return httpClient.get("/data")
-		                 .flatMap(s ->  s.input().log("client").next())
+		                 .flatMap(s -> s.receiveString()
+		                                .log("client")
+		                                .next())
 		                 .toList()
 		                 .cache()
 		                 .subscribe();
@@ -292,16 +289,15 @@ public class ClientServerHttpTests {
 		final ArrayList<List<String>> datas = new ArrayList<List<String>>();
 
 		for (int i = 0; i < threadCount; ++i) {
-			Runnable runner = new Runnable() {
-				public void run() {
-					try {
-						latch.await();
-						Mono<List<String>> clientDataPromise = getClientDataPromise();
-						promiseLatch.countDown();
-						datas.add(clientDataPromise.get(Duration.ofSeconds(10)));
-					} catch (Exception ie) {
-						ie.printStackTrace();
-					}
+			Runnable runner = () -> {
+				try {
+					latch.await();
+					Mono<List<String>> clientDataPromise = getClientDataPromise();
+					promiseLatch.countDown();
+					datas.add(clientDataPromise.get(Duration.ofSeconds(10)));
+				}
+				catch (Exception ie) {
+					ie.printStackTrace();
 				}
 			};
 			Thread t = new Thread(runner, "SmokeThread" + i);

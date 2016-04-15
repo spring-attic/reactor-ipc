@@ -16,8 +16,8 @@
 package reactor.io.netty.http
 
 import reactor.core.publisher.Flux
-import reactor.io.netty.preprocessor.CodecPreprocessor
-import reactor.io.netty.ReactiveNet
+import reactor.io.netty.common.NettyCodec
+
 import spock.lang.Specification
 
 import java.time.Duration
@@ -29,13 +29,11 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
 
     def "http status code 404 is handled by the client"() {
         given: "a simple HttpServer"
-            def server = ReactiveNet.httpServer {
-                it.httpProcessor(CodecPreprocessor.string()).listen(0)
-            }
+            def server = HttpServer.create(0)
 
         when: "the server is prepared"
             server.post('/test') { req ->
-                req.writeWith(
+                req.send(
                         req.log('server-received')
                 )
             }
@@ -45,9 +43,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
           !server.start().get(Duration.ofSeconds(5))
 
         when: "a request with unsupported URI is sent onto the server"
-            def client = ReactiveNet.httpClient {
-                it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
-            }
+            def client = HttpClient.create("localhost", server.listenAddress.port)
 
             def replyReceived = ""
             def content = client.get('/unsupportedURI') { req ->
@@ -55,7 +51,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
                 req.header('Content-Type', 'text/plain')
 
                 //return a producing stream to send some data along the request
-                req.writeWith(
+                req.sendString(
                     Flux
                             .just("Hello")
                             .log('client-send')
@@ -64,7 +60,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             .flatMap { replies ->
                 //successful request, listen for replies
                 replies
-                        .input()
+                        .receiveString()
                         .log('client-received')
                         .doOnNext { s ->
                             replyReceived = s

@@ -33,7 +33,7 @@ HttpServer.<String, String>create(spec ->
 			.map(isKonami -> isKonami ? "Konami!" : "Nah")
 			.nest()
 			.flatMap(konamis ->
-				channel.writeWith(konamis)
+				channel.send(konamis)
 			);
 		})
 		.start()

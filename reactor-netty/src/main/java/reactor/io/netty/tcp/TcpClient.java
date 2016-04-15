@@ -17,36 +17,53 @@
 package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
-import java.util.function.Function;
+import java.util.Iterator;
+import java.util.function.Supplier;
+import javax.net.ssl.SSLEngine;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.Future;
+import org.reactivestreams.Subscriber;
+import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.state.Introspectable;
 import reactor.core.scheduler.Timer;
-import reactor.core.tuple.Tuple2;
+import reactor.core.state.Introspectable;
+import reactor.core.util.ExecutorUtils;
+import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
-import reactor.io.netty.Preprocessor;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.Client;
-import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.ReactivePeer;
-import reactor.io.netty.Reconnect;
-import reactor.io.netty.Spec;
+import reactor.io.netty.common.MonoChannelFuture;
+import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.NettyChannelHandler;
+import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
-import reactor.io.netty.config.SslOptions;
+import reactor.io.netty.config.NettyOptions;
+import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
+import reactor.io.netty.util.NettyNativeDetector;
 
 /**
  * The base class for a Reactor-based TCP client.
  *
- * @param <IN>  The type that will be received by this client
- * @param <OUT> The type that will be sent by this client
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
-public abstract class TcpClient<IN, OUT>
-		extends Client<IN, OUT, ChannelFlux<IN, OUT>>
-		implements Introspectable {
+public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Introspectable, MultiProducer {
+
+	public static final ChannelFluxHandler PING = o -> Flux.empty();
 
 	/**
 	 * Bind a new TCP client to the localhost on port 12012. By default the default client implementation is scanned
@@ -55,7 +72,7 @@ public abstract class TcpClient<IN, OUT>
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -65,8 +82,8 @@ public abstract class TcpClient<IN, OUT>
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static TcpClient<Buffer, Buffer> create() {
-		return create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+	public static TcpClient create() {
+		return create(DEFAULT_BIND_ADDRESS);
 	}
 
 	/**
@@ -76,7 +93,7 @@ public abstract class TcpClient<IN, OUT>
 	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * on the active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -87,8 +104,8 @@ public abstract class TcpClient<IN, OUT>
 	 * @param bindAddress the address to connect to on port 12012
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static TcpClient<Buffer, Buffer> create(String bindAddress) {
-		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+	public static TcpClient create(String bindAddress) {
+		return create(bindAddress, DEFAULT_PORT);
 	}
 
 	/**
@@ -98,7 +115,7 @@ public abstract class TcpClient<IN, OUT>
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -109,8 +126,8 @@ public abstract class TcpClient<IN, OUT>
 	 * @param port the port to connect to on "loopback"
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static TcpClient<Buffer, Buffer> create(int port) {
-		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+	public static TcpClient create(int port) {
+		return create(DEFAULT_BIND_ADDRESS, port);
 	}
 
 	/**
@@ -120,7 +137,7 @@ public abstract class TcpClient<IN, OUT>
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
 	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -132,28 +149,120 @@ public abstract class TcpClient<IN, OUT>
 	 * @param port the port to connect to
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static TcpClient<Buffer, Buffer> create(final String bindAddress, final int port) {
-		return ReactiveNet.tcpClient(new Function<Spec.TcpClientSpec<Buffer, Buffer>, Spec.TcpClientSpec<Buffer, Buffer>>() {
-			@Override
-			public Spec.TcpClientSpec<Buffer, Buffer> apply(Spec.TcpClientSpec<Buffer, Buffer> clientSpec) {
-				clientSpec.timer(Timer.globalOrNull());
-				return clientSpec.connect(bindAddress, port);
-			}
-		});
+	public static TcpClient create(String bindAddress, int port) {
+		return create(ClientOptions.to(bindAddress, port)
+		                           .timer(Timer.globalOrNull()));
 	}
 
-	private final InetSocketAddress connectAddress;
-	private final ClientOptions     options;
-	private final SslOptions        sslOptions;
+	/**
+	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
+	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
+	 * dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
+	 * org.reactivestreams.Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
+	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
+	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
+	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link org.reactivestreams.Publisher}.
+	 * <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in
+	 * auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply.
+	 * Otherwise, data will be flushed every capacity batch size and read will pause when capacity number of elements
+	 * have been dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
+	 * <p>
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 *
+	 * @param options
+	 *
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static TcpClient create(ClientOptions options) {
+		return new TcpClient(options);
+	}
 
-	protected TcpClient(Timer timer,
-	                    InetSocketAddress connectAddress,
-	                    ClientOptions options,
-	                    SslOptions sslOptions) {
-		super(timer, options != null ? options.prefetch() : Long.MAX_VALUE);
-		this.connectAddress = (null != connectAddress ? connectAddress : new InetSocketAddress("127.0.0.1", 3000));
-		this.options = options;
-		this.sslOptions = sslOptions;
+	final Bootstrap               bootstrap;
+	final EventLoopGroup          ioGroup;
+	final Supplier<ChannelFuture> connectionSupplier;
+	final ChannelGroup            channelGroup;
+
+	final    ClientOptions     options;
+	volatile InetSocketAddress connectAddress;
+
+	protected TcpClient(ClientOptions options) {
+		super(options.timer(), options.prefetch());
+		this.connectAddress = options.remoteAddress();
+		if (null == connectAddress) {
+			connectAddress = new InetSocketAddress("127.0.0.1", 3000);
+		}
+
+		this.options = options.toImmutable();
+		this.connectionSupplier = new Supplier<ChannelFuture>() {
+			@Override
+			public ChannelFuture get() {
+				if (started.get()) {
+					return bootstrap.connect(getConnectAddress());
+				}
+				else {
+					return null;
+				}
+			}
+		};
+		if (null != options.eventLoopGroup()) {
+			this.ioGroup = options.eventLoopGroup();
+		}
+		else {
+			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
+			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount,
+					ExecutorUtils.newNamedFactory("reactor-tcp-io"));
+		}
+
+		Bootstrap _bootstrap = new Bootstrap().group(ioGroup)
+		                                      .channel(NettyNativeDetector.getChannel(ioGroup))
+		                                      .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+		                                      .option(ChannelOption.AUTO_READ, options.ssl() != null)
+				//.remoteAddress(this.connectAddress)
+				;
+
+		_bootstrap = _bootstrap.option(ChannelOption.SO_RCVBUF, options.rcvbuf())
+		                       .option(ChannelOption.SO_SNDBUF, options.sndbuf())
+		                       .option(ChannelOption.SO_KEEPALIVE, options.keepAlive())
+		                       .option(ChannelOption.SO_LINGER, options.linger())
+		                       .option(ChannelOption.TCP_NODELAY, options.tcpNoDelay())
+		                       .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.timeout());
+
+		this.bootstrap = _bootstrap;
+		if (options != null && options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
+			log.debug("Client is managed.");
+			this.channelGroup = new DefaultChannelGroup(null);
+		}
+		else {
+			log.debug("Client is not managed (Not directly introspectable)");
+			this.channelGroup = null;
+		}
+	}
+
+	@Override
+	public long downstreamCount() {
+		return channelGroup == null ? -1 : channelGroup.size();
+	}
+
+	@Override
+	public Iterator<?> downstreams() {
+		if (channelGroup == null) {
+			return null;
+		}
+		return new Iterator<Object>() {
+			final Iterator<Channel> channelIterator = channelGroup.iterator();
+
+			@Override
+			public boolean hasNext() {
+				return channelIterator.hasNext();
+			}
+
+			@Override
+			public Object next() {
+				return channelIterator.next()
+				                      .pipeline()
+				                      .get(NettyChannelHandler.class);
+			}
+		};
 	}
 
 	/**
@@ -165,6 +274,11 @@ public abstract class TcpClient<IN, OUT>
 		return connectAddress;
 	}
 
+	@Override
+	public String getName() {
+		return "TcpClient:" + getConnectAddress().toString();
+	}
+
 	/**
 	 * Get the {@link ClientOptions} currently in effect.
 	 *
@@ -174,67 +288,88 @@ public abstract class TcpClient<IN, OUT>
 		return this.options;
 	}
 
-	/**
-	 * Get the {@link SslOptions} current in effect.
-	 *
-	 * @return the SSL options
-	 */
-	protected SslOptions getSslOptions() {
-		return sslOptions;
+	@Override
+	@SuppressWarnings("unchecked")
+	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler) {
+
+		final ChannelFluxHandler<Buffer, Buffer, NettyChannel> targetHandler =
+				null == handler ? (ChannelFluxHandler<Buffer, Buffer, NettyChannel>) PING : handler;
+
+		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+			@Override
+			public void initChannel(final SocketChannel ch) throws Exception {
+				if (channelGroup != null) {
+					channelGroup.add(ch);
+				}
+				bindChannel(targetHandler, ch);
+			}
+		});
+
+		return new Mono<Void>() {
+			@Override
+			public void subscribe(Subscriber<? super Void> s) {
+				ChannelFuture channelFuture = connectionSupplier.get();
+
+				if (channelFuture == null) {
+					throw new IllegalStateException("Connection supplier didn't return any connection");
+				}
+
+				new MonoChannelFuture<>(channelFuture).subscribe(s);
+			}
+		};
 	}
 
 	@Override
-	public String getName() {
-		return "TcpClient:"+getConnectAddress().toString();
+	protected Mono<Void> doShutdown() {
+
+		if (getOptions() != null && getOptions().eventLoopGroup() != null) {
+			return Mono.empty();
+		}
+
+		return new MonoChannelFuture<Future<?>>(ioGroup.shutdownGracefully());
+	}
+
+	protected void addSecureHandler(SocketChannel ch) throws Exception {
+		SSLEngine ssl = new SSLEngineSupplier(options.ssl(), true).get();
+		if (log.isDebugEnabled()) {
+			log.debug("SSL enabled using keystore {}",
+					(null != options.ssl() && null != options.ssl()
+					                                         .keystoreFile() ? options.ssl()
+					                                                                  .keystoreFile() : "<DEFAULT>"));
+		}
+		ch.pipeline()
+		  .addFirst(new SslHandler(ssl));
+	}
+
+	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, SocketChannel ch)
+			throws Exception {
+
+		if (null != options.ssl()) {
+			addSecureHandler(ch);
+		}
+		else {
+			ch.config()
+			  .setAutoRead(false);
+		}
+
+		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
+
+		ChannelPipeline pipeline = ch.pipeline();
+
+		if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+			getOptions().pipelineConfigurer()
+			            .accept(pipeline);
+		}
+		if (log.isDebugEnabled()) {
+			pipeline.addLast(new LoggingHandler(TcpClient.class));
+		}
+		pipeline.addLast(new NettyChannelHandler(handler, netChannel));
 	}
 
 	@Override
-	public int getMode() {
-		return 0;
+	protected boolean shouldFailOnStarted() {
+		return false;
 	}
 
-	@Override
-	protected <NEWIN, NEWOUT> ReactivePeer<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> doPreprocessor(
-			Function<ChannelFlux<IN, OUT>, ? extends ChannelFlux<NEWIN, NEWOUT>> preprocessor) {
-		return new PreprocessedTcpClient<>(preprocessor);
-	}
-
-	private final class PreprocessedTcpClient<NEWIN, NEWOUT, NEWCONN extends ChannelFlux<NEWIN, NEWOUT>>
-			extends TcpClient<NEWIN, NEWOUT> {
-
-		private final Function<ChannelFlux<IN, OUT>, ? extends NEWCONN>
-				preprocessor;
-
-		public PreprocessedTcpClient(Function<ChannelFlux<IN, OUT>, ? extends NEWCONN> preprocessor) {
-			super(TcpClient.this.getDefaultTimer(), TcpClient.this.getConnectAddress(), TcpClient.this.getOptions(), TcpClient.this.getSslOptions());
-			this.preprocessor = preprocessor;
-		}
-
-		@Override
-		protected Mono<Void> doStart(
-				ChannelFluxHandler<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> handler) {
-			ChannelFluxHandler<IN, OUT, ChannelFlux<IN, OUT>>
-					p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
-			return TcpClient.this.start(p);
-		}
-
-		@Override
-		protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
-				ChannelFluxHandler<NEWIN, NEWOUT, ChannelFlux<NEWIN, NEWOUT>> handler,
-				Reconnect reconnect) {
-			ChannelFluxHandler<IN, OUT, ChannelFlux<IN, OUT>>
-					p = Preprocessor.PreprocessedHandler.create(handler, preprocessor);
-			return TcpClient.this.start(p, reconnect);
-		}
-
-		@Override
-		protected Mono<Void> doShutdown() {
-			return TcpClient.this.shutdown();
-		}
-
-		@Override
-		protected boolean shouldFailOnStarted() {
-			return false;
-		}
-	}
+	protected static final Logger log = Logger.getLogger(TcpClient.class);
 }

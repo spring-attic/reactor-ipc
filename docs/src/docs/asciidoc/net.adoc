@@ -23,10 +23,10 @@ server.start( input ->
 
 	//for each connection echo any incoming data
 
-	//return the write confirm publisher from writeWith
+	//return the write confirm publisher from send
 	// >>> close when the write confirm completed
 
-	input.writeWith(
+	input.send(
 
 		//read incoming data
 		input
@@ -47,7 +47,7 @@ client.start( input -> {
 		.consume( data -> latch.countDown() );
 
 	//write data
-	input.writeWith(
+	input.send(
 		Flux.range(1, 10)
 			.map( it -> new Pojo("test" + it) )
 			.log("send")

@@ -17,64 +17,103 @@
 package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
-import java.util.function.Function;
+import java.net.URI;
 
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
-import reactor.core.tuple.Tuple2;
+import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.Client;
-import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.Reconnect;
-import reactor.io.netty.Spec;
+import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
-import reactor.io.netty.http.model.Method;
+import reactor.io.netty.tcp.TcpChannel;
+import reactor.io.netty.tcp.TcpClient;
 
 /**
- * The base class for a Reactor-based Http client.
- * @param <IN> The type that will be received by this client
- * @param <OUT> The type that will be sent by this client
- * @author Jon Brisbin
+ * The base class for a Netty-based Http client.
+ *
  * @author Stephane Maldini
  */
-public abstract class HttpClient<IN, OUT>
-		extends Client<IN, OUT, HttpChannel<IN, OUT>> {
+public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loopback {
 
 	/**
 	 * @return a simple HTTP client
 	 */
-	public static HttpClient<Buffer, Buffer> create() {
-		return ReactiveNet.httpClient(new Function<Spec.HttpClientSpec<Buffer, Buffer>, Spec.HttpClientSpec<Buffer, Buffer>>() {
-			@Override
-			public Spec.HttpClientSpec<Buffer, Buffer> apply(Spec.HttpClientSpec<Buffer, Buffer> clientSpec) {
-				clientSpec.timer(Timer.globalOrNull());
-				return clientSpec;
-			}
-		});
+	public static HttpClient create() {
+		return create(ClientOptions.create()
+		                           .timer(Timer.globalOrNull()));
 	}
-
-	protected HttpClient(Timer timer, ClientOptions options) {
-		super(timer, options != null ? options.prefetch() : 1);
-	}
-
 
 	/**
-	 * Start this {@literal Peer}.
-	 * @return a {@link Mono<Void>} that will be complete when the {@link
-	 * HttpClient} is started
+	 * @return a simple HTTP client
 	 */
-	public final <NEWIN, NEWOUT> Mono<Void> startWithHttpCodec(
-			final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
-			final Function<HttpChannel<IN, OUT>, ? extends HttpChannel<NEWIN, NEWOUT>> preprocessor) {
+	public static HttpClient create(ClientOptions options) {
+		return new HttpClient(options);
+	}
 
-		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
-			throw new IllegalStateException("Peer already started");
-		}
+	/**
+	 * @return a simple HTTP client
+	 */
+	public static HttpClient create(String address, int port) {
+		return create(ClientOptions.create()
+		                           .timer(Timer.globalOrNull())
+		                           .connect(address, port));
+	}
 
-		return doStart(ch -> handler.apply(preprocessor.apply(ch)));
+	final TcpClient client;
+	URI lastURI = null;
+
+	protected HttpClient(final ClientOptions options) {
+		super(options.timer(), options.prefetch());
+
+		this.client = new TcpBridgeClient(options);
+	}
+
+	@Override
+	public Object connectedInput() {
+		return client;
+	}
+
+	@Override
+	public Object connectedOutput() {
+		return client;
+	}
+
+	/**
+	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
+	 * invoked and can be used to build precisely the request and write data to it.
+	 * @param url the target remote URL
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * response
+	 */
+	public final Mono<HttpChannel> delete(String url,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		return request(HttpMethod.DELETE, url, handler);
+	}
+
+	/**
+	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is invoked and can be used to build
+	 * precisely the request and write data to it.
+	 *
+	 * @param url the target remote URL
+	 *
+	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
+	 */
+	public final Mono<HttpChannel> delete(String url) {
+		return request(HttpMethod.DELETE, url, null);
 	}
 
 	/**
@@ -85,20 +124,31 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> get(String url,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		return request(Method.GET, url, handler);
+	public final Mono<HttpChannel> get(String url,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		return request(HttpMethod.GET, url, handler);
 	}
 
 	/**
 	 * HTTP GET the passed URL.
+	 *
 	 * @param url the target remote URL
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
-	 * response
+	 *
+	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
 	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> get(String url) {
+	public final Mono<HttpChannel> get(String url) {
 
-		return request(Method.GET, url, null);
+		return request(HttpMethod.GET, url, null);
+	}
+
+	@Override
+	public boolean isStarted() {
+		return client.isStarted();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return client.isTerminated();
 	}
 
 	/**
@@ -109,9 +159,9 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> post(String url,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		return request(Method.POST, url, handler);
+	public final Mono<HttpChannel> post(String url,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		return request(HttpMethod.POST, url, handler);
 	}
 
 	/**
@@ -122,58 +172,9 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> put(String url,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		return request(Method.PUT, url, handler);
-	}
-
-	/**
-	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
-	 * invoked and can be used to build precisely the request and write data to it.
-	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
-	 * response
-	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> delete(String url,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		return request(Method.DELETE, url, handler);
-	}
-
-	/**
-	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
-	 * invoked and can be used to build precisely the request and write data to it.
-	 * @param url the target remote URL
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
-	 * response
-	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> delete(String url) {
-		return request(Method.DELETE, url, null);
-	}
-
-	/**
-	 * WebSocket to the passed URL.
-	 * @param url the target remote URL
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
-	 * response
-	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> ws(String url) {
-		return request(Method.WS, url, null);
-	}
-
-	/**
-	 * WebSocket to the passed URL. When connection has been made, the passed handler is
-	 * invoked and can be used to build
-	 *
-	 * precisely the request and write data to it.
-	 * @param url the target remote URL
-	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
-	 * response
-	 */
-	public final Mono<? extends HttpChannel<IN, OUT>> ws(String url,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		return request(Method.WS, url, handler);
+	public final Mono<HttpChannel> put(String url,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		return request(HttpMethod.PUT, url, handler);
 	}
 
 	/**
@@ -186,67 +187,178 @@ public abstract class HttpClient<IN, OUT>
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public abstract Mono<? extends HttpChannel<IN, OUT>> request(Method method,
+	public Mono<HttpChannel> request(HttpMethod method,
 			String url,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler);
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		final URI currentURI;
+		try {
+			if (method == null && url == null) {
+				throw new IllegalArgumentException("Method && url cannot be both null");
+			}
+			currentURI = new URI(parseURL(url, false));
+			lastURI = currentURI;
+		}
+		catch (Exception e) {
+			return Mono.error(e);
+		}
 
-
-	/**
-	 *
-	 * @param preprocessor
-	 * @param <NEWIN>
-	 * @param <NEWOUT>
-	 * @param <NEWCONN>
-	 * @return
-	 */
-	public <NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>> HttpClient<NEWIN, NEWOUT> httpProcessor(
-			final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor
-	){
-		return new PreprocessedHttpClient<>(preprocessor);
+		return new MonoPostRequest(this, currentURI, method, handler);
 	}
 
-	private final class PreprocessedHttpClient<NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>>
-			extends HttpClient<NEWIN, NEWOUT> {
+	/**
+	 * WebSocket to the passed URL.
+	 * @param url the target remote URL
+	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * response
+	 */
+	public final Mono<HttpChannel> ws(String url) {
+		return request(HttpMethod.GET, parseURL(url, true), null);
+	}
 
-		private final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN>
-				preprocessor;
+	/**
+	 * WebSocket to the passed URL. When connection has been made, the passed handler is
+	 * invoked and can be used to build
+	 *
+	 * precisely the request and write data to it.
+	 * @param url the target remote URL
+	 * @param handler the {@link ChannelFluxHandler} to invoke on open channel
+	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * response
+	 */
+	public final Mono<HttpChannel> ws(String url,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		return request(HttpMethod.GET, parseURL(url, true), handler);
+	}
 
-		public PreprocessedHttpClient(
-				HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor) {
-			super(HttpClient.this.getDefaultTimer(), null);
-			this.preprocessor = preprocessor;
+	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, Object nativeChannel) {
+		SocketChannel ch = (SocketChannel) nativeChannel;
+
+		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
+
+		ChannelPipeline pipeline = ch.pipeline();
+		if (log.isDebugEnabled()) {
+			pipeline.addLast(new LoggingHandler(HttpClient.class));
+		}
+
+		pipeline.addLast(new HttpClientCodec());
+
+		URI currentURI = lastURI;
+		if (currentURI.getScheme() != null && currentURI.getScheme()
+		                                                .toLowerCase()
+		                                                .startsWith(HttpChannel.WS_SCHEME)) {
+			pipeline.addLast(new HttpObjectAggregator(8192))
+			        .addLast(new NettyWebSocketClientHandler(handler,
+					        netChannel,
+					        WebSocketClientHandshakerFactory.newHandshaker(lastURI,
+							        WebSocketVersion.V13,
+							        null,
+							        false,
+							        new DefaultHttpHeaders())));
+		}
+		else {
+			pipeline.addLast(new NettyHttpClientHandler(handler, netChannel));
+		}
+	}
+
+	@Override
+	protected boolean shouldFailOnStarted() {
+		return false;
+	}
+
+	@Override
+	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		return client.start(inoutChannelFlux -> {
+			final NettyHttpChannel ch = ((NettyHttpChannel) inoutChannelFlux);
+			return handler.apply(ch);
+		});
+	}
+
+	@Override
+	protected final Mono<Void> doShutdown() {
+		return client.shutdown();
+	}
+
+	String parseURL(String url, boolean ws) {
+		if (!url.startsWith(HttpChannel.HTTP_SCHEME) && !url.startsWith(HttpChannel.WS_SCHEME)) {
+			final String parsedUrl = (ws ? HttpChannel.WS_SCHEME : HttpChannel.HTTP_SCHEME) + "://";
+			if (url.startsWith("/")) {
+				return parsedUrl + (lastURI != null && lastURI.getHost() != null ? lastURI.getHost() :
+						"localhost") + url;
+			}
+			else {
+				return parsedUrl + url;
+			}
+		}
+		else {
+			return url;
+		}
+	}
+
+	final static Logger log = Logger.getLogger(HttpClient.class);
+
+	final class TcpBridgeClient extends TcpClient {
+
+		final InetSocketAddress connectAddress;
+
+		TcpBridgeClient(ClientOptions options) {
+			super(options);
+			this.connectAddress = options.remoteAddress();
 		}
 
 		@Override
-		public Mono<? extends HttpChannel<NEWIN, NEWOUT>> request(Method method,
-				String url,
-				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
-			return
-					HttpClient.this.request(method, url, handler != null ?
-							(ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>) conn -> handler.apply(preprocessor.transform(conn)) : null).map(new Function<HttpChannel<IN, OUT>, HttpChannel<NEWIN, NEWOUT>>() {
-				@Override
-				public HttpChannel<NEWIN, NEWOUT> apply(HttpChannel<IN, OUT> channel) {
-					return preprocessor.transform(channel);
+		public InetSocketAddress getConnectAddress() {
+			if (connectAddress != null) {
+				return connectAddress;
+			}
+			try {
+				URI url = lastURI;
+				String host = url != null && url.getHost() != null ? url.getHost() : "localhost";
+				int port = url != null ? url.getPort() : -1;
+				if (port == -1) {
+					if (url != null && url.getScheme() != null && (url.getScheme()
+					                                                  .toLowerCase()
+					                                                  .equals(HttpChannel.HTTPS_SCHEME) || url.getScheme()
+					                                                                                          .toLowerCase()
+					                                                                                          .equals(HttpChannel.WSS_SCHEME))) {
+						port = 443;
+					}
+					else {
+						port = 80;
+					}
 				}
-			});
+				return new InetSocketAddress(host, port);
+			}
+			catch (Exception e) {
+				throw new IllegalArgumentException(e);
+			}
 		}
 
 		@Override
-		protected Flux<Tuple2<InetSocketAddress, Integer>> doStart(
-				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
-				Reconnect reconnect) {
-			return HttpClient.this.start(conn -> handler.apply(preprocessor.transform(conn)), reconnect);
-		}
+		protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
+				SocketChannel nativeChannel) {
 
-		@Override
-		protected Mono<Void> doStart(
-				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
-			return HttpClient.this.start(conn -> handler.apply(preprocessor.transform(conn)));
-		}
+			URI currentURI = lastURI;
+			try {
+				if (currentURI.getScheme() != null && (currentURI.getScheme()
+				                                                 .toLowerCase()
+				                                                 .equals(HttpChannel.HTTPS_SCHEME) || currentURI.getScheme()
+				                                                                                                .toLowerCase()
+				                                                                                                .equals(HttpChannel.WSS_SCHEME))) {
+					nativeChannel.config()
+					             .setAutoRead(true);
+					addSecureHandler(nativeChannel);
+				}
+				else {
+					nativeChannel.config()
+					             .setAutoRead(false);
+				}
+			}
+			catch (Exception e) {
+				nativeChannel.pipeline()
+				             .fireExceptionCaught(e);
+			}
 
-		@Override
-		protected Mono<Void> doShutdown() {
-			return HttpClient.this.shutdown();
+			HttpClient.this.bindChannel(handler, nativeChannel);
 		}
 	}
 }

@@ -30,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -46,19 +45,17 @@ import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
-import reactor.io.codec.Frame;
 import reactor.io.codec.FrameCodec;
 import reactor.io.codec.LengthFieldCodec;
 import reactor.io.codec.StandardCodecs;
-import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.common.NettyBuffer;
+import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.NettyCodec;
+import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
 import reactor.io.netty.util.SocketUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -101,52 +98,39 @@ public class TcpServerTests {
 		  .keystoreFile("./src/test/resources/server.jks")
 		  .keystorePasswd("changeit");
 
-		SslOptions clientOpts = new SslOptions()
-		  .keystoreFile("./src/test/resources/client.jks")
-		  .keystorePasswd("changeit")
-		  .trustManagers(new Supplier<TrustManager[]>() {
-			  @Override
-			  public TrustManager[] get() {
-				  return new TrustManager[]{
-					new X509TrustManager() {
-						@Override
-						public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
-						  throws CertificateException {
-							// trust all
-						}
+		SslOptions clientOpts = new SslOptions().keystoreFile("./src/test/resources/client.jks")
+		                                        .keystorePasswd("changeit")
+		                                        .trustManagers(() -> new TrustManager[]{new X509TrustManager() {
+			                                        @Override
+			                                        public void checkClientTrusted(X509Certificate[] x509Certificates,
+					                                        String s) throws CertificateException {
+				                                        // trust all
+			                                        }
 
-						@Override
-						public void checkServerTrusted(X509Certificate[] x509Certificates, String s)
-						  throws CertificateException {
-							// trust all
-						}
+			                                        @Override
+			                                        public void checkServerTrusted(X509Certificate[] x509Certificates,
+					                                        String s) throws CertificateException {
+				                                        // trust all
+			                                        }
 
-						@Override
-						public X509Certificate[] getAcceptedIssuers() {
-							return new X509Certificate[0];
-						}
+			                                        @Override
+			                                        public X509Certificate[] getAcceptedIssuers() {
+				                                        return new X509Certificate[0];
 					}
-				  };
-			  }
+		                                        }
 		  });
 
 		final CountDownLatch latch = new CountDownLatch(1);
-		final TcpClient<Pojo, Pojo> client = ReactiveNet.tcpClient(s ->
-			s
-			  .ssl(clientOpts)
-			  .connect("localhost", port)
-			  .preprocessor(CodecPreprocessor.json(Pojo.class))
-		);
+		final TcpClient client = TcpClient.create(ClientOptions.to("localhost", port)
+		                                                       .ssl(clientOpts));
 
-		final TcpServer<Pojo, Pojo> server = ReactiveNet.tcpServer(s ->
-			s
-			  .ssl(serverOpts)
-			  .listen("localhost", port)
-			  .preprocessor(CodecPreprocessor.json(Pojo.class))
+		final TcpServer server = TcpServer.create(ServerOptions.on("localhost", port)
+		                                                       .ssl(serverOpts)
 		);
 
 		server.start(channel -> {
-			channel.input().log("conn")
+			channel.receive(NettyCodec.json(Pojo.class))
+			       .log("conn")
 			       .consume(data -> {
 				       if ("John Doe".equals(data.getName())) {
 					       latch.countDown();
@@ -155,8 +139,8 @@ public class TcpServerTests {
 			return Flux.never();
 		});
 
-
-		client.start(ch -> ch.writeWith(Flux.just(new Pojo("John Doe")))).get();
+		client.start(ch -> ch.send(Flux.just(new Pojo("John Doe")), NettyCodec.json(Pojo.class)))
+		      .get();
 
 		assertTrue("Latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -168,20 +152,16 @@ public class TcpServerTests {
 	public void tcpServerHandlesLengthFieldData() throws InterruptedException {
 		final int port = SocketUtils.findAvailableTcpPort();
 
-		TcpServer<byte[], byte[]> server = ReactiveNet.tcpServer(s ->
-			s
-			  .options(ServerOptions.create()
-				.backlog(1000)
-				.reuseAddr(true)
-				.tcpNoDelay(true))
-			  .listen(port)
-			  .preprocessor(CodecPreprocessor.from(new LengthFieldCodec<>(StandardCodecs.BYTE_ARRAY_CODEC)))
-		);
+		TcpServer server = TcpServer.create(ServerOptions.on(port)
+		                                                 .backlog(1000)
+		                                                 .reuseAddr(true)
+		                                                 .tcpNoDelay(true));
 
 		System.out.println(latch.getCount());
 
 		server.start(ch -> {
-			  ch.input().consume(new Consumer<byte[]>() {
+			ch.receive(NettyCodec.from(new LengthFieldCodec<>(StandardCodecs.BYTE_ARRAY_CODEC)))
+			  .consume(new Consumer<byte[]>() {
 				  long num = 1;
 
 				  @Override
@@ -226,18 +206,15 @@ public class TcpServerTests {
 	public void tcpServerHandlesFrameData() throws InterruptedException {
 		final int port = SocketUtils.findAvailableTcpPort();
 
-		TcpServer<Frame, Frame> server = ReactiveNet.tcpServer(spec ->
-			spec
-			  .options(ServerOptions.create()
-			    .backlog(1000)
-			    .reuseAddr(true)
-			    .tcpNoDelay(true))
-			  .listen(port)
-			  .preprocessor(CodecPreprocessor.from(new FrameCodec(2, FrameCodec.LengthField.SHORT)))
-		);
+		TcpServer server = TcpServer.create(ServerOptions.on(port)
+		                                                 .backlog(1000)
+		                                                 .reuseAddr(true)
+		                                                 .tcpNoDelay(true));
 
 		server.start(ch -> {
-			ch.input().consume(frame -> {
+			ch.receive(NettyCodec.from(new FrameCodec(2, FrameCodec.LengthField.SHORT)))
+			  .log()
+			  .consume(frame -> {
 				short prefix = frame.getPrefix().readShort();
 				assertThat("prefix is not 128: "+prefix, prefix == 128);
 				Buffer data = frame.getData();
@@ -248,6 +225,7 @@ public class TcpServerTests {
 			return Flux.never();
 		}).get();
 
+		System.out.println("Starting on "+port);
 		start.set(System.currentTimeMillis());
 		for (int i = 0; i < threads; i++) {
 			threadPool.submit(new FramedLengthFieldMessageWriter(port));
@@ -269,14 +247,8 @@ public class TcpServerTests {
 		final int port = SocketUtils.findAvailableTcpPort();
 		final CountDownLatch latch = new CountDownLatch(1);
 
-		TcpClient<Buffer, Buffer> client = ReactiveNet.tcpClient(s ->
-			s.connect("localhost", port)
-		);
-
-		TcpServer<Buffer, Buffer> server = ReactiveNet.tcpServer(s ->
-			s.listen(port)
-			  .preprocessor(CodecPreprocessor.passthrough())
-		);
+		TcpServer server = TcpServer.create(port);
+		TcpClient client = TcpClient.create("localhost", port);
 
 		server.start(ch -> {
 			InetSocketAddress remoteAddr = ch.remoteAddress();
@@ -286,7 +258,8 @@ public class TcpServerTests {
 			return Flux.never();
 		}).get();
 
-		client.start(ch -> ch.writeWith(Flux.just(Buffer.wrap("Hello World!")))).get();
+		client.start(ch -> ch.send(Flux.just(Buffer.wrap("Hello World!"))))
+		      .get();
 
 		assertTrue("latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -298,72 +271,33 @@ public class TcpServerTests {
 		final int port = SocketUtils.findAvailableTcpPort();
 		final CountDownLatch latch = new CountDownLatch(2);
 
-		final TcpClient<String, String> client = ReactiveNet.tcpClient(s -> s.connect("localhost", port)
-		                                                                    .preprocessor(CodecPreprocessor.linefeed()));
+		final TcpClient client = TcpClient.create("localhost", port);
 
-		ChannelFluxHandler<String, String, ChannelFlux<String, String>>
+		ChannelFluxHandler<Buffer, Buffer, NettyChannel>
 				serverHandler = ch -> {
-			ch.input().consume(data -> {
+			ch.receiveString()
+			  .consume(data -> {
 				log.info("data " + data + " on " + ch);
 				latch.countDown();
 			});
 			return Flux.never();
 		};
 
-		TcpServer<String, String> server = ReactiveNet.tcpServer(s ->
-			s
-			  .options(ServerOptions.create()
-			    .pipelineConfigurer(pipeline -> pipeline.addLast(new LineBasedFrameDecoder(8 * 1024))))
-			  .listen(port)
-			  .preprocessor(CodecPreprocessor.string())
+		TcpServer server = TcpServer.create(ServerOptions.create()
+		                                                 .pipelineConfigurer(pipeline -> pipeline.addLast(new LineBasedFrameDecoder(
+				                                                 8 * 1024)))
+		                                                 .listen(port)
 		);
 
 		server.start(serverHandler).get();
 
-		client.start(ch -> ch.writeWith(Flux.just("Hello World!", "Hello 11!"))).get();
+		client.start(ch -> ch.send(Flux.just("Hello World!", "Hello 11!"), NettyCodec.linefeed()))
+		      .get();
 
 		assertTrue("Latch was counted down", latch.await(10, TimeUnit.SECONDS));
 
 		client.shutdown();
 		server.shutdown();
-	}
-
-	@Test
-	public void exposesNettyByteBuf() throws InterruptedException {
-		final int port = SocketUtils.findAvailableTcpPort();
-		final CountDownLatch latch = new CountDownLatch(msgs);
-
-		TcpServer<NettyBuffer, NettyBuffer> server = ReactiveNet.tcpServer(spec -> spec
-			.listen(port)
-			.options(ServerOptions.create())
-		);
-
-		log.info("Starting raw server on tcp://localhost:{}", port);
-		server.start(ch -> {
-			ch.input().consume(byteBuf -> {
-				byteBuf.getByteBuf().forEachByte(value -> {
-					if (value == '\n') {
-						latch.countDown();
-					}
-					return true;
-				});
-				byteBuf.getByteBuf().release();
-			});
-			return Flux.never();
-		}).get();
-
-
-		for (int i = 0; i < threads; i++) {
-			threadPool.submit(new DataWriter(port));
-		}
-
-		try {
-			latch.await(10, TimeUnit.SECONDS);
-			assertTrue("Latch was counted down : " +latch.getCount(), latch.getCount() == 0 );
-		} finally {
-			server.shutdown();
-		}
-
 	}
 
 	@Test
@@ -382,12 +316,8 @@ public class TcpServerTests {
 		  .log("broadcaster")
 		  .subscribe(processor);
 
-
-		//create a server dispatching data on the default shared dispatcher, and serializing/deserializing as string
-		HttpServer<String, String> httpServer = ReactiveNet.httpServer(server -> server
-		  .httpProcessor(CodecPreprocessor.string())
-		  .listen(0)
-		  );
+		//on a server dispatching data on the default shared dispatcher, and serializing/deserializing as string
+		HttpServer httpServer = HttpServer.create(0);
 
 		//Listen for anything exactly hitting the root URI and route the incoming connection request to the callback
 		httpServer.get("/", (request) -> {
@@ -395,8 +325,7 @@ public class TcpServerTests {
 			request.addResponseHeader("X-CUSTOM", "12345");
 			//attach to the shared tail, take the most recent generated substream and merge it to the high level stream
 			//returning a stream of String from each microbatch merged
-			return
-			  request.writeWith(
+			return request.sendString(
 				Flux.from(processor)
 				  //split each microbatch data into individual data
 				  .flatMap(Flux::fromIterable)
@@ -423,30 +352,24 @@ public class TcpServerTests {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		TcpServer<Buffer, Buffer> server =
-		  ReactiveNet.tcpServer(s ->
-			  s
-				.listen(0)
-		  );
+		TcpServer server = TcpServer.create(0);
 
-		server.startWithCodec(ch -> {
-			ch.input().log("channel").consume(trip -> {
+		server.start(ch -> {
+			ch.receive()
+			  .log("channel")
+			  .consume(trip -> {
 				countDownLatch.countDown();
 			});
 			return Flux.never();
-		}, CodecPreprocessor.string()).get();
+		})
+		      .get();
 
 		System.out.println("PORT +"+server.getListenAddress().getPort());
-		TcpClient<String, String> client =
-		  ReactiveNet.tcpClient(s ->
-			  s
-				.preprocessor(CodecPreprocessor.string())
-				.connect("127.0.0.1", server.getListenAddress().getPort())
-		  );
+		TcpClient client = TcpClient.create("127.0.0.1",
+				server.getListenAddress()
+				      .getPort());
 
-
-		client.start(ch ->
-			ch.writeWith(Flux.just("test"))
+		client.start(ch -> ch.sendString(Flux.just("test"))
 		).get();
 
 		assertThat("countDownLatch counted down", countDownLatch.await(5, TimeUnit.SECONDS));
@@ -455,13 +378,11 @@ public class TcpServerTests {
 	@Test
 	@Ignore
 	public void proxyTest() throws Exception {
-		HttpServer<Buffer, Buffer> server = HttpServer.create();
+		HttpServer server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
 			          .get("foaas.herokuapp.com/life/" + requestIn.param("search"))
-			          .flatMap(repliesOut ->
-				  requestIn
-					.writeWith(repliesOut.input())
+			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive())
 			  )
 		);
 		server.start().get();
@@ -472,15 +393,13 @@ public class TcpServerTests {
 	@Test
 	@Ignore
 	public void wsTest() throws Exception {
-		HttpServer<Buffer, Buffer> server = HttpServer.create();
+		HttpServer server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
-			          .ws("ws://localhost:3000", requestOut ->
-				  requestOut.writeWith(Flux.just(Buffer.wrap("ping")))
+			          .ws("ws://localhost:3000", requestOut -> requestOut.send(Flux.just(Buffer.wrap("ping")))
 			  )
-			          .flatMap(repliesOut ->
-				  requestIn
-					.writeWith(repliesOut.input().useCapacity(100))
+			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive()
+			                                                          .useCapacity(100))
 			  )
 		);
 		server.start().get();
@@ -528,7 +447,8 @@ public class TcpServerTests {
 		@Override
 		public void run() {
 			try {
-				java.nio.channels.SocketChannel ch = java.nio.channels.SocketChannel.open(new InetSocketAddress(port));
+				java.nio.channels.SocketChannel ch = java.nio.channels.SocketChannel.open(new InetSocketAddress
+						("localhost", port));
 
 				System.out.println("writing " + msgs + " messages of " + length + " byte length...");
 
@@ -562,7 +482,8 @@ public class TcpServerTests {
 		@Override
 		public void run() {
 			try {
-				java.nio.channels.SocketChannel ch = java.nio.channels.SocketChannel.open(new InetSocketAddress(port));
+				java.nio.channels.SocketChannel ch = java.nio.channels.SocketChannel.open(new InetSocketAddress
+						("localhost", port));
 
 				System.out.println("writing " + msgs + " messages of " + length + " byte length...");
 
@@ -580,28 +501,6 @@ public class TcpServerTests {
 					ch.write(buff);
 
 					count.incrementAndGet();
-				}
-				ch.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	private class DataWriter implements Runnable {
-		private final int port;
-
-		private DataWriter(int port) {
-			this.port = port;
-		}
-
-		@Override
-		public void run() {
-			try {
-				java.nio.channels.SocketChannel ch = java.nio.channels.SocketChannel.open(new InetSocketAddress(port));
-				start.set(System.currentTimeMillis());
-				for (int i = 0; i < 100; i++) {
-					ch.write(Buffer.wrap("Hello World!\n").byteBuffer());
 				}
 				ch.close();
 			} catch (IOException e) {

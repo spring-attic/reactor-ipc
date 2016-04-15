@@ -18,8 +18,6 @@ package reactor.io.netty.tcp;
 import java.util.concurrent.CountDownLatch;
 
 import reactor.core.subscriber.Subscribers;
-import reactor.io.buffer.Buffer;
-import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.nexus.Nexus;
 
@@ -35,17 +33,17 @@ public class NexusFederatePlay {
 
 		Nexus nexus = Nexus.create();
 		nexus.withSystemStats()
-		     .federate("ws://localhost:12014/create/stream")
+		     .federate("ws://localhost:12014/on/stream")
 		     .startAndAwait();
 
 
 		nexus.monitor(nexus);
 //
-		HttpClient<Buffer, Buffer> client = HttpClient.create();
+		HttpClient client = HttpClient.create();
 		client
-		           .ws("ws://localhost:12014/create/stream")
-				   .subscribe(Subscribers.consumer( (HttpChannel<?, ?> ch) ->
-						   ch.input().subscribe(Subscribers.consumer(System.out::println))
+		           .ws("ws://localhost:12014/on/stream")
+				   .subscribe(Subscribers.consumer( ch ->
+						   ch.receive().subscribe(Subscribers.consumer(System.out::println))
 				   ));
 
 		nexus.monitor(nexus2);

@@ -25,9 +25,7 @@
     </appender>
 
 	<logger name="reactor" level="DEBUG"/>
-	<logger name="reactor.io.net" level="INFO"/>
-	<!--<logger name="NettyHttpClient" level="DEBUG"/>-->
-	<!--<logger name="NettyHttpServer" level="DEBUG"/>-->
+	<logger name="reactor.io.netty" level="INFO"/>
 
     <root level="info">
         <appender-ref ref="stdout"/>

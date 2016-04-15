@@ -19,11 +19,10 @@ package reactor.io.netty.tcp.netty
 import reactor.core.publisher.Flux
 import reactor.io.buffer.Buffer
 import reactor.io.codec.json.JsonCodec
-import reactor.io.netty.preprocessor.CodecPreprocessor
+import reactor.io.netty.common.NettyCodec
 import reactor.io.netty.tcp.TcpClient
-import reactor.io.netty.util.SocketUtils
-import reactor.io.netty.ReactiveNet
 import reactor.io.netty.tcp.TcpServer
+import reactor.io.netty.util.SocketUtils
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -39,14 +38,13 @@ class NettyTcpServerSpec extends Specification {
 
 	static final int port = SocketUtils.findAvailableTcpPort()
 
-	def "NettyTcpServer responds to requests from clients"() {
+  def "TcpServer responds to requests from clients"() {
 		given: "a simple TcpServer"
 			def dataLatch = new CountDownLatch(1)
 			def server = TcpServer.create(port)
 
 		when: "the server is started"
-			server.start { conn ->
-				conn.writeBufferWith(Flux.just(Buffer.wrap("Hello World!")))
+		server.start { conn -> conn.send(Flux.just(Buffer.wrap("Hello World!")))
 			}.get()
 
 			def client = new SimpleClient(port, dataLatch, Buffer.wrap("Hello World!"))
@@ -62,23 +60,19 @@ class NettyTcpServerSpec extends Specification {
 			server.shutdown()
 	}
 
-	def "NettyTcpServer can encode and decode JSON"() {
+  def "TcpServer can encode and decode JSON"() {
 		given: "a TcpServer with JSON defaultCodec"
 			def dataLatch = new CountDownLatch(1)
-			TcpServer<Pojo, Pojo> server = ReactiveNet. tcpServer {
-				it.
-						listen(port)
-			}
+		TcpServer server = TcpServer.create(port)
 
 		when: "the server is started"
-			server.startWithCodec({ conn ->
-				conn.writeWith(
-						conn.input().take(1).map { pojo ->
+		server.start({ conn ->
+		  conn.send(conn.receive(NettyCodec.json(Pojo)).take(1).map { pojo ->
 							assert pojo.name == "John Doe"
 							new Pojo(name: "Jane Doe")
 						}
-				)
-			}, CodecPreprocessor.json(Pojo)).get()
+				  , NettyCodec.json(Pojo))
+		}).get()
 
 			def client = new SimpleClient(port, dataLatch, Buffer.wrap("{\"name\":\"John Doe\"}"))
 			client.start()
@@ -103,8 +97,7 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the client/server are prepared"
 			server.start { input ->
-				input.writeWith(
-						Flux.from(codec.decode(input.input()))
+			  input.send(Flux.from(codec.decode(input.receive()))
 								.log('serve')
 								.map(codec)
 								.useCapacity(5l)
@@ -112,11 +105,11 @@ class NettyTcpServerSpec extends Specification {
 			}.get()
 
 			client.start { input ->
-			  codec.decode(input.input())
+			  codec.decode(input.receive())
 						.log('receive')
 						.consume { latch.countDown() }
 
-				input.writeWith(
+			  input.send(
 						Flux.range(1, 10)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')
@@ -141,15 +134,14 @@ class NettyTcpServerSpec extends Specification {
 			def elem = 10
 			def latch = new CountDownLatch(elem)
 
-			TcpServer<Buffer, Buffer> server = TcpServer.create(port)
+		TcpServer server = TcpServer.create("localhost", port)
 			def client = TcpClient.create("localhost", port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 			def i = 0
 
 		when: "the client/server are prepared"
 			server.start { input ->
-				input.writeWith(
-						Flux.from(codec.decode(input.input()))
+			  input.send(input.receive(NettyCodec.from(codec))
 						.flatMap {
 						  Flux.just(it)
 							.log('flatmap-retry')
@@ -159,18 +151,17 @@ class NettyTcpServerSpec extends Specification {
 						}
 					}
 					.retry(2)
-				}
-				.map(codec)
-						.useCapacity(10l)
-				)
+			  }
+			  .useCapacity(10l)
+					  , NettyCodec.from(codec))
 			}.get()
 
 			client.start { input ->
-			  Flux.from(codec.decode(input))
+			  input.receive(NettyCodec.from(codec))
 						.log('receive')
 						.consume { latch.countDown() }
 
-				input.writeWith(
+			  input.send(
 						Flux.range(1, elem)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send')

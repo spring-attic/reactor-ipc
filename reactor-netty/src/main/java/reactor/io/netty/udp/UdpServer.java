@@ -51,10 +51,11 @@ import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
+import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.ReactivePeer;
-import reactor.io.netty.common.NettyChannelHandlerBridge;
+import reactor.io.netty.tcp.TcpChannel;
+import reactor.io.netty.common.NettyChannelHandler;
+import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 
@@ -62,8 +63,7 @@ import reactor.io.netty.util.NettyNativeDetector;
  *
  * @author Stephane Maldini
  */
-final public class DatagramServer
-		extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> {
+final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
@@ -74,7 +74,7 @@ final public class DatagramServer
 	 * Bind a new UDP server to the "loopback" address. By default the default server implementation is scanned from the
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
-	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
+	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#send} can subscribe to
 	 * any passed {@link Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
 	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
 	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
@@ -84,15 +84,15 @@ final public class DatagramServer
 	 * <p> By default the type of emitted data or received data is {@link Buffer}
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static DatagramServer create() {
-		return create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+	public static UdpServer create() {
+		return create(DEFAULT_BIND_ADDRESS);
 	}
 
 	/**
 	 * Bind a new UDP server to the given bind address. By default the default server implementation is scanned from the
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to read
-	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can subscribe to
+	 * any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#send} can subscribe to
 	 * any passed {@link Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
 	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
 	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
@@ -103,8 +103,8 @@ final public class DatagramServer
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static DatagramServer create(String bindAddress) {
-		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+	public static UdpServer create(String bindAddress) {
+		return create(bindAddress, DEFAULT_PORT);
 	}
 
 	/**
@@ -112,7 +112,7 @@ final public class DatagramServer
 	 * is scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
 	 * dependencies are on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add
 	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
-	 * ChannelFlux#writeWith} can subscribe to any passed {@link Publisher}. <p> Note that
+	 * ChannelFlux#send} can subscribe to any passed {@link Publisher}. <p> Note that
 	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
 	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
@@ -122,15 +122,15 @@ final public class DatagramServer
 	 * @param port the port to listen on the passed bind address
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static DatagramServer create(int port) {
-		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+	public static UdpServer create(int port) {
+		return create(DEFAULT_BIND_ADDRESS, port);
 	}
 
 	/**
 	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
 	 * on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to
-	 * read any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#writeWith} can
+	 * read any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#send} can
 	 * subscribe to any passed {@link Publisher}. <p> Note that {@link
 	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
 	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
@@ -142,11 +142,27 @@ final public class DatagramServer
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
-	public static DatagramServer create(final String bindAddress, final int port) {
-		return ReactiveNet.udpServer(serverSpec -> {
-			serverSpec.timer(Timer.globalOrNull());
-			return serverSpec.listen(bindAddress, port);
-		});
+	public static UdpServer create(String bindAddress, int port) {
+		return create(ServerOptions.create()
+		                                  .listen(bindAddress, port)
+		                                  .timer(Timer.globalOrNull()));
+	}/**
+	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
+	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
+	 * on the classpath. <p> <p> From the emitted {@link ChannelFlux}, one can decide to add in-channel consumers to
+	 * read any incoming data. <p> To reply data on the active connection, {@link ChannelFlux#send} can
+	 * subscribe to any passed {@link Publisher}. <p> Note that {@link
+	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
+	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
+	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
+	 * channels will run on the same thread they have beem receiving IO events.
+	 *
+	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * @param options
+	 * @return a new Stream of ChannelFlux, typically a peer of connections.
+	 */
+	public static UdpServer create(ServerOptions options) {
+		return new UdpServer(options);
 	}
 
 	final Bootstrap      bootstrap;
@@ -158,21 +174,17 @@ final public class DatagramServer
 
 	volatile DatagramChannel channel;
 
-	public DatagramServer(Timer timer,
-	                         InetSocketAddress listenAddress,
-	                         NetworkInterface multicastInterface,
-	                         ServerOptions options) {
-		super(timer, options != null ? options.prefetch() : Long.MAX_VALUE);
-		this.listenAddress = listenAddress;
-		this.multicastInterface = multicastInterface;
-		this.options = options;
+	UdpServer(ServerOptions options) {
+		super(options.timer(), options.prefetch());
+		this.listenAddress = options.listenAddress();
+		this.multicastInterface = options.multicastInterface();
+		this.options = options.toImmutable();
 
-		if (null != options && null != options.eventLoopGroup()) {
+		if (null != options.eventLoopGroup()) {
 			this.ioGroup = options.eventLoopGroup();
 		} else {
 			int ioThreadCount = DEFAULT_UDP_THREAD_COUNT;
-			this.ioGroup =
-					options == null || options.protocolFamily() == null ?
+			this.ioGroup = options.protocolFamily() == null ?
 							NettyNativeDetector.newEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory
 									("reactor-udp-io")) :
 							new NioEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory
@@ -184,19 +196,17 @@ final public class DatagramServer
 				.option(ChannelOption.AUTO_READ, false)
 		;
 
-		if ((options == null || options.protocolFamily() == null) &&
+		if ((options.protocolFamily() == null) &&
 				NettyNativeDetector.getDatagramChannel(ioGroup).getSimpleName().startsWith("Epoll")) {
 			bootstrap.channel(NettyNativeDetector.getDatagramChannel(ioGroup));
 		} else {
-			bootstrap.channelFactory(() -> new NioDatagramChannel(toNettyFamily(options != null ? options.protocolFamily() : null)));
+			bootstrap.channelFactory(() -> new NioDatagramChannel(toNettyFamily(options.protocolFamily())));
 		}
 
-		if (options != null) {
 			bootstrap.option(ChannelOption.SO_RCVBUF, options.rcvbuf())
 			         .option(ChannelOption.SO_SNDBUF, options.sndbuf())
 			         .option(ChannelOption.SO_REUSEADDR, options.reuseAddr())
 			         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.timeout());
-		}
 
 		if (null != listenAddress) {
 			bootstrap.localAddress(listenAddress);
@@ -206,142 +216,6 @@ final public class DatagramServer
 		if (null != multicastInterface) {
 			bootstrap.option(ChannelOption.IP_MULTICAST_IF, multicastInterface);
 		}
-	}
-
-	protected InternetProtocolFamily toNettyFamily(ProtocolFamily family) {
-		if (family == null) {
-			return null;
-		}
-		switch (family.name()) {
-			case "INET":
-				return InternetProtocolFamily.IPv4;
-			case "INET6":
-				return InternetProtocolFamily.IPv6;
-			default:
-				throw new IllegalArgumentException("Unsupported protocolFamily: " + family.name());
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> channelHandler) {
-		return new Mono<Void>(){
-
-			@Override
-			public void subscribe(final Subscriber<? super Void> subscriber) {
-				ChannelFuture future = bootstrap.handler(new ChannelInitializer<DatagramChannel>() {
-					@Override
-					public void initChannel(final DatagramChannel ch) throws Exception {
-						if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
-							getOptions().pipelineConfigurer().accept(ch.pipeline());
-						}
-
-						bindChannel(channelHandler, ch);
-					}
-				}).bind();
-				future.addListener(new ChannelFutureListener() {
-					@Override
-					public void operationComplete(ChannelFuture future) throws Exception {
-						subscriber.onSubscribe(EmptySubscription.INSTANCE);
-						if (future.isSuccess()) {
-							log.info("BIND {}", future.channel().localAddress());
-							channel = (DatagramChannel) future.channel();
-							subscriber.onComplete();
-						}
-						else {
-							Exceptions.throwIfFatal(future.cause());
-							subscriber.onError(future.cause());
-						}
-					}
-				});
-			}
-		};
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	protected Mono<Void> doShutdown() {
-		return new NettyChannel.FuturePublisher<ChannelFuture>(channel.close()){
-			@Override
-			protected void doComplete(ChannelFuture future, Subscriber<? super Void> s) {
-				if (null == getOptions() || null == getOptions().eventLoopGroup()) {
-					new NettyChannel.FuturePublisher<>(ioGroup.shutdownGracefully()).subscribe(s);
-				}
-				else {
-					super.doComplete(future, s);
-				}
-			}
-		};
-	}
-
-	public Mono<Void> join(final InetAddress multicastAddress, NetworkInterface iface) {
-		if (null == channel) {
-			throw new IllegalStateException("DatagramServer not running.");
-		}
-
-		if (null == iface && null != getMulticastInterface()) {
-			iface = getMulticastInterface();
-		}
-
-		final ChannelFuture future;
-		if (null != iface) {
-			future = channel.joinGroup(new InetSocketAddress(multicastAddress, getListenAddress().getPort()), iface);
-		} else {
-			future = channel.joinGroup(multicastAddress);
-		}
-
-		return new NettyChannel.FuturePublisher<Future<?>>(future){
-			@Override
-			protected void doComplete(Future<?> future, Subscriber<? super Void> s) {
-				log.info("JOIN {}", multicastAddress);
-				super.doComplete(future, s);
-			}
-		};
-	}
-
-	/**
-	 * Join a multicast group.
-	 *
-	 * @param multicastAddress multicast address of the group to join
-	 * @return a {@link Publisher} that will be complete when the group has been joined
-	 */
-	public Mono<Void> join(InetAddress multicastAddress) {
-		return join(multicastAddress, null);
-	}
-
-	public Mono<Void> leave(final InetAddress multicastAddress, NetworkInterface iface) {
-		if (null == channel) {
-			throw new IllegalStateException("DatagramServer not running.");
-		}
-
-		if (null == iface && null != getMulticastInterface()) {
-			iface = getMulticastInterface();
-		}
-
-		final ChannelFuture future;
-		if (null != iface) {
-			future = channel.leaveGroup(new InetSocketAddress(multicastAddress, getListenAddress().getPort()), iface);
-		} else {
-			future = channel.leaveGroup(multicastAddress);
-		}
-
-		return new NettyChannel.FuturePublisher<Future<?>>(future){
-			@Override
-			protected void doComplete(Future<?> future, Subscriber<? super Void> s) {
-				log.info("LEAVE {}", multicastAddress);
-				super.doComplete(future, s);
-			}
-		};
-	}
-
-	/**
-	 * Leave a multicast group.
-	 *
-	 * @param multicastAddress multicast address of the group to leave
-	 * @return a {@link Publisher} that will be complete when the group has been left
-	 */
-	public Mono<Void> leave(InetAddress multicastAddress) {
-		return leave(multicastAddress, null);
 	}
 
 	/**
@@ -367,15 +241,152 @@ final public class DatagramServer
 	 *
 	 * @return the server options in use
 	 */
-	protected ServerOptions getOptions() {
+	public ServerOptions getOptions() {
 		return options;
 	}
 
+	/**
+	 * Join a multicast group.
+	 *
+	 * @param multicastAddress multicast address of the group to join
+	 * @return a {@link Publisher} that will be complete when the group has been joined
+	 */
+	public Mono<Void> join(InetAddress multicastAddress) {
+		return join(multicastAddress, null);
+	}
 
-	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
+	/**
+	 * Join a multicast group.
+	 *
+	 * @param multicastAddress multicast address of the group to join
+	 * @return a {@link Publisher} that will be complete when the group has been joined
+	 */
+	public Mono<Void> join(final InetAddress multicastAddress, NetworkInterface iface) {
+		if (null == channel) {
+			throw new IllegalStateException("UdpServer not running.");
+		}
+
+		if (null == iface && null != getMulticastInterface()) {
+			iface = getMulticastInterface();
+		}
+
+		final ChannelFuture future;
+		if (null != iface) {
+			future = channel.joinGroup(new InetSocketAddress(multicastAddress, getListenAddress().getPort()), iface);
+		} else {
+			future = channel.joinGroup(multicastAddress);
+		}
+
+		return new MonoChannelFuture<Future<?>>(future){
+			@Override
+			protected void doComplete(Future<?> future, Subscriber<? super Void> s) {
+				log.info("JOIN {}", multicastAddress);
+				super.doComplete(future, s);
+			}
+		};
+	}
+
+	/**
+	 * Leave a multicast group.
+	 *
+	 * @param multicastAddress multicast address of the group to leave
+	 * @return a {@link Publisher} that will be complete when the group has been left
+	 */
+	public Mono<Void> leave(InetAddress multicastAddress) {
+		return leave(multicastAddress, null);
+	}
+
+	/**
+	 * Leave a multicast group.
+	 *
+	 * @param multicastAddress multicast address of the group to leave
+	 * @return a {@link Publisher} that will be complete when the group has been left
+	 */
+	public Mono<Void> leave(final InetAddress multicastAddress, NetworkInterface iface) {
+		if (null == channel) {
+			throw new IllegalStateException("UdpServer not running.");
+		}
+
+		if (null == iface && null != getMulticastInterface()) {
+			iface = getMulticastInterface();
+		}
+
+		final ChannelFuture future;
+		if (null != iface) {
+			future = channel.leaveGroup(new InetSocketAddress(multicastAddress, getListenAddress().getPort()), iface);
+		} else {
+			future = channel.leaveGroup(multicastAddress);
+		}
+
+		return new MonoChannelFuture<Future<?>>(future){
+			@Override
+			protected void doComplete(Future<?> future, Subscriber<? super Void> s) {
+				log.info("LEAVE {}", multicastAddress);
+				super.doComplete(future, s);
+			}
+		};
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, NettyChannel> channelHandler) {
+		return new Mono<Void>() {
+
+			@Override
+			public void subscribe(final Subscriber<? super Void> subscriber) {
+				ChannelFuture future = bootstrap.handler(new ChannelInitializer<DatagramChannel>() {
+					@Override
+					public void initChannel(final DatagramChannel ch) throws Exception {
+						if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+							getOptions().pipelineConfigurer()
+							            .accept(ch.pipeline());
+						}
+
+						bindChannel(channelHandler, ch);
+					}
+				})
+				                                .bind();
+				future.addListener(new ChannelFutureListener() {
+					@Override
+					public void operationComplete(ChannelFuture future) throws Exception {
+						subscriber.onSubscribe(EmptySubscription.INSTANCE);
+						if (future.isSuccess()) {
+							log.info("BIND {}",
+									future.channel()
+									      .localAddress());
+							channel = (DatagramChannel) future.channel();
+							subscriber.onComplete();
+						}
+						else {
+							Exceptions.throwIfFatal(future.cause());
+							subscriber.onError(future.cause());
+						}
+					}
+				});
+			}
+		};
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected Mono<Void> doShutdown() {
+		return new MonoChannelFuture<ChannelFuture>(channel.close()) {
+			@Override
+			protected void doComplete(ChannelFuture future, Subscriber<? super Void> s) {
+				if (null == getOptions() || null == getOptions().eventLoopGroup()) {
+					new MonoChannelFuture<>(ioGroup.shutdownGracefully()).subscribe(s);
+				}
+				else {
+					super.doComplete(future, s);
+				}
+			}
+		};
+	}
+
+	void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
 			Object _ioChannel) {
 		DatagramChannel ioChannel = (DatagramChannel) _ioChannel;
-		NettyChannel netChannel = new NettyChannel(
+		TcpChannel netChannel = new TcpChannel(
 				getDefaultPrefetchSize(),
 				ioChannel
 		);
@@ -383,11 +394,11 @@ final public class DatagramServer
 		ChannelPipeline pipeline = ioChannel.pipeline();
 
 		if (log.isDebugEnabled()) {
-			pipeline.addLast(new LoggingHandler(DatagramServer.class));
+			pipeline.addLast(new LoggingHandler(UdpServer.class));
 		}
 
 		pipeline.addLast(
-				new NettyChannelHandlerBridge(handler, netChannel) {
+				new NettyChannelHandler(handler, netChannel) {
 					@Override
 					public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 						if (msg != null && DatagramPacket.class.isAssignableFrom(msg.getClass())) {
@@ -410,6 +421,19 @@ final public class DatagramServer
 				});
 	}
 
-	private final static Logger log = Logger.getLogger(DatagramServer.class);
+	InternetProtocolFamily toNettyFamily(ProtocolFamily family) {
+		if (family == null) {
+			return null;
+		}
+		switch (family.name()) {
+			case "INET":
+				return InternetProtocolFamily.IPv4;
+			case "INET6":
+				return InternetProtocolFamily.IPv6;
+			default:
+				throw new IllegalArgumentException("Unsupported protocolFamily: " + family.name());
+		}
+	}
+	final static Logger log = Logger.getLogger(UdpServer.class);
 
 }

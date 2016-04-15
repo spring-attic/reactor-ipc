@@ -43,13 +43,11 @@ import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
-import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.Spec;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.preprocessor.CodecPreprocessor;
+import reactor.io.netty.common.NettyCodec;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -61,7 +59,7 @@ import static org.junit.Assert.assertThat;
 @Ignore
 public class SmokeTests {
 	private Processor<Buffer, Buffer>         processor;
-	private HttpServer<Buffer, Buffer> httpServer;
+	private HttpServer httpServer;
 
 	private final AtomicInteger postReduce         = new AtomicInteger();
 	private final AtomicInteger windows            = new AtomicInteger();
@@ -89,14 +87,7 @@ public class SmokeTests {
 		this.port = port;
 	}*/
 
-	private ClientOptions nettyOptions;
-
-	private final Function<Spec.HttpClientSpec<String, String>, Spec.HttpClientSpec<String, String>> clientFactory =
-	  spec -> spec
-		.options(nettyOptions)
-		.httpProcessor(CodecPreprocessor.string())
-		.connect("localhost", httpServer.getListenAddress().getPort());
-
+	private ClientOptions nettyOptions = ClientOptions.to("localhost", port);
 	@SuppressWarnings("unchecked")
 	private List<Integer> windowsData = new ArrayList<>();
 
@@ -181,7 +172,7 @@ public class SmokeTests {
 		int fulltotalints = 0;
 
 		nettyOptions =
-		  ClientOptions.create().eventLoopGroup(new NioEventLoopGroup(10));
+		  ClientOptions.to("localhost", httpServer.getListenAddress().getPort()).eventLoopGroup(new NioEventLoopGroup(10));
 
 		for (int t = 0; t < iter; t++) {
 			List<Integer> clientDatas = new ArrayList<>();
@@ -228,7 +219,7 @@ public class SmokeTests {
 		int fulltotalints = 0;
 
 		nettyOptions =
-				ClientOptions.create().eventLoopGroup(new NioEventLoopGroup(10));
+				ClientOptions.to("localhost", httpServer.getListenAddress().getPort()).eventLoopGroup(new NioEventLoopGroup(10));
 
 		for (int t = 0; t < iter; t++) {
 			int size = 0;
@@ -281,44 +272,41 @@ public class SmokeTests {
 		  .subscribeWith(workProcessor)
 		  .as(Flux::from);
 
-		httpServer = ReactiveNet.httpServer(server -> server.httpProcessor(CodecPreprocessor.from(codec))
-		                                                   .listen(port)
-		                                                   .options(ServerOptions.create().eventLoopGroup(
-				                                                   new NioEventLoopGroup(10)))
-		);
+		httpServer = HttpServer.create(ServerOptions.on(port).eventLoopGroup(
+				                                                   new NioEventLoopGroup(10)));
 
 		httpServer.get("/data", (request) -> {
-			request.responseHeaders()
-			       .removeTransferEncodingChunked();
+			request.removeTransferEncodingChunked();
+
 			request.addResponseHeader("Content-type", "text/plain");
 			request.addResponseHeader("Expires", "0");
 			request.addResponseHeader("X-GPFDIST-VERSION", "Spring XD");
 			request.addResponseHeader("X-GP-PROTO", "1");
 			request.addResponseHeader("Cache-Control", "no-cache");
 			request.addResponseHeader("Connection", "close");
-			return request.writeWith(bufferStream.doOnNext(d -> integer.getAndIncrement())
-			                                     .take(takeCount)
-			                                     .doOnNext(d -> integerPostTake.getAndIncrement())
-			                                     .timeout(Duration.ofSeconds(2), Flux.<Buffer>empty().doOnComplete(() -> System.out.println(
+			return request.send(bufferStream.doOnNext(d -> integer.getAndIncrement())
+			                                .take(takeCount)
+			                                .doOnNext(d -> integerPostTake.getAndIncrement())
+			                                .timeout(Duration.ofSeconds(2), Flux.<Buffer>empty().doOnComplete(() -> System.out.println(
 					                                     "timeout after 2 ")))
-			                                     .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Flux
+			                                .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Flux
 							.just(
 									GpdistCodec.class.equals(codec.getClass()) ?
 											Buffer.wrap(new byte[0]) : Buffer.wrap("END"))
 			                                                                                                           .doOnComplete(
 					                                                                                                           () -> integerPostConcat.decrementAndGet()))//END
-			                                     .doOnNext(d -> integerPostConcat.getAndIncrement())
-			                                     .useCapacity(1L));
+			                                .doOnNext(d -> integerPostConcat.getAndIncrement())
+			                                .useCapacity(1L), NettyCodec.from(codec));
 		});
 
 		httpServer.start().get();
 	}
 
 	private List<String> getClientDataPromise() throws Exception {
-		HttpClient<String, String> httpClient = ReactiveNet.httpClient(clientFactory);
+		HttpClient httpClient = HttpClient.create(nettyOptions);
 
 		Mono<List<String>> content = httpClient.get("/data")
-		                                       .then(f -> f.input().toList())
+		                                       .then(f -> f.receiveString().toList())
 		                                       .cache();
 
 		List<String> res = content.get(Duration.ofSeconds(20));
@@ -563,7 +551,7 @@ public class SmokeTests {
 				.subscribeWith(workProcessor);
 
 
-	request.writeWith(bufferStream
+	request.send(bufferStream
 //							.doOnNext(d ->
 //											integer.getAndIncrement()
 //							)

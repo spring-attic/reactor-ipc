@@ -28,8 +28,10 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
@@ -37,31 +39,26 @@ import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.io.buffer.Buffer;
-import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.common.NettyChannelHandlerBridge;
-import reactor.io.netty.http.HttpChannel;
-import reactor.io.netty.http.HttpException;
-import reactor.io.netty.http.model.Cookie;
 import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.NettyChannelHandler;
+import reactor.io.netty.tcp.TcpChannel;
 
 /**
  * @author Stephane Maldini
  */
-class NettyHttpClientHandler extends NettyChannelHandlerBridge {
+class NettyHttpClientHandler extends NettyChannelHandler {
 
-	final NettyChannel                                    tcpStream;
-	       NettyHttpChannel                                httpChannel;
-	      Subscriber<? super HttpChannel<Buffer, Buffer>> replySubscriber;
+	final TcpChannel tcpStream;
+	NettyHttpChannel                httpChannel;
+	Subscriber<? super HttpChannel> replySubscriber;
 
 	/**
 	 * The body of an HTTP response should be discarded.
 	 */
 	private boolean discardBody = false;
 
-	public NettyHttpClientHandler(
-			ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
-			NettyChannel tcpStream) {
+	public NettyHttpClientHandler(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, TcpChannel tcpStream) {
 		super(handler, tcpStream);
 		this.tcpStream = tcpStream;
 	}
@@ -73,7 +70,7 @@ class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 		if(httpChannel == null) {
 			httpChannel = new PostHeaderPublisher();
 			httpChannel.keepAlive(true);
-			httpChannel.headers().transferEncodingChunked();
+			HttpUtil.setTransferEncodingChunked(httpChannel.nettyRequest, true);
 		}
 
 
@@ -138,7 +135,8 @@ class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 	private void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws Exception {
 		boolean discardBody = false;
 
-		int code = response.getStatus().code();
+		int code = response.status()
+		                   .code();
 		if (code == HttpResponseStatus.NOT_FOUND.code()
 				|| code == HttpResponseStatus.BAD_REQUEST.code()
 				|| code == HttpResponseStatus.INTERNAL_SERVER_ERROR.code()) {
@@ -187,16 +185,16 @@ class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 	}
 
 	/**
-	 * An event to attach a {@link Subscriber} to the {@link NettyChannel}
-	 * created by {@link NettyHttpClient}
+	 * An event to attach a {@link Subscriber} to the {@link TcpChannel}
+	 * created by {@link HttpClient}
 	 */
 	public static final class ChannelInputSubscriberEvent {
 
-		private final Subscriber<? super HttpChannel<Buffer,Buffer>> clientReplySubscriber;
+		private final Subscriber<? super HttpChannel> clientReplySubscriber;
 
-		public ChannelInputSubscriberEvent(Subscriber<? super HttpChannel<Buffer, Buffer>> inputSubscriber) {
+		public ChannelInputSubscriberEvent(Subscriber<? super HttpChannel> inputSubscriber) {
 			if (null == inputSubscriber) {
-				throw new IllegalArgumentException("HTTP input subscriber must not be null.");
+				throw new IllegalArgumentException("HTTP receive subscriber must not be null.");
 			}
 			this.clientReplySubscriber = inputSubscriber;
 		}
@@ -207,14 +205,13 @@ class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 		private Cookies cookies;
 
 		public PostHeaderPublisher() {
-			super(NettyHttpClientHandler.this.tcpStream,
-					new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+			super(NettyHttpClientHandler.this.tcpStream, null);
 		}
 
 		@Override
 		void setNettyResponse(HttpResponse nettyResponse) {
 			super.setNettyResponse(nettyResponse);
-			this.cookies = Cookies.newClientResponseHolder(responseHeaders().delegate());
+			this.cookies = Cookies.newClientResponseHolder(responseHeaders());
 		}
 
 		@Override
@@ -223,7 +220,7 @@ class NettyHttpClientHandler extends NettyChannelHandlerBridge {
 		}
 
 		@Override
-		public Map<String, Set<Cookie>> cookies() {
+		public Map<CharSequence, Set<Cookie>> cookies() {
 			return cookies.getCachedCookies();
 		}
 	}

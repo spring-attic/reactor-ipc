@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.io.netty.http.routing;
+package reactor.io.netty.http;
 
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpVersion;
 import reactor.bus.registry.Registries;
 import reactor.bus.registry.Registry;
 import reactor.bus.selector.Selector;
 import reactor.bus.selector.Selectors;
 import reactor.bus.selector.UriPathSelector;
 import reactor.core.converter.DependencyUtils;
+import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.http.HttpChannel;
-import reactor.io.netty.http.model.Method;
-import reactor.io.netty.http.model.Protocol;
 
 /**
  * @author Stephane Maldini
  */
-public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
+final class RegistryChannelMappings extends ChannelMappings {
 
 	static {
 		if (!DependencyUtils.hasReactorBus()) {
@@ -41,30 +41,30 @@ public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
 		}
 	}
 
-	private final Registry<HttpChannel<IN, OUT>, HttpHandlerMapping<IN, OUT>> routedWriters =
+	private final Registry<HttpChannel, HttpHandlerMapping> routedWriters =
 			Registries.create();
 
 	@Override
-	public Iterable<? extends ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> apply(
-			HttpChannel<IN, OUT> channel) {
+	public Iterable<? extends ChannelFluxHandler<Buffer, Buffer, HttpChannel>> apply(
+			HttpChannel channel) {
 		return routedWriters.selectValues(channel);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ChannelMappings<IN, OUT> add(Predicate<? super HttpChannel<IN, OUT>> condition,
-			ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+	public ChannelMappings add(Predicate<? super HttpChannel> condition,
+			ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
 
-		Selector<HttpChannel<IN, OUT>> selector;
+		Selector<HttpChannel> selector;
 
 		if(Selector.class.isAssignableFrom(condition.getClass())) {
-			selector = (Selector<HttpChannel<IN, OUT>>) condition;
+			selector = (Selector<HttpChannel>) condition;
 		}
 		else{
 			selector = Selectors.predicate(condition);
 		}
 
-		routedWriters.register(selector, new HttpHandlerMapping<>(condition, handler, selector.getHeaderResolver()));
+		routedWriters.register(selector, new HttpHandlerMapping(condition, handler, selector.getHeaderResolver()));
 
 		return this;
 	}
@@ -75,7 +75,7 @@ public class RegistryChannelMappings<IN, OUT> extends ChannelMappings<IN, OUT> {
 
 		final UriPathSelector uriPathSelector;
 
-		public HttpSelector(String uri, Protocol protocol, Method method) {
+		public HttpSelector(String uri, HttpVersion protocol, HttpMethod method) {
 			super(null, protocol, method);
 			this.uriPathSelector = uri != null && !uri.isEmpty() ? new UriPathSelector(uri) : null;
 		}

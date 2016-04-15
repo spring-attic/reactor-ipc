@@ -51,34 +51,31 @@ import reactor.core.util.Sequence;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.common.NettyBuffer;
-import reactor.io.netty.common.NettyChannel;
 
 /**
  * Netty {@link io.netty.channel.ChannelInboundHandler} implementation that passes data to a Reactor {@link
  * ChannelFlux}.
- * @author Jon Brisbin
+ *
  * @author Stephane Maldini
  */
-public class NettyChannelHandlerBridge extends ChannelDuplexHandler
+public class NettyChannelHandler extends ChannelDuplexHandler
 		implements Introspectable, Loopback, Producer,
 		           Completable  {
 
-	protected static final Logger log = Logger.getLogger(NettyChannelHandlerBridge.class);
+	protected static final Logger log = Logger.getLogger(NettyChannelHandler.class);
 
-	protected final ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler;
-	protected final NettyChannel                                                    reactorNettyChannel;
+	protected final ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler;
+	protected final NettyChannel                                     nettyChannel;
 
 	protected ChannelInputSubscriber channelSubscriber;
 
-	private volatile       int                                                  channelRef  = 0;
-	protected static final AtomicIntegerFieldUpdater<NettyChannelHandlerBridge> CHANNEL_REF =
-			AtomicIntegerFieldUpdater.newUpdater(NettyChannelHandlerBridge.class, "channelRef");
+	private volatile       int                                            channelRef  = 0;
+	protected static final AtomicIntegerFieldUpdater<NettyChannelHandler> CHANNEL_REF =
+			AtomicIntegerFieldUpdater.newUpdater(NettyChannelHandler.class, "channelRef");
 
-	public NettyChannelHandlerBridge(ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> handler,
-			NettyChannel reactorNettyChannel) {
+	public NettyChannelHandler(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, NettyChannel nettyChannel) {
 		this.handler = handler;
-		this.reactorNettyChannel = reactorNettyChannel;
+		this.nettyChannel = nettyChannel;
 	}
 
 	@Override
@@ -89,7 +86,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 			@SuppressWarnings("unchecked") ChannelInputSubscriber subscriberEvent = (ChannelInputSubscriber) evt;
 
 			if (null == channelSubscriber) {
-				CHANNEL_REF.incrementAndGet(NettyChannelHandlerBridge.this);
+				CHANNEL_REF.incrementAndGet(NettyChannelHandler.this);
 				channelSubscriber = subscriberEvent;
 				subscriberEvent.onSubscribe(new Subscription() {
 					@Override
@@ -109,14 +106,14 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 						ctx.channel()
 						   .config()
 						   .setAutoRead(false);
-						CHANNEL_REF.decrementAndGet(NettyChannelHandlerBridge.this);
+						CHANNEL_REF.decrementAndGet(NettyChannelHandler.this);
 					}
 				});
 
 			}
 			else {
 				channelSubscriber.onSubscribe(EmptySubscription.INSTANCE);
-				channelSubscriber.onError(new IllegalStateException("Only one connection input subscriber allowed."));
+				channelSubscriber.onError(new IllegalStateException("Only one connection receive subscriber allowed."));
 			}
 		}
 		super.userEventTriggered(ctx, evt);
@@ -130,18 +127,20 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 		super.channelActive(ctx);
-		handler.apply(reactorNettyChannel)
+		handler.apply(nettyChannel)
 		       .subscribe(new CloseSubscriber(ctx));
 	}
 
 	@Override
 	public boolean isStarted() {
-		return reactorNettyChannel.delegate().isActive();
+		return nettyChannel.delegate()
+		                   .isActive();
 	}
 
 	@Override
 	public boolean isTerminated() {
-		return !reactorNettyChannel.delegate().isOpen();
+		return !nettyChannel.delegate()
+		                    .isOpen();
 	}
 
 	@Override
@@ -190,7 +189,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 	@Override
 	public Object connectedInput() {
-		return reactorNettyChannel;
+		return nettyChannel;
 	}
 
 	@Override
@@ -333,7 +332,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 	}
 
 	/**
-	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandlerBridge}
+	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandler}
 	 */
 	public static final class ChannelInputSubscriber implements Subscription, Subscriber<Buffer>
 	, Requestable, Completable, Backpressurable, Producer, Cancellable {
@@ -365,7 +364,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		public ChannelInputSubscriber(Subscriber<? super Buffer> inputSubscriber, long bufferSize) {
 			if (null == inputSubscriber) {
-				throw new IllegalArgumentException("Connection input subscriber must not be null.");
+				throw new IllegalArgumentException("Connection receive subscriber must not be null.");
 			}
 			this.inputSubscriber = inputSubscriber;
 			this.bufferSize = (int) Math.min(Math.max(bufferSize, 32), 128);
@@ -643,7 +642,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public Object connectedInput() {
-			return NettyChannelHandlerBridge.this;
+			return NettyChannelHandler.this;
 		}
 
 		@Override
@@ -776,7 +775,7 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 
 		@Override
 		public Object connectedInput() {
-			return NettyChannelHandlerBridge.this;
+			return NettyChannelHandler.this;
 		}
 
 		@Override
@@ -883,12 +882,8 @@ public class NettyChannelHandlerBridge extends ChannelDuplexHandler
 		}
 	}
 
-	public ChannelFluxHandler<Buffer, Buffer, ChannelFlux<Buffer, Buffer>> getHandler() {
+	public ChannelFluxHandler<Buffer, Buffer, NettyChannel> getHandler() {
 		return handler;
-	}
-
-	public NettyChannel getReactorNettyChannel() {
-		return reactorNettyChannel;
 	}
 
 }

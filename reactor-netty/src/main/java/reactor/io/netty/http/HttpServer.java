@@ -27,42 +27,54 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Exceptions;
+import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.ReactivePeer;
-import reactor.io.netty.Spec;
-import reactor.io.netty.http.model.HttpHeaders;
-import reactor.io.netty.http.routing.ChannelMappings;
+import reactor.io.netty.common.MonoChannelFuture;
+import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.Peer;
+import reactor.io.netty.config.ServerOptions;
+import reactor.io.netty.tcp.TcpChannel;
+import reactor.io.netty.tcp.TcpServer;
 
 /**
  * Base functionality needed by all servers that communicate with clients over HTTP.
- * @param <IN> The type that will be received by this server
- * @param <OUT> The type that will be sent by this server
  * @author Stephane Maldini
  */
-public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChannel<IN, OUT>> {
+public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loopback {
 
 	/**
 	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
 	 * @return a simple HTTP Server
 	 */
-	public static HttpServer<Buffer, Buffer> create() {
-		return create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+	public static HttpServer create() {
+		return create(DEFAULT_BIND_ADDRESS);
 	}
 
 	/**
-	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
-	 * @param bindAddress address to listen for (e.g. 0.0.0.0 or 127.0.0.1)
+	 * Build a simple Netty HTTP server listening othe passed bind address and port
+	 *
+	 * @param options
+	 *
 	 * @return a simple HTTP server
 	 */
-	public static HttpServer<Buffer, Buffer> create(String bindAddress) {
-		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+	public static HttpServer create(ServerOptions options) {
+		return new HttpServer(options);
 	}
 
 	/**
@@ -70,8 +82,17 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @param port the port to listen to
 	 * @return a simple HTTP server
 	 */
-	public static HttpServer<Buffer, Buffer> create(int port) {
-		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+	public static HttpServer create(int port) {
+		return create(DEFAULT_BIND_ADDRESS, port);
+	}
+
+	/**
+	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
+	 * @param bindAddress address to listen for (e.g. 0.0.0.0 or 127.0.0.1)
+	 * @return a simple HTTP server
+	 */
+	public static HttpServer create(String bindAddress) {
+		return create(bindAddress, DEFAULT_PORT);
 	}
 
 	/**
@@ -80,43 +101,270 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	 * @param port the port to listen to
 	 * @return a simple HTTP server
 	 */
-	public static HttpServer<Buffer, Buffer> create(final String bindAddress, final int port) {
-		return ReactiveNet.httpServer(new Function<Spec.HttpServerSpec<Buffer, Buffer>, Spec.HttpServerSpec<Buffer, Buffer>>() {
-			@Override
-			public Spec.HttpServerSpec<Buffer, Buffer> apply(Spec.HttpServerSpec<Buffer, Buffer> serverSpec) {
-				serverSpec.timer(Timer.globalOrNull());
-				return serverSpec.listen(bindAddress, port);
-			}
-		});
+	public static HttpServer create(String bindAddress, int port) {
+		return create(ServerOptions.create()
+		                           .timer(Timer.globalOrNull())
+		                           .listen(bindAddress, port));
 	}
-
-
 
 	/**
-	 * Start this {@literal Peer}.
-	 * @return a {@link Mono<Void>} that will be complete when the {@link
-	 * HttpClient} is started
+	 * @param c
+	 *
+	 * @return
 	 */
-	public final <NEWIN, NEWOUT> Mono<Void> startWithHttpCodec(
-			final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler,
-			final Function<HttpChannel<IN, OUT>, ? extends HttpChannel<NEWIN, NEWOUT>> preprocessor) {
-
-		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
-			throw new IllegalStateException("Peer already started");
-		}
-
-		return doStart(ch -> handler.apply(preprocessor.apply(ch)));
+	public static Mono<Void> upgradeToWebsocket(HttpChannel c) {
+		return upgradeToWebsocket(c, null);
 	}
 
-	protected ChannelMappings<IN, OUT> channelMappings;
+	/**
+	 * @param c
+	 * @param protocols
+	 *
+	 * @return
+	 */
+	public static Mono<Void> upgradeToWebsocket(HttpChannel c, String protocols) {
+		ChannelPipeline pipeline = c.delegate()
+		                            .pipeline();
+		NettyWebSocketServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
+		                                              .withWebsocketSupport(c.uri(), protocols);
 
-	protected HttpServer(Timer timer) {
-		super(timer);
+		if (handler != null) {
+			pipeline.addLast(handler);
+			return new MonoChannelFuture<>(handler.handshakerResult);
+		}
+		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
+	}
+
+	TcpServer       server;
+	ChannelMappings channelMappings;
+
+	HttpServer(final ServerOptions options) {
+		super(options.timer());
+		this.server = new TcpBridgeServer(options);
+	}
+
+	@Override
+	public Object connectedInput() {
+		return server;
+	}
+
+	@Override
+	public TcpServer connectedOutput() {
+		return server;
+	}
+
+	/**
+	 * Listen for HTTP DELETE on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param handler an handler to invoke for the given condition
+	 * @return {@code this}
+	 */
+	public final HttpServer delete(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(ChannelMappings.delete(path), handler);
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param directory the File to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer directory(String path, final File directory) {
+		directory(path, directory.getAbsolutePath());
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param directory the Path to the file to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer directory(final String path, final String directory) {
+		return directory(path, directory, null);
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param directory the Path to the file to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer directory(final String path,
+			final String directory,
+			final Function<HttpChannel, HttpChannel> interceptor) {
+		route(ChannelMappings.prefix(path), new ChannelFluxHandler<Buffer, Buffer, HttpChannel>() {
+			@Override
+			public Publisher<Void> apply(HttpChannel channel) {
+				String strippedPrefix = channel.uri()
+				                               .replaceFirst(path, "");
+				int paramIndex = strippedPrefix.lastIndexOf("?");
+				if (paramIndex != -1) {
+					strippedPrefix = strippedPrefix.substring(0, paramIndex);
+				}
+
+				if (Files.isReadable(Paths.get(directory + strippedPrefix))) {
+					Publisher<Buffer> filePub = Buffer.readFile(directory + strippedPrefix);
+
+					if (interceptor != null) {
+						return interceptor.apply(channel)
+						                  .send(filePub);
+					}
+					return channel.send(filePub);
+				}
+				else {
+					return Mono.error(Exceptions.CancelException.INSTANCE);
+				}
+			}
+		});
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param file the File to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer file(String path, final File file) {
+		file(ChannelMappings.get(path), file.getAbsolutePath(), null);
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param filepath the Path to the file to serve
+	 * @return {@code this}
+	 */
+	public final HttpServer file(String path, final String filepath) {
+		file(ChannelMappings.get(path), filepath, null);
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param filepath the Path to the file to serve
+	 * @param interceptor a channel pre-intercepting handler e.g. for content type header
+	 * @return {@code this}
+	 */
+	public final HttpServer file(Predicate<HttpChannel> path,
+			final String filepath,
+			final Function<HttpChannel, HttpChannel> interceptor) {
+		final Publisher<Buffer> file = Buffer.readFile(filepath);
+		route(path, channel -> {
+			if (interceptor != null) {
+				return interceptor.apply(channel)
+				                  .send(file);
+			}
+			return channel.send(file);
+		});
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param handler an handler to invoke for the given condition
+	 * @return {@code this}
+	 */
+	public final HttpServer get(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(ChannelMappings.get(path), handler);
+		return this;
+	}
+
+	public InetSocketAddress getListenAddress() {
+		return this.connectedOutput()
+		           .getListenAddress();
+	}
+
+	@Override
+	public boolean isStarted() {
+		return server.isStarted();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return server.isTerminated();
+	}
+
+	/**
+	 * Listen for HTTP POST on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param handler an handler to invoke for the given condition
+	 * @return {@code this}
+	 */
+	public final HttpServer post(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(ChannelMappings.post(path), handler);
+		return this;
+	}
+
+	/**
+	 * Listen for HTTP PUT on the passed path to be used as a routing condition. Incoming connections will query the
+	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
+	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
+	 * are supported
+	 * @param handler an handler to invoke for the given condition
+	 * @return {@code this}
+	 */
+	public final HttpServer put(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
+		route(ChannelMappings.put(path), handler);
+		return this;
+	}
+
+	/**
+	 * Register an handler for the given Selector condition, incoming connections will query the internal registry to
+	 * invoke the matching handlers. Implementation may choose to reply 404 if no route matches.
+	 * @param condition a {@link Predicate} to match the incoming connection with registered handler
+	 * @param serviceFunction an handler to invoke for the given condition
+	 * @return {@code this}
+	 */
+	@SuppressWarnings("unchecked")
+	public HttpServer route(final Predicate<HttpChannel> condition,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> serviceFunction) {
+
+		if (this.channelMappings == null) {
+			this.channelMappings = ChannelMappings.newMappings();
+		}
+
+		this.channelMappings.add(condition, serviceFunction);
+		return this;
 	}
 
 	/***
 	 * Additional regex matching is available when reactor-bus is on the classpath. Start the server without any global
 	 * handler, only the specific routed methods (get, post...) will apply.
+	 *
 	 * @return a Promise fulfilled when server is started
 	 */
 	public final Mono<Void> start() {
@@ -131,266 +379,88 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 	}
 
 	/**
-	 * Get the address to which this server is bound. If port 0 was used on configuration, try resolving the port.
-	 * @return the bind address
-	 */
-	public abstract InetSocketAddress getListenAddress();
-
-	/**
-	 * Register an handler for the given Selector condition, incoming connections will query the internal registry to
-	 * invoke the matching handlers. Implementation may choose to reply 404 if no route matches.
-	 * @param condition a {@link Predicate} to match the incoming connection with registered handler
-	 * @param serviceFunction an handler to invoke for the given condition
-	 * @return {@code this}
-	 */
-	@SuppressWarnings("unchecked")
-	public HttpServer<IN, OUT> route(final Predicate<HttpChannel> condition,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> serviceFunction) {
-
-		if (this.channelMappings == null) {
-			this.channelMappings = ChannelMappings.newMappings();
-		}
-
-		this.channelMappings.add(condition, serviceFunction);
-		return this;
-	}
-
-	/**
-	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param handler an handler to invoke for the given condition
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> get(String path,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		route(ChannelMappings.get(path), handler);
-		return this;
-	}
-
-	/**
-	 * Listen for HTTP POST on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param handler an handler to invoke for the given condition
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> post(String path,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		route(ChannelMappings.post(path), handler);
-		return this;
-	}
-
-	/**
-	 * Listen for HTTP PUT on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param handler an handler to invoke for the given condition
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> put(String path,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		route(ChannelMappings.put(path), handler);
-		return this;
-	}
-
-	/**
 	 * Listen for WebSocket on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
 	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> ws(String path,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
+	public final HttpServer ws(String path, final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler) {
 		return ws(path, handler, null);
 	}
 
 	/**
 	 * Listen for WebSocket on the passed path to be used as a routing condition. Incoming connections will query the
 	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
+	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(CharSequence)}
 	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
 	 * are supported
 	 * @param handler an handler to invoke for the given condition
 	 * @param protocols
 	 * @return {@code this}
 	 */
-	public final HttpServer<IN, OUT> ws(String path,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler,
+	public final HttpServer ws(String path,
+			final ChannelFluxHandler<Buffer, Buffer, HttpChannel> handler,
 			final String protocols) {
 		return route(ChannelMappings.get(path), channel -> {
 			String connection = channel.headers()
-			                           .get(HttpHeaders.CONNECTION);
-			if (connection != null && connection.equals(HttpHeaders.UPGRADE)) {
+			                           .get(HttpHeaderNames.CONNECTION);
+			if (connection != null && connection.equals(HttpHeaderValues.UPGRADE.toString())) {
 				onWebsocket(channel, protocols);
 			}
 			return handler.apply(channel);
 		});
 	}
 
-	/**
-	 * Listen for HTTP DELETE on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param handler an handler to invoke for the given condition
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> delete(String path,
-			final ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> handler) {
-		route(ChannelMappings.delete(path), handler);
-		return this;
-	}
+	@Override
+	protected Mono<Void> doStart(final ChannelFluxHandler<Buffer, Buffer, HttpChannel> defaultHandler) {
+		return server.start(ch -> {
+			NettyHttpChannel request = (NettyHttpChannel) ch;
 
-	/**
-	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param file the File to serve
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> file(String path, final File file) {
-		file(ChannelMappings.get(path), file.getAbsolutePath(), null);
-		return this;
-	}
+			try {
+				Publisher<Void> afterHandlers = routeChannel(request);
 
-	/**
-	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param filepath the Path to the file to serve
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> file(String path, final String filepath) {
-		file(ChannelMappings.get(path), filepath, null);
-		return this;
-	}
-
-	/**
-	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param filepath the Path to the file to serve
-	 * @param interceptor a channel pre-intercepting handler e.g. for content type header
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> file(Predicate<HttpChannel> path, final String filepath,
-			final Function<HttpChannel<IN, OUT>, HttpChannel<IN, OUT>> interceptor) {
-		final Publisher<Buffer> file = Buffer.readFile(filepath);
-		route(path, new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-			@Override
-			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
-				if(interceptor != null){
-					return interceptor.apply(channel).writeBufferWith(file);
-				}
-				return channel.writeBufferWith(file);
-			}
-		});
-		return this;
-	}
-
-	/**
-	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param directory the File to serve
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> directory(String path, final File directory) {
-		directory(path, directory.getAbsolutePath());
-		return this;
-	}
-
-	/**
-	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param directory the Path to the file to serve
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> directory(final String path, final String directory) {
-		return directory(path, directory, null);
-	}
-
-	/**
-	 * Listen for HTTP GET on the passed path to be used as a routing condition. Incoming connections will query the
-	 * internal registry to invoke the matching handlers. <p> Additional regex matching is available when reactor-bus is
-	 * on the classpath. e.g. "/test/{param}". Params are resolved using {@link HttpChannel#param(String)}
-	 * @param path The {@link ChannelMappings.HttpPredicate} to resolve against this path, pattern matching and capture
-	 * are supported
-	 * @param directory the Path to the file to serve
-	 * @return {@code this}
-	 */
-	public final HttpServer<IN, OUT> directory(final String path, final String directory,
-			final Function<HttpChannel<IN, OUT>, HttpChannel<IN, OUT>> interceptor) {
-		route(ChannelMappings.prefix(path), new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-			@Override
-			public Publisher<Void> apply(HttpChannel<IN, OUT> channel) {
-				String strippedPrefix = channel.uri()
-				                               .replaceFirst(path, "");
-				int paramIndex = strippedPrefix.lastIndexOf("?");
-				if(paramIndex != -1){
-					strippedPrefix = strippedPrefix.substring(0, paramIndex);
-				}
-
-				if(Files.isReadable(Paths.get(directory + strippedPrefix))) {
-					Publisher<Buffer> filePub = Buffer.readFile(directory + strippedPrefix);
-
-					if (interceptor != null) {
-						return interceptor.apply(channel)
-						                  .writeBufferWith(filePub);
+				if (afterHandlers == null) {
+					if (defaultHandler != null) {
+						return defaultHandler.apply(request);
 					}
-					return channel.writeBufferWith(filePub);
+					else if (request.markHeadersAsFlushed()) {
+						//404
+						request.delegate()
+						       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1,
+								       HttpResponseStatus.NOT_FOUND));
+					}
+					return Flux.empty();
+
 				}
-				else{
-					return Mono.error(Exceptions.CancelException.INSTANCE);
+				else {
+					return afterHandlers;
 				}
 			}
+			catch (Throwable t) {
+				Exceptions.throwIfFatal(t);
+				return Mono.error(t);
+			}
+			//500
 		});
-		return this;
 	}
 
-	/**
-	 *
-	 * @param preprocessor
-	 * @param <NEWIN>
-	 * @param <NEWOUT>
-	 * @param <NEWCONN>
-	 * @return
-	 */
-	public <NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>> HttpServer<NEWIN, NEWOUT> httpProcessor(final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor) {
-		return new PreprocessedHttpServer<>(preprocessor);
+	protected final void onWebsocket(HttpChannel next, String protocols) {
+		ChannelPipeline pipeline = next.delegate()
+		                               .pipeline();
+		pipeline.addLast(pipeline.remove(NettyHttpServerHandler.class)
+		                         .withWebsocketSupport(next.uri(), protocols));
 	}
 
-	protected abstract void onWebsocket(HttpChannel<?, ?> next, String protocols);
-
-	protected Publisher<Void> routeChannel(final HttpChannel<IN, OUT> ch) {
+	protected Publisher<Void> routeChannel(final HttpChannel ch) {
 
 		if (channelMappings == null) {
 			return null;
 		}
 
-		final Iterator<? extends ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>> selected =
+		final Iterator<? extends ChannelFluxHandler<Buffer, Buffer, HttpChannel>> selected =
 				channelMappings.apply(ch)
 				               .iterator();
 
@@ -398,7 +468,7 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 			return null;
 		}
 
-		ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>> channelHandler = selected.next();
+		ChannelFluxHandler<Buffer, Buffer, HttpChannel> channelHandler = selected.next();
 
 		if (!selected.hasNext()) {
 			return channelHandler.apply(ch);
@@ -418,51 +488,39 @@ public abstract class HttpServer<IN, OUT> extends ReactivePeer<IN, OUT, HttpChan
 		return Flux.concat(Flux.fromIterable(multiplexing));
 	}
 
-	private final class PreprocessedHttpServer<NEWIN, NEWOUT, NEWCONN extends HttpChannel<NEWIN, NEWOUT>>
-			extends HttpServer<NEWIN, NEWOUT> {
+	@Override
+	protected final Mono<Void> doShutdown() {
+		return server.shutdown();
+	}
 
-		private final HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor;
+	protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler, SocketChannel nativeChannel) {
 
-		public PreprocessedHttpServer(HttpProcessor<IN, OUT, ? super HttpChannel<IN, OUT>, NEWIN, NEWOUT, NEWCONN> preprocessor) {
-			super(HttpServer.this.getDefaultTimer());
-			this.preprocessor = preprocessor;
+		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), nativeChannel);
+
+		ChannelPipeline pipeline = nativeChannel.pipeline();
+
+		if (log.isDebugEnabled()) {
+			pipeline.addLast(new LoggingHandler(HttpServer.class));
+		}
+
+		pipeline.addLast(new HttpServerCodec());
+
+		pipeline.addLast(NettyHttpServerHandler.class.getSimpleName(), new NettyHttpServerHandler(handler, netChannel));
+
+	}
+
+	static final Logger log = Logger.getLogger(HttpServer.class);
+
+	final class TcpBridgeServer extends TcpServer {
+
+		TcpBridgeServer(ServerOptions options) {
+			super(options);
 		}
 
 		@Override
-		public HttpServer<NEWIN, NEWOUT> route(Predicate<HttpChannel> condition,
-				final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> serviceFunction) {
-			HttpServer.this.route(condition, new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-				@Override
-				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
-					return serviceFunction.apply(preprocessor.transform(conn));
-				}
-			});
-			return this;
-		}
-
-		@Override
-		public InetSocketAddress getListenAddress() {
-			return HttpServer.this.getListenAddress();
-		}
-
-		@Override
-		protected void onWebsocket(HttpChannel<?, ?> next, String protocols) {
-			HttpServer.this.onWebsocket(next, protocols);
-		}
-
-		@Override
-		protected Mono<Void> doStart(final ChannelFluxHandler<NEWIN, NEWOUT, HttpChannel<NEWIN, NEWOUT>> handler) {
-			return HttpServer.this.start(null != handler ? new ChannelFluxHandler<IN, OUT, HttpChannel<IN, OUT>>() {
-				@Override
-				public Publisher<Void> apply(HttpChannel<IN, OUT> conn) {
-					return handler.apply(preprocessor.transform(conn));
-				}
-			} : null);
-		}
-
-		@Override
-		protected Mono<Void> doShutdown() {
-			return HttpServer.this.shutdown();
+		protected void bindChannel(ChannelFluxHandler<Buffer, Buffer, NettyChannel> handler,
+				SocketChannel nativeChannel) {
+			HttpServer.this.bindChannel(handler, nativeChannel);
 		}
 	}
 }

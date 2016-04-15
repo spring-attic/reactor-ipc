@@ -15,10 +15,11 @@
  */
 package reactor.io.netty.http
 
+import io.netty.handler.codec.http.cookie.Cookie
+import io.netty.handler.codec.http.cookie.DefaultCookie
 import reactor.core.publisher.Mono
-import reactor.io.netty.http.model.Cookie
-import reactor.io.netty.preprocessor.CodecPreprocessor
-import reactor.io.netty.ReactiveNet
+import reactor.io.netty.common.NettyCodec
+
 import spock.lang.Specification
 
 import java.time.Duration
@@ -27,41 +28,14 @@ public class HttpCookieHandlingSpec extends Specification{
 
   def "client without cookie gets a new one from server"(){
 
-	def getResponseCookie = {
-	  new Cookie(){
-
-		@Override
-		String name() {
-		  'cookie1'
-		}
-
-		@Override
-		String domain() {
-		  '/'
-		}
-
-		@Override
-		String path() {
-		  '/'
-		}
-
-		@Override
-		String value() {
-		  'test_value'
-		}
-	  }
-	}
-
 	given: "a http server setting cookie 1.0"
-	def server = ReactiveNet.httpServer {
-	  it.httpProcessor(CodecPreprocessor.string()).listen(0)
-	}
+	def server = HttpServer.create(0)
 
 	when: "server is prepared"
 	server.get("/test"){
 	   req ->
-		req.addResponseCookie("cookie1", getResponseCookie())
-			.writeWith(req.input().log("server received"))
+		req.addResponseCookie("cookie1", new DefaultCookie("cookie1", "test_value"))
+			.send(req.receive().log("server received"))
 	}
 
 	then: "the server was started"
@@ -69,9 +43,8 @@ public class HttpCookieHandlingSpec extends Specification{
 	!server.start().get(Duration.ofSeconds(5))
 
 	when: "a request with URI is sent onto the server"
-	def client = ReactiveNet.httpClient {
-	  it.httpProcessor(CodecPreprocessor.string()).connect("localhost", server.listenAddress.port)
-	}
+	def client = HttpClient.create("localhost", server.listenAddress.port)
+
 	def cookieResponse = client.get('/test').then {
 	  replies -> Mono.just(replies.cookies())
 	}

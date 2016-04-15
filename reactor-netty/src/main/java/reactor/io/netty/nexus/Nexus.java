@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 
 import org.reactivestreams.Publisher;
@@ -37,10 +36,11 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
+import reactor.core.scheduler.TimedScheduler;
+import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.Subscribers;
-import reactor.core.scheduler.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
@@ -49,12 +49,10 @@ import reactor.core.util.WaitStrategy;
 import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelFlux;
 import reactor.io.ipc.ChannelFluxHandler;
-import reactor.io.netty.ReactiveNet;
-import reactor.io.netty.ReactivePeer;
+import reactor.io.netty.common.Peer;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.http.NettyHttpServer;
 import reactor.io.netty.tcp.TcpServer;
 
 import static reactor.core.util.ReactiveStateUtils.property;
@@ -63,8 +61,8 @@ import static reactor.core.util.ReactiveStateUtils.property;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>
-		implements ChannelFluxHandler<Buffer, Buffer, HttpChannel<Buffer, Buffer>>, Loopback {
+public final class Nexus extends Peer<Buffer, Buffer, ChannelFlux<Buffer, Buffer>>
+		implements ChannelFluxHandler<Buffer, Buffer, HttpChannel>, Loopback {
 
 	/**
 	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
@@ -73,7 +71,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 * Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
 	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -85,7 +83,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus create(int port) {
-		return create(ReactiveNet.DEFAULT_BIND_ADDRESS, port);
+		return create(DEFAULT_BIND_ADDRESS, port);
 	}
 
 	/**
@@ -95,7 +93,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 * {@link Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from -
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
-	 * on the active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * on the active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
 	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -107,7 +105,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus create(String bindAddress) {
-		return create(bindAddress, ReactiveNet.DEFAULT_PORT);
+		return create(bindAddress, DEFAULT_PORT);
 	}
 
 	/**
@@ -117,7 +115,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 * Publisher} that will emit: - onNext {@link ChannelFlux} to consume data from - onComplete
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * ChannelFlux}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
-	 * active connection, {@link ChannelFlux#writeWith} can subscribe to any passed {@link
+	 * active connection, {@link ChannelFlux#send} can subscribe to any passed {@link
 	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
 	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
 	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
@@ -130,17 +128,15 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus create(final String bindAddress, final int port) {
-		return ReactiveNet.nexus(serverSpec -> {
-			serverSpec.timer(Timer.globalOrNull());
-			return serverSpec.listen(bindAddress, port);
-		});
+		HttpServer server = HttpServer.create(bindAddress, port);
+		return new Nexus(server.getDefaultTimer(), server);
 	}
 
 	/**
 	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
-	 * {@link ChannelFlux#writeWith} can subscribe to any passed {@link Publisher}. <p> Note
+	 * {@link ChannelFlux#send} can subscribe to any passed {@link Publisher}. <p> Note
 	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
 	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
 	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
@@ -150,7 +146,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 * @return a new Stream of ChannelFlux, typically a peer of connections.
 	 */
 	public static Nexus create() {
-		return Nexus.create(ReactiveNet.DEFAULT_BIND_ADDRESS);
+		return Nexus.create(DEFAULT_BIND_ADDRESS);
 	}
 
 	/**
@@ -158,7 +154,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	 *
 	 * @return
 	 */
-	public static Nexus create(HttpServer<Buffer, Buffer> server) {
+	public static Nexus create(HttpServer server) {
 
 		Nexus nexus = new Nexus(server.getDefaultTimer(), server);
 		log.info("Warping Nexus...");
@@ -180,13 +176,14 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		log.info("CTRL-C to return...");
 		stopped.await();
 	}
-	private final HttpServer<Buffer, Buffer>        server;
-	private final GraphEvent                        lastState;
-	private final SystemEvent                       lastSystemState;
-	private final FluxProcessor<Event, Event>       eventStream;
-	private final SchedulerGroup                    group;
-	private final Function<Event, Event>            lastStateMerge;
-	private final Timer                             timer;
+
+	private final HttpServer                      server;
+	private final GraphEvent                      lastState;
+	private final SystemEvent                     lastSystemState;
+	private final FluxProcessor<Event, Event>     eventStream;
+	private final SchedulerGroup                  group;
+	private final Function<Event, Event>          lastStateMerge;
+	private final TimedScheduler                  timer;
 	private final SignalEmitter<Publisher<Event>> cannons;
 
 	@SuppressWarnings("unused")
@@ -197,18 +194,13 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	private NexusLoggerExtension logExtension;
 	private long websocketCapacity = 1L;
 
-	private Nexus(Timer defaultTimer, HttpServer<Buffer, Buffer> server) {
+	private Nexus(TimedScheduler defaultTimer, HttpServer server) {
 		super(defaultTimer);
 		this.server = server;
 		this.eventStream = EmitterProcessor.create(false);
 		this.lastStateMerge = new LastGraphStateMap();
 		this.timer = Timer.create("create-poller");
-		this.group = SchedulerGroup.async("create", 1024, 1, null, null, false, new Supplier<WaitStrategy>() {
-			@Override
-			public WaitStrategy get() {
-				return WaitStrategy.blocking();
-			}
-		});
+		this.group = SchedulerGroup.async("create", 1024, 1, null, null, false, WaitStrategy::blocking);
 
 		FluxProcessor<Publisher<Event>, Publisher<Event>> cannons = EmitterProcessor.create();
 
@@ -225,7 +217,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	}
 
 	@Override
-	public Publisher<Void> apply(HttpChannel<Buffer, Buffer> channel) {
+	public Publisher<Void> apply(HttpChannel channel) {
 		channel.responseHeader("Access-Control-Allow-Origin", "*");
 
 		Flux<Event> eventStream = this.eventStream.publishOn(group)
@@ -233,14 +225,14 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
-			p = Flux.concat(NettyHttpServer.upgradeToWebsocket(channel),
-					channel.writeBufferWith(federateAndEncode(channel, eventStream)));
+			p = Flux.concat(HttpServer.upgradeToWebsocket(channel),
+					channel.send(federateAndEncode(channel, eventStream)));
 		}
 		else {
-			p = channel.writeBufferWith(federateAndEncode(channel, eventStream));
+			p = channel.send(federateAndEncode(channel, eventStream));
 		}
 
-		channel.input()
+		channel.receive()
 		       .subscribe(Subscribers.consumer(new Consumer<Buffer>() {
 			       @Override
 			       public void accept(Buffer buffer) {
@@ -323,7 +315,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 	/**
 	 * @return
 	 */
-	public HttpServer<Buffer, Buffer> getServer() {
+	public HttpServer getServer() {
 		return server;
 	}
 
@@ -508,7 +500,7 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 		return server.shutdown();
 	}
 
-	private Flux<? extends Buffer> federateAndEncode(HttpChannel<Buffer, Buffer> c, Flux<Event> stream) {
+	private Flux<? extends Buffer> federateAndEncode(HttpChannel c, Flux<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
 			return stream.map(BUFFER_STRING_FUNCTION)
@@ -856,28 +848,23 @@ public final class Nexus extends ReactivePeer<Buffer, Buffer, ChannelFlux<Buffer
 
 	private static final class FederatedMerger implements Function<FederatedClient, Publisher<Buffer>> {
 
-		private final HttpChannel<Buffer, Buffer> c;
+		private final HttpChannel c;
 
-		public FederatedMerger(HttpChannel<Buffer, Buffer> c) {
+		public FederatedMerger(HttpChannel c) {
 			this.c = c;
 		}
 
 		@Override
 		public Publisher<Buffer> apply(FederatedClient o) {
 			return o.client.ws(o.targetAPI)
-			               .flatMap(new Function<HttpChannel<Buffer, Buffer>, Publisher<Buffer>>() {
-				               @Override
-				               public Publisher<Buffer> apply(HttpChannel<Buffer, Buffer> channel) {
-					               return channel.input();
-				               }
-			               });
+			               .flatMap(HttpChannel::receive);
 		}
 	}
 
 	private static final class FederatedClient {
 
-		private final HttpClient<Buffer, Buffer> client;
-		private final String                     targetAPI;
+		private final HttpClient client;
+		private final String     targetAPI;
 
 		public FederatedClient(String targetAPI) {
 			this.targetAPI = targetAPI;
