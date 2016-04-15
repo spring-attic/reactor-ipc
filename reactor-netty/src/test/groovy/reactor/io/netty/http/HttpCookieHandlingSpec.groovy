@@ -34,7 +34,7 @@ public class HttpCookieHandlingSpec extends Specification{
 	when: "server is prepared"
 	server.get("/test"){
 	   req ->
-		req.addResponseCookie("cookie1", new DefaultCookie("cookie1", "test_value"))
+		req.addResponseCookie(new DefaultCookie("cookie1", "test_value"))
 			.send(req.receive().log("server received"))
 	}
 

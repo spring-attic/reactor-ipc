@@ -46,7 +46,7 @@ public interface HttpChannel extends NettyChannel {
 	 * add the passed cookie
 	 * @return this
 	 */
-	HttpChannel addCookie(CharSequence name, Cookie cookie);
+	HttpChannel addCookie(Cookie cookie);
 
 	/**
 	 *
@@ -60,7 +60,7 @@ public interface HttpChannel extends NettyChannel {
 	 * add the passed cookie
 	 * @return this
 	 */
-	HttpChannel addResponseCookie(CharSequence name, Cookie cookie);
+	HttpChannel addResponseCookie(Cookie cookie);
 
 	/**
 	 *

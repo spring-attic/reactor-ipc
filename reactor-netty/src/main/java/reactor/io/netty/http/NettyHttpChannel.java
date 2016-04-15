@@ -91,9 +91,9 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	}
 
 	@Override
-	public HttpChannel addCookie(CharSequence name, Cookie cookie) {
+	public HttpChannel addCookie(Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
-			doAddCookie(name, cookie);
+			doAddCookie(cookie);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -118,9 +118,9 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 	}
 
 	@Override
-	public HttpChannel addResponseCookie(CharSequence name, Cookie cookie) {
+	public HttpChannel addResponseCookie(Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
-			doAddResponseCookie(name, cookie);
+			doAddResponseCookie( cookie);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -433,11 +433,11 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Loo
 		return HEADERS_SENT.compareAndSet(this, 0, 1);
 	}
 
-	void doAddCookie(CharSequence name, Cookie cookie) {
+	void doAddCookie(Cookie cookie) {
 		doAddHeader(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
 	}
 
-	void doAddResponseCookie(CharSequence name, Cookie cookie) {
+	void doAddResponseCookie(Cookie cookie) {
 		doAddResponseHeader(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
 	}
 
