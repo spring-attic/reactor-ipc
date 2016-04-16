@@ -54,6 +54,11 @@ public interface HttpChannel extends NettyChannel, HttpConnection {
 	HttpChannel addResponseHeader(CharSequence name, CharSequence value);
 
 	/**
+	 * @return Resolved HTTP request headers
+	 */
+	HttpHeaders headers();
+
+	/**
 	 *
 	 * @param key
 	 * @return

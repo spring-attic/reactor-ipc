@@ -51,11 +51,6 @@ public interface HttpConnection {
 	Channel delegate();
 
 	/**
-	 * @return Resolved HTTP request headers
-	 */
-	HttpHeaders headers();
-
-	/**
 	 * Is the request keepAlive
 	 * @return is keep alive
 	 */

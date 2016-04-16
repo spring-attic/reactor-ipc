@@ -18,6 +18,7 @@ package reactor.io.netty.http;
 import java.nio.ByteBuffer;
 import java.util.function.Function;
 
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -89,6 +90,11 @@ public interface HttpInbound extends HttpConnection {
 	default Flux<String> receiveStringBody() {
 		return receiveBody().map(Buffer::asString);
 	}
+
+	/**
+	 * @return the resolved response HTTP headers
+	 */
+	HttpHeaders responseHeaders();
 
 	/**
 	 * @return the resolved HTTP Response Status

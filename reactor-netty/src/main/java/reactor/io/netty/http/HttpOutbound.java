@@ -19,6 +19,7 @@ package reactor.io.netty.http;
 import java.nio.ByteBuffer;
 import java.util.function.Function;
 
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -57,6 +58,11 @@ public interface HttpOutbound extends HttpConnection {
 	 * @return
 	 */
 	HttpOutbound header(CharSequence name, CharSequence value);
+
+	/**
+	 * @return Resolved HTTP request headers
+	 */
+	HttpHeaders headers();
 
 	/**
 	 * set the request keepAlive if true otherwise remove the existing connection keep alive header
