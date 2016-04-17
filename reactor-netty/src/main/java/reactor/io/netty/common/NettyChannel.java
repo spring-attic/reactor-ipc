@@ -37,6 +37,7 @@ public interface NettyChannel extends Channel<Buffer, Buffer>, NettyInbound, Net
 	 *
 	 * @return Lifecycle to build the events handlers
 	 */
+	@Override
 	Lifecycle on();
 
 	/**
@@ -44,6 +45,7 @@ public interface NettyChannel extends Channel<Buffer, Buffer>, NettyInbound, Net
 	 *
 	 * @return the peer's address
 	 */
+	@Override
 	InetSocketAddress remoteAddress();
 
 	/**

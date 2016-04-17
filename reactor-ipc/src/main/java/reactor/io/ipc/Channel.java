@@ -34,5 +34,6 @@ public interface Channel<IN, OUT> extends Inbound<IN>, Outbound<OUT>  {
 	/**
 	 * @return The underlying IO runtime connection reference (Netty Channel for instance)
 	 */
+	@Override
 	Object delegate();
 }
