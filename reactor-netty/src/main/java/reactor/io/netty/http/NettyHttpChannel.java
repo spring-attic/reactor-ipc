@@ -387,13 +387,8 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 	}
 
 	@Override
-	final public Flux<Buffer> receiveBody() {
-		return receive();
-	}
-
-	@Override
-	final public Mono<Void> sendBody(Publisher<? extends Buffer> dataStream) {
-		return send(dataStream);
+	public Mono<Void> send(final Publisher<? extends Buffer> source) {
+		return new PostWritePublisher(source);
 	}
 
 	/**
@@ -408,11 +403,6 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 		else {
 			return Mono.empty();
 		}
-	}
-
-	@Override
-	public Mono<Void> send(final Publisher<? extends Buffer> source) {
-		return new PostWritePublisher(source);
 	}
 
 	// REQUEST contract

@@ -62,11 +62,11 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.sendStringBody(Mono.just("Hello").log('client-send'))
+	  req.sendString(Mono.just("Hello").log('client-send'))
 
 	}.then { replies ->
 	  //successful request, listen for the first returned next reply and pass it downstream
-	  replies.receiveBody().log('client-received').next()
+	  replies.receive().log('client-received').next()
 	}
 	.doOnError {
 	  //something failed during the request or the reply processing
@@ -115,12 +115,12 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.sendStringBody(Flux.just("Hello")
+	  req.sendString(Flux.just("Hello")
 			  .log('client-send'))
 
 	}.flatMap { replies ->
 	  //successful request, listen for the first returned next reply and pass it downstream
-	  replies.receiveStringBody()
+	  replies.receiveString()
 			  .log('client-received')
 	}
 	.publishNext()
@@ -271,7 +271,7 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain')
 
 	  //return a producing stream to send some data along the request
-	  req.sendStringBody(Flux
+	  req.sendString(Flux
 			  .range(1, 1000)
 			  .useCapacity(1)
 			  .map { it.toString() }
@@ -280,7 +280,7 @@ class HttpSpec extends Specification {
 	}.flatMap { replies ->
 	  //successful handshake, listen for the first returned next replies and pass it downstream
 	  replies
-			  .receiveStringBody()
+			  .receiveString()
 			  .log('client-received')
 			  .doOnNext { clientRes++ }
 	}

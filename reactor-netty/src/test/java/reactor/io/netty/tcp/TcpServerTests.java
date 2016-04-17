@@ -382,7 +382,7 @@ public class TcpServerTests {
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
 			          .get("foaas.herokuapp.com/life/" + requestIn.param("search"))
-			          .flatMap(repliesOut -> requestIn.send(repliesOut.receiveBody())
+			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive())
 			  )
 		);
 		server.start().get();
@@ -396,9 +396,9 @@ public class TcpServerTests {
 		HttpServer server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
-			          .ws("ws://localhost:3000", requestOut -> requestOut.sendBody(Flux.just(Buffer.wrap("ping")))
+			          .ws("ws://localhost:3000", requestOut -> requestOut.send(Flux.just(Buffer.wrap("ping")))
 			  )
-			          .flatMap(repliesOut -> requestIn.send(repliesOut.receiveBody()
+			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive()
 			                                                          .useCapacity(100))
 			  )
 		);

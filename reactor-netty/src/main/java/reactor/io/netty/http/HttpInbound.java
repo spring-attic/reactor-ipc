@@ -15,15 +15,9 @@
  */
 package reactor.io.netty.http;
 
-import java.nio.ByteBuffer;
-import java.util.function.Function;
-
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.io.buffer.Buffer;
-import reactor.io.netty.common.NettyCodec;
+import reactor.io.netty.common.NettyInbound;
 
 /**
  * An Http Reactive client read contract for incoming response. It inherits several accessor related to HTTP
@@ -33,63 +27,7 @@ import reactor.io.netty.common.NettyCodec;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface HttpInbound extends HttpConnection {
-
-	/**
-	 * Get the inbound http traffic
-	 *
-	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
-	 */
-	Flux<Buffer> receiveBody();
-
-	/**
-	 * Get the inbound http traffic and decode it
-	 *
-	 * @param decoder a decoding function providing a target type {@link Publisher}
-	 *
-	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
-	 */
-	default <NEW_IN> Flux<NEW_IN> receiveBody(Function<? super Flux<Buffer>, ? extends Publisher<NEW_IN>> decoder) {
-		return Flux.from(receiveBody().as(decoder));
-	}
-
-	/**
-	 * Get the inbound http traffic and decode it
-	 *
-	 * @param codec a decoding {@link NettyCodec} providing a target type {@link Publisher}
-	 *
-	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
-	 */
-	default <NEW_IN> Flux<NEW_IN> receiveBody(NettyCodec<NEW_IN, ?> codec) {
-		return receiveBody(codec.decoder());
-	}
-
-	/**
-	 * a {@link ByteBuffer} inbound {@link Flux}
-	 *
-	 * @return a {@link ByteBuffer} inbound {@link Flux}
-	 */
-	default Flux<ByteBuffer> receiveByteBufferBody() {
-		return receiveBody().map(Buffer::byteBuffer);
-	}
-
-	/**
-	 * a {@literal byte[]} inbound {@link Flux}
-	 *
-	 * @return a {@literal byte[]} inbound {@link Flux}
-	 */
-	default Flux<byte[]> receiveByteArrayBody() {
-		return receiveBody().map(Buffer::asBytes);
-	}
-
-	/**
-	 * a {@link String} inbound {@link Flux}
-	 *
-	 * @return a {@link String} inbound {@link Flux}
-	 */
-	default Flux<String> receiveStringBody() {
-		return receiveBody().map(Buffer::asString);
-	}
+public interface HttpInbound extends HttpConnection, NettyInbound {
 
 	/**
 	 * @return the resolved response HTTP headers

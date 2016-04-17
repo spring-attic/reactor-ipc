@@ -858,7 +858,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 		@Override
 		public Publisher<Buffer> apply(FederatedClient o) {
 			return o.client.ws(o.targetAPI)
-			               .flatMap(HttpInbound::receiveBody);
+			               .flatMap(HttpInbound::receive);
 		}
 	}
 

@@ -27,7 +27,7 @@ import reactor.io.ipc.Channel;
 /**
  * @author Stephane Maldini
  */
-public interface NettyChannel extends Channel<Buffer, Buffer> {
+public interface NettyChannel extends Channel<Buffer, Buffer>, NettyInbound, NettyOutbound {
 
 	@Override
 	io.netty.channel.Channel delegate();
@@ -40,100 +40,11 @@ public interface NettyChannel extends Channel<Buffer, Buffer> {
 	Lifecycle on();
 
 	/**
-	 * Get the inbound publisher (incoming tcp traffic for instance) and decode its traffic
-	 *
-	 * @param codec a decoding {@link NettyCodec} providing a target type {@link Publisher}
-	 *
-	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
-	 */
-	default <NEW_IN> Flux<NEW_IN> receive(NettyCodec<NEW_IN, ?> codec) {
-		return receive(codec.decoder());
-	}
-
-	/**
-	 * a {@link ByteBuffer} inbound {@link Flux}
-	 *
-	 * @return a {@link ByteBuffer} inbound {@link Flux}
-	 */
-	default Flux<ByteBuffer> receiveByteBuffer() {
-		return receive().map(Buffer::byteBuffer);
-	}
-
-	/**
-	 * a {@literal byte[]} inbound {@link Flux}
-	 *
-	 * @return a {@literal byte[]} inbound {@link Flux}
-	 */
-	default Flux<byte[]> receiveByteArray() {
-		return receive().map(Buffer::asBytes);
-	}
-
-	/**
-	 * a {@link String} inbound {@link Flux}
-	 *
-	 * @return a {@link String} inbound {@link Flux}
-	 */
-	default Flux<String> receiveString() {
-		return receive().map(Buffer::asString);
-	}
-
-	/**
 	 * Get the address of the remote peer.
 	 *
 	 * @return the peer's address
 	 */
 	InetSocketAddress remoteAddress();
-
-	/**
-	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
-	 *
-	 * @param dataStream the dataStream publishing OLD_OUT items to write on this channel after encoding
-	 * @param codec an encoding {@link NettyCodec} providing a send-ready {@link Publisher}
-	 *
-	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default <OLD_OUT> Mono<Void> send(Publisher<? extends OLD_OUT> dataStream, NettyCodec<?, OLD_OUT> codec) {
-		return send(dataStream, codec.encoder());
-	}
-
-	/**
-	 * /** Send bytes to the peer, listen for any error on write and close on terminal signal (complete|error). If more
-	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
-	 *
-	 * @param dataStream the dataStream publishing Buffer items to write on this channel
-	 *
-	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default Mono<Void> sendByteArray(Publisher<? extends byte[]> dataStream) {
-		return send(Flux.from(dataStream)
-		                .map(Buffer::wrap));
-	}
-
-	/**
-	 * Send bytes to the peer, listen for any error on write and close on terminal signal (complete|error). If more than
-	 * one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
-	 *
-	 * @param dataStream the dataStream publishing Buffer items to write on this channel
-	 *
-	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default Mono<Void> sendByteBuffer(Publisher<? extends ByteBuffer> dataStream) {
-		return send(Flux.from(dataStream)
-		                .map(Buffer::new));
-	}
-
-	/**
-	 * Send String to the peer, listen for any error on write and close on terminal signal (complete|error). If more
-	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
-	 *
-	 * @param dataStream the dataStream publishing Buffer items to write on this channel
-	 *
-	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default Mono<Void> sendString(Publisher<? extends String> dataStream) {
-		return send(Flux.from(dataStream)
-		                .map(Buffer::wrap));
-	}
 
 	/**
 	 * Lifecycle Builder for assigning multiple event handlers on a channel.
