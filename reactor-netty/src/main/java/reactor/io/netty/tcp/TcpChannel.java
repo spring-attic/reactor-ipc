@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -35,7 +36,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.Channel;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -46,7 +46,7 @@ import reactor.io.netty.common.NettyChannelHandler;
  * @since 2.5
  */
 public class TcpChannel
-		extends Flux<Buffer>
+		extends Flux<ByteBuf>
 		implements NettyChannel, Loopback, Completable {
 
 	private final io.netty.channel.Channel ioChannel;
@@ -58,12 +58,12 @@ public class TcpChannel
 	}
 
 	@Override
-	public Mono<Void> send(final Publisher<? extends Buffer> dataStream) {
+	public Mono<Void> send(final Publisher<? extends ByteBuf> dataStream) {
 		return new PostWritePublisher(dataStream);
 	}
 
 	@Override
-	public Flux<Buffer> receive() {
+	public Flux<ByteBuf> receive() {
 		return this;
 	}
 
@@ -94,7 +94,7 @@ public class TcpChannel
 	}
 
 	@Override
-	public void subscribe(Subscriber<? super Buffer> subscriber) {
+	public void subscribe(Subscriber<? super ByteBuf> subscriber) {
 		try {
 			ioChannel.pipeline()
 			         .fireUserEventTriggered(new NettyChannelHandler.ChannelInputSubscriber(subscriber, prefetch));
@@ -117,16 +117,13 @@ public class TcpChannel
 	public void emitWriter(final Publisher<?> encodedWriter,
 			final Subscriber<? super Void> postWriter) {
 
-		final ChannelFutureListener postWriteListener = new ChannelFutureListener() {
-			@Override
-			public void operationComplete(ChannelFuture future) throws Exception {
-				postWriter.onSubscribe(EmptySubscription.INSTANCE);
-				if (future.isSuccess()) {
-					postWriter.onComplete();
-				}
-				else {
-					postWriter.onError(future.cause());
-				}
+		final ChannelFutureListener postWriteListener = future -> {
+			postWriter.onSubscribe(EmptySubscription.INSTANCE);
+			if (future.isSuccess()) {
+				postWriter.onComplete();
+			}
+			else {
+				postWriter.onError(future.cause());
 			}
 		};
 
@@ -138,13 +135,8 @@ public class TcpChannel
 		}
 		else {
 			ioChannel.eventLoop()
-			         .execute(new Runnable() {
-				         @Override
-				         public void run() {
-					         ioChannel.write(encodedWriter)
-					                  .addListener(postWriteListener);
-				         }
-			         });
+			         .execute(() -> ioChannel.write(encodedWriter)
+	                                 .addListener(postWriteListener));
 		}
 	}
 
@@ -228,9 +220,9 @@ public class TcpChannel
 
 	private class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
 
-		private final Publisher<? extends Buffer> dataStream;
+		private final Publisher<?> dataStream;
 
-		public PostWritePublisher(Publisher<? extends Buffer> dataStream) {
+		public PostWritePublisher(Publisher<?> dataStream) {
 			this.dataStream = dataStream;
 		}
 

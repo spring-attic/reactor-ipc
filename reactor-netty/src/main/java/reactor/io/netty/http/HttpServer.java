@@ -19,6 +19,7 @@ package reactor.io.netty.http;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -43,7 +45,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.io.buffer.Buffer;
+
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
@@ -56,7 +58,7 @@ import reactor.io.netty.tcp.TcpServer;
  * Base functionality needed by all servers that communicate with clients over HTTP.
  * @author Stephane Maldini
  */
-public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loopback {
+public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements Loopback {
 
 	/**
 	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
@@ -130,7 +132,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 
 		if (handler != null) {
 			pipeline.addLast(handler);
-			return new MonoChannelFuture<>(handler.handshakerResult);
+			return MonoChannelFuture.from(handler.handshakerResult);
 		}
 		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
 	}
@@ -162,7 +164,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer delete(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final HttpServer delete(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 		route(HttpMappings.delete(path), handler);
 		return this;
 	}
@@ -206,28 +208,25 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	public final HttpServer directory(final String path,
 			final String directory,
 			final Function<HttpChannel, HttpChannel> interceptor) {
-		route(HttpMappings.prefix(path), new ChannelHandler<Buffer, Buffer, HttpChannel>() {
-			@Override
-			public Publisher<Void> apply(HttpChannel channel) {
-				String strippedPrefix = channel.uri()
-				                               .replaceFirst(path, "");
-				int paramIndex = strippedPrefix.lastIndexOf("?");
-				if (paramIndex != -1) {
-					strippedPrefix = strippedPrefix.substring(0, paramIndex);
-				}
+		route(HttpMappings.prefix(path), channel -> {
+			String strippedPrefix = channel.uri()
+			                               .replaceFirst(path, "");
+			int paramIndex = strippedPrefix.lastIndexOf("?");
+			if (paramIndex != -1) {
+				strippedPrefix = strippedPrefix.substring(0, paramIndex);
+			}
 
-				if (Files.isReadable(Paths.get(directory + strippedPrefix))) {
-					Publisher<Buffer> filePub = Buffer.readFile(directory + strippedPrefix);
+			Path p = Paths.get(directory + strippedPrefix);
+			if (Files.isReadable(p)) {
 
-					if (interceptor != null) {
-						return interceptor.apply(channel)
-						                  .send(filePub);
-					}
-					return channel.send(filePub);
+				if (interceptor != null) {
+					return interceptor.apply(channel)
+					                  .sendFile(p.toFile());
 				}
-				else {
-					return Mono.error(Exceptions.CancelException.INSTANCE);
-				}
+				return channel.sendFile(p.toFile());
+			}
+			else {
+				return Mono.error(Exceptions.CancelException.INSTANCE);
 			}
 		});
 		return this;
@@ -274,13 +273,13 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	public final HttpServer file(Predicate<HttpChannel> path,
 			final String filepath,
 			final Function<HttpChannel, HttpChannel> interceptor) {
-		final Publisher<Buffer> file = Buffer.readFile(filepath);
+		final File file = new File(filepath);
 		route(path, channel -> {
 			if (interceptor != null) {
 				return interceptor.apply(channel)
-				                  .send(file);
+				                  .sendFile(file);
 			}
-			return channel.send(file);
+			return channel.sendFile(file);
 		});
 		return this;
 	}
@@ -294,7 +293,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer get(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final HttpServer get(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 		route(HttpMappings.get(path), handler);
 		return this;
 	}
@@ -323,7 +322,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer post(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final HttpServer post(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 		route(HttpMappings.post(path), handler);
 		return this;
 	}
@@ -337,7 +336,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer put(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final HttpServer put(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 		route(HttpMappings.put(path), handler);
 		return this;
 	}
@@ -351,7 +350,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 */
 	@SuppressWarnings("unchecked")
 	public HttpServer route(final Predicate<HttpChannel> condition,
-			final ChannelHandler<Buffer, Buffer, HttpChannel> serviceFunction) {
+			final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> serviceFunction) {
 
 		if (this.httpMappings == null) {
 			this.httpMappings = HttpMappings.newMappings();
@@ -387,7 +386,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer ws(String path, final ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+	public final HttpServer ws(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 		return ws(path, handler, null);
 	}
 
@@ -402,7 +401,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	 * @return {@code this}
 	 */
 	public final HttpServer ws(String path,
-			final ChannelHandler<Buffer, Buffer, HttpChannel> handler,
+			final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler,
 			final String protocols) {
 		return route(HttpMappings.get(path), channel -> {
 			String connection = channel.headers()
@@ -415,7 +414,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	}
 
 	@Override
-	protected Mono<Void> doStart(final ChannelHandler<Buffer, Buffer, HttpChannel> defaultHandler) {
+	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> defaultHandler) {
 		return server.start(ch -> {
 			NettyHttpChannel request = (NettyHttpChannel) ch;
 
@@ -460,7 +459,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 			return null;
 		}
 
-		final Iterator<? extends ChannelHandler<Buffer, Buffer, HttpChannel>> selected =
+		final Iterator<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>> selected =
 				httpMappings.apply(ch)
 				            .iterator();
 
@@ -468,7 +467,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 			return null;
 		}
 
-		ChannelHandler<Buffer, Buffer, HttpChannel> channelHandler = selected.next();
+		ChannelHandler<ByteBuf, ByteBuf, HttpChannel> channelHandler = selected.next();
 
 		if (!selected.hasNext()) {
 			return channelHandler.apply(ch);
@@ -493,7 +492,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		return server.shutdown();
 	}
 
-	protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler, SocketChannel nativeChannel) {
+	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), nativeChannel);
 
@@ -518,7 +517,7 @@ public class HttpServer extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		}
 
 		@Override
-		protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler,
+		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 				SocketChannel nativeChannel) {
 			HttpServer.this.bindChannel(handler, nativeChannel);
 		}

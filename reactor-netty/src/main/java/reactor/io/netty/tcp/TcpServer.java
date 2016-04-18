@@ -21,6 +21,7 @@ import java.util.Iterator;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -42,7 +43,6 @@ import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
@@ -59,7 +59,7 @@ import reactor.io.netty.util.NettyNativeDetector;
  *
  * @author Stephane Maldini
  */
-public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Introspectable, MultiProducer {
+public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements Introspectable, MultiProducer {
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.selectThreadCount",
@@ -69,7 +69,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 			Integer.parseInt(System.getProperty("reactor.tcp.selectThreadCount", "" + DEFAULT_TCP_THREAD_COUNT));
 
 	/**
-	 * Bind a new TCP server to "loopback" on port {@literal 12012}. By default the default server implementation is
+	 * Bind a new TCP server to "loopback" on port {@literal 12012}. The default server implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> To reply data on the active connection, {@link
 	 * Channel#send} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
@@ -78,7 +78,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static TcpServer create() {
@@ -86,7 +86,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
+	 * Bind a new TCP server to the given bind address and port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
 	 * on the classpath. <p> A {@link TcpServer} is a specific kind of {@link org.reactivestreams.Publisher} that will
 	 * emit: - onNext {@link Channel} to consume data from - onComplete when server is shutdown - onError when any
@@ -98,7 +98,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
 	 * <p>
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 *
 	 * @param options
 	 *
@@ -109,7 +109,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
+	 * Bind a new TCP server to "loopback" on the given port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty first is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -122,7 +122,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param port the port to listen on loopback
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -131,7 +131,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
+	 * Bind a new TCP server to the given bind address on port {@literal 12012}. The default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty first is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
 	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from -
@@ -144,7 +144,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -153,7 +153,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
+	 * Bind a new TCP server to the given bind address and port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -166,7 +166,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of Channel, typically a peer of connections.
@@ -243,10 +243,10 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 			return Mono.error(ie);
 		}
 
-		final Mono<Void> shutdown = new MonoChannelFuture<Future<?>>(selectorGroup.shutdownGracefully());
+		final Mono<Void> shutdown = MonoChannelFuture.from(selectorGroup.shutdownGracefully());
 
 		if (null == getOptions() || null == getOptions().eventLoopGroup()) {
-			return shutdown.then(aVoid -> new MonoChannelFuture<Future<?>>(ioGroup.shutdownGracefully()));
+			return shutdown.then(aVoid -> MonoChannelFuture.from(ioGroup.shutdownGracefully()));
 		}
 
 		return shutdown;
@@ -306,7 +306,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	@Override
-	protected Mono<Void> doStart(final ChannelHandler<Buffer, Buffer, NettyChannel> handler) {
+	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler) {
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
@@ -370,7 +370,7 @@ public class TcpServer extends Peer<Buffer, Buffer, NettyChannel> implements Int
 		};
 	}
 
-	protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler, SocketChannel nativeChannel) {
+	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), nativeChannel);
 

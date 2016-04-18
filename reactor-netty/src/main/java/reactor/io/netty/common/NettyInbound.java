@@ -17,18 +17,17 @@ package reactor.io.netty.common;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
+import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.io.buffer.Buffer;
-import reactor.io.ipc.Channel;
 import reactor.io.ipc.Inbound;
 
 /**
  * @author Stephane Maldini
  */
-public interface NettyInbound extends Inbound<Buffer> {
+public interface NettyInbound extends Inbound<ByteBuf> {
 
 	@Override
 	io.netty.channel.Channel delegate();
@@ -57,7 +56,7 @@ public interface NettyInbound extends Inbound<Buffer> {
 	 * @return a {@link ByteBuffer} inbound {@link Flux}
 	 */
 	default Flux<ByteBuffer> receiveByteBuffer() {
-		return receive().map(Buffer::byteBuffer);
+		return receive().map(ByteBuf::nioBuffer);
 	}
 
 	/**
@@ -66,7 +65,11 @@ public interface NettyInbound extends Inbound<Buffer> {
 	 * @return a {@literal byte[]} inbound {@link Flux}
 	 */
 	default Flux<byte[]> receiveByteArray() {
-		return receive().map(Buffer::asBytes);
+		return receive().map(bb -> {
+			byte[] bytes = new byte[bb.readableBytes()];
+			bb.readBytes(bytes);
+			return bytes;
+		});
 	}
 
 	/**
@@ -75,7 +78,18 @@ public interface NettyInbound extends Inbound<Buffer> {
 	 * @return a {@link String} inbound {@link Flux}
 	 */
 	default Flux<String> receiveString() {
-		return receive().map(Buffer::asString);
+		return receiveString(Charset.defaultCharset());
+	}
+
+	/**
+	 * a {@link String} inbound {@link Flux}
+	 *
+	 * @param charset the decoding charset
+	 *
+	 * @return a {@link String} inbound {@link Flux}
+	 */
+	default Flux<String> receiveString(Charset charset) {
+		return receive().map(s -> s.toString(charset));
 	}
 
 	/**

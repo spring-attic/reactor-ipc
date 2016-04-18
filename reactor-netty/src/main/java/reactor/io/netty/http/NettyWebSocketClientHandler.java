@@ -16,6 +16,7 @@
 
 package reactor.io.netty.http;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -27,8 +28,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.io.buffer.Buffer;
-import reactor.io.buffer.StringBuffer;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.tcp.TcpChannel;
@@ -40,7 +39,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 
 	final WebSocketClientHandshaker handshaker;
 	NettyWebSocketClientHandler(
-			ChannelHandler<Buffer, Buffer, NettyChannel> handler,
+			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 			TcpChannel tcpStream,
 			WebSocketClientHandshaker handshaker) {
 		super(handler, tcpStream);
@@ -86,8 +85,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			try {
 				//don't inflate the String bytes now
 				if(channelSubscriber != null) {
-					channelSubscriber.onNext(new StringBuffer(((TextWebSocketFrame) msg).content()
-					                                                                    .nioBuffer()));
+					channelSubscriber.onNext(((TextWebSocketFrame) msg).content());
 				}
 			} finally {
 				ReferenceCountUtil.release(msg);

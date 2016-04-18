@@ -22,18 +22,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import org.reactivestreams.Publisher;
 import reactor.core.converter.DependencyUtils;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelHandler;
 
 /**
  * @author Stephane Maldini
  */
 public abstract class HttpMappings
-		implements Function<HttpChannel, Iterable<? extends ChannelHandler<Buffer, Buffer, HttpChannel>>> {
+		implements Function<HttpChannel, Iterable<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>>> {
 
 	/**
 	 * An alias for {@link HttpMappings#http}.
@@ -180,19 +180,19 @@ public abstract class HttpMappings
 	 * @return
 	 */
 	public abstract HttpMappings add(Predicate<? super HttpChannel> condition,
-			ChannelHandler<Buffer, Buffer, HttpChannel> handler);
+			ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler);
 
 	/**
 	 */
 	static final class HttpHandlerMapping
-			implements ChannelHandler<Buffer, Buffer, HttpChannel>, Predicate<HttpChannel> {
+			implements ChannelHandler<ByteBuf, ByteBuf, HttpChannel>, Predicate<HttpChannel> {
 
 		private final Predicate<? super HttpChannel>                condition;
-		private final ChannelHandler<Buffer, Buffer, HttpChannel>   handler;
+		private final ChannelHandler<ByteBuf, ByteBuf, HttpChannel>   handler;
 		private final Function<? super String, Map<String, Object>> resolver;
 
 		HttpHandlerMapping(Predicate<? super HttpChannel> condition,
-				ChannelHandler<Buffer, Buffer, HttpChannel> handler,
+				ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler,
 				Function<? super String, Map<String, Object>>         resolver) {
 			this.condition = condition;
 			this.handler = handler;
@@ -204,7 +204,7 @@ public abstract class HttpMappings
 			return handler.apply(channel.paramsResolver(resolver));
 		}
 
-		ChannelHandler<Buffer, Buffer, HttpChannel> getHandler() {
+		ChannelHandler<ByteBuf, ByteBuf, HttpChannel> getHandler() {
 			return handler;
 		}
 
@@ -221,18 +221,18 @@ public abstract class HttpMappings
 
 		@Override
 		public HttpMappings add(Predicate<? super HttpChannel> condition,
-				ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+				ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 
 			handlers.add(new HttpHandlerMapping(condition, handler, null));
 			return this;
 		}
 
 		@Override
-		public Iterable<? extends ChannelHandler<Buffer, Buffer, HttpChannel>> apply(final HttpChannel channel) {
+		public Iterable<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>> apply(final HttpChannel channel) {
 
-			return (Iterable<ChannelHandler<Buffer, Buffer, HttpChannel>>) () -> {
+			return (Iterable<ChannelHandler<ByteBuf, ByteBuf, HttpChannel>>) () -> {
 				final Iterator<HttpHandlerMapping> iterator = handlers.iterator();
-				return new Iterator<ChannelHandler<Buffer, Buffer, HttpChannel>>() {
+				return new Iterator<ChannelHandler<ByteBuf, ByteBuf, HttpChannel>>() {
 
 					HttpHandlerMapping cached;
 
@@ -250,7 +250,7 @@ public abstract class HttpMappings
 					}
 
 					@Override
-					public ChannelHandler<Buffer, Buffer, HttpChannel> next() {
+					public ChannelHandler<ByteBuf, ByteBuf, HttpChannel> next() {
 						HttpHandlerMapping cursor = cached;
 						if (cursor != null) {
 							cached = null;

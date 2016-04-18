@@ -15,20 +15,25 @@
  */
 package reactor.io.netty.common;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.DefaultFileRegion;
+import io.netty.channel.FileRegion;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.io.buffer.Buffer;
-import reactor.io.ipc.Channel;
 import reactor.io.ipc.Outbound;
 
 /**
  * @author Stephane Maldini
  */
-public interface NettyOutbound extends Outbound<Buffer> {
+public interface NettyOutbound extends Outbound<ByteBuf> {
 
 	@Override
 	io.netty.channel.Channel delegate();
@@ -69,7 +74,7 @@ public interface NettyOutbound extends Outbound<Buffer> {
 	 */
 	default Mono<Void> sendByteArray(Publisher<? extends byte[]> dataStream) {
 		return send(Flux.from(dataStream)
-		                .map(Buffer::wrap));
+		                .map(Unpooled::wrappedBuffer));
 	}
 
 	/**
@@ -82,7 +87,47 @@ public interface NettyOutbound extends Outbound<Buffer> {
 	 */
 	default Mono<Void> sendByteBuffer(Publisher<? extends ByteBuffer> dataStream) {
 		return send(Flux.from(dataStream)
-		                .map(Buffer::new));
+		                .map(Unpooled::wrappedBuffer));
+	}
+
+	/**
+	 * Send File with zero-byte copy to the peer, listen for any error on write and close on terminal signal
+	 * (complete|error). If more
+	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
+	 *
+	 * @param file the dataStream publishing Buffer items to write on this channel
+	 *
+	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	default Mono<Void> sendFile(File file) {
+		return sendFile(file, 0L, file.length());
+	}
+
+	/**
+	 * Send File with zero-byte copy to the peer, listen for any error on write and close on terminal signal
+	 * (complete|error). If more
+	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
+	 *
+	 *
+	 * @param file the dataStream publishing Buffer items to write on this channel
+	 *
+	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	default Mono<Void> sendFile(File file, long position) {
+		return sendFile(file, position, file.length());
+	}
+
+	/**
+	 * Send File with zero-byte copy to the peer, listen for any error on write and close on terminal signal
+	 * (complete|error). If more
+	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
+	 *
+	 * @param file the dataStream publishing Buffer items to write on this channel
+	 *
+	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	default Mono<Void> sendFile(File file, long position, long count) {
+		return MonoChannelFuture.from(delegate().writeAndFlush(new DefaultFileRegion(file, position, count)));
 	}
 
 	/**
@@ -94,7 +139,20 @@ public interface NettyOutbound extends Outbound<Buffer> {
 	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
 	 */
 	default Mono<Void> sendString(Publisher<? extends String> dataStream) {
+		return sendString(dataStream, Charset.defaultCharset());
+	}
+
+	/**
+	 * Send String to the peer, listen for any error on write and close on terminal signal (complete|error). If more
+	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
+	 *
+	 * @param dataStream the dataStream publishing Buffer items to write on this channel
+	 * @param charset the encoding charset
+	 *
+	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	default Mono<Void> sendString(Publisher<? extends String> dataStream, Charset charset) {
 		return send(Flux.from(dataStream)
-		                .map(Buffer::wrap));
+		                .map(s -> delegate().alloc().buffer().writeBytes(s.getBytes(charset))));
 	}
 }

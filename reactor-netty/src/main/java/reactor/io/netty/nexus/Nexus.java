@@ -28,6 +28,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.EmitterProcessor;
@@ -46,7 +48,6 @@ import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.core.util.WaitStrategy;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.Peer;
@@ -62,11 +63,11 @@ import static reactor.core.util.ReactiveStateUtils.property;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
-		implements ChannelHandler<Buffer, Buffer, HttpChannel>, Loopback {
+public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>>
+		implements ChannelHandler<ByteBuf, ByteBuf, HttpChannel>, Loopback {
 
 	/**
-	 * Bind a new TCP server to "loopback" on the given port. By default the default server implementation is scanned
+	 * Bind a new TCP server to "loopback" on the given port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
 	 * Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -79,7 +80,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param port the port to listen on loopback
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -88,7 +89,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	}
 
 	/**
-	 * Bind a new TCP server to the given bind address on port {@literal 12012}. By default the default server
+	 * Bind a new TCP server to the given bind address on port {@literal 12012}. The default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of
 	 * {@link Publisher} that will emit: - onNext {@link Channel} to consume data from -
@@ -101,7 +102,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the default port 12012
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -110,7 +111,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	}
 
 	/**
-	 * Bind a new TCP server to the given bind address and port. By default the default server implementation is scanned
+	 * Bind a new TCP server to the given bind address and port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpServer} is a specific kind of {@link
 	 * Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -123,7 +124,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of Channel, typically a peer of connections.
@@ -134,7 +135,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	}
 
 	/**
-	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. By default the default server
+	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. The default server
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
 	 * {@link Channel#send} can subscribe to any passed {@link Publisher}. <p> Note
@@ -143,7 +144,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
 	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static Nexus create() {
@@ -233,11 +234,10 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 			p = channel.send(federateAndEncode(channel, eventStream));
 		}
 
-		channel.receive()
-		       .subscribe(Subscribers.consumer(new Consumer<Buffer>() {
+		channel.receiveString()
+		       .subscribe(Subscribers.consumer(new Consumer<String>() {
 			       @Override
-			       public void accept(Buffer buffer) {
-				       String command = buffer.asString();
+			       public void accept(String command) {
 				       int indexArg = command.indexOf("\n");
 				       if (indexArg > 0) {
 					       String action = command.substring(0, indexArg);
@@ -453,7 +453,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 	}
 
 	@Override
-	protected Mono<Void> doStart(ChannelHandler<Buffer, Buffer, Channel<Buffer, Buffer>> handler) {
+	protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>> handler) {
 
 		if (logExtensionEnabled) {
 			FluxProcessor<Event, Event> p =
@@ -501,13 +501,13 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 		return server.shutdown();
 	}
 
-	private Flux<? extends Buffer> federateAndEncode(HttpChannel c, Flux<Event> stream) {
+	private Flux<? extends ByteBuf> federateAndEncode(HttpChannel c, Flux<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
 			return stream.map(BUFFER_STRING_FUNCTION)
 			             .useCapacity(websocketCapacity);
 		}
-		Flux<Buffer> mergedUpstreams = Flux.merge(Flux.fromArray(clients)
+		Flux<ByteBuf> mergedUpstreams = Flux.merge(Flux.fromArray(clients)
 		                                              .map(new FederatedMerger(c)));
 
 		return Flux.merge(stream.map(BUFFER_STRING_FUNCTION), mergedUpstreams)
@@ -805,13 +805,13 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 		private static final JvmStats jvmStats = new JvmStats();
 	}
 
-	private static class StringToBuffer implements Function<Event, Buffer> {
+	private static class StringToBuffer implements Function<Event, ByteBuf> {
 
 		@Override
-		public Buffer apply(Event event) {
+		public ByteBuf apply(Event event) {
 			try {
-				return reactor.io.buffer.StringBuffer.wrap(event.toString()
-				                                                .getBytes("UTF-8"));
+				return Unpooled.wrappedBuffer(event.toString()
+				                     .getBytes("UTF-8"));
 			}
 			catch (UnsupportedEncodingException e) {
 				throw Exceptions.propagate(e);
@@ -847,7 +847,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 		}
 	}
 
-	private static final class FederatedMerger implements Function<FederatedClient, Publisher<Buffer>> {
+	private static final class FederatedMerger implements Function<FederatedClient, Publisher<ByteBuf>> {
 
 		private final HttpChannel c;
 
@@ -856,7 +856,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 		}
 
 		@Override
-		public Publisher<Buffer> apply(FederatedClient o) {
+		public Publisher<ByteBuf> apply(FederatedClient o) {
 			return o.client.ws(o.targetAPI)
 			               .flatMap(HttpInbound::receive);
 		}
@@ -876,7 +876,7 @@ public final class Nexus extends Peer<Buffer, Buffer, Channel<Buffer, Buffer>>
 			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
 	private static final Logger log            = Logger.getLogger(Nexus.class);
 	private static final String API_STREAM_URL = "/create/stream";
-	private static final Function<Event, Buffer> BUFFER_STRING_FUNCTION = new StringToBuffer();
+	private static final Function<Event, ByteBuf> BUFFER_STRING_FUNCTION = new StringToBuffer();
 
 	private class LastGraphStateMap implements Function<Event, Event>, Introspectable {
 

@@ -32,10 +32,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.netty.handler.codec.http.DefaultHttpRequest;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,10 +42,9 @@ import reactor.core.publisher.SchedulerGroup;
 import reactor.core.scheduler.Timer;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.PlatformDependent;
-import reactor.io.buffer.Buffer;
-import reactor.io.netty.common.NettyBuffer;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
+import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.util.SocketUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -316,8 +311,8 @@ public class TcpClientTests {
 
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {
-				  allWrites.add(connection.send(Flux.just(Buffer.wrap("a"))
-				                                    .delay(750)));
+				  allWrites.add(connection.sendString(Flux.just("a")
+				                                          .delay(750)));
 			  }
 			  return Flux.merge(allWrites);
 		  }
@@ -333,22 +328,12 @@ public class TcpClientTests {
 
 	@Test
 	public void nettyNetChannelAcceptsNettyChannelHandlers() throws InterruptedException {
-		TcpClient client = TcpClient.create(ClientOptions.create()
-		                                                 .pipelineConfigurer(pipeline -> pipeline.addLast(new HttpClientCodec()))
-		                                                 .connect("www.google.com", 80)
-		);
+		HttpClient client = HttpClient.create();
 
-
-		final CountDownLatch latch = new CountDownLatch(2);
-		client.startAndAwait(resp -> {
-			latch.countDown();
-			System.out.println("resp: " + resp);
-
-			return Flux.from(resp.send(Flux.just(NettyBuffer.create(new DefaultHttpRequest(HttpVersion.HTTP_1_1,
-					HttpMethod.GET,
-					"/")))))
-			           .doOnComplete(latch::countDown);
-		});
+		final CountDownLatch latch = new CountDownLatch(1);
+		client.get("http://www.google.com/")
+		      .doOnSuccess(v -> latch.countDown())
+		      .get();
 
 
 		assertTrue("Latch didn't time out", latch.await(15, TimeUnit.SECONDS));

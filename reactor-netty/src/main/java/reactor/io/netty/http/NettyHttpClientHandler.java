@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -35,7 +36,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
-import reactor.io.buffer.Buffer;
+
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -55,7 +56,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	 */
 	private boolean discardBody = false;
 
-	public NettyHttpClientHandler(ChannelHandler<Buffer, Buffer, NettyChannel> handler, TcpChannel tcpStream) {
+	public NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, TcpChannel tcpStream) {
 		super(handler, tcpStream);
 		this.tcpStream = tcpStream;
 	}

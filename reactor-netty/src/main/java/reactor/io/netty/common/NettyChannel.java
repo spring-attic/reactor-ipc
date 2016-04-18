@@ -16,18 +16,14 @@
 package reactor.io.netty.common;
 
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.io.buffer.Buffer;
+import io.netty.buffer.ByteBuf;
 import reactor.io.ipc.Channel;
 
 /**
  * @author Stephane Maldini
  */
-public interface NettyChannel extends Channel<Buffer, Buffer>, NettyInbound, NettyOutbound {
+public interface NettyChannel extends Channel<ByteBuf, ByteBuf>, NettyInbound, NettyOutbound {
 
 	@Override
 	io.netty.channel.Channel delegate();

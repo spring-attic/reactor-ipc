@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.function.Function;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -34,7 +35,6 @@ import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.Peer;
@@ -47,7 +47,7 @@ import reactor.io.netty.tcp.TcpClient;
  *
  * @author Stephane Maldini
  */
-public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loopback {
+public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements Loopback {
 
 
 	final static String WS_SCHEME    = "ws";
@@ -237,7 +237,7 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		return request(HttpMethod.GET, parseURL(url, true), handler);
 	}
 
-	protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler, Object nativeChannel) {
+	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, Object nativeChannel) {
 		SocketChannel ch = (SocketChannel) nativeChannel;
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
@@ -273,7 +273,7 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 	}
 
 	@Override
-	protected Mono<Void> doStart(ChannelHandler<Buffer, Buffer, HttpChannel> handler) {
+	protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 		return client.start(inoutChannel -> {
 			final NettyHttpChannel ch = ((NettyHttpChannel) inoutChannel);
 			return handler.apply(ch);
@@ -341,7 +341,7 @@ public class HttpClient extends Peer<Buffer, Buffer, HttpChannel> implements Loo
 		}
 
 		@Override
-		protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler,
+		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 				SocketChannel nativeChannel) {
 
 			URI currentURI = lastURI;

@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import org.junit.After;
 import org.junit.Before;
@@ -41,6 +42,7 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
@@ -258,7 +260,7 @@ public class TcpServerTests {
 			return Flux.never();
 		}).get();
 
-		client.start(ch -> ch.send(Flux.just(Buffer.wrap("Hello World!"))))
+		client.start(ch -> ch.sendString(Flux.just("Hello World!")))
 		      .get();
 
 		assertTrue("latch was counted down", latch.await(5, TimeUnit.SECONDS));
@@ -273,7 +275,7 @@ public class TcpServerTests {
 
 		final TcpClient client = TcpClient.create("localhost", port);
 
-		ChannelHandler<Buffer, Buffer, NettyChannel>
+		ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
 				serverHandler = ch -> {
 			ch.receiveString()
 			  .consume(data -> {
@@ -396,7 +398,7 @@ public class TcpServerTests {
 		HttpServer server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
-			          .ws("ws://localhost:3000", requestOut -> requestOut.send(Flux.just(Buffer.wrap("ping")))
+			          .ws("ws://localhost:3000", requestOut -> requestOut.sendString(Mono.just("ping"))
 			  )
 			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive()
 			                                                          .useCapacity(100))

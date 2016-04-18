@@ -22,6 +22,7 @@ import java.net.NetworkInterface;
 import java.net.ProtocolFamily;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -48,22 +49,21 @@ import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
+import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.util.NettyNativeDetector;
 
 /**
  *
  * @author Stephane Maldini
  */
-final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
+final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
@@ -71,7 +71,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	);
 
 	/**
-	 * Bind a new UDP server to the "loopback" address. By default the default server implementation is scanned from the
+	 * Bind a new UDP server to the "loopback" address. The default server implementation is scanned from the
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to read
 	 * any incoming data. <p> To reply data on the active connection, {@link Channel#send} can subscribe to
@@ -81,7 +81,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
 	 * they have beem receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static UdpServer create() {
@@ -89,7 +89,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	}
 
 	/**
-	 * Bind a new UDP server to the given bind address. By default the default server implementation is scanned from the
+	 * Bind a new UDP server to the given bind address. The default server implementation is scanned from the
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to read
 	 * any incoming data. <p> To reply data on the active connection, {@link Channel#send} can subscribe to
@@ -99,7 +99,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
 	 * they have beem receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -108,7 +108,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	}
 
 	/**
-	 * Bind a new UDP server to the "loopback" address and specified port. By default the default server implementation
+	 * Bind a new UDP server to the "loopback" address and specified port. The default server implementation
 	 * is scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
 	 * dependencies are on the classpath. <p> <p> From the emitted {@link Channel}, one can decide to add
 	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
@@ -118,7 +118,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param port the port to listen on the passed bind address
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -127,7 +127,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	}
 
 	/**
-	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
+	 * Bind a new UDP server to the given bind address and port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
 	 * on the classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to
 	 * read any incoming data. <p> To reply data on the active connection, {@link Channel#send} can
@@ -137,7 +137,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
 	 * channels will run on the same thread they have beem receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param port the port to listen on the passed bind address
 	 * @param bindAddress bind address (e.g. "127.0.0.1") to create the server on the passed port
 	 * @return a new Stream of Channel, typically a peer of connections.
@@ -147,7 +147,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 		                                  .listen(bindAddress, port)
 		                                  .timer(Timer.globalOrNull()));
 	}/**
-	 * Bind a new UDP server to the given bind address and port. By default the default server implementation is scanned
+	 * Bind a new UDP server to the given bind address and port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
 	 * on the classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to
 	 * read any incoming data. <p> To reply data on the active connection, {@link Channel#send} can
@@ -157,7 +157,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
 	 * channels will run on the same thread they have beem receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param options
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -329,7 +329,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Mono<Void> doStart(final ChannelHandler<Buffer, Buffer, NettyChannel> channelHandler) {
+	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> channelHandler) {
 		return new Mono<Void>() {
 
 			@Override
@@ -374,7 +374,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 			@Override
 			protected void doComplete(ChannelFuture future, Subscriber<? super Void> s) {
 				if (null == getOptions() || null == getOptions().eventLoopGroup()) {
-					new MonoChannelFuture<>(ioGroup.shutdownGracefully()).subscribe(s);
+					MonoChannelFuture.from(ioGroup.shutdownGracefully()).subscribe(s);
 				}
 				else {
 					super.doComplete(future, s);
@@ -383,7 +383,7 @@ final public class UdpServer extends Peer<Buffer, Buffer, NettyChannel> {
 		};
 	}
 
-	void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler,
+	void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 			Object _ioChannel) {
 		DatagramChannel ioChannel = (DatagramChannel) _ioChannel;
 		TcpChannel netChannel = new TcpChannel(

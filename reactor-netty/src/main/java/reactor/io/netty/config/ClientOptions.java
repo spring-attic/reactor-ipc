@@ -129,11 +129,6 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
-		public boolean isRaw() {
-			return options.isRaw();
-		}
-
-		@Override
 		public boolean keepAlive() {
 			return options.keepAlive();
 		}
@@ -210,11 +205,6 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 
 		@Override
 		public ClientOptions pipelineConfigurer(Consumer<ChannelPipeline> pipelineConfigurer) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public ClientOptions isRaw(boolean israw) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 

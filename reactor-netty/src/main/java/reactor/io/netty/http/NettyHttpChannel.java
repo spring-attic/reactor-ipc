@@ -17,11 +17,13 @@
 package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Function;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -41,6 +43,7 @@ import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -52,15 +55,16 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
-import reactor.io.buffer.Buffer;
+
+import reactor.io.netty.common.NettyOutbound;
 import reactor.io.netty.tcp.TcpChannel;
 
 /**
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, HttpInbound, HttpOutbound, Loopback,
-                                                                Completable {
+abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, HttpInbound, HttpOutbound, Loopback,
+                                                                 Completable {
 
 	final static AsciiString EVENT_STREAM = new AsciiString("text/event-stream");
 
@@ -181,7 +185,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 	@Override
 	public HttpOutbound header(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
-			doAddHeader(name, value);
+			doHeader(name, value);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -195,7 +199,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 	}
 
 	@Override
-	public Flux<Buffer> receive() {
+	public Flux<ByteBuf> receive() {
 		return this;
 	}
 
@@ -359,7 +363,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 	}
 
 	@Override
-	public void subscribe(final Subscriber<? super Buffer> subscriber) {
+	public void subscribe(final Subscriber<? super ByteBuf> subscriber) {
 		// Handle the 'Expect: 100-continue' header if necessary.
 		// TODO: Respond with 413 Request Entity Too Large
 		//   and discard the traffic or close the connection.
@@ -387,8 +391,20 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 	}
 
 	@Override
-	public Mono<Void> send(final Publisher<? extends Buffer> source) {
+	public Mono<Void> send(final Publisher<? extends ByteBuf> source) {
 		return new PostWritePublisher(source);
+	}
+
+	@Override
+	public Mono<Void> sendString(Publisher<? extends String> dataStream, Charset charset) {
+
+		if (isWebsocket()){
+			return new PostWritePublisher(Flux.from(dataStream)
+			                                  .map(TextWebSocketFrame::new));
+		}
+
+		return send(Flux.from(dataStream)
+		                .map(s -> tcpStream.delegate().alloc().buffer().writeBytes(s.getBytes(charset))));
 	}
 
 	/**
@@ -406,14 +422,6 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 	}
 
 	// REQUEST contract
-
-	protected Mono<Void> sendAfterHeaders(Publisher<? extends Buffer> writer) {
-		return tcpStream.send(writer);
-	}
-
-	protected Publisher<Void> sendBufferAfterHeaders(Publisher<? extends Buffer> s) {
-		return tcpStream.send(s);
-	}
 
 	protected void doHeader(CharSequence name, CharSequence value) {
 		this.headers.set(name, value);
@@ -470,9 +478,9 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 
 	class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
 
-		final Publisher<? extends Buffer> source;
+		final Publisher<?> source;
 
-		public PostWritePublisher(Publisher<? extends Buffer> source) {
+		public PostWritePublisher(Publisher<?> source) {
 			this.source = source;
 		}
 
@@ -492,7 +500,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 				doSubscribeHeaders(new PostHeaderWriteSubscriber(s));
 			}
 			else{
-				sendAfterHeaders(source).subscribe(s);
+				tcpStream.emitWriter(source, s);
 			}
 		}
 
@@ -518,7 +526,7 @@ abstract class NettyHttpChannel extends Flux<Buffer> implements HttpChannel, Htt
 			@Override
 			public void onComplete() {
 				this.subscription = null;
-				sendAfterHeaders(source).subscribe(s);
+				tcpStream.emitWriter(source, s);
 			}
 
 			@Override

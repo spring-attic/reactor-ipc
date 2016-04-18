@@ -19,7 +19,10 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.apache.http.HttpException;
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +51,7 @@ public class PostAndGetTests {
 		httpServer.start().get();
 	}
 
-	ChannelHandler<Buffer, Buffer, HttpChannel> getHandler() {
+	ChannelHandler<ByteBuf, ByteBuf, HttpChannel> getHandler() {
 		return channel -> {
 			channel.headers().entries().forEach(entry1 -> System.out.println(String.format("header [%s=>%s]", entry1
 			  .getKey
@@ -59,25 +62,25 @@ public class PostAndGetTests {
 
 			StringBuilder response = new StringBuilder().append("hello ").append(channel.params().get("name"));
 			System.out.println(String.format("%s from thread %s", response.toString(), Thread.currentThread()));
-			return channel.send(Flux.just(Buffer.wrap(response.toString())));
+			return channel.sendString(Flux.just(response.toString()));
 		};
 	}
 
-	ChannelHandler<Buffer, Buffer, HttpChannel> postHandler() {
+	ChannelHandler<ByteBuf, ByteBuf, HttpChannel> postHandler() {
 		return channel -> {
 
 			channel.headers().entries().forEach(entry -> System.out.println(String.format("header [%s=>%s]", entry
 				.getKey(),
 			  entry.getValue())));
 
-			return channel.send(channel.receive()
+			return channel.sendString(channel.receive()
 			                           .take(1)
 			                           .log("received")
 			                           .flatMap(data -> {
-				  final StringBuilder response = new StringBuilder().append("hello ").append(new String(data.asBytes
-				    ()));
+				  final StringBuilder response = new StringBuilder().append("hello ").append(data.toString(Charset
+						  .defaultCharset()));
 				  System.out.println(String.format("%s from thread %s", response.toString(), Thread.currentThread()));
-				  return Flux.just(Buffer.wrap(response.toString()));
+				  return Flux.just(response.toString());
 			  }));
 		};
 	}

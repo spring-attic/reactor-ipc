@@ -26,9 +26,13 @@ import reactor.core.publisher.Mono;
  */
 public class MonoChannelFuture<C extends Future> extends Mono<Void> {
 
+	public static Mono<Void> from(Future future){
+		return new MonoChannelFuture<Future>(future);
+	}
+
 	final C future;
 
-	public MonoChannelFuture(C future) {
+	protected MonoChannelFuture(C future) {
 		this.future = future;
 	}
 	@Override

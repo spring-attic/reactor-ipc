@@ -243,11 +243,6 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
-		public boolean isRaw() {
-			return options.isRaw();
-		}
-
-		@Override
 		public boolean keepAlive() {
 			return options.keepAlive();
 		}
@@ -349,11 +344,6 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 
 		@Override
 		public ServerOptions pipelineConfigurer(Consumer<ChannelPipeline> pipelineConfigurer) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public ServerOptions isRaw(boolean israw) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 

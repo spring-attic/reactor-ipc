@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -38,15 +39,14 @@ import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.io.buffer.Buffer;
+
 import reactor.io.ipc.ChannelHandler;
-import reactor.io.netty.common.NettyBuffer;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 
 /**
- * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link reactor.io.buffer.Buffer}).
+ * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel}.
  *
  * @author Stephane Maldini
  */
@@ -56,7 +56,7 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 	     NettyHttpChannel request;
 
 	public NettyHttpServerHandler(
-			ChannelHandler<Buffer, Buffer, NettyChannel> handler,
+			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 			TcpChannel tcpStream) {
 		super(handler, tcpStream);
 		this.tcpStream = tcpStream;
@@ -111,14 +111,7 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 
 	@Override
 	protected ChannelFuture doOnWrite(final Object data, final ChannelHandlerContext ctx) {
-		if (Buffer.class.isAssignableFrom(data.getClass())) {
-			if(NettyBuffer.class.equals(data.getClass())){
-				return ctx.write(((NettyBuffer)data).get());
-			}
-			return ctx.write(new DefaultHttpContent(convertBufferToByteBuff(ctx, (Buffer) data)));
-		} else {
-			return ctx.write(data);
-		}
+		return ctx.write(data);
 	}
 
 	NettyWebSocketServerHandler withWebsocketSupport(String url, String protocols){

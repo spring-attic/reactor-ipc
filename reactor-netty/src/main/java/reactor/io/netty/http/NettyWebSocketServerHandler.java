@@ -16,6 +16,7 @@
 
 package reactor.io.netty.http;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -29,12 +30,9 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
-import reactor.io.buffer.Buffer;
-import reactor.io.buffer.StringBuffer;
-import reactor.io.netty.common.NettyBuffer;
 
 /**
- * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel} and {@link Buffer}).
+ * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel}
  *
  * @author Stephane Maldini
  */
@@ -98,16 +96,13 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 	}
 
 	static ChannelFuture writeWS(final Object data, ChannelHandlerContext ctx){
-		if (Buffer.class.isAssignableFrom(data.getClass())) {
-			if(!(StringBuffer.class.equals(data.getClass()))) {
-				if(NettyBuffer.class.equals(data.getClass())) {
-					return ctx.write(((NettyBuffer)data).get());
-				}
-				return ctx.write(new BinaryWebSocketFrame(convertBufferToByteBuff(ctx, (Buffer) data)));
-			}else{
-				return ctx.write(new TextWebSocketFrame(convertBufferToByteBuff(ctx, (Buffer) data)));
-			}
-		} else {
+		if (data instanceof ByteBuf) {
+			return ctx.write(new BinaryWebSocketFrame((ByteBuf)data));
+		}
+		else if (data instanceof String) {
+			return ctx.write(new TextWebSocketFrame((String)data));
+		}
+		else {
 			return ctx.write(data);
 		}
 	}

@@ -16,17 +16,12 @@
 package reactor.io.netty.http;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.cookie.Cookie;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.io.buffer.Buffer;
 import reactor.io.netty.common.NettyChannel;
 
 /**

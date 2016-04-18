@@ -17,7 +17,6 @@
 package reactor.io.netty.tcp.netty
 
 import reactor.core.publisher.Flux
-import reactor.io.buffer.Buffer
 import reactor.io.codec.json.JsonCodec
 import reactor.io.netty.common.NettyCodec
 import reactor.io.netty.tcp.TcpClient
@@ -27,6 +26,7 @@ import spock.lang.Specification
 
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
+import java.nio.charset.Charset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -44,16 +44,16 @@ class NettyTcpServerSpec extends Specification {
 			def server = TcpServer.create(port)
 
 		when: "the server is started"
-		server.start { conn -> conn.send(Flux.just(Buffer.wrap("Hello World!")))
+		server.start { conn -> conn.sendString(Flux.just("Hello World!"))
 			}.get()
 
-			def client = new SimpleClient(port, dataLatch, Buffer.wrap("Hello World!"))
+			def client = new SimpleClient(port, dataLatch, "Hello World!")
 			client.start()
 			dataLatch.await(5, TimeUnit.SECONDS)
 
 		then: "data was recieved"
 			client.data?.remaining() == 12
-			new Buffer(client.data).asString() == "Hello World!"
+			new String(client.data.array()) == "Hello World!"
 			dataLatch.count == 0
 
 		cleanup: "the server is stopped"
@@ -74,13 +74,13 @@ class NettyTcpServerSpec extends Specification {
 				  , NettyCodec.json(Pojo))
 		}).get()
 
-			def client = new SimpleClient(port, dataLatch, Buffer.wrap("{\"name\":\"John Doe\"}"))
+			def client = new SimpleClient(port, dataLatch, "{\"name\":\"John Doe\"}")
 			client.start()
 			dataLatch.await(5, TimeUnit.SECONDS)
 
 		then: "data was recieved"
 			client.data?.remaining() == 19
-			new Buffer(client.data).asString() == "{\"name\":\"Jane Doe\"}"
+			new String(client.data.array()) == "{\"name\":\"Jane Doe\"}"
 			dataLatch.count == 0
 
 		cleanup: "the server is stopped"
@@ -97,23 +97,21 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the client/server are prepared"
 			server.start { input ->
-			  input.send(Flux.from(codec.decode(input.receive()))
+			  input.send(input.receive(NettyCodec.from(codec))
 								.log('serve')
-								.map(codec)
-								.useCapacity(5l)
+								.useCapacity(5l), NettyCodec.from(codec)
 				)
 			}.get()
 
 			client.start { input ->
-			  codec.decode(input.receive())
+			  input.receive(NettyCodec.from(codec))
 						.log('receive')
 						.consume { latch.countDown() }
 
 			  input.send(
 						Flux.range(1, 10)
 								.map { new Pojo(name: 'test' + it) }
-								.log('send')
-								.map(codec)
+								.log('send'), NettyCodec.from(codec)
 				).subscribe()
 
 			  Flux.never()
@@ -164,8 +162,7 @@ class NettyTcpServerSpec extends Specification {
 			  input.send(
 						Flux.range(1, elem)
 								.map { new Pojo(name: 'test' + it) }
-								.log('send')
-								.map(codec)
+								.log('send'), NettyCodec.from(codec)
 				).subscribe()
 
 			  Flux.never()
@@ -184,10 +181,10 @@ class NettyTcpServerSpec extends Specification {
 	static class SimpleClient extends Thread {
 		final int port
 		final CountDownLatch latch
-		final Buffer output
+		final String output
 		ByteBuffer data
 
-		SimpleClient(int port, CountDownLatch latch, Buffer output) {
+		SimpleClient(int port, CountDownLatch latch, String output) {
 			this.port = port
 			this.latch = latch
 			this.output = output
@@ -196,7 +193,7 @@ class NettyTcpServerSpec extends Specification {
 		@Override
 		void run() {
 			def ch = SocketChannel.open(new InetSocketAddress("127.0.0.1", port))
-			def len = ch.write(output.byteBuffer())
+			def len = ch.write(ByteBuffer.wrap(output.getBytes(Charset.defaultCharset())))
 			assert ch.connected
 			data = ByteBuffer.allocate(len)
 			int read = ch.read(data)

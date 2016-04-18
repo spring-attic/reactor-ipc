@@ -17,13 +17,11 @@
 package reactor.io.netty.config;
 
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.util.PlatformDependent;
-import reactor.io.buffer.Buffer;
 
 /**
  * Encapsulates common socket options.
@@ -46,7 +44,6 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	private int                       rcvbuf             = PlatformDependent.SMALL_IO_BUFFER_SIZE;
 	private int                       sndbuf             = PlatformDependent.SMALL_IO_BUFFER_SIZE;
 	private long                      prefetch           = Long.MAX_VALUE;
-	private boolean                   israw              = false;
 	private boolean                   managed            = DEFAULT_MANAGED_PEER;
 	private Consumer<ChannelPipeline> pipelineConfigurer = null;
 	private EventLoopGroup            eventLoopGroup     = null;
@@ -75,23 +72,6 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	 */
 	public boolean isManaged() {
 		return managed;
-	}
-
-	/**
-	 * @return false if emitting {@link Buffer}
-	 */
-	public boolean isRaw() {
-		return israw;
-	}
-
-	/**
-	 * Set the is Raw value.
-	 * @param israw Should the peer emit {@link Buffer} or its native type
-	 * @return {@code this}
-	 */
-	public SO isRaw(boolean israw) {
-		this.israw = israw;
-		return (SO) this;
 	}
 
 	/**

@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -42,7 +43,6 @@ import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
@@ -60,12 +60,12 @@ import reactor.io.netty.util.NettyNativeDetector;
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
-public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Introspectable, MultiProducer {
+public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements Introspectable, MultiProducer {
 
 	public static final ChannelHandler PING = o -> Flux.empty();
 
 	/**
-	 * Bind a new TCP client to the localhost on port 12012. By default the default client implementation is scanned
+	 * Bind a new TCP client to the localhost on port 12012. The default client implementation is scanned
 	 * from the classpath on Class init. Support for Netty first is provided as long as the relevant
 	 * library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -78,7 +78,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static TcpClient create() {
@@ -86,7 +86,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP client to the specified connect address and port 12012. By default the default client
+	 * Bind a new TCP client to the specified connect address and port 12012. The default client
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of
 	 * {@link org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from -
@@ -99,7 +99,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param bindAddress the address to connect to on port 12012
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -108,7 +108,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP client to "loopback" on the the specified port. By default the default client implementation is
+	 * Bind a new TCP client to "loopback" on the the specified port. The default client implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -121,7 +121,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param port the port to connect to on "loopback"
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
@@ -130,7 +130,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
+	 * Bind a new TCP client to the specified connect address and port. The default client implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -143,7 +143,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 * @param bindAddress the address to connect to
 	 * @param port the port to connect to
 	 * @return a new Stream of Channel, typically a peer of connections.
@@ -154,7 +154,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	}
 
 	/**
-	 * Bind a new TCP client to the specified connect address and port. By default the default client implementation is
+	 * Bind a new TCP client to the specified connect address and port. The default client implementation is
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
 	 * dependencies are on the classpath. <p> A {@link TcpClient} is a specific kind of {@link
 	 * org.reactivestreams.Publisher} that will emit: - onNext {@link Channel} to consume data from - onComplete
@@ -166,7 +166,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 	 * Otherwise, data will be flushed every capacity batch size and read will pause when capacity number of elements
 	 * have been dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
 	 * <p>
-	 * <p> By default the type of emitted data or received data is {@link Buffer}
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
 	 *
 	 * @param options
 	 *
@@ -289,10 +289,10 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected Mono<Void> doStart(final ChannelHandler<Buffer, Buffer, NettyChannel> handler) {
+	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler) {
 
-		final ChannelHandler<Buffer, Buffer, NettyChannel> targetHandler =
-				null == handler ? (ChannelHandler<Buffer, Buffer, NettyChannel>) PING : handler;
+		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler =
+				null == handler ? (ChannelHandler<ByteBuf, ByteBuf, NettyChannel>) PING : handler;
 
 		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 			@Override
@@ -313,7 +313,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 					throw new IllegalStateException("Connection supplier didn't return any connection");
 				}
 
-				new MonoChannelFuture<>(channelFuture).subscribe(s);
+				MonoChannelFuture.from(channelFuture).subscribe(s);
 			}
 		};
 	}
@@ -325,7 +325,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 			return Mono.empty();
 		}
 
-		return new MonoChannelFuture<Future<?>>(ioGroup.shutdownGracefully());
+		return MonoChannelFuture.from(ioGroup.shutdownGracefully());
 	}
 
 	protected void addSecureHandler(SocketChannel ch) throws Exception {
@@ -340,7 +340,7 @@ public class TcpClient extends Peer<Buffer, Buffer, NettyChannel> implements Int
 		  .addFirst(new SslHandler(ssl));
 	}
 
-	protected void bindChannel(ChannelHandler<Buffer, Buffer, NettyChannel> handler, SocketChannel ch)
+	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel ch)
 			throws Exception {
 
 		if (null != options.ssl()) {

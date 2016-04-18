@@ -19,6 +19,8 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.function.Function;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.io.buffer.Buffer;
@@ -163,15 +165,15 @@ public final class NettyCodec<IN, OUT> {
 	 *
 	 * @return
 	 */
-	public Function<? super Flux<Buffer>, ? extends Publisher<IN>> decoder() {
-		return codec::decode;
+	public Function<? super Flux<ByteBuf>, ? extends Publisher<IN>> decoder() {
+		return flux -> codec.decode(flux.map(bb -> new Buffer(bb.nioBuffer())));
 	}
 
 	/**
 	 *
 	 * @return
 	 */
-	public Function<Flux<? extends OUT>, ? extends Publisher<Buffer>> encoder() {
-		return codec::encode;
+	public Function<Flux<? extends OUT>, ? extends Publisher<ByteBuf>> encoder() {
+		return flux -> codec.encode(flux).map(b -> Unpooled.wrappedBuffer(b.byteBuffer()));
 	}
 }
