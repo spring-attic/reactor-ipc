@@ -29,6 +29,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
@@ -223,7 +224,7 @@ public class SubscriberThreadingPOCTest {
 	public void testSubscribeOn() throws InterruptedException {
 		Publisher<Buffer> dataPublisher = new SyncPublisher(32);
 
-		SchedulerGroup group = SchedulerGroup.async();
+		Scheduler group = SchedulerGroup.async();
 		TopicProcessor<Buffer> processor = TopicProcessor.create("ringbuffer-sender", 8);
 		Flux.from(dataPublisher).subscribeOn(group).subscribe(processor);
 

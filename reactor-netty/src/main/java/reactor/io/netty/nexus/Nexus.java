@@ -38,6 +38,7 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
@@ -183,7 +184,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	private final GraphEvent                      lastState;
 	private final SystemEvent                     lastSystemState;
 	private final FluxProcessor<Event, Event>     eventStream;
-	private final SchedulerGroup                  group;
+	private final Scheduler                       group;
 	private final Function<Event, Event>          lastStateMerge;
 	private final TimedScheduler                  timer;
 	private final SignalEmitter<Publisher<Event>> cannons;

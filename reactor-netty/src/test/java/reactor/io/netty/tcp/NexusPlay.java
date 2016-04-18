@@ -24,6 +24,7 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
 import reactor.io.netty.nexus.Nexus;
@@ -146,9 +147,9 @@ public class NexusPlay {
 		new Thread("schedulerGroupSample"){
 			@Override
 			public void run() {
-				SchedulerGroup io = SchedulerGroup.io();
-				SchedulerGroup single = SchedulerGroup.single();
-				SchedulerGroup async = SchedulerGroup.async();
+				Scheduler io = SchedulerGroup.io();
+				Scheduler single = SchedulerGroup.single();
+				Scheduler async = SchedulerGroup.async();
 				nexus.monitor(io);
 				nexus.monitor(single);
 				nexus.monitor(async);
