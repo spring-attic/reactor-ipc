@@ -208,14 +208,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			}
 
 			ByteBuf buffer = (ByteBuf) msg;
-			try {
-				channelSubscriber.onNext(buffer);
-			}
-			finally {
-				if (buffer.refCnt() != 0) {
-					ReferenceCountUtil.release(buffer);
-				}
-			}
+			channelSubscriber.onNext(buffer);
 		}
 		catch (Throwable err) {
 			Exceptions.throwIfFatal(err);

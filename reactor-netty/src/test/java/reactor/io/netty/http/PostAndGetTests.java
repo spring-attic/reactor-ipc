@@ -22,13 +22,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import org.apache.http.HttpException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
-import reactor.io.buffer.Buffer;
 import reactor.io.ipc.ChannelHandler;
 
 /**
@@ -102,7 +100,7 @@ public class PostAndGetTests {
 			  ("Connection: Keep-Alive\r\n").append("\r\n");
 			java.nio.channels.SocketChannel channel = java.nio.channels.SocketChannel.open(address);
 			System.out.println(String.format("get: request >> [%s]", request.toString()));
-			channel.write(Buffer.wrap(request.toString()).byteBuffer());
+			channel.write(ByteBuffer.wrap(request.toString().getBytes()));
 			ByteBuffer buf = ByteBuffer.allocate(4 * 1024);
 			while (channel.read(buf) > -1)
 				;
@@ -122,7 +120,7 @@ public class PostAndGetTests {
 			  ("\r\n");
 			java.nio.channels.SocketChannel channel = java.nio.channels.SocketChannel.open(address);
 			System.out.println(String.format("post: request >> [%s]", request.toString()));
-			channel.write(Buffer.wrap(request.toString()).byteBuffer());
+			channel.write(ByteBuffer.wrap(request.toString().getBytes()));
 			ByteBuffer buf = ByteBuffer.allocate(4 * 1024);
 			while (channel.read(buf) > -1)
 				;
