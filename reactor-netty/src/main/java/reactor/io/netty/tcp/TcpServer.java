@@ -38,7 +38,7 @@ import io.netty.util.concurrent.Future;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.SchedulerGroup;
+import reactor.core.publisher.Computations;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.util.ExecutorUtils;
@@ -63,7 +63,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.selectThreadCount",
-			"" + SchedulerGroup.DEFAULT_POOL_SIZE / 2));
+			"" + Computations.DEFAULT_POOL_SIZE / 2));
 
 	public static final int DEFAULT_TCP_SELECT_COUNT =
 			Integer.parseInt(System.getProperty("reactor.tcp.selectThreadCount", "" + DEFAULT_TCP_THREAD_COUNT));

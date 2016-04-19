@@ -43,7 +43,7 @@ import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.SchedulerGroup;
+import reactor.core.publisher.Computations;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -67,7 +67,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
-		"" + SchedulerGroup.DEFAULT_POOL_SIZE)
+		"" + Computations.DEFAULT_POOL_SIZE)
 	);
 
 	/**

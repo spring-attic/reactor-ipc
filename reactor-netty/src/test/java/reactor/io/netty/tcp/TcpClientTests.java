@@ -38,7 +38,7 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.SchedulerGroup;
+import reactor.core.publisher.Computations;
 import reactor.core.scheduler.Timer;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.PlatformDependent;
@@ -167,7 +167,7 @@ public class TcpClientTests {
 			channel.send(
 			  Flux.range(1, messages)
 				.map(i -> "Hello World!")
-				.subscribeOn(SchedulerGroup.io("test-line-feed"))
+				.subscribeOn(Computations.concurrent("test-line-feed"))
 			, NettyCodec.linefeed()).subscribe();
 
 			return Flux.never();

@@ -41,7 +41,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.SchedulerGroup;
+import reactor.core.publisher.Computations;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.netty.config.ServerOptions;
@@ -159,7 +159,7 @@ public class UdpServerTests {
 			servers.add(server);
 		}
 
-		for (int i = 0; i < SchedulerGroup.DEFAULT_POOL_SIZE; i++) {
+		for (int i = 0; i < Computations.DEFAULT_POOL_SIZE; i++) {
 			threadPool.submit(() -> {
 				try {
 					MulticastSocket multicast = new MulticastSocket();

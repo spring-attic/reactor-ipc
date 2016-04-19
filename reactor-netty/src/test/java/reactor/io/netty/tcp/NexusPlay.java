@@ -23,7 +23,7 @@ import java.util.logging.Level;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.SchedulerGroup;
+import reactor.core.publisher.Computations;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
@@ -66,7 +66,7 @@ public class NexusPlay {
 
 				FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
 				Flux<Integer> dispatched = p
-				                                   .publishOn(SchedulerGroup.async("semi-fast",  8192, 4));
+				                                   .publishOn(Computations.parallel("semi-fast",  8192, 4));
 
 				//slow subscribers
 				for(int i = 0; i < 2; i++) {
@@ -87,7 +87,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.publishOn(SchedulerGroup.async("semi-slow", 1024, 4));
+				dispatched = p.publishOn(Computations.parallel("semi-slow", 1024, 4));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -110,7 +110,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.publishOn(SchedulerGroup.async("slow", 1024, 3));
+				dispatched = p.publishOn(Computations.parallel("slow", 1024, 3));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -147,9 +147,9 @@ public class NexusPlay {
 		new Thread("schedulerGroupSample"){
 			@Override
 			public void run() {
-				Scheduler io = SchedulerGroup.io();
-				Scheduler single = SchedulerGroup.single();
-				Scheduler async = SchedulerGroup.async();
+				Scheduler io = Computations.concurrent();
+				Scheduler single = Computations.single();
+				Scheduler async = Computations.parallel();
 				nexus.monitor(io);
 				nexus.monitor(single);
 				nexus.monitor(async);
