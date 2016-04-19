@@ -16,17 +16,20 @@
 
 package reactor.io.netty.http;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -56,7 +59,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
 
-import reactor.io.netty.common.NettyOutbound;
+import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.tcp.TcpChannel;
 
 /**
@@ -386,21 +389,29 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 	}
 
 	@Override
+	public Mono<Void> sendFile(File file, long position, long count) {
+		Supplier<Mono<Void>> writeFile = () ->
+				MonoChannelFuture.from(tcpStream.delegate()
+				                                .writeAndFlush(new DefaultFileRegion(file, position, count)));
+		return sendHeaders().after(writeFile);
+	}
+
+	@Override
 	public String uri() {
 		return this.nettyRequest.uri();
 	}
 
 	@Override
 	public Mono<Void> send(final Publisher<? extends ByteBuf> source) {
-		return new PostWritePublisher(source);
+		return new MonoPostWrite(source);
 	}
 
 	@Override
 	public Mono<Void> sendString(Publisher<? extends String> dataStream, Charset charset) {
 
 		if (isWebsocket()){
-			return new PostWritePublisher(Flux.from(dataStream)
-			                                  .map(TextWebSocketFrame::new));
+			return new MonoPostWrite(Flux.from(dataStream)
+			                             .map(TextWebSocketFrame::new));
 		}
 
 		return send(Flux.from(dataStream)
@@ -414,7 +425,7 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 	@Override
 	public Mono<Void> sendHeaders() {
 		if (statusAndHeadersSent == 0) {
-			return new PostHeaderWritePublisher();
+			return new MonoPostHeaderWrite();
 		}
 		else {
 			return Mono.empty();
@@ -476,11 +487,11 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 	static final           FullHttpResponse                            CONTINUE     =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
 
-	class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
+	final class MonoPostWrite extends Mono<Void> implements Receiver, Loopback {
 
 		final Publisher<?> source;
 
-		public PostWritePublisher(Publisher<?> source) {
+		public MonoPostWrite(Publisher<?> source) {
 			this.source = source;
 		}
 
@@ -509,7 +520,7 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 			return source;
 		}
 
-		class PostHeaderWriteSubscriber implements Subscriber<Void>, Receiver, Producer {
+		final class PostHeaderWriteSubscriber implements Subscriber<Void>, Receiver, Producer {
 
 			final Subscriber<? super Void> s;
 			Subscription subscription;
@@ -553,7 +564,7 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 		}
 	}
 
-	class PostHeaderWritePublisher extends Mono<Void> implements Loopback {
+	final class MonoPostHeaderWrite extends Mono<Void> implements Loopback {
 
 		@Override
 		public Object connectedInput() {

@@ -32,7 +32,7 @@ import reactor.core.util.PlatformDependent;
 @SuppressWarnings("unchecked")
 public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 
-	public static final boolean DEFAULT_MANAGED_PEER = Boolean.parseBoolean(System.getProperty("reactor.io.net" +
+	public static final boolean DEFAULT_MANAGED_PEER = Boolean.parseBoolean(System.getProperty("reactor.io.netty" +
 			".managed.default",
 			"true"));
 

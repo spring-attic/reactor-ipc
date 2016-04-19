@@ -108,20 +108,6 @@ public interface NettyOutbound extends Outbound<ByteBuf> {
 	 * (complete|error). If more
 	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
 	 *
-	 *
-	 * @param file the dataStream publishing Buffer items to write on this channel
-	 *
-	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default Mono<Void> sendFile(File file, long position) {
-		return sendFile(file, position, file.length());
-	}
-
-	/**
-	 * Send File with zero-byte copy to the peer, listen for any error on write and close on terminal signal
-	 * (complete|error). If more
-	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
-	 *
 	 * @param file the dataStream publishing Buffer items to write on this channel
 	 *
 	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
