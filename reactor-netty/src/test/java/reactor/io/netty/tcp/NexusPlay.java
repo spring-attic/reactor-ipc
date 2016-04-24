@@ -46,9 +46,9 @@ public class NexusPlay {
 		//ReactiveStateUtils.scan(o).toString()
 
 		//SAMPLE streams to monitor
-		//on.monitor(on);
+		//on.monitor(nexus);
 
-		//hotSample(on);
+		//hotSample(nexus);
 		schedulerGroupSample(nexus);
 
 		CountDownLatch latch = new CountDownLatch(1);

@@ -42,12 +42,16 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 
 	final ChannelFuture handshakerResult;
 
+	final boolean plainText;
+
 	public NettyWebSocketServerHandler(String wsUrl,
 			String protocols,
-			NettyHttpServerHandler originalHandler
+			NettyHttpServerHandler originalHandler,
+			boolean plainText
 	) {
 		super(originalHandler.getHandler(), originalHandler.tcpStream);
 		this.request = originalHandler.request;
+		this.plainText = plainText;
 
 		// Handshake
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(wsUrl, protocols, true);
@@ -92,18 +96,15 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 
 	@Override
 	protected ChannelFuture doOnWrite(final Object data, final ChannelHandlerContext ctx) {
-		return writeWS(data, ctx);
-	}
-
-	static ChannelFuture writeWS(final Object data, ChannelHandlerContext ctx){
 		if (data instanceof ByteBuf) {
+			if (plainText){
+				return ctx.write(new TextWebSocketFrame((ByteBuf)data));
+			}
 			return ctx.write(new BinaryWebSocketFrame((ByteBuf)data));
 		}
 		else if (data instanceof String) {
 			return ctx.write(new TextWebSocketFrame((String)data));
 		}
-		else {
-			return ctx.write(data);
-		}
+		return ctx.write(data);
 	}
 }

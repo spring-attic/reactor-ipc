@@ -109,33 +109,6 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		                           .listen(bindAddress, port));
 	}
 
-	/**
-	 * @param c
-	 *
-	 * @return
-	 */
-	public static Mono<Void> upgradeToWebsocket(HttpChannel c) {
-		return upgradeToWebsocket(c, null);
-	}
-
-	/**
-	 * @param c
-	 * @param protocols
-	 *
-	 * @return
-	 */
-	public static Mono<Void> upgradeToWebsocket(HttpChannel c, String protocols) {
-		ChannelPipeline pipeline = c.delegate()
-		                            .pipeline();
-		NettyWebSocketServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
-		                                              .withWebsocketSupport(c.uri(), protocols);
-
-		if (handler != null) {
-			pipeline.addLast(handler);
-			return MonoChannelFuture.from(handler.handshakerResult);
-		}
-		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
-	}
 
 	TcpServer    server;
 	HttpMappings httpMappings;
@@ -450,7 +423,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		ChannelPipeline pipeline = next.delegate()
 		                               .pipeline();
 		pipeline.addLast(pipeline.remove(NettyHttpServerHandler.class)
-		                         .withWebsocketSupport(next.uri(), protocols));
+		                         .withWebsocketSupport(next.uri(), protocols, false));
 	}
 
 	protected Publisher<Void> routeChannel(final HttpChannel ch) {

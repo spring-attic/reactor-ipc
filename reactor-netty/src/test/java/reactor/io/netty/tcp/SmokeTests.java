@@ -42,11 +42,11 @@ import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
+import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
-import reactor.io.netty.common.NettyCodec;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -286,14 +286,15 @@ public class SmokeTests {
 			return request.send(bufferStream.doOnNext(d -> integer.getAndIncrement())
 			                                .take(takeCount)
 			                                .doOnNext(d -> integerPostTake.getAndIncrement())
-			                                .timeout(Duration.ofSeconds(2), Flux.<Buffer>empty().doOnComplete(() -> System.out.println(
-					                                     "timeout after 2 ")))
-			                                .doOnNext(d -> integerPostTimeout.getAndIncrement()).concatWith(Flux
-							.just(
-									GpdistCodec.class.equals(codec.getClass()) ?
-											Buffer.wrap(new byte[0]) : Buffer.wrap("END"))
-			                                                                                                           .doOnComplete(
-					                                                                                                           () -> integerPostConcat.decrementAndGet()))//END
+			                                .timeout(Duration.ofSeconds(2),
+					                                Flux.<Buffer>empty().doOnComplete(() -> System.out.println(
+							                                "timeout after 2 ")))
+			                                .doOnNext(d -> integerPostTimeout.getAndIncrement())
+			                                .concatWith(Flux.just(
+					                                GpdistCodec.class.equals(codec.getClass()) ?
+							                                Buffer.wrap(new byte[0]) :
+							                                Buffer.wrap("END"))
+			                                                .doOnComplete(() -> integerPostConcat.decrementAndGet()))//END
 			                                .doOnNext(d -> integerPostConcat.getAndIncrement())
 			                                .useCapacity(1L), NettyCodec.from(codec));
 		});
@@ -334,42 +335,40 @@ public class SmokeTests {
 		CountDownLatch thread = new CountDownLatch(threadCount);
 		AtomicInteger counter = new AtomicInteger();
 		for (int i = 0; i < threadCount; ++i) {
-			Runnable runner = new Runnable() {
-				public void run() {
-					try {
-						boolean empty = false;
-						while (true) {
-							List<String> res = getClientDataPromise();
-							if (res == null) {
-								if (empty) break;
-								empty = true;
-								continue;
-							}
-
-							List<Integer> collected = parseCollection(res);
-							Collections.sort(collected);
-							int size = collected.size();
-
-							//previous empty
-							if (size == 0 && empty) break;
-
-							synchronized (datas) {
-								datas.addAll(collected);
-							}
-							counter.addAndGet(size);
-							empty = size == 0;
-							System.out.println("Client received " + size + " elements, current total: " + counter +
-							  ", batches: " +
-							  integerPostConcat + ", between [ " + (size > 0 ? collected.get(0) + " -> " + collected
-							  .get(size - 1)
-							  : "") + " ]");
+			Runnable runner = () -> {
+				try {
+					boolean empty = false;
+					while (true) {
+						List<String> res = getClientDataPromise();
+						if (res == null) {
+							if (empty) break;
+							empty = true;
+							continue;
 						}
-						System.out.println("Client finished");
-					} catch (Exception ie) {
-						ie.printStackTrace();
-					} finally {
-						thread.countDown();
+
+						List<Integer> collected = parseCollection(res);
+						Collections.sort(collected);
+						int size = collected.size();
+
+						//previous empty
+						if (size == 0 && empty) break;
+
+						synchronized (datas) {
+							datas.addAll(collected);
+						}
+						counter.addAndGet(size);
+						empty = size == 0;
+						System.out.println("Client received " + size + " elements, current total: " + counter +
+						  ", batches: " +
+						  integerPostConcat + ", between [ " + (size > 0 ? collected.get(0) + " -> " + collected
+						  .get(size - 1)
+						  : "") + " ]");
 					}
+					System.out.println("Client finished");
+				} catch (Exception ie) {
+					ie.printStackTrace();
+				} finally {
+					thread.countDown();
 				}
 			};
 			Thread t = new Thread(runner, "SmokeThread" + i);
@@ -399,13 +398,11 @@ public class SmokeTests {
 
 		windowsData.clear();
 		Thread.sleep(1500);
-		Runnable srunner = new Runnable() {
-			public void run() {
-				try {
-					sender.sendNext(count);
-				} catch (Exception ie) {
-					ie.printStackTrace();
-				}
+		Runnable srunner = () -> {
+			try {
+				sender.sendNext(count);
+			} catch (Exception ie) {
+				ie.printStackTrace();
 			}
 		};
 		Thread st = new Thread(srunner, "SenderThread");
@@ -413,39 +410,37 @@ public class SmokeTests {
 		CountDownLatch thread = new CountDownLatch(threadCount);
 		AtomicInteger counter = new AtomicInteger();
 		for (int i = 0; i < threadCount; ++i) {
-			Runnable runner = new Runnable() {
-				public void run() {
-					try {
-						boolean empty = false;
-						while (true) {
-							List<String> res = getClientDataPromise();
-							if (res == null) {
-								if (empty) break;
-								empty = true;
-								continue;
-							}
-
-							List<Integer> collected = parseCollection(res);
-							Collections.sort(collected);
-							int size = collected.size();
-
-							//previous empty
-							if (size == 0 && empty) break;
-
-							counter.addAndGet(size);
-							empty = size == 0;
-							System.out.println("Client received " + size + " elements, current total: " + counter +
-							  ", batches: " +
-							  integerPostConcat + ", between [ " + (size > 0 ? collected.get(0) + " -> " + collected
-							  .get(size - 1)
-							  : "") + " ]");
+			Runnable runner = () -> {
+				try {
+					boolean empty = false;
+					while (true) {
+						List<String> res = getClientDataPromise();
+						if (res == null) {
+							if (empty) break;
+							empty = true;
+							continue;
 						}
-						System.out.println("Client finished");
-					} catch (Exception ie) {
-						ie.printStackTrace();
-					} finally {
-						thread.countDown();
+
+						List<Integer> collected = parseCollection(res);
+						Collections.sort(collected);
+						int size = collected.size();
+
+						//previous empty
+						if (size == 0 && empty) break;
+
+						counter.addAndGet(size);
+						empty = size == 0;
+						System.out.println("Client received " + size + " elements, current total: " + counter +
+						  ", batches: " +
+						  integerPostConcat + ", between [ " + (size > 0 ? collected.get(0) + " -> " + collected
+						  .get(size - 1)
+						  : "") + " ]");
 					}
+					System.out.println("Client finished");
+				} catch (Exception ie) {
+					ie.printStackTrace();
+				} finally {
+					thread.countDown();
 				}
 			};
 			Thread t = new Thread(runner, "SmokeThread" + i);

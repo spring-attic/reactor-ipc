@@ -108,11 +108,11 @@ public class TcpClientTests {
 		TcpClient client = TcpClient.create("localhost", echoServerPort);
 
 		client.startAndAwait(conn -> {
-			Flux.from(conn.receive())
+			conn.receive()
 			    .log("conn")
 			    .consume(s -> latch.countDown());
 
-			Flux.from(conn.sendString(Flux.just("Hello World!")))
+			conn.sendString(Flux.just("Hello World!"))
 			    .subscribe();
 
 			return Flux.never();

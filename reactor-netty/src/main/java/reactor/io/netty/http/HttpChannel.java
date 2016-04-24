@@ -18,10 +18,12 @@ package reactor.io.netty.http;
 import java.util.Map;
 import java.util.function.Function;
 
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.cookie.Cookie;
 import reactor.core.publisher.Mono;
+import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 
 /**
@@ -122,5 +124,42 @@ public interface HttpChannel extends NettyChannel, HttpConnection {
 	 * @return the resolved HTTP Response Status
 	 */
 	HttpResponseStatus status();
+
+
+	/**
+	 * Upgrade connection to Websocket
+	 * @return a {@link Mono} completing when upgrade is confirmed
+	 */
+	 default Mono<Void> upgradeToWebsocket() {
+		return upgradeToWebsocket(null, false);
+	}
+
+	/**
+	 * Upgrade connection to Websocket with text plain payloads
+	 * @return a {@link Mono} completing when upgrade is confirmed
+	 */
+	 default Mono<Void> upgradeToTextWebsocket() {
+		return upgradeToWebsocket(null, true);
+	}
+
+
+	/**
+	 * Upgrade connection to Websocket
+	 * @param protocols
+	 *
+	 * @return a {@link Mono} completing when upgrade is confirmed
+	 */
+	default Mono<Void> upgradeToWebsocket(String protocols, boolean textPlain) {
+		ChannelPipeline pipeline = delegate().pipeline();
+		NettyWebSocketServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
+		                                              .withWebsocketSupport(uri(),
+				                                              protocols, textPlain);
+
+		if (handler != null) {
+			pipeline.addLast(handler);
+			return MonoChannelFuture.from(handler.handshakerResult);
+		}
+		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
+	}
 
 }

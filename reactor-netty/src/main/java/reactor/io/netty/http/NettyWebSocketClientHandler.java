@@ -21,6 +21,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
@@ -99,7 +100,15 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 
 	@Override
 	protected ChannelFuture doOnWrite(Object data, ChannelHandlerContext ctx) {
-		return NettyWebSocketServerHandler.writeWS(data, ctx);
+		if (data instanceof ByteBuf) {
+			return ctx.write(new BinaryWebSocketFrame((ByteBuf)data));
+		}
+		else if (data instanceof String) {
+			return ctx.write(new TextWebSocketFrame((String)data));
+		}
+		else {
+			return ctx.write(data);
+		}
 	}
 
 }

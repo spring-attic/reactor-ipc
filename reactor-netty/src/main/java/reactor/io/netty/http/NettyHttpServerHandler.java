@@ -114,13 +114,14 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 		return ctx.write(data);
 	}
 
-	NettyWebSocketServerHandler withWebsocketSupport(String url, String protocols){
+	final NettyWebSocketServerHandler withWebsocketSupport(String url, String
+			protocols, boolean textPlain){
 		//prevent further header to be sent for handshaking
 		if(!request.markHeadersAsFlushed()){
 			log.error("Cannot enable websocket if headers have already been sent");
 			return null;
 		}
-		return new NettyWebSocketServerHandler(url, protocols, this);
+		return new NettyWebSocketServerHandler(url, protocols, this, textPlain);
 	}
 
 	@Override

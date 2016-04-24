@@ -251,7 +251,7 @@ class HttpSpec extends Specification {
 						.map { it + ' ' + req.param('param') + '!' }
 						.log('server-reply'))
 
-		HttpServer.upgradeToWebsocket(req)
+		req.upgradeToWebsocket()
 
 		res
 	}

@@ -30,6 +30,9 @@ import java.util.logging.Level;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.EmitterProcessor;
@@ -66,6 +69,23 @@ import static reactor.core.util.ReactiveStateUtils.property;
  */
 public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>>
 		implements ChannelHandler<ByteBuf, ByteBuf, HttpChannel>, Loopback {
+
+	/**
+	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. The default server
+	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
+	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
+	 * {@link Channel#send} can subscribe to any passed {@link Publisher}. <p> Note
+	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
+	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
+	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
+	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
+	 *
+	 * <p> The type of emitted data or received data is {@link ByteBuf}
+	 * @return a new Stream of Channel, typically a peer of connections.
+	 */
+	public static Nexus create() {
+		return create(DEFAULT_BIND_ADDRESS);
+	}
 
 	/**
 	 * Bind a new TCP server to "loopback" on the given port. The default server implementation is scanned
@@ -131,25 +151,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static Nexus create(final String bindAddress, final int port) {
-		HttpServer server = HttpServer.create(bindAddress, port);
-		return new Nexus(server.getDefaultTimer(), server);
-	}
-
-	/**
-	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. The default server
-	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
-	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
-	 * {@link Channel#send} can subscribe to any passed {@link Publisher}. <p> Note
-	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
-	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
-	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
-	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
-	 *
-	 * <p> The type of emitted data or received data is {@link ByteBuf}
-	 * @return a new Stream of Channel, typically a peer of connections.
-	 */
-	public static Nexus create() {
-		return Nexus.create(DEFAULT_BIND_ADDRESS);
+		return create(HttpServer.create(bindAddress, port));
 	}
 
 	/**
@@ -189,6 +191,8 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	private final TimedScheduler                  timer;
 	private final SignalEmitter<Publisher<Event>> cannons;
 
+	static final AsciiString ALL = new AsciiString("*");
+
 	@SuppressWarnings("unused")
 	private volatile FederatedClient[] federatedClients;
 	private long                 systemStatsPeriod;
@@ -221,14 +225,14 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 
 	@Override
 	public Publisher<Void> apply(HttpChannel channel) {
-		channel.responseHeader("Access-Control-Allow-Origin", "*");
+		channel.responseHeader(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN,  ALL);
 
 		Flux<Event> eventStream = this.eventStream.publishOn(group)
 		                                          .map(lastStateMerge);
 
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
-			p = Flux.concat(HttpServer.upgradeToWebsocket(channel),
+			p = Flux.concat(channel.upgradeToTextWebsocket(),
 					channel.send(federateAndEncode(channel, eventStream)));
 		}
 		else {
@@ -236,23 +240,20 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 
 		channel.receiveString()
-		       .subscribe(Subscribers.consumer(new Consumer<String>() {
-			       @Override
-			       public void accept(String command) {
-				       int indexArg = command.indexOf("\n");
-				       if (indexArg > 0) {
-					       String action = command.substring(0, indexArg);
-					       String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
-					       log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
+		       .consume(command -> {
+			       int indexArg = command.indexOf("\n");
+			       if (indexArg > 0) {
+				       String action = command.substring(0, indexArg);
+				       String arg = command.length() > indexArg ? command.substring(indexArg + 1) : null;
+				       log.info("Received " + "[" + action + "]" + " " + "[" + arg + ']');
 //					if(action.equals("pause") && !arg.isEmpty()){
 //						((EmitterProcessor)Nexus.this.eventStream).pause();
 //					}
 //					else if(action.equals("resume") && !arg.isEmpty()){
 //						((EmitterProcessor)Nexus.this.eventStream).resume();
 //					}
-				       }
 			       }
-		       }));
+		       });
 
 		return p;
 	}
@@ -876,7 +877,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED =
 			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
 	private static final Logger log            = Logger.getLogger(Nexus.class);
-	private static final String API_STREAM_URL = "/create/stream";
+	private static final String API_STREAM_URL = "/nexus/stream";
 	private static final Function<Event, ByteBuf> BUFFER_STRING_FUNCTION = new StringToBuffer();
 
 	private class LastGraphStateMap implements Function<Event, Event>, Introspectable {
