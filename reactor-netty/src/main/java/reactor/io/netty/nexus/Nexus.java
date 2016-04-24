@@ -362,12 +362,12 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 */
 	public final <E> E monitor(final E o, long period, TimeUnit unit) {
 
-		final long _period = period > 0 ? (unit != null ? TimeUnit.MILLISECONDS.convert(period, unit) : period) : 400L;
+		final long _period = period > 0 ?  period : 400L;
 
 		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
 		final SignalEmitter<Object> session = p.connectEmitter();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
-		timer.schedule(() -> {
+		timer.schedulePeriodically(() -> {
 				if (!session.isCancelled()) {
 					session.emit(ReactiveStateUtils.scan(o));
 				}
@@ -375,7 +375,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 					log.info("State Monitoring stopping on " + ReactiveStateUtils.getName(o));
 					throw Exceptions.failWithCancel();
 				}
-		}, _period, TimeUnit.MILLISECONDS);
+		}, 0L, _period, unit != null ? unit : TimeUnit.MILLISECONDS);
 
 		this.cannons.submit(p.map(new GraphMapper()));
 
