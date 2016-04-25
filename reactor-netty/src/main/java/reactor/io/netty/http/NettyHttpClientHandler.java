@@ -126,8 +126,8 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		}
 		if(LastHttpContent.EMPTY_LAST_CONTENT != msg && !discardBody){
 			super.channelRead(ctx, msg);
-			postRead(ctx, msg);
 		}
+		postRead(ctx, msg);
 	}
 
 	private void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws Exception {
@@ -150,7 +150,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	}
 
 	protected void postRead(ChannelHandlerContext ctx, Object msg){
-		if (LastHttpContent.class.isAssignableFrom(msg.getClass())) {
+		if (LastHttpContent.EMPTY_LAST_CONTENT != msg) {
 			ctx.channel().close();
 		}
 	}
