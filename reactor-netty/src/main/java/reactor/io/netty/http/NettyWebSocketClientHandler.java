@@ -84,9 +84,8 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 
 		if (TextWebSocketFrame.class.isAssignableFrom(messageClass)) {
 			try {
-				//don't inflate the String bytes now
 				if(channelSubscriber != null) {
-					channelSubscriber.onNext(((TextWebSocketFrame) msg).content());
+					channelSubscriber.onNext(msg);
 				}
 			} finally {
 				ReferenceCountUtil.release(msg);
@@ -94,7 +93,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 		} else if (CloseWebSocketFrame.class.isAssignableFrom(messageClass)) {
 			ctx.close();
 		} else {
-			doRead(ctx, ((WebSocketFrame)msg).content());
+			doRead(ctx, msg);
 		}
 	}
 

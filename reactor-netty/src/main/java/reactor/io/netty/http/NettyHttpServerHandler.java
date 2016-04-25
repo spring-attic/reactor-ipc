@@ -89,7 +89,7 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 
 		}
 		if (HttpContent.class.isAssignableFrom(messageClass)) {
-			super.channelRead(ctx, ((ByteBufHolder) msg).content());
+			super.channelRead(ctx, msg);
 		}
 		postRead(ctx, msg);
 	}

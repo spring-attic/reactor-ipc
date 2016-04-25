@@ -398,27 +398,8 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 		}
 
 		pipeline.addLast(
-				new NettyChannelHandler(handler, netChannel) {
-					@Override
-					public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-						if (msg != null && DatagramPacket.class.isAssignableFrom(msg.getClass())) {
-							super.channelRead(ctx, ((DatagramPacket) msg).content());
-						} else {
-							super.channelRead(ctx, msg);
-						}
-					}
-
-					@Override
-					public String getName() {
-						return "UDP Connection";
-					}
-				},
-				new ChannelOutboundHandlerAdapter() {
-					@Override
-					public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-						super.write(ctx, msg, promise);
-					}
-				});
+				new NettyChannelHandler(handler, netChannel),
+				new ChannelOutboundHandlerAdapter());
 	}
 
 	InternetProtocolFamily toNettyFamily(ProtocolFamily family) {

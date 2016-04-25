@@ -47,7 +47,6 @@ import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 
 import reactor.io.ipc.ChannelHandler;
-import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;

@@ -21,12 +21,14 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.EmptyByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -202,13 +204,12 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			return;
 		}
 		try {
-			if (null == channelSubscriber || msg == Unpooled.EMPTY_BUFFER) {
+			if (null == channelSubscriber || msg == Unpooled.EMPTY_BUFFER ) {
 				ReferenceCountUtil.release(msg);
 				return;
 			}
 
-			ByteBuf buffer = (ByteBuf) msg;
-			channelSubscriber.onNext(buffer);
+			channelSubscriber.onNext(msg);
 		}
 		catch (Throwable err) {
 			Exceptions.throwIfFatal(err);
@@ -312,10 +313,11 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 	/**
 	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandler}
 	 */
-	public static final class ChannelInputSubscriber implements Subscription, Subscriber<ByteBuf>
+	public static final class ChannelInputSubscriber implements Subscription,
+	                                                            Subscriber<Object>
 	, Requestable, Completable, Backpressurable, Producer, Cancellable {
 
-		private final Subscriber<? super ByteBuf> inputSubscriber;
+		private final Subscriber<? super Object> inputSubscriber;
 
 		private volatile Subscription subscription;
 
@@ -336,11 +338,11 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 
 		Sequence pollCursor;
 		volatile Throwable                 error;
-		volatile RingBuffer<Slot<ByteBuf>> readBackpressureBuffer;
+		volatile RingBuffer<Slot<Object>> readBackpressureBuffer;
 
 		final int bufferSize;
 
-		public ChannelInputSubscriber(Subscriber<? super ByteBuf> inputSubscriber, long bufferSize) {
+		public ChannelInputSubscriber(Subscriber<? super Object> inputSubscriber, long bufferSize) {
 			if (null == inputSubscriber) {
 				throw new IllegalArgumentException("Connection receive subscriber must not be null.");
 			}
@@ -421,12 +423,12 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		}
 
 		@Override
-		public void onNext(ByteBuf bytes) {
+		public void onNext(Object msg) {
 			if (RUNNING.get(this) == 0 && RUNNING.compareAndSet(this, 0, 1)) {
 				long r = BackpressureUtils.getAndSub(REQUESTED, this, 1L);
 				if(r != 0) {
 					try {
-						inputSubscriber.onNext(bytes);
+						inputSubscriber.onNext(msg);
 					}
 					catch (Throwable e) {
 						Exceptions.throwIfFatal(e);
@@ -436,9 +438,9 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 					}
 				}
 				else{
-					RingBuffer<Slot<ByteBuf>> queue = getReadBackpressureBuffer();
+					RingBuffer<Slot<Object>> queue = getReadBackpressureBuffer();
 					long n = queue.next();
-					queue.get(n).value = bytes;
+					queue.get(n).value = msg;
 					queue.publish(n);
 				}
 				if(RUNNING.decrementAndGet(this) == 0){
@@ -446,9 +448,9 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 				}
 			}
 			else {
-				RingBuffer<Slot<ByteBuf>> queue = getReadBackpressureBuffer();
+				RingBuffer<Slot<Object>> queue = getReadBackpressureBuffer();
 				long n = queue.next();
-				queue.get(n).value = bytes;
+				queue.get(n).value = msg;
 				queue.publish(n);
 				if(RUNNING.getAndIncrement(this) == 0){
 					return;
@@ -490,17 +492,17 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		void drainBackpressureQueue() {
 			int missed = 1;
 			final Sequence pollCursor = this.pollCursor;
-			final Subscriber<? super ByteBuf> child = this.inputSubscriber;
+			final Subscriber<? super Object> child = this.inputSubscriber;
 			for (; ; ) {
 				long demand = requested;
-				RingBuffer<Slot<ByteBuf>> queue;
+				RingBuffer<Slot<Object>> queue;
 				if (demand != 0) {
 					long remaining = demand;
 					queue = readBackpressureBuffer;
 					if (queue != null) {
 
 						long polled = -1;
-						Slot<ByteBuf> holder;
+						Slot<Object> holder;
 						while (polled <= queue.getCursor() && (demand == Long.MAX_VALUE || remaining-- > 0)) {
 
 							if(subscription == null){
@@ -540,8 +542,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		}
 
 		@SuppressWarnings("unchecked")
-		RingBuffer<Slot<ByteBuf>> getReadBackpressureBuffer() {
-			RingBuffer<Slot<ByteBuf>> q = readBackpressureBuffer;
+		RingBuffer<Slot<Object>> getReadBackpressureBuffer() {
+			RingBuffer<Slot<Object>> q = readBackpressureBuffer;
 			if (q == null) {
 				q = RingBuffer.createSingleProducer(bufferSize);
 				q.addGatingSequence(pollCursor = RingBuffer.newSequence(-1L));

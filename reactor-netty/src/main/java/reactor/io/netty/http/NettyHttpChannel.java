@@ -66,7 +66,8 @@ import reactor.io.netty.tcp.TcpChannel;
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, HttpInbound, HttpOutbound, Loopback,
+abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, HttpInbound,
+                                                           HttpOutbound, Loopback,
                                                                  Completable {
 
 	final static AsciiString EVENT_STREAM = new AsciiString("text/event-stream");
@@ -202,7 +203,7 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 	}
 
 	@Override
-	public Flux<ByteBuf> receive() {
+	public Flux<Object> receiveObject() {
 		return this;
 	}
 
@@ -366,7 +367,7 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 	}
 
 	@Override
-	public void subscribe(final Subscriber<? super ByteBuf> subscriber) {
+	public void subscribe(final Subscriber<? super Object> subscriber) {
 		// Handle the 'Expect: 100-continue' header if necessary.
 		// TODO: Respond with 413 Request Entity Too Large
 		//   and discard the traffic or close the connection.
@@ -402,7 +403,7 @@ abstract class NettyHttpChannel extends Flux<ByteBuf> implements HttpChannel, Ht
 	}
 
 	@Override
-	public Mono<Void> send(final Publisher<? extends ByteBuf> source) {
+	public Mono<Void> sendObject(final Publisher<?> source) {
 		return new MonoPostWrite(source);
 	}
 

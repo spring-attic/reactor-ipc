@@ -122,11 +122,11 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			if(!discardBody && replySubscriber != null){
 				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
-		} else if (HttpContent.class.isAssignableFrom(messageClass)) {
-			super.channelRead(ctx, ((ByteBufHolder) msg).content());
-			postRead(ctx, msg);
-		} else if(!discardBody){
+			return;
+		}
+		if(LastHttpContent.EMPTY_LAST_CONTENT != msg && !discardBody){
 			super.channelRead(ctx, msg);
+			postRead(ctx, msg);
 		}
 	}
 

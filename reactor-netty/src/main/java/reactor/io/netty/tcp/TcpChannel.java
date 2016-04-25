@@ -45,8 +45,8 @@ import reactor.io.netty.common.NettyChannelHandler;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class TcpChannel
-		extends Flux<ByteBuf>
+final public class TcpChannel
+		extends Flux<Object>
 		implements NettyChannel, Loopback, Completable {
 
 	private final io.netty.channel.Channel ioChannel;
@@ -63,7 +63,12 @@ public class TcpChannel
 	}
 
 	@Override
-	public Flux<ByteBuf> receive() {
+	public Mono<Void> sendObject(final Publisher<?> dataStream) {
+		return new PostWritePublisher(dataStream);
+	}
+
+	@Override
+	public Flux<Object> receiveObject() {
 		return this;
 	}
 
@@ -94,7 +99,7 @@ public class TcpChannel
 	}
 
 	@Override
-	public void subscribe(Subscriber<? super ByteBuf> subscriber) {
+	public void subscribe(Subscriber<? super Object> subscriber) {
 		try {
 			ioChannel.pipeline()
 			         .fireUserEventTriggered(new NettyChannelHandler.ChannelInputSubscriber(subscriber, prefetch));

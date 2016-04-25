@@ -81,10 +81,11 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 			return;
 		}
 		if (PingWebSocketFrame.class.isAssignableFrom(frame.getClass())) {
-			ctx.channel().write(new PongWebSocketFrame(((PingWebSocketFrame)frame).content().retain()));
+			ctx.channel().writeAndFlush(new PongWebSocketFrame(((PingWebSocketFrame)frame)
+					.content().retain()));
 			return;
 		}
-		doRead(ctx, ((WebSocketFrame)frame).content());
+		doRead(ctx, frame);
 	}
 
 	protected void writeLast(ChannelHandlerContext ctx){

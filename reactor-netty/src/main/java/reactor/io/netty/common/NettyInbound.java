@@ -18,8 +18,10 @@ package reactor.io.netty.common;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufHolder;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.io.ipc.Inbound;
@@ -38,6 +40,11 @@ public interface NettyInbound extends Inbound<ByteBuf> {
 	 * @return Lifecycle to build the events handlers
 	 */
 	NettyChannel.Lifecycle on();
+
+	@Override
+	default Flux<ByteBuf> receive() {
+		return receiveObject().map(objectMapper);
+	}
 
 	/**
 	 * Get the inbound publisher (incoming tcp traffic for instance) and decode its traffic
@@ -73,6 +80,13 @@ public interface NettyInbound extends Inbound<ByteBuf> {
 	}
 
 	/**
+	 * a {@literal Object} inbound {@link Flux}
+	 *
+	 * @return a {@literal Object} inbound {@link Flux}
+	 */
+	Flux<?> receiveObject();
+
+	/**
 	 * a {@link String} inbound {@link Flux}
 	 *
 	 * @return a {@link String} inbound {@link Flux}
@@ -98,4 +112,18 @@ public interface NettyInbound extends Inbound<ByteBuf> {
 	 * @return the peer's address
 	 */
 	InetSocketAddress remoteAddress();
+
+	/**
+	 * A channel object to bytebuf transformer
+	 */
+	Function<Object, ByteBuf> objectMapper =  o -> {
+		if(o instanceof ByteBuf){
+			return (ByteBuf)o;
+		}
+		if(o instanceof ByteBufHolder){
+			return ((ByteBufHolder)o).content();
+		}
+		throw new IllegalArgumentException("Object "+o+" of type "+o.getClass()+" " +
+				"cannot be converted to ByteBuf");
+	};
 }

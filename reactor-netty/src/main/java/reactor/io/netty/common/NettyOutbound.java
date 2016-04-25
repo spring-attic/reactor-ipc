@@ -52,6 +52,11 @@ public interface NettyOutbound extends Outbound<ByteBuf> {
 	 */
 	InetSocketAddress remoteAddress();
 
+	@Override
+	default Mono<Void> send(Publisher<? extends ByteBuf> dataStream) {
+		return sendObject(dataStream);
+	}
+
 	/**
 	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
 	 *
@@ -141,4 +146,15 @@ public interface NettyOutbound extends Outbound<ByteBuf> {
 		return send(Flux.from(dataStream)
 		                .map(s -> delegate().alloc().buffer().writeBytes(s.getBytes(charset))));
 	}
+
+	/**
+	 * Send Object to the peer, listen for any error on write and close on terminal
+	 * signal (complete|error). If more
+	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
+	 *
+	 * @param dataStream the dataStream publishing Buffer items to write on this channel
+	 *
+	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	Mono<Void> sendObject(Publisher<?> dataStream);
 }

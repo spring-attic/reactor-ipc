@@ -24,29 +24,26 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
+import reactor.core.publisher.Computations;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SignalEmitter;
-import reactor.core.subscriber.Subscribers;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
@@ -182,26 +179,26 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		stopped.await();
 	}
 
-	private final HttpServer                      server;
-	private final GraphEvent                      lastState;
-	private final SystemEvent                     lastSystemState;
-	private final FluxProcessor<Event, Event>     eventStream;
-	private final Scheduler                       group;
-	private final Function<Event, Event>          lastStateMerge;
-	private final TimedScheduler                  timer;
-	private final SignalEmitter<Publisher<Event>> cannons;
+	final HttpServer                      server;
+	final GraphEvent                      lastState;
+	final SystemEvent                     lastSystemState;
+	final FluxProcessor<Event, Event>     eventStream;
+	final Scheduler                       group;
+	final Function<Event, Event>          lastStateMerge;
+	final TimedScheduler                  timer;
+	final SignalEmitter<Publisher<Event>> cannons;
 
 	static final AsciiString ALL = new AsciiString("*");
 
 	@SuppressWarnings("unused")
-	private volatile FederatedClient[] federatedClients;
-	private long                 systemStatsPeriod;
-	private boolean              systemStats;
-	private boolean              logExtensionEnabled;
-	private NexusLoggerExtension logExtension;
-	private long websocketCapacity = 1L;
+	volatile FederatedClient[] federatedClients;
+	long                 systemStatsPeriod;
+	boolean              systemStats;
+	boolean              logExtensionEnabled;
+	NexusLoggerExtension logExtension;
+	long websocketCapacity = 1L;
 
-	private Nexus(TimedScheduler defaultTimer, HttpServer server) {
+	Nexus(TimedScheduler defaultTimer, HttpServer server) {
 		super(defaultTimer);
 		this.server = server;
 		this.eventStream = EmitterProcessor.create(false);
@@ -232,8 +229,8 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
-			p = Flux.concat(channel.upgradeToTextWebsocket(),
-					channel.send(federateAndEncode(channel, eventStream)));
+			p = channel.upgradeToTextWebsocket()
+			           .after(channel.send(federateAndEncode(channel, eventStream)));
 		}
 		else {
 			p = channel.send(federateAndEncode(channel, eventStream));
@@ -476,7 +473,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 			this.cannons.submit(p);
 			final SignalEmitter<Event> session = p.connectEmitter();
 			log.info("System Monitoring Starting");
-			timer.schedule(() -> {
+			timer.schedulePeriodically(() -> {
 					if (!session.isCancelled()) {
 						session.submit(lastSystemState.scan());
 					}
@@ -484,7 +481,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 						log.info("System Monitoring Stopped");
 						throw Exceptions.failWithCancel();
 					}
-			}, systemStatsPeriod, TimeUnit.MILLISECONDS);
+			}, 0L, systemStatsPeriod, TimeUnit.MILLISECONDS);
 		}
 
 		return server.start();
@@ -503,7 +500,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		return server.shutdown();
 	}
 
-	private Flux<? extends ByteBuf> federateAndEncode(HttpChannel c, Flux<Event> stream) {
+	Flux<? extends ByteBuf> federateAndEncode(HttpChannel c, Flux<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
 			return stream.map(BUFFER_STRING_FUNCTION)
@@ -516,9 +513,9 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		           .useCapacity(websocketCapacity);
 	}
 
-	private static class Event {
+	static class Event {
 
-		private final String nexusHost;
+		final String nexusHost;
 
 		public Event(String nexusHost) {
 			this.nexusHost = nexusHost;
@@ -533,9 +530,9 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private final static class GraphEvent extends Event {
+	final static class GraphEvent extends Event {
 
-		private final ReactiveStateUtils.Graph graph;
+		final ReactiveStateUtils.Graph graph;
 
 		public GraphEvent(String name, ReactiveStateUtils.Graph graph) {
 			super(name);
@@ -555,9 +552,9 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private final static class RemovedGraphEvent extends Event {
+	final static class RemovedGraphEvent extends Event {
 
-		private final Collection<String> ids;
+		final Collection<String> ids;
 
 		public RemovedGraphEvent(String name, Collection<String> ids) {
 			super(name);
@@ -577,16 +574,16 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private final static class LogEvent extends Event {
+	final static class LogEvent extends Event {
 
-		private final String message;
-		private final String category;
-		private final Level  level;
-		private final long   threadId;
-		private final String origin;
-		private final String data;
-		private final String kind;
-		private final long timestamp = System.currentTimeMillis();
+		final String message;
+		final String category;
+		final Level  level;
+		final long   threadId;
+		final String origin;
+		final String data;
+		final String kind;
+		final long timestamp = System.currentTimeMillis();
 
 		public LogEvent(String name, String category, Level level, String message, Object... args) {
 			super(name);
@@ -654,7 +651,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private final static class MetricEvent extends Event {
+	final static class MetricEvent extends Event {
 
 		public MetricEvent(String hostname) {
 			super(hostname);
@@ -669,9 +666,9 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private final static class SystemEvent extends Event {
+	final static class SystemEvent extends Event {
 
-		private final Map<Thread, ThreadState> threads = new WeakHashMap<>();
+		final Map<Thread, ThreadState> threads = new WeakHashMap<>();
 		public SystemEvent(String hostname) {
 			super(hostname);
 		}
@@ -693,7 +690,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 					", " + property("nexusHost", getNexusHost()) + " }";
 		}
 
-		private SystemEvent scan() {
+		SystemEvent scan() {
 			int active = Thread.activeCount();
 			Thread[] currentThreads = new Thread[active];
 			int n = Thread.enumerate(currentThreads);
@@ -740,7 +737,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 
 		final static class ThreadState {
 
-			private transient final Thread thread;
+			transient final Thread thread;
 
 			public ThreadState(Thread thread) {
 				this.thread = thread;
@@ -803,11 +800,12 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 						", " + property("daemon", isDaemon()) + " }";
 			}
 		}
-		private static final Runtime  runtime  = Runtime.getRuntime();
-		private static final JvmStats jvmStats = new JvmStats();
+
+		static final Runtime  runtime  = Runtime.getRuntime();
+		static final JvmStats jvmStats = new JvmStats();
 	}
 
-	private static class StringToBuffer implements Function<Event, ByteBuf> {
+	static class StringToBuffer implements Function<Event, ByteBuf> {
 
 		@Override
 		public ByteBuf apply(Event event) {
@@ -821,7 +819,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private final static class NexusLoggerExtension implements Logger.Extension {
+	final static class NexusLoggerExtension implements Logger.Extension {
 
 		final SignalEmitter<Event> logSink;
 		final String                 hostname;
@@ -849,9 +847,10 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private static final class FederatedMerger implements Function<FederatedClient, Publisher<ByteBuf>> {
+	static final class FederatedMerger
+			implements Function<FederatedClient, Publisher<ByteBuf>> {
 
-		private final HttpChannel c;
+		final HttpChannel c;
 
 		public FederatedMerger(HttpChannel c) {
 			this.c = c;
@@ -864,23 +863,28 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private static final class FederatedClient {
+	static final class FederatedClient {
 
-		private final HttpClient client;
-		private final String     targetAPI;
+		final HttpClient client;
+		final String     targetAPI;
 
 		public FederatedClient(String targetAPI) {
 			this.targetAPI = targetAPI;
 			this.client = HttpClient.create();
 		}
 	}
-	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED =
-			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
-	private static final Logger log            = Logger.getLogger(Nexus.class);
-	private static final String API_STREAM_URL = "/nexus/stream";
-	private static final Function<Event, ByteBuf> BUFFER_STRING_FUNCTION = new StringToBuffer();
 
-	private class LastGraphStateMap implements Function<Event, Event>, Introspectable {
+	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED              =
+			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
+	static final Logger                                                log                    =
+			Logger.getLogger(Nexus.class);
+	static final String                                                API_STREAM_URL         =
+			"/nexus/stream";
+	static final Function<Event, ByteBuf>
+	                                                                   BUFFER_STRING_FUNCTION =
+			new StringToBuffer();
+
+	class LastGraphStateMap implements Function<Event, Event>, Introspectable {
 
 		@Override
 		public Event apply(Event event) {
@@ -909,7 +913,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	private final class MetricMapper implements Function<Object, Event> {
+	final class MetricMapper implements Function<Object, Event> {
 
 		@Override
 		public Event apply(Object o) {
@@ -919,7 +923,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 
 	}
 
-	private final class GraphMapper implements Function<Object, Event> {
+	final class GraphMapper implements Function<Object, Event> {
 
 		@Override
 		public Event apply(Object o) {
