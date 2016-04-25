@@ -17,18 +17,17 @@
 package reactor.io.netty.common;
 
 import java.io.IOException;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.EmptyByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -36,8 +35,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
-import reactor.core.queue.RingBuffer;
-import reactor.core.queue.Slot;
+import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
@@ -49,7 +47,6 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.Sequence;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 
@@ -336,9 +333,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		private final AtomicIntegerFieldUpdater<ChannelInputSubscriber> RUNNING =
 				AtomicIntegerFieldUpdater.newUpdater(ChannelInputSubscriber.class, "running");
 
-		Sequence pollCursor;
 		volatile Throwable                 error;
-		volatile RingBuffer<Slot<Object>> readBackpressureBuffer;
+		volatile Queue<Object> readBackpressureBuffer;
 
 		final int bufferSize;
 
@@ -396,7 +392,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 
 		@Override
 		public boolean isTerminated() {
-			return terminated == 1 && (readBackpressureBuffer == null || readBackpressureBuffer.getPending() == 0);
+			return terminated == 1 && (readBackpressureBuffer == null ||
+					readBackpressureBuffer.isEmpty());
 		}
 
 		@Override
@@ -406,7 +403,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 
 		@Override
 		public long getPending() {
-			return readBackpressureBuffer == null ? -1 : readBackpressureBuffer.getPending();
+			return readBackpressureBuffer == null ? -1 : readBackpressureBuffer.size();
 		}
 
 		@Override
@@ -438,20 +435,16 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 					}
 				}
 				else{
-					RingBuffer<Slot<Object>> queue = getReadBackpressureBuffer();
-					long n = queue.next();
-					queue.get(n).value = msg;
-					queue.publish(n);
+					Queue<Object> queue = getReadBackpressureBuffer();
+					queue.add(msg);
 				}
 				if(RUNNING.decrementAndGet(this) == 0){
 					return;
 				}
 			}
 			else {
-				RingBuffer<Slot<Object>> queue = getReadBackpressureBuffer();
-				long n = queue.next();
-				queue.get(n).value = msg;
-				queue.publish(n);
+				Queue<Object> queue = getReadBackpressureBuffer();
+				queue.add(msg);
 				if(RUNNING.getAndIncrement(this) == 0){
 					return;
 				}
@@ -480,7 +473,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 
 		boolean shouldReadMore() {
 			return requested > 0 ||
-					(readBackpressureBuffer != null && readBackpressureBuffer.getPending() < bufferSize / 2);
+					(readBackpressureBuffer != null && readBackpressureBuffer.size() <
+							bufferSize / 2);
 		}
 
 		void drain(){
@@ -491,31 +485,28 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 
 		void drainBackpressureQueue() {
 			int missed = 1;
-			final Sequence pollCursor = this.pollCursor;
 			final Subscriber<? super Object> child = this.inputSubscriber;
 			for (; ; ) {
 				long demand = requested;
-				RingBuffer<Slot<Object>> queue;
+				Queue<Object> queue;
 				if (demand != 0) {
 					long remaining = demand;
 					queue = readBackpressureBuffer;
 					if (queue != null) {
 
-						long polled = -1;
-						Slot<Object> holder;
-						while (polled <= queue.getCursor() && (demand == Long.MAX_VALUE || remaining-- > 0)) {
+						Object data;
+						while ((demand == Long.MAX_VALUE || remaining-- > 0)) {
 
 							if(subscription == null){
 								break;
 							}
 
-							polled = pollCursor.getAsLong() + 1L;
-							holder = queue.get(polled);
-							if (holder.value != null) {
-								child.onNext(holder.value);
-								holder.value = null;
-								pollCursor.set(polled);
+							data = queue.poll();
+
+							if(data == null){
+								break;
 							}
+							child.onNext(data);
 						}
 					}
 					Subscription subscription = this.subscription;
@@ -524,7 +515,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 					}
 				}
 				queue = readBackpressureBuffer;
-				if((queue == null || queue.getPending() == 0) && terminated == 1){
+				if((queue == null || queue.isEmpty()) && terminated == 1){
 					if(error != null){
 						inputSubscriber.onError(error);
 					}
@@ -542,11 +533,10 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		}
 
 		@SuppressWarnings("unchecked")
-		RingBuffer<Slot<Object>> getReadBackpressureBuffer() {
-			RingBuffer<Slot<Object>> q = readBackpressureBuffer;
+		Queue<Object> getReadBackpressureBuffer() {
+			Queue<Object> q = readBackpressureBuffer;
 			if (q == null) {
-				q = RingBuffer.createSingleProducer(bufferSize);
-				q.addGatingSequence(pollCursor = RingBuffer.newSequence(-1L));
+				q = QueueSupplier.unbounded(bufferSize).get();
 				readBackpressureBuffer = q;
 			}
 			return q;
