@@ -324,6 +324,10 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 					nativeChannel.config()
 					             .setAutoRead(false);
 				}
+				if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+					getOptions().pipelineConfigurer()
+					            .accept(nativeChannel.pipeline());
+				}
 			}
 			catch (Exception e) {
 				nativeChannel.pipeline()

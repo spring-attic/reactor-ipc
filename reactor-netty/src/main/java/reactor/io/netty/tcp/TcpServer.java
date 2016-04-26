@@ -290,7 +290,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	 * Get the {@link ServerOptions} currently in effect.
 	 * @return the current server options
 	 */
-	ServerOptions getOptions() {
+	protected ServerOptions getOptions() {
 		return options;
 	}
 

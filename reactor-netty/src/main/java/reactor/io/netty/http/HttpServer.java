@@ -491,6 +491,12 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		@Override
 		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 				SocketChannel nativeChannel) {
+
+			if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+				getOptions().pipelineConfigurer()
+				            .accept(nativeChannel.pipeline());
+			}
+
 			HttpServer.this.bindChannel(handler, nativeChannel);
 		}
 	}
