@@ -244,7 +244,7 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		}
 
 		pipeline.addLast(new HttpClientCodec())
-		        .addLast(new NettyHttpClientHandler(handler, netChannel));
+		        .addLast(new NettyHttpClientHandler(handler, netChannel, lastURI));
 	}
 
 	final String parseURL(String url, boolean ws) {

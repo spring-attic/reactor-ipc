@@ -18,7 +18,6 @@ package reactor.io.netty.http;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,6 +49,8 @@ import reactor.io.netty.tcp.TcpChannel;
 class NettyHttpClientHandler extends NettyChannelHandler {
 
 	final TcpChannel tcpStream;
+	final URI        currentURI;
+
 	NettyHttpChannel                httpChannel;
 	Subscriber<? super HttpInbound> replySubscriber;
 
@@ -58,8 +59,11 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	 */
 	boolean discardBody = false;
 
-	public NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, TcpChannel tcpStream) {
+	public NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			TcpChannel tcpStream,
+			URI lastURI) {
 		super(handler, tcpStream);
+		this.currentURI = lastURI;
 		this.tcpStream = tcpStream;
 	}
 
@@ -129,15 +133,14 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		postRead(ctx, msg);
 	}
 
-
-	final NettyWebSocketClientHandler withWebsocketSupport(URI url, String
+	final NettyWebSocketClientHandler withWebsocketSupport(String
 			protocols, boolean textPlain){
 		//prevent further header to be sent for handshaking
 		if(!httpChannel.markHeadersAsFlushed()){
 			log.error("Cannot enable websocket if headers have already been sent");
 			return null;
 		}
-		return new NettyWebSocketClientHandler(url, protocols, this, textPlain);
+		return new NettyWebSocketClientHandler(protocols, this, textPlain);
 	}
 
 	final void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws
@@ -238,15 +241,9 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		public Mono<Void> upgradeToWebsocket(String protocols, boolean textPlain) {
 			ChannelPipeline pipeline = delegate().pipeline();
 			NettyWebSocketClientHandler handler;
-			try {
 				pipeline.addLast(new HttpObjectAggregator(8192));
 				handler = pipeline.remove(NettyHttpClientHandler.class)
-				                                              .withWebsocketSupport(new URI(uri()),
-						                                              protocols, textPlain);
-			}
-			catch (URISyntaxException e) {
-				return Mono.error(e);
-			}
+				                  .withWebsocketSupport(protocols, textPlain);
 
 			if (handler != null) {
 				pipeline.addLast(handler);

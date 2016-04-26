@@ -50,17 +50,16 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 	final boolean plainText;
 
 	NettyWebSocketClientHandler(
-			URI wsUrl,
 			String protocols,
 			NettyHttpClientHandler originalHandler,
 			boolean plainText) {
-		super(originalHandler.getHandler(), originalHandler.tcpStream);
+		super(originalHandler.getHandler(), originalHandler.tcpStream, originalHandler.currentURI);
 		this.httpChannel = originalHandler.httpChannel;
 		this.replySubscriber = originalHandler.replySubscriber;
 		this.plainText = plainText;
 
 		handshaker =
-				WebSocketClientHandshakerFactory.newHandshaker(wsUrl,
+				WebSocketClientHandshakerFactory.newHandshaker(currentURI,
 						WebSocketVersion.V13,
 						protocols,
 						false,
