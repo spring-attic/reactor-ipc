@@ -23,12 +23,8 @@ import java.util.function.Function;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
-import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
@@ -50,11 +46,6 @@ import reactor.io.netty.tcp.TcpClient;
 public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements Loopback {
 
 
-	final static String WS_SCHEME    = "ws";
-	final static String WSS_SCHEME   = "wss";
-	final static String HTTP_SCHEME  = "http";
-	final static String HTTPS_SCHEME = "https";
-	
 	/**
 	 * @return a simple HTTP client
 	 */
@@ -78,7 +69,6 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		                           .timer(Timer.globalOrNull())
 		                           .connect(address, port));
 	}
-
 	final TcpClient client;
 	URI lastURI = null;
 
@@ -219,52 +209,9 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 	 * response
 	 */
 	public final Mono<HttpInbound> ws(String url) {
-		return request(HttpMethod.GET, parseURL(url, true), null);
-	}
-
-	/**
-	 * WebSocket to the passed URL. When connection has been made, the passed handler is
-	 * invoked and can be used to build
-	 *
-	 * precisely the request and write data to it.
-	 * @param url the target remote URL
-	 * @param handler the {@link ChannelHandler} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
-	 * response
-	 */
-	public final Mono<HttpInbound> ws(String url,
-			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
-		return request(HttpMethod.GET, parseURL(url, true), handler);
-	}
-
-	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, Object nativeChannel) {
-		SocketChannel ch = (SocketChannel) nativeChannel;
-
-		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
-
-		ChannelPipeline pipeline = ch.pipeline();
-		if (log.isDebugEnabled()) {
-			pipeline.addLast(new LoggingHandler(HttpClient.class));
-		}
-
-		pipeline.addLast(new HttpClientCodec());
-
-		URI currentURI = lastURI;
-		if (currentURI.getScheme() != null && currentURI.getScheme()
-		                                                .toLowerCase()
-		                                                .startsWith(WS_SCHEME)) {
-			pipeline.addLast(new HttpObjectAggregator(8192))
-			        .addLast(new NettyWebSocketClientHandler(handler,
-					        netChannel,
-					        WebSocketClientHandshakerFactory.newHandshaker(lastURI,
-							        WebSocketVersion.V13,
-							        null,
-							        false,
-							        new DefaultHttpHeaders())));
-		}
-		else {
-			pipeline.addLast(new NettyHttpClientHandler(handler, netChannel));
-		}
+		return request(HttpMethod.GET,
+				parseURL(url, true),
+				HttpOutbound::upgradeToWebsocket);
 	}
 
 	@Override
@@ -285,7 +232,22 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		return client.shutdown();
 	}
 
-	String parseURL(String url, boolean ws) {
+	final void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			Object nativeChannel) {
+		SocketChannel ch = (SocketChannel) nativeChannel;
+
+		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
+
+		ChannelPipeline pipeline = ch.pipeline();
+		if (log.isDebugEnabled()) {
+			pipeline.addLast(new LoggingHandler(HttpClient.class));
+		}
+
+		pipeline.addLast(new HttpClientCodec())
+		        .addLast(new NettyHttpClientHandler(handler, netChannel));
+	}
+
+	final String parseURL(String url, boolean ws) {
 		if (!url.startsWith(HTTP_SCHEME) && !url.startsWith(WS_SCHEME)) {
 			final String parsedUrl = (ws ? WS_SCHEME : HTTP_SCHEME) + "://";
 			if (url.startsWith("/")) {
@@ -300,7 +262,10 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 			return url;
 		}
 	}
-
+	final static String WS_SCHEME    = "ws";
+	final static String WSS_SCHEME   = "wss";
+	final static String HTTP_SCHEME  = "http";
+	final static String HTTPS_SCHEME = "https";
 	final static Logger log = Logger.getLogger(HttpClient.class);
 
 	final class TcpBridgeClient extends TcpClient {

@@ -34,7 +34,7 @@ import reactor.io.netty.common.NettyChannel;
  * @author Stephane Maldini
  * @since 2.5
  */
-public interface HttpChannel extends NettyChannel, HttpConnection {
+public interface HttpChannel extends NettyChannel, HttpOutbound, HttpInbound {
 
 	/**
 	 * add the passed cookie
@@ -49,11 +49,6 @@ public interface HttpChannel extends NettyChannel, HttpConnection {
 	 * @return
 	 */
 	HttpChannel addResponseHeader(CharSequence name, CharSequence value);
-
-	/**
-	 * @return Resolved HTTP request headers
-	 */
-	HttpHeaders headers();
 
 	/**
 	 *
@@ -89,16 +84,6 @@ public interface HttpChannel extends NettyChannel, HttpConnection {
 	HttpChannel responseHeader(CharSequence name, CharSequence value);
 
 	/**
-	 * @return the resolved response HTTP headers
-	 */
-	HttpHeaders responseHeaders();
-
-	/**
-	 * @return
-	 */
-	Mono<Void> sendHeaders();
-
-	/**
 	 *
 	 * @return
 	 */
@@ -120,46 +105,5 @@ public interface HttpChannel extends NettyChannel, HttpConnection {
 		return status(HttpResponseStatus.valueOf(status));
 	}
 
-	/**
-	 * @return the resolved HTTP Response Status
-	 */
-	HttpResponseStatus status();
-
-
-	/**
-	 * Upgrade connection to Websocket
-	 * @return a {@link Mono} completing when upgrade is confirmed
-	 */
-	 default Mono<Void> upgradeToWebsocket() {
-		return upgradeToWebsocket(null, false);
-	}
-
-	/**
-	 * Upgrade connection to Websocket with text plain payloads
-	 * @return a {@link Mono} completing when upgrade is confirmed
-	 */
-	 default Mono<Void> upgradeToTextWebsocket() {
-		return upgradeToWebsocket(null, true);
-	}
-
-
-	/**
-	 * Upgrade connection to Websocket
-	 * @param protocols
-	 *
-	 * @return a {@link Mono} completing when upgrade is confirmed
-	 */
-	default Mono<Void> upgradeToWebsocket(String protocols, boolean textPlain) {
-		ChannelPipeline pipeline = delegate().pipeline();
-		NettyWebSocketServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
-		                                              .withWebsocketSupport(uri(),
-				                                              protocols, textPlain);
-
-		if (handler != null) {
-			pipeline.addLast(handler);
-			return MonoChannelFuture.from(handler.handshakerResult);
-		}
-		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
-	}
 
 }

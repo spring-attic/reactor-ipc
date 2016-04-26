@@ -42,9 +42,9 @@ public class NexusFederatePlay {
 		HttpClient client = HttpClient.create();
 		client
 		           .ws("ws://localhost:12014/on/stream")
-				   .subscribe(Subscribers.consumer( ch ->
+				   .consume( ch ->
 						   ch.receive().subscribe(Subscribers.consumer(System.out::println))
-				   ));
+				   );
 
 		nexus.monitor(nexus2);
 		nexus.monitor(client);

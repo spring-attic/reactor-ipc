@@ -21,11 +21,10 @@ import java.util.Map;
 import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -37,10 +36,12 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
+import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
 
 import reactor.io.ipc.ChannelHandler;
+import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -55,7 +56,7 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 	final TcpChannel tcpStream;
 	     NettyHttpChannel request;
 
-	public NettyHttpServerHandler(
+	NettyHttpServerHandler(
 			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 			TcpChannel tcpStream) {
 		super(handler, tcpStream);
@@ -72,7 +73,7 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 	public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();
 		if (request == null && io.netty.handler.codec.http.HttpRequest.class.isAssignableFrom(messageClass)) {
-			request = new AutoHeaderNettyHttpChannel(msg);
+			request = new HttpServerChannel(msg);
 
 
 			if (request.isWebsocket()) {
@@ -129,11 +130,11 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 		return request != null ? request.getName() : "HTTP Client Connection";
 	}
 
-	private class AutoHeaderNettyHttpChannel extends NettyHttpChannel {
+	final class HttpServerChannel extends NettyHttpChannel {
 
 		private final Cookies cookies;
 
-		public AutoHeaderNettyHttpChannel(Object msg) {
+		HttpServerChannel(Object msg) {
 			super(NettyHttpServerHandler.this.tcpStream, (io.netty.handler.codec.http.HttpRequest) msg);
 			this.cookies = Cookies.newServerRequestHolder(headers());
 		}
@@ -144,12 +145,26 @@ class NettyHttpServerHandler extends NettyChannelHandler {
 		}
 
 		@Override
+		public Mono<Void> upgradeToWebsocket(String protocols, boolean textPlain) {
+			ChannelPipeline pipeline = delegate().pipeline();
+			NettyWebSocketServerHandler handler = pipeline.remove(NettyHttpServerHandler.class)
+			                                              .withWebsocketSupport(uri(),
+					                                              protocols, textPlain);
+
+			if (handler != null) {
+				pipeline.addLast(handler);
+				return MonoChannelFuture.from(handler.handshakerResult);
+			}
+			return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
+		}
+
+		@Override
 		public Map<CharSequence, Set<Cookie>> cookies() {
 			return cookies.getCachedCookies();
 		}
 	}
 
-	private class CloseSubscriber implements BaseSubscriber<Void>, Receiver, Completable {
+	final class CloseSubscriber implements BaseSubscriber<Void>, Receiver, Completable {
 
 		private final ChannelHandlerContext ctx;
 		Subscription subscription;

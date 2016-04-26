@@ -398,7 +398,10 @@ public class TcpServerTests {
 		HttpServer server = HttpServer.create();
 		server.get("/search/{search}", requestIn ->
 			HttpClient.create()
-			          .ws("ws://localhost:3000", requestOut -> requestOut.sendString(Mono.just("ping"))
+			          .get("ws://localhost:3000",
+					          requestOut -> requestOut.upgradeToTextWebsocket()
+					                                  .concatWith(requestOut.sendString(
+							                                  Mono.just("ping")))
 			  )
 			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive()
 			                                                          .useCapacity(100))

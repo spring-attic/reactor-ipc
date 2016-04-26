@@ -17,14 +17,15 @@
 package reactor.io.netty.http;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufHolder;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpContent;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
@@ -33,11 +34,12 @@ import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
-
 import reactor.io.ipc.ChannelHandler;
+import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.tcp.TcpChannel;
@@ -54,7 +56,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	/**
 	 * The body of an HTTP response should be discarded.
 	 */
-	private boolean discardBody = false;
+	boolean discardBody = false;
 
 	public NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, TcpChannel tcpStream) {
 		super(handler, tcpStream);
@@ -66,7 +68,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		ctx.fireChannelActive();
 
 		if(httpChannel == null) {
-			httpChannel = new PostHeaderPublisher();
+			httpChannel = new HttpClientChannel(tcpStream);
 			httpChannel.keepAlive(true);
 			HttpUtil.setTransferEncodingChunked(httpChannel.nettyRequest, true);
 		}
@@ -119,9 +121,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			if(!discardBody && replySubscriber != null){
 				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
-			if (FullHttpResponse.class.isAssignableFrom(messageClass)) {
-				postRead(ctx, msg);
-			}
 			return;
 		}
 		if(LastHttpContent.EMPTY_LAST_CONTENT != msg && !discardBody){
@@ -130,7 +129,19 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		postRead(ctx, msg);
 	}
 
-	private void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws Exception {
+
+	final NettyWebSocketClientHandler withWebsocketSupport(URI url, String
+			protocols, boolean textPlain){
+		//prevent further header to be sent for handshaking
+		if(!httpChannel.markHeadersAsFlushed()){
+			log.error("Cannot enable websocket if headers have already been sent");
+			return null;
+		}
+		return new NettyWebSocketClientHandler(url, protocols, this, textPlain);
+	}
+
+	final void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws
+	                                                                          Exception {
 		boolean discardBody = false;
 
 		int code = response.status()
@@ -198,13 +209,14 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		}
 	}
 
-	class PostHeaderPublisher extends NettyHttpChannel {
+	static class HttpClientChannel extends NettyHttpChannel {
 
 		private Cookies cookies;
 
-		public PostHeaderPublisher() {
-			super(NettyHttpClientHandler.this.tcpStream, null);
+		public HttpClientChannel(TcpChannel tcpStream) {
+			super(tcpStream, null);
 		}
+
 
 		@Override
 		void setNettyResponse(HttpResponse nettyResponse) {
@@ -213,8 +225,34 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		}
 
 		@Override
+		public boolean isWebsocket() {
+			return delegate().pipeline().get(NettyWebSocketClientHandler.class) != null;
+		}
+
+		@Override
 		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
 			tcpStream.emitWriter(just(getNettyRequest()), s);
+		}
+
+		@Override
+		public Mono<Void> upgradeToWebsocket(String protocols, boolean textPlain) {
+			ChannelPipeline pipeline = delegate().pipeline();
+			NettyWebSocketClientHandler handler;
+			try {
+				pipeline.addLast(new HttpObjectAggregator(8192));
+				handler = pipeline.remove(NettyHttpClientHandler.class)
+				                                              .withWebsocketSupport(new URI(uri()),
+						                                              protocols, textPlain);
+			}
+			catch (URISyntaxException e) {
+				return Mono.error(e);
+			}
+
+			if (handler != null) {
+				pipeline.addLast(handler);
+				return MonoChannelFuture.from(handler.handshakerResult);
+			}
+			return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
 		}
 
 		@Override

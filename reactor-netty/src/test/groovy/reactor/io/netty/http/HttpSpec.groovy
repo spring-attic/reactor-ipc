@@ -241,11 +241,11 @@ class HttpSpec extends Specification {
 			.get('/test/{param}') {
 	  req
 		->
-
+		println req.headers().get('test')
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
 		def res = req.responseHeader("content-type", "text/plain")
-					.sendString(req.receiveString().log('server-received')
+					.sendString(req.receiveString()
 						.useCapacity(1)
 						.doOnNext { serverRes++ }
 						.map { it + ' ' + req.param('param') + '!' }
@@ -266,16 +266,16 @@ class HttpSpec extends Specification {
 	def client = HttpClient.create("localhost", server.listenAddress.port)
 
 	//prepare an http websocket request-reply flow
-	def content = client.ws('/test/World') { req ->
+	def content = client.get('/test/World') { req ->
 	  //prepare content-type
-	  req.header('Content-Type', 'text/plain')
+	  req.header('Content-Type', 'text/plain').header("test", "test")
 
 	  //return a producing stream to send some data along the request
-	  req.sendString(Flux
+	  req.upgradeToTextWebsocket().concatWith(req.sendString(Flux
 			  .range(1, 1000)
 			  .useCapacity(1)
 			  .map { it.toString() }
-			  .log('client-send'))
+			  ))
 
 	}.flatMap { replies ->
 	  //successful handshake, listen for the first returned next replies and pass it downstream
@@ -297,7 +297,7 @@ class HttpSpec extends Specification {
 
 	then: "data was recieved"
 	//the produced reply should be there soon
-	content.get()[1000 - 1] == "1000 World!"
+	content.get(100000)[1000 - 1] == "1000 World!"
 
 	cleanup: "the client/server where stopped"
 	//note how we order first the client then the server shutdown

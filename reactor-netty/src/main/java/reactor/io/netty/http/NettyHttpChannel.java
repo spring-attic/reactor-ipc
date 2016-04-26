@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -58,7 +57,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
-
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.tcp.TcpChannel;
 
@@ -100,7 +98,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public HttpOutbound addCookie(Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
-			doAddCookie(cookie);
+			this.headers.add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -116,7 +114,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public HttpOutbound addHeader(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
-			doAddHeader(name, value);
+			this.headers.add(name, value);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -127,7 +125,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public HttpChannel addResponseCookie(Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
-			doAddResponseCookie( cookie);
+			this.responseHeaders.add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -145,7 +143,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public HttpChannel addResponseHeader(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
-			doAddResponseHeader(name, value);
+			this.responseHeaders.add(name, value);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -189,7 +187,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public HttpOutbound header(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
-			doHeader(name, value);
+			this.headers.set(name, value);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -322,7 +320,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public HttpChannel responseHeader(CharSequence name, CharSequence value) {
 		if (statusAndHeadersSent == 0) {
-			doResponseHeader(name, value);
+			this.responseHeaders.set(name, value);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -349,7 +347,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public HttpChannel status(HttpResponseStatus status) {
 		if (statusAndHeadersSent == 0) {
-			doResponseStatus(status);
+			this.nettyResponse.setStatus(status);
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
@@ -404,15 +402,15 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 
 	@Override
 	public Mono<Void> sendObject(final Publisher<?> source) {
-		return new MonoPostWrite(source);
+		return new MonoOutboundWrite(source);
 	}
 
 	@Override
 	public Mono<Void> sendString(Publisher<? extends String> dataStream, Charset charset) {
 
 		if (isWebsocket()){
-			return new MonoPostWrite(Flux.from(dataStream)
-			                             .map(TextWebSocketFrame::new));
+			return new MonoOutboundWrite(Flux.from(dataStream)
+			                                 .map(TextWebSocketFrame::new));
 		}
 
 		return send(Flux.from(dataStream)
@@ -426,49 +424,19 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	@Override
 	public Mono<Void> sendHeaders() {
 		if (statusAndHeadersSent == 0) {
-			return new MonoPostHeaderWrite();
+			return new MonoOnlyHeaderWrite();
 		}
 		else {
 			return Mono.empty();
 		}
 	}
 
-	// REQUEST contract
-
-	protected void doHeader(CharSequence name, CharSequence value) {
-		this.headers.set(name, value);
-	}
-
-	protected void doAddHeader(CharSequence name, CharSequence value) {
-		this.headers.add(name, value);
-	}
-
-	protected void doResponseHeader(CharSequence name, CharSequence value) {
-		this.responseHeaders.set(name, value);
-	}
-
-	protected void doAddResponseHeader(CharSequence name, CharSequence value) {
-		this.responseHeaders.add(name, value);
-	}
-
 	// RESPONSE contract
 
 	protected abstract void doSubscribeHeaders(Subscriber<? super Void> s);
 
-	protected boolean markHeadersAsFlushed() {
+	final boolean markHeadersAsFlushed() {
 		return HEADERS_SENT.compareAndSet(this, 0, 1);
-	}
-
-	void doAddCookie(Cookie cookie) {
-		doAddHeader(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
-	}
-
-	void doAddResponseCookie(Cookie cookie) {
-		doAddResponseHeader(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
-	}
-
-	void doResponseStatus(HttpResponseStatus status) {
-		this.nettyResponse.setStatus(HttpResponseStatus.valueOf(status.code()));
 	}
 
 	HttpRequest getNettyRequest() {
@@ -488,11 +456,11 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	static final           FullHttpResponse                            CONTINUE     =
 			new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE, Unpooled.EMPTY_BUFFER);
 
-	final class MonoPostWrite extends Mono<Void> implements Receiver, Loopback {
+	final class MonoOutboundWrite extends Mono<Void> implements Receiver, Loopback {
 
 		final Publisher<?> source;
 
-		public MonoPostWrite(Publisher<?> source) {
+		public MonoOutboundWrite(Publisher<?> source) {
 			this.source = source;
 		}
 
@@ -509,7 +477,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 		@Override
 		public void subscribe(final Subscriber<? super Void> s) {
 			if(markHeadersAsFlushed()){
-				doSubscribeHeaders(new PostHeaderWriteSubscriber(s));
+				doSubscribeHeaders(new HttpOutboundSubscriber(s));
 			}
 			else{
 				tcpStream.emitWriter(source, s);
@@ -521,12 +489,12 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 			return source;
 		}
 
-		final class PostHeaderWriteSubscriber implements Subscriber<Void>, Receiver, Producer {
+		final class HttpOutboundSubscriber implements Subscriber<Void>, Receiver, Producer {
 
 			final Subscriber<? super Void> s;
 			Subscription subscription;
 
-			public PostHeaderWriteSubscriber(Subscriber<? super Void> s) {
+			public HttpOutboundSubscriber(Subscriber<? super Void> s) {
 				this.s = s;
 			}
 
@@ -565,7 +533,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 		}
 	}
 
-	final class MonoPostHeaderWrite extends Mono<Void> implements Loopback {
+	final class MonoOnlyHeaderWrite extends Mono<Void> implements Loopback {
 
 		@Override
 		public Object connectedInput() {

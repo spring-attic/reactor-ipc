@@ -16,9 +16,11 @@
 
 package reactor.io.netty.http;
 
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.cookie.Cookie;
 import reactor.core.publisher.Mono;
+import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyOutbound;
 
 /**
@@ -74,4 +76,32 @@ public interface HttpOutbound extends HttpConnection, NettyOutbound {
 	 * @return
 	 */
 	Mono<Void> sendHeaders();
+
+
+
+	/**
+	 * Upgrade connection to Websocket
+	 * @return a {@link Mono} completing when upgrade is confirmed
+	 */
+	default Mono<Void> upgradeToWebsocket() {
+		return upgradeToWebsocket(null, false);
+	}
+
+	/**
+	 * Upgrade connection to Websocket with text plain payloads
+	 * @return a {@link Mono} completing when upgrade is confirmed
+	 */
+	default Mono<Void> upgradeToTextWebsocket() {
+		return upgradeToWebsocket(null, true);
+	}
+
+
+	/**
+	 * Upgrade connection to Websocket
+	 * @param protocols
+	 * @param textPlain
+	 *
+	 * @return a {@link Mono} completing when upgrade is confirmed
+	 */
+	Mono<Void> upgradeToWebsocket(String protocols, boolean textPlain);
 }

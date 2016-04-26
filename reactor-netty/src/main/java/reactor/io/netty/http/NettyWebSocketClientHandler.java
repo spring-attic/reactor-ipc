@@ -16,22 +16,27 @@
 
 package reactor.io.netty.http;
 
+import java.net.URI;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.util.ReferenceCountUtil;
-import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.io.ipc.ChannelHandler;
-import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.tcp.TcpChannel;
 
 /**
  * @author Stephane Maldini
@@ -39,17 +44,34 @@ import reactor.io.netty.tcp.TcpChannel;
 final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 
 	final WebSocketClientHandshaker handshaker;
-	NettyWebSocketClientHandler(
-			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-			TcpChannel tcpStream,
-			WebSocketClientHandshaker handshaker) {
-		super(handler, tcpStream);
-		this.handshaker = handshaker;
-	}
 
-	@Override
-	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-		handshaker.handshake(ctx.channel()).addListener(future -> ctx.read());
+	final ChannelPromise handshakerResult;
+
+	final boolean plainText;
+
+	NettyWebSocketClientHandler(
+			URI wsUrl,
+			String protocols,
+			NettyHttpClientHandler originalHandler,
+			boolean plainText) {
+		super(originalHandler.getHandler(), originalHandler.tcpStream);
+		this.httpChannel = originalHandler.httpChannel;
+		this.replySubscriber = originalHandler.replySubscriber;
+		this.plainText = plainText;
+
+		handshaker =
+				WebSocketClientHandshakerFactory.newHandshaker(wsUrl,
+						WebSocketVersion.V13,
+						protocols,
+						false,
+						httpChannel.headers());
+
+		handshakerResult = httpChannel.delegate().newPromise();
+		handshaker.handshake(httpChannel.delegate()).addListener(f -> {
+			if(!f.isSuccess()) {
+				handshakerResult.tryFailure(f.cause());
+			}
+		});
 	}
 
 	@Override
@@ -68,17 +90,24 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 	@SuppressWarnings("unchecked")
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();
-		if (!handshaker.isHandshakeComplete()) {
+		if (FullHttpResponse.class.isAssignableFrom(messageClass)) {
 			ctx.pipeline().remove(HttpObjectAggregator.class);
-			handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
-			httpChannel = new NettyHttpClientHandler.PostHeaderPublisher() {
-				@Override
-				protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-					Flux.<Void>empty().subscribe(s);
-				}
-			};
-			NettyWebSocketClientHandler.super.channelActive(ctx);
-			super.channelRead(ctx, msg);
+			HttpResponse response = (HttpResponse) msg;
+			if (httpChannel != null) {
+				httpChannel.setNettyResponse(response);
+			}
+
+			checkResponseCode(ctx, response);
+
+			if(!handshaker.isHandshakeComplete()) {
+				handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
+			}
+			ctx.fireChannelRead(msg);
+			handshakerResult.trySuccess();
+
+			if(!discardBody && replySubscriber != null){
+				Flux.just(httpChannel).subscribe(replySubscriber);
+			}
 			return;
 		}
 
@@ -100,6 +129,9 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 	@Override
 	protected ChannelFuture doOnWrite(Object data, ChannelHandlerContext ctx) {
 		if (data instanceof ByteBuf) {
+			if (plainText){
+				return ctx.write(new TextWebSocketFrame((ByteBuf)data));
+			}
 			return ctx.write(new BinaryWebSocketFrame((ByteBuf)data));
 		}
 		else if (data instanceof String) {
@@ -109,5 +141,4 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			return ctx.write(data);
 		}
 	}
-
 }

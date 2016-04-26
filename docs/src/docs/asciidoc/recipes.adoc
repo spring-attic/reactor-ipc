@@ -4,7 +4,7 @@ If you made it that far, here a simple non blocking stream to scale up your Kona
 
 [source,java]
 ----
-final Processor<Integer, Integer> keyboardStream = TopicProcessor.create();
+final TopicProcessor<Integer> keyboardStream = TopicProcessor.create();
 
 HttpServer.<String, String>create(spec ->
 		spec
@@ -14,8 +14,8 @@ HttpServer.<String, String>create(spec ->
 	.ws("/", channel -> {
 		System.out.println("Connected a websocket client: " + channel.remoteAddress());
 
-		return Flux
-			.from(keyboardStream)
+		return channel.upgradeToWebsocket()
+			.after(() -> keyboardStream)
 			.skipWhile(key -> KeyEvent.VK_UP != key)
 			.buffer(10, 1) // <1>
 			.map(keys -> keys.size() == 10 &&
@@ -36,8 +36,7 @@ HttpServer.<String, String>create(spec ->
 				channel.send(konamis)
 			);
 		})
-		.start()
-		.await();
+		.subscribe();
 
 keyboardStream.onNext(KeyEvent.VK_RIGHT);
 keyboardStream.onNext(KeyEvent.VK_UP);
