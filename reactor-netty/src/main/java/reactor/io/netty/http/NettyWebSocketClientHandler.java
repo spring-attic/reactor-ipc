@@ -16,19 +16,13 @@
 
 package reactor.io.netty.http;
 
-import java.net.URI;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -63,7 +57,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 						WebSocketVersion.V13,
 						protocols,
 						false,
-						httpChannel.headers());
+						httpChannel.removeTransferEncodingChunked().headers());
 
 		handshakerResult = httpChannel.delegate().newPromise();
 		handshaker.handshake(httpChannel.delegate()).addListener(f -> {
