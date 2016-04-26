@@ -25,6 +25,8 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
@@ -105,7 +107,11 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			}
 			return;
 		}
-
+		if (PingWebSocketFrame.class.isAssignableFrom(messageClass)) {
+			ctx.channel().writeAndFlush(new PongWebSocketFrame(((PingWebSocketFrame)msg)
+					.content().retain()));
+			return;
+		}
 		if (TextWebSocketFrame.class.isAssignableFrom(messageClass)) {
 			try {
 				if(channelSubscriber != null) {
