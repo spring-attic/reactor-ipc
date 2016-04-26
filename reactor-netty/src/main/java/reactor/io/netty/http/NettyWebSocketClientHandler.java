@@ -69,7 +69,9 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 		handshaker.handshake(httpChannel.delegate()).addListener(f -> {
 			if(!f.isSuccess()) {
 				handshakerResult.tryFailure(f.cause());
+				return;
 			}
+			httpChannel.delegate().read();
 		});
 	}
 
