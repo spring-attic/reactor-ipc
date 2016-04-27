@@ -44,7 +44,7 @@ client.start( input -> {
 		.take(10)
 		.decode(codec)
 		.log("receive")
-		.consume( data -> latch.countDown() );
+		.subscribe( data -> latch.countDown() );
 
 	//write data
 	input.send(

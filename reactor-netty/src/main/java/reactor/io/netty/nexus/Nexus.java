@@ -230,14 +230,14 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		Publisher<Void> p;
 		if (channel.isWebsocket()) {
 			p = channel.upgradeToTextWebsocket()
-			           .after(channel.send(federateAndEncode(channel, eventStream)));
+			           .then(channel.send(federateAndEncode(channel, eventStream)));
 		}
 		else {
 			p = channel.send(federateAndEncode(channel, eventStream));
 		}
 
 		channel.receiveString()
-		       .consume(command -> {
+		       .subscribe(command -> {
 			       int indexArg = command.indexOf("\n");
 			       if (indexArg > 0) {
 				       String action = command.substring(0, indexArg);

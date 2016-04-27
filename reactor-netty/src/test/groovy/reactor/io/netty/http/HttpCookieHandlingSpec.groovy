@@ -15,14 +15,12 @@
  */
 package reactor.io.netty.http
 
-import io.netty.handler.codec.http.cookie.Cookie
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import reactor.core.publisher.Mono
-import reactor.io.netty.common.NettyCodec
-
 import spock.lang.Specification
 
 import java.time.Duration
+import java.util.function.Function
 
 public class HttpCookieHandlingSpec extends Specification{
 
@@ -45,9 +43,9 @@ public class HttpCookieHandlingSpec extends Specification{
 	when: "a request with URI is sent onto the server"
 	def client = HttpClient.create("localhost", server.listenAddress.port)
 
-	def cookieResponse = client.get('/test').then {
+	def cookieResponse = client.get('/test').then({
 	  replies -> Mono.just(replies.cookies())
-	}
+	} as Function)
 	.doOnSuccess{
 	  println it
 	}

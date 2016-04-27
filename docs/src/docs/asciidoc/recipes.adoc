@@ -15,7 +15,7 @@ HttpServer.<String, String>create(spec ->
 		System.out.println("Connected a websocket client: " + channel.remoteAddress());
 
 		return channel.upgradeToWebsocket()
-			.after(() -> keyboardStream)
+			.then(() -> keyboardStream)
 			.skipWhile(key -> KeyEvent.VK_UP != key)
 			.buffer(10, 1) // <1>
 			.map(keys -> keys.size() == 10 &&

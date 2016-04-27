@@ -23,6 +23,7 @@ import spock.lang.Specification
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 
 /**
  * @author Stephane Maldini
@@ -64,10 +65,10 @@ class HttpSpec extends Specification {
 	  //return a producing stream to send some data along the request
 	  req.sendString(Mono.just("Hello").log('client-send'))
 
-	}.then { replies ->
+	}.then ({ replies ->
 	  //successful request, listen for the first returned next reply and pass it downstream
 	  replies.receive().log('client-received').next()
-	}
+	} as Function)
 	.doOnError {
 	  //something failed during the request or the reply processing
 	  println "Failed requesting server: $it"
@@ -177,10 +178,10 @@ class HttpSpec extends Specification {
 	//prepare an http post request-reply flow
 	client
 			.get('/test')
-			.then { replies ->
+			.then ({ replies ->
 	 			 Mono.just(replies.status().code())
 			  .log("received-status-1")
-			}
+			} as Function)
 			.get(Duration.ofSeconds(5))
 
 

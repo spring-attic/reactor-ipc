@@ -110,7 +110,7 @@ public class TcpClientTests {
 		client.startAndAwait(conn -> {
 			conn.receive()
 			    .log("conn")
-			    .consume(s -> latch.countDown());
+			    .subscribe(s -> latch.countDown());
 
 			conn.sendString(Flux.just("Hello World!"))
 			    .subscribe();
@@ -134,7 +134,7 @@ public class TcpClientTests {
 
 		client.start(input -> {
 			input.receive()
-			     .consume(d -> latch.countDown());
+			     .subscribe(d -> latch.countDown());
 			input.sendString(Flux.just("Hello"))
 			     .subscribe();
 
@@ -159,7 +159,7 @@ public class TcpClientTests {
 		client.start(channel -> {
 			channel.receive(NettyCodec.linefeed())
 			       .log("received")
-			       .consume(s -> {
+			       .subscribe(s -> {
 						strings.add(s);
 						latch.countDown();
 					});
@@ -216,7 +216,7 @@ public class TcpClientTests {
 					                                    return Mono.<Long>empty();
 			                                    }
 		                                    }))
-		         .consume(System.out::println);
+		         .subscribe(System.out::println);
 
 		latch.await(5, TimeUnit.SECONDS);
 		assertTrue("latch was counted down:"+latch.getCount(), latch.getCount() == 0 );
@@ -264,7 +264,7 @@ public class TcpClientTests {
 					latch.countDown();
 				});
 
-			  return Mono.delay(3000).after().log();
+			  return Mono.delay(3000).then().log();
 		  }
 		);
 

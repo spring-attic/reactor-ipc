@@ -133,7 +133,7 @@ public class TcpServerTests {
 		server.start(channel -> {
 			channel.receive(NettyCodec.json(Pojo.class))
 			       .log("conn")
-			       .consume(data -> {
+			       .subscribe(data -> {
 				       if ("John Doe".equals(data.getName())) {
 					       latch.countDown();
 				       }
@@ -163,7 +163,7 @@ public class TcpServerTests {
 
 		server.start(ch -> {
 			ch.receive(NettyCodec.from(new LengthFieldCodec<>(StandardCodecs.BYTE_ARRAY_CODEC)))
-			  .consume(new Consumer<byte[]>() {
+			  .subscribe(new Consumer<byte[]>() {
 				  long num = 1;
 
 				  @Override
@@ -216,7 +216,7 @@ public class TcpServerTests {
 		server.start(ch -> {
 			ch.receive(NettyCodec.from(new FrameCodec(2, FrameCodec.LengthField.SHORT)))
 			  .log()
-			  .consume(frame -> {
+			  .subscribe(frame -> {
 				short prefix = frame.getPrefix().readShort();
 				assertThat("prefix is not 128: "+prefix, prefix == 128);
 				Buffer data = frame.getData();
@@ -278,7 +278,7 @@ public class TcpServerTests {
 		ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
 				serverHandler = ch -> {
 			ch.receiveString()
-			  .consume(data -> {
+			  .subscribe(data -> {
 				log.info("data " + data + " on " + ch);
 				latch.countDown();
 			});
@@ -359,7 +359,7 @@ public class TcpServerTests {
 		server.start(ch -> {
 			ch.receive()
 			  .log("channel")
-			  .consume(trip -> {
+			  .subscribe(trip -> {
 				countDownLatch.countDown();
 			});
 			return Flux.never();

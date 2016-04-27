@@ -42,7 +42,7 @@ public class NexusFederatePlay {
 		HttpClient client = HttpClient.create();
 		client
 		           .ws("ws://localhost:12014/on/stream")
-				   .consume( ch ->
+				   .subscribe( ch ->
 						   ch.receive().subscribe(Subscribers.consumer(System.out::println))
 				   );
 

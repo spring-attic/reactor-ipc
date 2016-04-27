@@ -83,7 +83,7 @@ public class UdpServerTests {
 		server.start(ch -> {
 			ch.receiveByteArray()
 			  .log()
-			  .consume(bytes -> {
+			  .subscribe(bytes -> {
 				if (bytes.length == 1024) {
 					latch.countDown();
 				}
@@ -133,7 +133,7 @@ public class UdpServerTests {
 			server.start(ch -> {
 				ch.receiveByteArray()
 				  .log()
-				  .consume(bytes -> {
+				  .subscribe(bytes -> {
 					//log.info("{} got {} bytes", ++count, bytes.length);
 					if (bytes.length == 1024) {
 						latch.countDown();

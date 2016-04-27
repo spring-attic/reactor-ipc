@@ -392,7 +392,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 		Supplier<Mono<Void>> writeFile = () ->
 				MonoChannelFuture.from(tcpStream.delegate()
 				                                .writeAndFlush(new DefaultFileRegion(file, position, count)));
-		return sendHeaders().after(writeFile);
+		return sendHeaders().then(writeFile);
 	}
 
 	@Override
