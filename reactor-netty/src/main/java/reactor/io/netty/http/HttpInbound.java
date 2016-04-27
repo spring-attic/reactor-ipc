@@ -15,9 +15,16 @@
  */
 package reactor.io.netty.http;
 
+import java.net.InetSocketAddress;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import reactor.core.publisher.Flux;
+import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyInbound;
+import reactor.io.netty.http.multipart.MultipartCodec;
 
 /**
  * An Http Reactive client read contract for incoming response. It inherits several accessor related to HTTP
@@ -39,5 +46,33 @@ public interface HttpInbound extends HttpConnection, NettyInbound {
 	 */
 	HttpResponseStatus status();
 
+	/**
+	 * a {@literal byte[]} inbound {@link Flux}
+	 *
+	 * @return a {@literal byte[]} inbound {@link Flux}
+	 */
+	default MultipartInbound receiveMultipart() {
+		HttpInbound thiz = this;
+		return new MultipartInbound() {
+			@Override
+			public Channel delegate() {
+				return thiz.delegate();
+			}
 
+			@Override
+			public Flux<Flux<ByteBuf>> receiveParts() {
+				return MultipartCodec.decode(thiz);
+			}
+
+			@Override
+			public NettyChannel.Lifecycle on() {
+				return thiz.on();
+			}
+
+			@Override
+			public InetSocketAddress remoteAddress() {
+				return thiz.remoteAddress();
+			}
+		};
+	}
 }

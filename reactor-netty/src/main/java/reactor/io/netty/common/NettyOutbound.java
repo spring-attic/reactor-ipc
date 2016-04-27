@@ -18,13 +18,11 @@ package reactor.io.netty.common;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.DefaultFileRegion;
-import io.netty.channel.FileRegion;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

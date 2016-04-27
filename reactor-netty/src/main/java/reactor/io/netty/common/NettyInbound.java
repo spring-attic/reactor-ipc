@@ -15,6 +15,7 @@
  */
 package reactor.io.netty.common;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufHolder;
+import io.netty.buffer.ByteBufInputStream;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.io.ipc.Inbound;
@@ -77,6 +79,16 @@ public interface NettyInbound extends Inbound<ByteBuf> {
 			bb.readBytes(bytes);
 			return bytes;
 		});
+	}
+
+
+	/**
+	 * a {@link InputStream} inbound {@link Flux}
+	 *
+	 * @return a {@link InputStream} inbound {@link Flux}
+	 */
+	default Flux<InputStream> receiveInputStream() {
+		return receive().map(ByteBufInputStream::new);
 	}
 
 	/**
