@@ -34,7 +34,7 @@ public class WebsocketTests {
 
 	@Before
 	public void setup() throws InterruptedException {
-		//setupServer();
+		setupServer();
 	}
 
 	private void setupServer() throws InterruptedException {
@@ -46,9 +46,8 @@ public class WebsocketTests {
 
 	@Test
 	public void simpleTest() {
-		String res = HttpClient.create()
-		                       .get("wss://doppler.run.pivotal" + "" +
-				                       ".io:443/apps/1a95eadc-95c6-4675-aa07-8c02f80ea8a4/stream",
+		String res = HttpClient.create("localhost", httpServer.getListenAddress().getPort())
+		                       .get("/test",
 				                       c -> c.addHeader("Authorization", auth)
 				                             .upgradeToTextWebsocket())
 		                       .flatMap(HttpInbound::receiveString)
