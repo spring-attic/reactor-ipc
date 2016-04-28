@@ -24,6 +24,7 @@ import java.util.Set;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -50,6 +51,8 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 	final TcpChannel tcpStream;
 	final URI        currentURI;
+
+	boolean written;
 
 	NettyHttpChannel                httpChannel;
 	Subscriber<? super HttpInbound> replySubscriber;
@@ -133,6 +136,13 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		postRead(ctx, msg);
 	}
 
+	@Override
+	public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
+			throws Exception {
+		written = true;
+		super.write(ctx, msg, promise);
+	}
+
 	final NettyWebSocketClientHandler withWebsocketSupport(String
 			protocols, boolean textPlain){
 		//prevent further header to be sent for handshaking
@@ -187,7 +197,10 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	}
 
 	protected void writeLast(final ChannelHandlerContext ctx){
-		ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		if(written) {
+			ctx.channel()
+			   .writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		}
 	}
 
 	private void setDiscardBody(boolean discardBody) {
