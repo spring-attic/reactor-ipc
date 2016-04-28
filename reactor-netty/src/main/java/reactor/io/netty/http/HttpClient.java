@@ -26,6 +26,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
@@ -51,7 +52,7 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 	 */
 	public static HttpClient create() {
 		return create(ClientOptions.create()
-		                           .timer(Timer.globalOrNull()));
+		                           .timer(Timer.globalOrNull()).sslSupport());
 	}
 
 	/**

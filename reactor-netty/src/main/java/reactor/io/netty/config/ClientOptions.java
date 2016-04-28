@@ -34,7 +34,7 @@ import reactor.io.netty.common.Peer;
 public class ClientOptions extends NettyOptions<ClientOptions> {
 
 	public static ClientOptions create(){
-		return new ClientOptions().ssl(SslContextBuilder.forClient());
+		return new ClientOptions();
 	}
 
 	public static ClientOptions to(String host){
@@ -94,6 +94,15 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 */
 	public InetSocketAddress remoteAddress() {
 		return connectAddress != null ? connectAddress.get() : null;
+	}
+
+	/**
+	 *
+	 * @return this {@link ClientOptions}
+	 */
+	public ClientOptions sslSupport() {
+		ssl(SslContextBuilder.forClient());
+		return this;
 	}
 
 	/**
