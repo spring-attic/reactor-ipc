@@ -231,7 +231,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 		@Override
 		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-			MonoChannelFuture.from(delegate().writeAndFlush(getNettyRequest()))
+			MonoChannelFuture.from(delegate().write(getNettyRequest()))
 			                 .subscribe(s);
 		}
 
