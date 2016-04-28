@@ -28,7 +28,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.cookie.Cookie;
@@ -236,7 +235,8 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 		@Override
 		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-			tcpStream.emitWriter(just(getNettyRequest()), s);
+			MonoChannelFuture.from(delegate().writeAndFlush(getNettyRequest()))
+			                 .subscribe(s);
 		}
 
 		@Override
