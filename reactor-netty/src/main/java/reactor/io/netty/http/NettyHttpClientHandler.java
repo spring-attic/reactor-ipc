@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
@@ -51,8 +52,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 	final TcpChannel tcpStream;
 	final URI        currentURI;
-
-	boolean written;
 
 	NettyHttpChannel                httpChannel;
 	Subscriber<? super HttpInbound> replySubscriber;
@@ -105,11 +104,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 					          .close();
 				       }
 			       }
-
-			       @Override
-			       public void onComplete() {
-				       writeLast(ctx);
-			       }
 		       });
 	}
 
@@ -128,19 +122,13 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			if(!discardBody && replySubscriber != null){
 				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
+			postRead(ctx, msg);
 			return;
 		}
 		if(LastHttpContent.EMPTY_LAST_CONTENT != msg && !discardBody){
 			super.channelRead(ctx, msg);
 		}
 		postRead(ctx, msg);
-	}
-
-	@Override
-	public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
-			throws Exception {
-		written = true;
-		super.write(ctx, msg, promise);
 	}
 
 	final NettyWebSocketClientHandler withWebsocketSupport(String
@@ -196,12 +184,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		return httpChannel != null ? httpChannel.getName() : "HTTP Client Connection";
 	}
 
-	protected void writeLast(final ChannelHandlerContext ctx){
-		if(written) {
-			ctx.channel()
-			   .writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-		}
-	}
 
 	private void setDiscardBody(boolean discardBody) {
 		this.discardBody = discardBody;
@@ -221,6 +203,15 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			}
 			this.clientReplySubscriber = inputSubscriber;
 		}
+	}
+
+	@Override
+	protected void doOnTerminate(ChannelHandlerContext ctx,
+			ChannelFuture last,
+			ChannelPromise promise,
+			Throwable exception) {
+		ctx.channel().write(LastHttpContent.EMPTY_LAST_CONTENT);
+		super.doOnTerminate(ctx, last, promise, exception);
 	}
 
 	static class HttpClientChannel extends NettyHttpChannel {
