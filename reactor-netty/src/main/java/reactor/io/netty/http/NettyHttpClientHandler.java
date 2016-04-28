@@ -103,11 +103,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 					          .close();
 				       }
 			       }
-
-			       @Override
-			       public void onComplete() {
-				       ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-			       }
 		       });
 	}
 
@@ -231,7 +226,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 		@Override
 		protected void doSubscribeHeaders(Subscriber<? super Void> s) {
-			MonoChannelFuture.from(delegate().write(getNettyRequest()))
+			MonoChannelFuture.from(delegate().writeAndFlush(getNettyRequest()))
 			                 .subscribe(s);
 		}
 

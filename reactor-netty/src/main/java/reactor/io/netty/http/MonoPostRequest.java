@@ -56,10 +56,14 @@ final class MonoPostRequest extends Mono<HttpInbound> {
 				NettyHttpChannel ch = (NettyHttpChannel) c;
 				ch.getNettyRequest()
 				  .setUri(uri.getPath() + (uri.getQuery() == null ? "" : "?" + uri.getQuery()))
-				  .setMethod(new HttpMethod(method.name()))
+				  .setMethod(method)
 				  .headers()
 				  .add(HttpHeaderNames.HOST, uri.getHost())
 				  .add(HttpHeaderNames.ACCEPT, "*/*");
+
+				if(method == HttpMethod.GET || method == HttpMethod.HEAD){
+					ch.removeTransferEncodingChunked();
+				}
 
 				ch.delegate()
 				  .pipeline()
