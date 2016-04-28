@@ -16,6 +16,7 @@
 
 package reactor.io.netty.tcp;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -35,6 +36,9 @@ import javax.net.ssl.X509TrustManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.handler.ssl.util.SelfSignedCertificate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -94,40 +98,23 @@ public class TcpServerTests {
 	}
 
 	@Test
-	public void tcpServerHandlesJsonPojosOverSsl() throws InterruptedException {
+	public void tcpServerHandlesJsonPojosOverSsl()
+			throws InterruptedException, CertificateException {
 		final int port = SocketUtils.findAvailableTcpPort();
-		SslOptions serverOpts = new SslOptions()
-		  .keystoreFile("./src/test/resources/server.jks")
-		  .keystorePasswd("changeit");
-
-		SslOptions clientOpts = new SslOptions().keystoreFile("./src/test/resources/client.jks")
-		                                        .keystorePasswd("changeit")
-		                                        .trustManagers(() -> new TrustManager[]{new X509TrustManager() {
-			                                        @Override
-			                                        public void checkClientTrusted(X509Certificate[] x509Certificates,
-					                                        String s) throws CertificateException {
-				                                        // trust all
-			                                        }
-
-			                                        @Override
-			                                        public void checkServerTrusted(X509Certificate[] x509Certificates,
-					                                        String s) throws CertificateException {
-				                                        // trust all
-			                                        }
-
-			                                        @Override
-			                                        public X509Certificate[] getAcceptedIssuers() {
-				                                        return new X509Certificate[0];
-					}
-		                                        }
-		  });
-
 		final CountDownLatch latch = new CountDownLatch(1);
-		final TcpClient client = TcpClient.create(ClientOptions.to("localhost", port)
-		                                                       .ssl(clientOpts));
 
+		SslContextBuilder clientOptions = SslContextBuilder.forClient()
+		                                                   .trustManager(InsecureTrustManagerFactory.INSTANCE);
+		final TcpClient client = TcpClient.create(ClientOptions.to("localhost", port)
+		                                                       .ssl(clientOptions));
+
+
+		SelfSignedCertificate ssc = new SelfSignedCertificate();
+		SslContextBuilder serverOptions = SslContextBuilder.forServer(
+				ssc.certificate(),
+				ssc.privateKey());
 		final TcpServer server = TcpServer.create(ServerOptions.on("localhost", port)
-		                                                       .ssl(serverOpts)
+		                                                       .ssl(serverOptions)
 		);
 
 		server.start(channel -> {

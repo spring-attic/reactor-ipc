@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -33,6 +34,7 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
@@ -40,6 +42,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
+import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.io.ipc.Channel;
@@ -50,7 +53,6 @@ import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.NettyOptions;
-import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
 import reactor.io.netty.util.NettyNativeDetector;
 
 /**
@@ -179,8 +181,9 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	final EventLoopGroup          ioGroup;
 	final Supplier<ChannelFuture> connectionSupplier;
 	final ChannelGroup            channelGroup;
+	final ClientOptions           options;
+	final SslContext              sslContext;
 
-	final    ClientOptions     options;
 	volatile InetSocketAddress connectAddress;
 
 	protected TcpClient(ClientOptions options) {
@@ -211,6 +214,23 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 					ExecutorUtils.newNamedFactory("reactor-tcp-io"));
 		}
 
+		if(options.ssl() != null){
+			try{
+				sslContext = options.ssl().build();
+
+				if (log.isDebugEnabled()) {
+					log.debug("Connecting with SSL enabled using context {}",
+							sslContext.getClass().getSimpleName());
+				}
+			}
+			catch (SSLException ssle){
+				throw Exceptions.bubble(ssle);
+			}
+		}
+		else{
+			sslContext = null;
+		}
+
 		Bootstrap _bootstrap = new Bootstrap().group(ioGroup)
 		                                      .channel(NettyNativeDetector.getChannel(ioGroup))
 		                                      .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
@@ -226,7 +246,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		                       .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.timeout());
 
 		this.bootstrap = _bootstrap;
-		if (options != null && options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
+		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
 			log.debug("Client is managed.");
 			this.channelGroup = new DefaultChannelGroup(null);
 		}
@@ -327,32 +347,25 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		return MonoChannelFuture.from(ioGroup.shutdownGracefully());
 	}
 
-	protected void addSecureHandler(SocketChannel ch) throws Exception {
-		SSLEngine ssl = new SSLEngineSupplier(options.ssl(), true).get();
-		if (log.isDebugEnabled()) {
-			log.debug("SSL enabled using keystore {}",
-					(null != options.ssl() && null != options.ssl()
-					                                         .keystoreFile() ? options.ssl()
-					                                                                  .keystoreFile() : "<DEFAULT>"));
-		}
-		ch.pipeline()
-		  .addFirst(new SslHandler(ssl));
-	}
-
-	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel ch)
-			throws Exception {
-
-		if (null != options.ssl()) {
-			addSecureHandler(ch);
+	final protected void addSecureHandler(SocketChannel ch){
+		if (null != sslContext) {
+			ch.pipeline().addFirst(sslContext.newHandler(ch.alloc()));
 		}
 		else {
 			ch.config()
 			  .setAutoRead(false);
 		}
+	}
+
+	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel ch)
+			throws Exception {
+
+		ChannelPipeline pipeline = ch.pipeline();
+
+		addSecureHandler(ch);
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
 
-		ChannelPipeline pipeline = ch.pipeline();
 
 		if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
 			getOptions().pipelineConfigurer()

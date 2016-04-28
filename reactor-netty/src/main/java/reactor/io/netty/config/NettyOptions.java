@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.SslContextBuilder;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.util.PlatformDependent;
 
@@ -47,7 +48,7 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	private boolean                   managed            = DEFAULT_MANAGED_PEER;
 	private Consumer<ChannelPipeline> pipelineConfigurer = null;
 	private EventLoopGroup            eventLoopGroup     = null;
-	private SslOptions                sslOptions         = null;
+	private SslContextBuilder         sslOptions         = null;
 
 	/**
 	 *
@@ -182,10 +183,10 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	}
 
 	/**
-	 * Return eventual {@link SslOptions}
-	 * @return optional {@link SslOptions}
+	 * Return eventual {@link SslContextBuilder}
+	 * @return optional {@link SslContextBuilder}
 	 */
-	public SslOptions ssl(){
+	public SslContextBuilder ssl() {
 		return sslOptions;
 	}
 
@@ -196,7 +197,7 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	 * @param sslOptions The options to set when configuring SSL
 	 * @return {@literal this}
 	 */
-	public SO ssl(SslOptions sslOptions) {
+	public SO ssl(SslContextBuilder sslOptions) {
 		this.sslOptions = sslOptions;
 		return (SO) this;
 	}

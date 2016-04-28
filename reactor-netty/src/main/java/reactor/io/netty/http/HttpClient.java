@@ -316,14 +316,9 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 				                                                 .equals(HTTPS_SCHEME) || currentURI.getScheme()
 				                                                                                                .toLowerCase()
 				                                                                                                .equals(WSS_SCHEME))) {
-					nativeChannel.config()
-					             .setAutoRead(true);
 					addSecureHandler(nativeChannel);
 				}
-				else {
-					nativeChannel.config()
-					             .setAutoRead(false);
-				}
+
 				if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
 					getOptions().pipelineConfigurer()
 					            .accept(nativeChannel.pipeline());

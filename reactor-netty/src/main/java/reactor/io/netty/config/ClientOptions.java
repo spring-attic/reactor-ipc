@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.SslContextBuilder;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.io.netty.common.Peer;
 
@@ -109,7 +110,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		ImmutableClientOptions(ClientOptions options) {
 			this.options = options;
 			if(options.ssl() != null){
-					super.ssl(options.ssl().toImmutable());
+					super.ssl(options.ssl());
 			}
 		}
 
@@ -219,7 +220,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
-		public ClientOptions ssl(SslOptions sslOptions) {
+		public ClientOptions ssl(SslContextBuilder sslOptions) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 

@@ -18,7 +18,7 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
-import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -33,13 +33,14 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.SocketChannelConfig;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslContext;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Computations;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
+import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.io.ipc.Channel;
@@ -50,7 +51,6 @@ import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.NettyOptions;
 import reactor.io.netty.config.ServerOptions;
-import reactor.io.netty.tcp.ssl.SSLEngineSupplier;
 import reactor.io.netty.util.NettyNativeDetector;
 
 /**
@@ -181,6 +181,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	final EventLoopGroup  ioGroup;
 	final ChannelGroup    channelGroup;
 	final ServerOptions   options;
+	final SslContext      sslContext;
 
 	//Carefully reset
 	InetSocketAddress listenAddress;
@@ -218,7 +219,21 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		                                   .option(ChannelOption.SO_SNDBUF, options.sndbuf())
 		                                   .option(ChannelOption.SO_REUSEADDR, options.reuseAddr());
 
-		if (options != null && options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
+		if(options.ssl() != null) {
+			try {
+				this.sslContext = options.ssl().build();
+				if (log.isDebugEnabled()) {
+					log.debug("Serving SSL enabled using context {}", sslContext.getClass().getSimpleName());
+				}
+			}
+			catch (SSLException e) {
+				throw Exceptions.bubble(e);
+			}
+		}
+		else{
+			this.sslContext = null;
+		}
+		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
 			log.debug("Server is managed.");
 			this.channelGroup = new DefaultChannelGroup(null);
 		}
@@ -328,23 +343,6 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 					channelGroup.add(ch);
 				}
 
-				if (null != options.ssl()) {
-					SSLEngine ssl = new SSLEngineSupplier(options.ssl(), false).get();
-					if (log.isDebugEnabled()) {
-						log.debug("SSL enabled using keystore {}",
-								(null != options.ssl()
-								                .keystoreFile() ? options.ssl()
-								                                         .keystoreFile() : "<DEFAULT>"));
-					}
-					ch.pipeline()
-					  .addLast(new SslHandler(ssl));
-				}
-
-				if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
-					getOptions().pipelineConfigurer()
-					            .accept(ch.pipeline());
-				}
-
 				bindChannel(handler, ch);
 			}
 		});
@@ -370,10 +368,20 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	}
 
 	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
+		ChannelPipeline pipeline = nativeChannel.pipeline();
+
+		if (sslContext != null) {
+			pipeline
+			  .addFirst(sslContext.newHandler(nativeChannel.alloc()));
+		}
+
+		if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+			getOptions().pipelineConfigurer()
+			            .accept(pipeline);
+		}
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), nativeChannel);
 
-		ChannelPipeline pipeline = nativeChannel.pipeline();
 
 		if (log.isDebugEnabled()) {
 			pipeline.addLast(new LoggingHandler(TcpServer.class));
