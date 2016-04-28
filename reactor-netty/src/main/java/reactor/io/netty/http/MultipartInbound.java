@@ -38,7 +38,8 @@ public interface MultipartInbound extends NettyInbound {
 
 	@Override
 	default Flux<ByteBuf> receive() {
-		return receiveParts().flatMap(parts -> parts.toList()
+		return receiveParts().onBackpressureBuffer()
+		                     .flatMap(parts -> parts.toList()
 		                                            .map(list -> Unpooled.wrappedBuffer(
 				                                            list.toArray(new
 						                                            ByteBuf[list.size()
