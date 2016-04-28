@@ -16,12 +16,10 @@
 
 package reactor.io.netty.tcp;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
@@ -31,8 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LineBasedFrameDecoder;
@@ -59,7 +55,6 @@ import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.config.ServerOptions;
-import reactor.io.netty.config.SslOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.util.SocketUtils;
@@ -109,12 +104,9 @@ public class TcpServerTests {
 		                                                       .ssl(clientOptions));
 
 
-		SelfSignedCertificate ssc = new SelfSignedCertificate();
-		SslContextBuilder serverOptions = SslContextBuilder.forServer(
-				ssc.certificate(),
-				ssc.privateKey());
+
 		final TcpServer server = TcpServer.create(ServerOptions.on("localhost", port)
-		                                                       .ssl(serverOptions)
+		                                                       .sslSelfSigned()
 		);
 
 		server.start(channel -> {

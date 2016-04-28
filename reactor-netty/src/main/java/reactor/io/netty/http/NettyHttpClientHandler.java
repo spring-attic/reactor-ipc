@@ -149,9 +149,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 		int code = response.status()
 		                   .code();
-		if (code == HttpResponseStatus.NOT_FOUND.code()
-				|| code == HttpResponseStatus.BAD_REQUEST.code()
-				|| code == HttpResponseStatus.INTERNAL_SERVER_ERROR.code()) {
+		if (code >= 400) {
 			Exception ex = new HttpException(httpChannel);
 			exceptionCaught(ctx, ex);
 			if(replySubscriber != null){

@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.io.netty.common.Peer;
 
@@ -33,7 +34,7 @@ import reactor.io.netty.common.Peer;
 public class ClientOptions extends NettyOptions<ClientOptions> {
 
 	public static ClientOptions create(){
-		return new ClientOptions();
+		return new ClientOptions().ssl(SslContextBuilder.forClient());
 	}
 
 	public static ClientOptions to(String host){
@@ -41,7 +42,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	}
 
 	public static ClientOptions to(String host, int port){
-		return new ClientOptions().connect(host, port);
+		return create().connect(host, port);
 	}
 
 

@@ -19,13 +19,15 @@ package reactor.io.netty.config;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.ProtocolFamily;
+import java.security.cert.CertificateException;
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.SelfSignedCertificate;
 import reactor.core.scheduler.TimedScheduler;
+import reactor.core.util.Exceptions;
 import reactor.io.netty.common.Peer;
 
 /**
@@ -189,6 +191,22 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 	public ServerOptions reuseAddr(boolean reuseAddr) {
 		this.reuseAddr = reuseAddr;
 		return this;
+	}
+
+	/**
+	 * Enable SSL service with a self-signed certificate
+	 *
+	 * @return {@code this}
+	 */
+	public ServerOptions sslSelfSigned() {
+		SelfSignedCertificate ssc;
+		try {
+			ssc = new SelfSignedCertificate();
+		}
+		catch (CertificateException e) {
+			throw Exceptions.bubble(e);
+		}
+		return ssl(SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()));
 	}
 
 	/**
