@@ -159,7 +159,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	}
 
 	protected void postRead(ChannelHandlerContext ctx, Object msg){
-		if (LastHttpContent.EMPTY_LAST_CONTENT == msg) {
+		if (msg instanceof LastHttpContent) {
 			ctx.channel().close();
 		}
 	}
