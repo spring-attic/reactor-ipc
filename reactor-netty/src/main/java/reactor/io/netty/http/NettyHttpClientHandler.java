@@ -103,6 +103,11 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 					          .close();
 				       }
 			       }
+
+			       @Override
+			       public void onComplete() {
+				       ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+			       }
 		       });
 	}
 
@@ -202,15 +207,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			}
 			this.clientReplySubscriber = inputSubscriber;
 		}
-	}
-
-	@Override
-	protected void doOnTerminate(ChannelHandlerContext ctx,
-			ChannelFuture last,
-			ChannelPromise promise,
-			Throwable exception) {
-		ctx.channel().write(LastHttpContent.EMPTY_LAST_CONTENT);
-		super.doOnTerminate(ctx, last, promise, exception);
 	}
 
 	static class HttpClientChannel extends NettyHttpChannel {
