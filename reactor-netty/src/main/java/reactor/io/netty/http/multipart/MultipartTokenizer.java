@@ -144,7 +144,7 @@ final class MultipartTokenizer
 
 	@Override
 	protected void doRequest(long n) {
-		if (Integer.MAX_VALUE != n) {  // TODO: Support smaller request sizes
+		if (Integer.MAX_VALUE < n) {  // TODO: Support smaller request sizes
 			onError(new IllegalArgumentException(
 					"This operation only supports unbounded requests, was " + n));
 		}
