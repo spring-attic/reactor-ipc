@@ -61,7 +61,9 @@ final class MonoPostRequest extends Mono<HttpInbound> {
 				  .add(HttpHeaderNames.HOST, uri.getHost())
 				  .add(HttpHeaderNames.ACCEPT, "*/*");
 
-				if(method == HttpMethod.GET || method == HttpMethod.HEAD){
+				if(method == HttpMethod.GET ||
+						method == HttpMethod.HEAD ||
+						method == HttpMethod.DELETE ){
 					ch.removeTransferEncodingChunked();
 				}
 
