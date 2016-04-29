@@ -107,6 +107,15 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	}
 
 	@Override
+	protected void doOnTerminate(ChannelHandlerContext ctx,
+			ChannelFuture last,
+			ChannelPromise promise,
+			Throwable exception) {
+		ctx.channel().write(LastHttpContent.EMPTY_LAST_CONTENT);
+		super.doOnTerminate(ctx, last, promise, exception);
+	}
+
+	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();
 		if (HttpResponse.class.isAssignableFrom(messageClass)) {
