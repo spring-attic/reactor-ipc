@@ -106,7 +106,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			ctx.fireChannelRead(msg);
 			handshakerResult.trySuccess();
 
-			if(!discardBody && replySubscriber != null){
+			if(replySubscriber != null){
 				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
 			return;

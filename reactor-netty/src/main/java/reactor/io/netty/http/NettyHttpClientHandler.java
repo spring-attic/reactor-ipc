@@ -55,11 +55,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	NettyHttpChannel                httpChannel;
 	Subscriber<? super HttpInbound> replySubscriber;
 
-	/**
-	 * The body of an HTTP response should be discarded.
-	 */
-	boolean discardBody = false;
-
 	public NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 			TcpChannel tcpStream,
 			URI lastURI) {
@@ -127,13 +122,13 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			checkResponseCode(ctx, response);
 
 			ctx.fireChannelRead(msg);
-			if(!discardBody && replySubscriber != null){
+			if(replySubscriber != null){
 				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
 			postRead(ctx, msg);
 			return;
 		}
-		if(LastHttpContent.EMPTY_LAST_CONTENT != msg && !discardBody){
+		if(LastHttpContent.EMPTY_LAST_CONTENT != msg){
 			super.channelRead(ctx, msg);
 		}
 		postRead(ctx, msg);
@@ -151,8 +146,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 	final void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws
 	                                                                          Exception {
-		boolean discardBody = false;
-
 		int code = response.status()
 		                   .code();
 		if (code >= 400) {
@@ -161,10 +154,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			if(replySubscriber != null){
 				EmptySubscription.error(replySubscriber, ex);
 			}
-			discardBody = true;
 		}
-
-		setDiscardBody(discardBody);
 	}
 
 	protected void postRead(ChannelHandlerContext ctx, Object msg){
@@ -192,10 +182,6 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		return httpChannel != null ? httpChannel.getName() : "HTTP Client Connection";
 	}
 
-
-	private void setDiscardBody(boolean discardBody) {
-		this.discardBody = discardBody;
-	}
 
 	/**
 	 * An event to attach a {@link Subscriber} to the {@link TcpChannel}
