@@ -26,15 +26,14 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.ssl.SslContextBuilder;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
+import reactor.core.state.Completable;
 import reactor.core.util.Logger;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.tcp.TcpClient;
@@ -44,7 +43,7 @@ import reactor.io.netty.tcp.TcpClient;
  *
  * @author Stephane Maldini
  */
-public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements Loopback {
+public class HttpClient implements Loopback, Completable {
 
 
 	/**
@@ -70,12 +69,10 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		                           .timer(Timer.globalOrNull())
 		                           .connect(address, port));
 	}
-	final TcpClient client;
-	URI lastURI = null;
+
+	final TcpBridgeClient client;
 
 	protected HttpClient(final ClientOptions options) {
-		super(options.timer(), options.prefetch());
-
 		this.client = new TcpBridgeClient(options);
 	}
 
@@ -118,7 +115,7 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 	 * HTTP GET the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelHandler} to invoke on open channel
+	 * @param handler the {@link Function} to invoke on open channel
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -135,7 +132,6 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
 	 */
 	public final Mono<HttpInbound> get(String url) {
-
 		return request(HttpMethod.GET, url, null);
 	}
 
@@ -194,13 +190,12 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 				throw new IllegalArgumentException("Method && url cannot be both null");
 			}
 			currentURI = new URI(parseURL(url, false));
-			lastURI = currentURI;
 		}
 		catch (Exception e) {
 			return Mono.error(e);
 		}
 
-		return new MonoPostRequest(this, currentURI, method, handler);
+		return new MonoClientRequest(this, currentURI, method, handler);
 	}
 
 	/**
@@ -215,29 +210,31 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 				HttpOutbound::upgradeToWebsocket);
 	}
 
-	@Override
-	protected boolean shouldFailOnStarted() {
-		return false;
-	}
-
-	@Override
-	protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
-		return client.start(inoutChannel -> {
-			final NettyHttpChannel ch = ((NettyHttpChannel) inoutChannel);
-			return handler.apply(ch);
-		});
-	}
-
-	@Override
-	protected final Mono<Void> doShutdown() {
+	/**
+	 * @return
+	 */
+	public final Mono<Void> shutdown() {
 		return client.shutdown();
+	}
+
+	Mono<Void> doStart(URI url, ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+
+		boolean secure = url.getScheme() != null && (url.getScheme()
+		                                                .toLowerCase()
+		                                                .equals(HTTPS_SCHEME) || url.getScheme()
+		                                                                            .toLowerCase()
+		                                                                            .equals(WSS_SCHEME));
+		return client.doStart(inoutChannel -> handler.apply(((NettyHttpChannel) inoutChannel)),
+				new InetSocketAddress(url.getHost(),
+						url.getPort() != -1 ? url.getPort() : (secure ? 443 : 80)),
+				secure);
 	}
 
 	final void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 			Object nativeChannel) {
 		SocketChannel ch = (SocketChannel) nativeChannel;
 
-		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
+		TcpChannel netChannel = new TcpChannel(client.getDefaultPrefetchSize(), ch);
 
 		ChannelPipeline pipeline = ch.pipeline();
 		if (log.isDebugEnabled()) {
@@ -245,14 +242,16 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 		}
 
 		pipeline.addLast(new HttpClientCodec())
-		        .addLast(new NettyHttpClientHandler(handler, netChannel, lastURI));
+		        .addLast(new NettyHttpClientHandler(handler, netChannel));
 	}
 
 	final String parseURL(String url, boolean ws) {
 		if (!url.startsWith(HTTP_SCHEME) && !url.startsWith(WS_SCHEME)) {
 			final String parsedUrl = (ws ? WS_SCHEME : HTTP_SCHEME) + "://";
 			if (url.startsWith("/")) {
-				return parsedUrl + (lastURI != null && lastURI.getHost() != null ? lastURI.getHost() :
+				InetSocketAddress address = client.getConnectAddress();
+				return parsedUrl + (address != null ?
+						address.getHostName() + ":" + address.getPort() :
 						"localhost") + url;
 			}
 			else {
@@ -271,55 +270,13 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 
 	final class TcpBridgeClient extends TcpClient {
 
-		final InetSocketAddress connectAddress;
-
 		TcpBridgeClient(ClientOptions options) {
 			super(options);
-			this.connectAddress = options.remoteAddress();
 		}
-
-		@Override
-		public InetSocketAddress getConnectAddress() {
-			if (connectAddress != null) {
-				return connectAddress;
-			}
-			try {
-				URI url = lastURI;
-				String host = url != null && url.getHost() != null ? url.getHost() : "localhost";
-				int port = url != null ? url.getPort() : -1;
-				if (port == -1) {
-					if (url != null && url.getScheme() != null && (url.getScheme()
-					                                                  .toLowerCase()
-					                                                  .equals(HTTPS_SCHEME) || url.getScheme()
-					                                                                                          .toLowerCase()
-					                                                                                          .equals(WSS_SCHEME))) {
-						port = 443;
-					}
-					else {
-						port = 80;
-					}
-				}
-				return new InetSocketAddress(host, port);
-			}
-			catch (Exception e) {
-				throw new IllegalArgumentException(e);
-			}
-		}
-
 		@Override
 		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 				SocketChannel nativeChannel) {
-
-			URI currentURI = lastURI;
 			try {
-				if (currentURI.getScheme() != null && (currentURI.getScheme()
-				                                                 .toLowerCase()
-				                                                 .equals(HTTPS_SCHEME) || currentURI.getScheme()
-				                                                                                                .toLowerCase()
-				                                                                                                .equals(WSS_SCHEME))) {
-					addSecureHandler(nativeChannel);
-				}
-
 				if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
 					getOptions().pipelineConfigurer()
 					            .accept(nativeChannel.pipeline());
@@ -331,6 +288,13 @@ public class HttpClient extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 			}
 
 			HttpClient.this.bindChannel(handler, nativeChannel);
+		}
+
+		@Override
+		protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+				InetSocketAddress address,
+				boolean secure) {
+			return super.doStart(handler, address, secure);
 		}
 	}
 }

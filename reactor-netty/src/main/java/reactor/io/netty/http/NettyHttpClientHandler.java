@@ -18,6 +18,7 @@ package reactor.io.netty.http;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,6 +39,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
+import reactor.core.util.Exceptions;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
@@ -50,16 +52,13 @@ import reactor.io.netty.tcp.TcpChannel;
 class NettyHttpClientHandler extends NettyChannelHandler {
 
 	final TcpChannel tcpStream;
-	final URI        currentURI;
 
 	NettyHttpChannel                httpChannel;
 	Subscriber<? super HttpInbound> replySubscriber;
 
 	public NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-			TcpChannel tcpStream,
-			URI lastURI) {
+			TcpChannel tcpStream) {
 		super(handler, tcpStream);
-		this.currentURI = lastURI;
 		this.tcpStream = tcpStream;
 	}
 
@@ -134,14 +133,14 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		postRead(ctx, msg);
 	}
 
-	final NettyWebSocketClientHandler withWebsocketSupport(String
+	final NettyWebSocketClientHandler withWebsocketSupport(URI url, String
 			protocols, boolean textPlain){
 		//prevent further header to be sent for handshaking
 		if(!httpChannel.markHeadersAsFlushed()){
 			log.error("Cannot enable websocket if headers have already been sent");
 			return null;
 		}
-		return new NettyWebSocketClientHandler(protocols, this, textPlain);
+		return new NettyWebSocketClientHandler(url, protocols, this, textPlain);
 	}
 
 	final void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws
@@ -229,9 +228,18 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		public Mono<Void> upgradeToWebsocket(String protocols, boolean textPlain) {
 			ChannelPipeline pipeline = delegate().pipeline();
 			NettyWebSocketClientHandler handler;
-				pipeline.addLast(new HttpObjectAggregator(8192));
-				handler = pipeline.remove(NettyHttpClientHandler.class)
-				                  .withWebsocketSupport(protocols, textPlain);
+
+			URI uri;
+			try {
+				uri = new URI(uri());
+			}
+			catch (URISyntaxException e) {
+				throw Exceptions.bubble(e);
+			}
+
+			pipeline.addLast(new HttpObjectAggregator(8192));
+			handler = pipeline.remove(NettyHttpClientHandler.class)
+				                  .withWebsocketSupport(uri, protocols, textPlain);
 
 			if (handler != null) {
 				pipeline.addLast(handler);

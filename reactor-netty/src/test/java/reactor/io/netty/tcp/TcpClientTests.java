@@ -331,7 +331,7 @@ public class TcpClientTests {
 		HttpClient client = HttpClient.create();
 
 		final CountDownLatch latch = new CountDownLatch(1);
-		client.get("http://www.google.com/")
+		client.get("http://www.google.com/?q=test%20d%20dq")
 		      .doOnSuccess(v -> latch.countDown())
 		      .get();
 

@@ -46,14 +46,14 @@ public class WebsocketTests {
 
 	@Test
 	public void simpleTest() {
-		String res = HttpClient.create("localhost", httpServer.getListenAddress().getPort())
-		                       .get("/test",
-				                       c -> c.addHeader("Authorization", auth)
-				                             .upgradeToTextWebsocket())
-		                       .flatMap(HttpInbound::receiveString)
-		                       .log()
-		                       .toList()
-		                       .get()
+			String res = HttpClient.create("localhost", httpServer.getListenAddress().getPort())
+			                       .get("/test",
+					                       c -> c.addHeader("Authorization", auth)
+					                             .upgradeToTextWebsocket())
+			                       .flatMap(HttpInbound::receiveString)
+			                       .log()
+			                       .toList()
+			                       .get()
 		                       .get(0);
 
 		if (!res.equals("test")) {

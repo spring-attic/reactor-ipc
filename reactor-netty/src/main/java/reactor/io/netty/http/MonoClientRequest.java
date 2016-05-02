@@ -29,17 +29,19 @@ import reactor.core.publisher.Mono;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.EmptySubscription;
 
+import static reactor.io.netty.http.HttpClient.HTTPS_SCHEME;
+
 /**
  * @author Stephane Maldini
  */
-final class MonoPostRequest extends Mono<HttpInbound> {
+final class MonoClientRequest extends Mono<HttpInbound> {
 
 	private HttpClient                                                client;
 	final   URI                                                       currentURI;
 	final   HttpMethod                                                method;
 	final   Function<? super HttpOutbound, ? extends Publisher<Void>> handler;
 
-	public MonoPostRequest(HttpClient client,
+	public MonoClientRequest(HttpClient client,
 			URI currentURI,
 			HttpMethod method, Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
 		this.client = client;
@@ -50,12 +52,13 @@ final class MonoPostRequest extends Mono<HttpInbound> {
 
 	@Override
 	public void subscribe(final Subscriber<? super HttpInbound> subscriber) {
-		client.doStart(c -> {
+		client.doStart(currentURI, c -> {
 			try {
 				URI uri = currentURI;
 				NettyHttpChannel ch = (NettyHttpChannel) c;
 				ch.getNettyRequest()
-				  .setUri(uri.getPath() + (uri.getQuery() == null ? "" : "?" + uri.getQuery()))
+				  .setUri(uri.getPath() +
+						  (uri.getQuery() == null ? "" : "?" + uri.getRawQuery()))
 				  .setMethod(method)
 				  .headers()
 				  .add(HttpHeaderNames.HOST, uri.getHost())
@@ -83,7 +86,6 @@ final class MonoPostRequest extends Mono<HttpInbound> {
 				return Mono.error(t);
 			}
 		})
-		      .subscribe(Subscribers.unbounded(null,
-				      (Consumer<Throwable>) reason -> EmptySubscription.error(subscriber, reason)));
+		      .subscribe(null, reason -> EmptySubscription.error(subscriber, reason));
 	}
 }

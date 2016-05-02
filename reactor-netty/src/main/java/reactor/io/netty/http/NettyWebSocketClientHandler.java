@@ -16,6 +16,8 @@
 
 package reactor.io.netty.http;
 
+import java.net.URI;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -46,10 +48,11 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 	final boolean plainText;
 
 	NettyWebSocketClientHandler(
+			URI currentURI,
 			String protocols,
 			NettyHttpClientHandler originalHandler,
 			boolean plainText) {
-		super(originalHandler.getHandler(), originalHandler.tcpStream, originalHandler.currentURI);
+		super(originalHandler.getHandler(), originalHandler.tcpStream);
 		this.httpChannel = originalHandler.httpChannel;
 		this.replySubscriber = originalHandler.replySubscriber;
 		this.plainText = plainText;

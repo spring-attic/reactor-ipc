@@ -19,7 +19,6 @@ package reactor.io.netty.tcp;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.function.Supplier;
-import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.Bootstrap;
@@ -35,8 +34,6 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
-import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -179,32 +176,22 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 
 	final Bootstrap               bootstrap;
 	final EventLoopGroup          ioGroup;
-	final Supplier<ChannelFuture> connectionSupplier;
 	final ChannelGroup            channelGroup;
 	final ClientOptions           options;
 	final SslContext              sslContext;
 
-	volatile InetSocketAddress connectAddress;
+	final InetSocketAddress connectAddress;
 
 	protected TcpClient(ClientOptions options) {
 		super(options.timer(), options.prefetch());
-		this.connectAddress = options.remoteAddress();
-		if (null == connectAddress) {
-			connectAddress = new InetSocketAddress("127.0.0.1", 3000);
+		if (null == options.remoteAddress()) {
+			this.connectAddress = new InetSocketAddress("127.0.0.1", 3000);
+		}
+		else{
+			this.connectAddress = options.remoteAddress();
 		}
 
 		this.options = options.toImmutable();
-		this.connectionSupplier = new Supplier<ChannelFuture>() {
-			@Override
-			public ChannelFuture get() {
-				if (started.get()) {
-					return bootstrap.connect(getConnectAddress());
-				}
-				else {
-					return null;
-				}
-			}
-		};
 		if (null != options.eventLoopGroup()) {
 			this.ioGroup = options.eventLoopGroup();
 		}
@@ -307,8 +294,14 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	}
 
 	@Override
+	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
+			handler){
+		return doStart(handler, getConnectAddress(), sslContext != null);
+	}
+
 	@SuppressWarnings("unchecked")
-	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler) {
+	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
+			handler, InetSocketAddress address, boolean secure) {
 
 		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler =
 				null == handler ? (ChannelHandler<ByteBuf, ByteBuf, NettyChannel>) PING : handler;
@@ -319,22 +312,23 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 				if (channelGroup != null) {
 					channelGroup.add(ch);
 				}
+
+				if(secure){
+					addSecureHandler(ch);
+				}
 				bindChannel(targetHandler, ch);
 			}
 		});
 
-		return new Mono<Void>() {
-			@Override
-			public void subscribe(Subscriber<? super Void> s) {
-				ChannelFuture channelFuture = connectionSupplier.get();
+		return Mono.defer(() -> {
+			ChannelFuture channelFuture = bootstrap.connect(address);
 
-				if (channelFuture == null) {
-					throw new IllegalStateException("Connection supplier didn't return any connection");
-				}
-
-				MonoChannelFuture.from(channelFuture).subscribe(s);
+			if (channelFuture == null) {
+				throw new IllegalStateException("Connection supplier didn't return any connection");
 			}
-		};
+
+			return MonoChannelFuture.from(channelFuture);
+		});
 	}
 
 	@Override
@@ -361,8 +355,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 			throws Exception {
 
 		ChannelPipeline pipeline = ch.pipeline();
-
-		addSecureHandler(ch);
 
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
 
