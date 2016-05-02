@@ -39,6 +39,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
+import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.scheduler.Timer;
@@ -323,7 +324,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * @return
 	 */
 	public final SignalEmitter<Object> metricCannon() {
-		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
+		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new MetricMapper()));
 		return p.connectEmitter();
 	}
@@ -361,12 +362,11 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 
 		final long _period = period > 0 ?  period : 400L;
 
-		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
-		final SignalEmitter<Object> session = p.connectEmitter();
+		UnicastProcessor<Object> p = UnicastProcessor.create();
 		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
 		timer.schedulePeriodically(() -> {
-				if (!session.isCancelled()) {
-					session.emit(ReactiveStateUtils.scan(o));
+				if (!p.isCancelled()) {
+					p.onNext(ReactiveStateUtils.scan(o));
 				}
 				else {
 					log.info("State Monitoring stopping on " + ReactiveStateUtils.getName(o));
@@ -400,7 +400,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * @return
 	 */
 	public final SignalEmitter<Object> streamCannon() {
-		FluxProcessor<Object, Object> p = FluxProcessor.blocking();
+		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new GraphMapper()));
 		return p.connectEmitter();
 	}
@@ -469,13 +469,12 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 
 		if (systemStats) {
-			FluxProcessor<Event, Event> p = FluxProcessor.blocking();
+			UnicastProcessor<Event> p = UnicastProcessor.create();
 			this.cannons.submit(p);
-			final SignalEmitter<Event> session = p.connectEmitter();
 			log.info("System Monitoring Starting");
 			timer.schedulePeriodically(() -> {
-					if (!session.isCancelled()) {
-						session.submit(lastSystemState.scan());
+					if (!p.isCancelled()) {
+						p.onNext(lastSystemState.scan());
 					}
 					else {
 						log.info("System Monitoring Stopped");
