@@ -29,21 +29,16 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.core.subscriber.SubscriberWithContext;
-import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
 
 /**
@@ -86,180 +81,6 @@ public class Buffer implements Comparable<Buffer>,
 	public static Flux<Buffer> stringToBuffer(final Publisher<String> channel) {
 		return  Flux.from(channel).map(STRING_TO_BUFFER);
 	}
-
-	/**
-	 * Transform a {@link ReadableByteChannel} into a {@link Publisher} of {@link Buffer} with a max chunk size of
-	 * {@link PlatformDependent#SMALL_IO_BUFFER_SIZE}.
-	 * <p>
-	 * Complete when channel read is negative. The read sequence is unique per subscriber.
-	 *
-	 * @param channel The Readable Channel to publish
-	 * @return a Publisher of Buffer values
-	 */
-	public static Flux<Buffer> read(final ReadableByteChannel channel) {
-		return read(channel, -1);
-	}
-
-	/**
-	 * Transform a {@link ReadableByteChannel} into a {@link Publisher} of {@link Buffer} with a max chunk size of
-	 * {@code chunkSize}.
-	 * Complete when channel read is negative. The read sequence is unique per subscriber.
-	 *
-	 * @param channel The Readable Channel to publish
-	 * @return a Publisher of Buffer values
-	 */
-	public static Flux<Buffer> read(final ReadableByteChannel channel, int chunkSize) {
-		return Flux.create(
-				chunkSize < 0 ? defaultChannelReadConsumer : new ChannelReadConsumer(chunkSize),
-				new Function<Subscriber<? super Buffer>, ReadableByteChannel>() {
-					@Override
-					public ReadableByteChannel apply(Subscriber<? super Buffer> subscriber) {
-						return channel;
-					}
-				},
-				channelCloseConsumer
-		);
-	}
-
-	/**
-	 * Read bytes as {@link Buffer} from file specified by the {@link Path} argument with a max chunk size of
-	 * {@link PlatformDependent#SMALL_IO_BUFFER_SIZE}.
-	 * <p>
-	 * Complete when channel read is negative. The read sequence is unique per subscriber.
-	 *
-	 * @param path the {@link Path} locating the file to read
-	 * @return a Publisher of Buffer values read from file sequentially
-	 */
-	public static Flux<Buffer> readFile(Path path) {
-		return readFile(path.toAbsolutePath().toString(), -1);
-	}
-
-
-	/**
-	 * Read bytes as {@link Buffer} from file specified by the {@link Path} argument with a max {@code chunkSize}
-	 * <p>
-	 * Complete when channel read is negative. The read sequence is unique per subscriber.
-	 *
-	 * @param path the {@link Path} locating the file to read
-	 * @return a Publisher of Buffer values read from file sequentially
-	 */
-	public static Flux<Buffer> readFile(Path path, int chunkSize) {
-		return readFile(path.toAbsolutePath().toString(), chunkSize);
-	}
-
-	/**
-	 * Read bytes as {@link Buffer} from file specified by the {@link Path} argument with a max chunk size of
-	 * {@link PlatformDependent#SMALL_IO_BUFFER_SIZE}.
-	 * <p>
-	 * Complete when channel read is negative. The read sequence is unique per subscriber.
-	 *
-	 * @param path the absolute String path to the read file
-	 * @return a Publisher of Buffer values read from file sequentially
-	 */
-	public static Flux<Buffer> readFile(final String path) {
-		return readFile(path, -1);
-	}
-
-	/**
-	 * Read bytes as {@link Buffer} from file specified by the {@link Path} argument with a max {@code chunkSize}
-	 * <p>
-	 * Complete when channel read is negative. The read sequence is unique per subscriber.
-	 *
-	 * @param path the absolute String path to the read file
-	 * @return a Publisher of Buffer values read from file sequentially
-	 */
-	public static Flux<Buffer> readFile(final String path, int chunkSize) {
-		return Flux.create(
-				chunkSize < 0 ? defaultChannelReadConsumer : new ChannelReadConsumer(chunkSize),
-				new Function<Subscriber<? super Buffer>, ReadableByteChannel>() {
-					@Override
-					public ReadableByteChannel apply(Subscriber<? super Buffer> subscriber) {
-						try {
-							RandomAccessFile file = new RandomAccessFile(path, "r");
-							return new FileContext(file);
-						} catch (FileNotFoundException e) {
-							throw Exceptions.propagate(e);
-						}
-					}
-				},
-				channelCloseConsumer);
-	}
-
-	private static final ChannelCloseConsumer channelCloseConsumer       = new ChannelCloseConsumer();
-	private static final ChannelReadConsumer  defaultChannelReadConsumer = new ChannelReadConsumer(PlatformDependent
-			.SMALL_IO_BUFFER_SIZE * 8);
-
-	/**
-	 * A read access to the source file
-	 */
-	public static final class FileContext implements ReadableByteChannel {
-		private final RandomAccessFile    file;
-		private final ReadableByteChannel channel;
-
-		public FileContext(RandomAccessFile file) {
-			this.file = file;
-			this.channel = file.getChannel();
-		}
-
-		public RandomAccessFile file() {
-			return file;
-		}
-
-		@Override
-		public int read(ByteBuffer dst) throws IOException {
-			return channel.read(dst);
-		}
-
-		@Override
-		public boolean isOpen() {
-			return channel.isOpen();
-		}
-
-		@Override
-		public void close() throws IOException {
-			channel.close();
-		}
-	}
-
-	private static final class ChannelReadConsumer implements Consumer<SubscriberWithContext<Buffer,
-			ReadableByteChannel>> {
-
-		private final int bufferSize;
-
-		public ChannelReadConsumer(int bufferSize) {
-			this.bufferSize = bufferSize;
-		}
-
-		@Override
-		public void accept(SubscriberWithContext<Buffer, ReadableByteChannel> sub) {
-			try {
-				ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-				int read;
-				if ((read = sub.context().read(buffer)) > 0) {
-					buffer.flip();
-					sub.onNext(new Buffer(buffer).limit(read));
-				} else {
-					sub.onComplete();
-				}
-			} catch (IOException e) {
-				sub.onError(e);
-			}
-		}
-	}
-
-	private static final class ChannelCloseConsumer implements Consumer<ReadableByteChannel> {
-		@Override
-		public void accept(ReadableByteChannel channel) {
-			try {
-				if (channel != null) {
-					channel.close();
-				}
-			} catch (IOException ioe) {
-				throw new IllegalStateException(ioe);
-			}
-		}
-	}
-
 
 	private static final class BufferToString implements Function<Buffer, String> {
 		@Override
