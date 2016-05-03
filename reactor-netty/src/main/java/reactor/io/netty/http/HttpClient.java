@@ -189,7 +189,7 @@ public class HttpClient implements Loopback, Completable {
 			if (method == null && url == null) {
 				throw new IllegalArgumentException("Method && url cannot be both null");
 			}
-			currentURI = new URI(parseURL(url, false));
+			currentURI = new URI(parseURL(client.getConnectAddress(), url, false));
 		}
 		catch (Exception e) {
 			return Mono.error(e);
@@ -206,7 +206,7 @@ public class HttpClient implements Loopback, Completable {
 	 */
 	public final Mono<HttpInbound> ws(String url) {
 		return request(HttpMethod.GET,
-				parseURL(url, true),
+				parseURL(client.getConnectAddress(), url, true),
 				HttpOutbound::upgradeToWebsocket);
 	}
 
@@ -245,13 +245,12 @@ public class HttpClient implements Loopback, Completable {
 		        .addLast(new NettyHttpClientHandler(handler, netChannel));
 	}
 
-	final String parseURL(String url, boolean ws) {
+	static String parseURL(InetSocketAddress base, String url, boolean ws) {
 		if (!url.startsWith(HTTP_SCHEME) && !url.startsWith(WS_SCHEME)) {
 			final String parsedUrl = (ws ? WS_SCHEME : HTTP_SCHEME) + "://";
 			if (url.startsWith("/")) {
-				InetSocketAddress address = client.getConnectAddress();
-				return parsedUrl + (address != null ?
-						address.getHostName() + ":" + address.getPort() :
+				return parsedUrl + (base != null ?
+						base.getHostName() + ":" + base.getPort() :
 						"localhost") + url;
 			}
 			else {

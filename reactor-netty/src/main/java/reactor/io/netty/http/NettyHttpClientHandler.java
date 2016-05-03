@@ -231,7 +231,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 
 			URI uri;
 			try {
-				uri = new URI(uri());
+				uri = new URI(HttpClient.parseURL(remoteAddress(), uri(), true));
 			}
 			catch (URISyntaxException e) {
 				throw Exceptions.bubble(e);
