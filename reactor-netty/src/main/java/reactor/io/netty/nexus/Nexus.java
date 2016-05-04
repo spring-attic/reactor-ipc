@@ -45,6 +45,7 @@ import reactor.core.scheduler.TimedScheduler;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SignalEmitter;
+import reactor.core.subscriber.SubmissionEmitter;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
@@ -180,14 +181,14 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		stopped.await();
 	}
 
-	final HttpServer                      server;
-	final GraphEvent                      lastState;
-	final SystemEvent                     lastSystemState;
-	final FluxProcessor<Event, Event>     eventStream;
-	final Scheduler                       group;
-	final Function<Event, Event>          lastStateMerge;
-	final TimedScheduler                  timer;
-	final SignalEmitter<Publisher<Event>> cannons;
+	final HttpServer                          server;
+	final GraphEvent                          lastState;
+	final SystemEvent                         lastSystemState;
+	final FluxProcessor<Event, Event>         eventStream;
+	final Scheduler                           group;
+	final Function<Event, Event>              lastStateMerge;
+	final TimedScheduler                      timer;
+	final SubmissionEmitter<Publisher<Event>> cannons;
 
 	static final AsciiString ALL = new AsciiString("*");
 
@@ -493,7 +494,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		this.eventStream.onComplete();
 		if (logExtension != null) {
 			Logger.disableExtension(logExtension);
-			logExtension.logSink.finish();
+			logExtension.logSink.complete();
 			logExtension = null;
 		}
 		return server.shutdown();
