@@ -324,7 +324,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	/**
 	 * @return
 	 */
-	public final SignalEmitter<Object> metricCannon() {
+	public final SubmissionEmitter<Object> metricCannon() {
 		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new MetricMapper()));
 		return p.connectEmitter();
@@ -400,7 +400,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	/**
 	 * @return
 	 */
-	public final SignalEmitter<Object> streamCannon() {
+	public final SubmissionEmitter<Object> streamCannon() {
 		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new GraphMapper()));
 		return p.connectEmitter();
