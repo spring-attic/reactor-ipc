@@ -118,6 +118,11 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 				httpChannel.setNettyResponse(response);
 			}
 
+			if(log.isDebugEnabled()){
+				log.debug("Received response (auto-read:{}) : {}", ctx.channel().config
+						().isAutoRead(), httpChannel.headers().toString());
+			}
+
 			checkResponseCode(ctx, response);
 
 			ctx.fireChannelRead(msg);
@@ -125,7 +130,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
 			else {
-				log.trace("No Response/ HttpInbound subscriber on {}", ctx.channel());
+				log.debug("No Response/ HttpInbound subscriber on {}", ctx.channel());
 			}
 			postRead(ctx, msg);
 			return;
