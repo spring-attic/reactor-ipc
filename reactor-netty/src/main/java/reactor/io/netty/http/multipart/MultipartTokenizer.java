@@ -380,7 +380,7 @@ final class MultipartTokenizer
 		}
 
 		ByteBuf getByteBuf() {
-			return this.byteBuf.copy(this.offset, this.length);
+			return this.byteBuf.slice(this.offset, this.length);
 		}
 
 		TokenKind getKind() {
