@@ -124,6 +124,9 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			if(replySubscriber != null){
 				Flux.just(httpChannel).subscribe(replySubscriber);
 			}
+			else {
+				log.trace("No reply subscriber on {}", ctx.channel());
+			}
 			postRead(ctx, msg);
 			return;
 		}

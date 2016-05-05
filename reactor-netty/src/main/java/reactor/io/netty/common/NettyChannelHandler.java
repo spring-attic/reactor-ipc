@@ -201,7 +201,12 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			return;
 		}
 		try {
-			if (null == channelSubscriber || msg == Unpooled.EMPTY_BUFFER ) {
+			if(null == channelSubscriber){
+				log.debug("Dropped packet ", msg);
+				ReferenceCountUtil.release(msg);
+				return;
+			}
+			if (msg == Unpooled.EMPTY_BUFFER ) {
 				ReferenceCountUtil.release(msg);
 				return;
 			}
@@ -256,7 +261,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			channelSubscriber.onError(err);
 		}
 		else {
-			log.error("Unexpected issue", err);
+			log.debug("Unexpected issue", err);
 		}
 	}
 
