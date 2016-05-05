@@ -447,6 +447,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 				}
 				else{
 					Queue<Object> queue = getReadBackpressureBuffer();
+					ReferenceCountUtil.retain(msg);
 					queue.add(msg);
 				}
 				if(RUNNING.decrementAndGet(this) == 0){
@@ -455,6 +456,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			}
 			else {
 				Queue<Object> queue = getReadBackpressureBuffer();
+				ReferenceCountUtil.retain(msg);
 				queue.add(msg);
 				if(RUNNING.getAndIncrement(this) == 0){
 					return;
@@ -517,7 +519,12 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 							if(data == null){
 								break;
 							}
-							child.onNext(data);
+							try {
+								child.onNext(data);
+							}
+							finally {
+								ReferenceCountUtil.release(data);
+							}
 						}
 					}
 					Subscription subscription = this.subscription;
