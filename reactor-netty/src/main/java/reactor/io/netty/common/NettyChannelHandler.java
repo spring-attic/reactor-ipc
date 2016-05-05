@@ -172,6 +172,11 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 				channelSubscriber.onComplete();
 				channelSubscriber = null;
 			}
+			else{
+				if(log.isDebugEnabled()){
+					log.debug("Connection closed without Subscriber to onComplete");
+				}
+			}
 			super.channelInactive(ctx);
 		}
 		catch (Throwable err) {
