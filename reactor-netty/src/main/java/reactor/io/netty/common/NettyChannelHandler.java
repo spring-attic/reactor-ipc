@@ -28,6 +28,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -113,6 +114,10 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 				channelSubscriber.onSubscribe(EmptySubscription.INSTANCE);
 				channelSubscriber.onError(new IllegalStateException("Only one connection receive subscriber allowed."));
 			}
+		}
+		if(evt instanceof SslHandshakeCompletionEvent &&
+				evt != SslHandshakeCompletionEvent.SUCCESS){
+			exceptionCaught(ctx, ((SslHandshakeCompletionEvent)evt).cause());
 		}
 		super.userEventTriggered(ctx, evt);
 	}

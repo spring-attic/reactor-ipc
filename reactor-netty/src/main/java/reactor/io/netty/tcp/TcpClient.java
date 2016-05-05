@@ -320,15 +320,9 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 			}
 		});
 
-		return Mono.defer(() -> {
-			ChannelFuture channelFuture = bootstrap.connect(address);
-
-			if (channelFuture == null) {
-				throw new IllegalStateException("Connection supplier didn't return any connection");
-			}
-
-			return MonoChannelFuture.from(channelFuture);
-		});
+		return Mono.defer(() ->
+			MonoChannelFuture.from(bootstrap.connect(address))
+		);
 	}
 
 	@Override
