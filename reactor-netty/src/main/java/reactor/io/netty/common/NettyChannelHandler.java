@@ -121,7 +121,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			   .setAutoRead(false);
 
 			if (evt != SslHandshakeCompletionEvent.SUCCESS) {
-				ctx.fireExceptionCaught(((SslHandshakeCompletionEvent) evt).cause());
+				exceptionCaught(ctx , ((SslHandshakeCompletionEvent) evt).cause());
 			}
 		}
 		super.userEventTriggered(ctx, evt);
