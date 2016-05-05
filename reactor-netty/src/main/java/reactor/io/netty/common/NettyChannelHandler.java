@@ -203,11 +203,9 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		try {
 			if(null == channelSubscriber){
 				log.debug("Dropped packet ", msg);
-				ReferenceCountUtil.release(msg);
 				return;
 			}
 			if (msg == Unpooled.EMPTY_BUFFER ) {
-				ReferenceCountUtil.release(msg);
 				return;
 			}
 
@@ -221,6 +219,9 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			else {
 				throw err;
 			}
+		}
+		finally {
+			ReferenceCountUtil.release(msg);
 		}
 	}
 
