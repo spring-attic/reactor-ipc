@@ -18,7 +18,6 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
-import java.util.function.Consumer;
 import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.Bootstrap;
@@ -27,14 +26,12 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -200,7 +197,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		else {
 			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
 			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount,
-					ExecutorUtils.newNamedFactory("reactor-tcp-io"));
+					ExecutorUtils.newNamedFactory("reactor-tcp-client-io"));
 		}
 
 		if(options.ssl() != null){

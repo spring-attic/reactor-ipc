@@ -55,12 +55,17 @@ final class NettySslReader extends ChannelDuplexHandler {
 			throws Exception {
 		if (evt instanceof SslHandshakeCompletionEvent) {
 			handshakeDone = true;
-			SslHandshakeCompletionEvent handshake = (SslHandshakeCompletionEvent)evt;
-			if(handshake.isSuccess()){
-				secureCallback.onComplete();
+			SslHandshakeCompletionEvent handshake = (SslHandshakeCompletionEvent) evt;
+			if(secureCallback != null) {
+				if (handshake.isSuccess()) {
+					secureCallback.onComplete();
+				}
+				else {
+					secureCallback.onError(handshake.cause());
+				}
 			}
-			else{
-				secureCallback.onError(handshake.cause());
+			else if(!handshake.isSuccess()){
+				ctx.fireExceptionCaught(handshake.cause());
 			}
 		}
 		super.userEventTriggered(ctx, evt);

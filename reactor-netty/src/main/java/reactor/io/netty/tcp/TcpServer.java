@@ -195,14 +195,14 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		int ioThreadCount = DEFAULT_TCP_THREAD_COUNT;
 
 		this.selectorGroup = NettyNativeDetector.newEventLoopGroup(selectThreadCount,
-				ExecutorUtils.newNamedFactory("reactor-tcp-select"));
+				ExecutorUtils.newNamedFactory("reactor-tcp-server-select"));
 
 		if (null != options.eventLoopGroup()) {
 			this.ioGroup = options.eventLoopGroup();
 		}
 		else {
 			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount,
-					ExecutorUtils.newNamedFactory("reactor-tcp-io"));
+					ExecutorUtils.newNamedFactory("reactor-tcp-server-io"));
 		}
 
 		ServerBootstrap _serverBootstrap = new ServerBootstrap().group(selectorGroup, ioGroup)
