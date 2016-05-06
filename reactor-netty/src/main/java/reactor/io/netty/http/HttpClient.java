@@ -133,6 +133,30 @@ public class HttpClient implements Loopback, Completable {
 		return request(HttpMethod.GET, url, null);
 	}
 
+	/**
+	 * HTTP PATCH the passed URL. When connection has been made, the passed handler is
+	 * invoked and can be used to build precisely the request and write data to it.
+	 * @param url the target remote URL
+	 * @param handler the {@link Function} to invoke on open channel
+	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * response
+	 */
+	public final Mono<HttpInbound> patch(String url,
+			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
+		return request(HttpMethod.PATCH, url, handler);
+	}
+
+	/**
+	 * HTTP PATCH the passed URL.
+	 *
+	 * @param url the target remote URL
+	 *
+	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
+	 */
+	public final Mono<HttpInbound> patch(String url) {
+		return request(HttpMethod.PATCH, url, null);
+	}
+
 	@Override
 	public boolean isStarted() {
 		return client.isStarted();
