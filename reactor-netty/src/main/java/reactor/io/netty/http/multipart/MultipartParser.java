@@ -16,102 +16,181 @@
 
 package reactor.io.netty.http.multipart;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import org.reactivestreams.Subscriber;
-import reactor.core.publisher.EmitterProcessor;
-import reactor.core.publisher.Flux;
-import reactor.core.subscriber.SubscriberBarrier;
+import org.reactivestreams.Subscription;
+import reactor.core.flow.MultiProducer;
+import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
+import reactor.core.publisher.UnicastProcessor;
+import reactor.core.queue.QueueSupplier;
+import reactor.core.state.Completable;
+import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
+import reactor.io.netty.common.EncodedFlux;
 
 /**
  * @author Ben Hale
+ * @author Stephane Maldini
  */
-final class MultipartParser extends SubscriberBarrier<MultipartTokenizer.Token, Flux<ByteBuf>> {
 
-	private boolean done = false;
+final class MultipartParser
+		implements Subscriber<MultipartTokenizer.Token>, Subscription, Runnable, Producer,
+		           MultiProducer, Receiver, Completable {
 
-	private EmitterProcessor<ByteBuf> emitter;
+	final Subscriber<? super EncodedFlux> actual;
+	final ByteBufAllocator                alloc;
 
-	MultipartParser(Subscriber<? super Flux<ByteBuf>> subscriber) {
-		super(subscriber);
+	volatile int wip;
+	@SuppressWarnings("rawtypes")
+	static final AtomicIntegerFieldUpdater<MultipartParser> WIP =
+			AtomicIntegerFieldUpdater.newUpdater(MultipartParser.class, "wip");
+
+	volatile int once;
+	@SuppressWarnings("rawtypes")
+	static final AtomicIntegerFieldUpdater<MultipartParser> ONCE =
+			AtomicIntegerFieldUpdater.newUpdater(MultipartParser.class, "once");
+
+	Subscription s;
+
+	UnicastProcessor<ByteBuf> window;
+
+	boolean done;
+
+	MultipartParser(Subscriber<? super EncodedFlux> actual, ByteBufAllocator alloc) {
+		this.actual = actual;
+		this.wip = 1;
+		this.alloc = alloc;
 	}
 
 	@Override
-	protected void doComplete() {
-		if (this.done) {
-			return;
+	public void onSubscribe(Subscription s) {
+		if (BackpressureUtils.validate(this.s, s)) {
+			this.s = s;
+			actual.onSubscribe(this);
 		}
-
-		this.done = true;
-
-		if (this.emitter != null) {
-			this.emitter.onComplete();
-			this.emitter = null;
-		}
-
-		this.subscriber.onComplete();
 	}
 
 	@Override
-	protected void doError(Throwable throwable) {
-		if (this.done) {
-			Exceptions.onErrorDropped(throwable);
-			return;
-		}
-
-		this.done = true;
-
-		if (this.emitter != null) {
-			this.emitter.onError(throwable);
-			this.emitter = null;
-		}
-
-		this.subscriber.onError(throwable);
-	}
-
-	@Override
-	protected void doNext(MultipartTokenizer.Token token) {
-		if (this.done) {
+	public void onNext(MultipartTokenizer.Token token) {
+		if (done) {
 			Exceptions.onNextDropped(token);
 			return;
 		}
 
+		UnicastProcessor<ByteBuf> w = window;
+
 		switch (token.getKind()) {
 			case BODY:
-				if (this.emitter != null) {
-					this.emitter.onNext(token.getByteBuf());
+				if (window != null) {
+					window.onNext(token.getByteBuf().retain());
+					return;
 				}
+				s.cancel();
+				actual.onError(new IllegalStateException("Body received before " +
+						"delimiter"));
 				break;
 			case CLOSE_DELIMITER:
-				if (this.emitter != null) {
-					this.emitter.onComplete();
-					this.emitter = null;
-				}
-
-				this.done = true;
-				this.subscription.cancel();
-				this.subscriber.onComplete();
+				onComplete();
 				break;
 			case DELIMITER:
-				if (this.emitter != null) {
-					this.emitter.onComplete();
+				if (window != null) {
+					window = null;
+					w.onComplete();
 				}
 
-				this.emitter = EmitterProcessor.<ByteBuf>create().connect();
-				this.subscriber.onNext(this.emitter);
-				break;
+				WIP.getAndIncrement(this);
+
+				w = UnicastProcessor.create(QueueSupplier.<ByteBuf>unbounded().get(), this);
+
+				window = w;
+
+				actual.onNext(EncodedFlux.encoded(w.doAfterNext(ByteBuf::release), alloc));
 		}
 	}
 
 	@Override
-	protected void doRequest(long n) {
-		if (Integer.MAX_VALUE > n) {  // TODO: Support smaller request sizes
-			onError(new IllegalArgumentException(
-					"This operation only supports unbounded requests, was " + n));
+	public void onError(Throwable t) {
+		if (done) {
+			Exceptions.onErrorDropped(t);
+			return;
 		}
-		else {
-			super.doRequest(n);
+		UnicastProcessor<ByteBuf> w = window;
+		if (w != null) {
+			window = null;
+			w.onError(t);
+		}
+
+		actual.onError(t);
+	}
+
+	@Override
+	public void onComplete() {
+		if (done) {
+			return;
+		}
+
+		UnicastProcessor<ByteBuf> w = window;
+		if (w != null) {
+			window = null;
+			w.onComplete();
+		}
+
+		actual.onComplete();
+	}
+
+	@Override
+	public void request(long n) {
+		s.request(n);
+	}
+
+	@Override
+	public void cancel() {
+		if (ONCE.compareAndSet(this, 0, 1)) {
+			run();
 		}
 	}
 
+	@Override
+	public void run() {
+		if (WIP.decrementAndGet(this) == 0) {
+			s.cancel();
+		}
+	}
+
+	@Override
+	public Object downstream() {
+		return actual;
+	}
+
+	@Override
+	public boolean isStarted() {
+		return s != null && !done;
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return done;
+	}
+
+	@Override
+	public Object upstream() {
+		return s;
+	}
+
+	@Override
+	public Iterator<?> downstreams() {
+		return Arrays.asList(window)
+		             .iterator();
+	}
+
+	@Override
+	public long downstreamCount() {
+		return window != null ? 1L : 0L;
+	}
 }

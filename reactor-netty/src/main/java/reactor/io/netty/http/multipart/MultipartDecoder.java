@@ -17,26 +17,29 @@
 package reactor.io.netty.http.multipart;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSource;
+import reactor.io.netty.common.EncodedFlux;
 
 /**
  * @author Ben Hale
  */
-final class MultipartDecoder extends FluxSource<ByteBuf, Flux<ByteBuf>> {
+final class MultipartDecoder extends FluxSource<ByteBuf, EncodedFlux> {
 
-	private final String boundary;
+	final String boundary;
+	final ByteBufAllocator alloc;
 
-	MultipartDecoder(Publisher<ByteBuf> source, String boundary) {
+	MultipartDecoder(Publisher<ByteBuf> source, String boundary, ByteBufAllocator alloc) {
 		super(source);
 		this.boundary = boundary;
+		this.alloc = alloc;
 	}
 
 	@Override
-	public void subscribe(Subscriber<? super Flux<ByteBuf>> subscriber) {
+	public void subscribe(Subscriber<? super EncodedFlux> subscriber) {
 		this.source.subscribe(new MultipartTokenizer(this.boundary,
-				new MultipartParser(subscriber)));
+				new MultipartParser(subscriber, alloc)));
 	}
 }

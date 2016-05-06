@@ -17,8 +17,8 @@
 package reactor.io.netty.http;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import reactor.core.publisher.Flux;
+import reactor.io.netty.common.EncodedFlux;
 import reactor.io.netty.common.NettyInbound;
 
 /**
@@ -34,16 +34,15 @@ public interface MultipartInbound extends NettyInbound {
 	 *
 	 * @return a {@link ByteBuf} partitioned inbound {@link Flux}
 	 */
-	Flux<Flux<ByteBuf>> receiveParts();
+	Flux<EncodedFlux> receiveParts();
 
 	@Override
-	default Flux<ByteBuf> receive() {
-		return receiveParts().onBackpressureBuffer()
-		                     .concatMap(parts -> parts.toList()
-		                                            .map(list -> Unpooled.wrappedBuffer(
-				                                            list.toArray(new
-						                                            ByteBuf[list.size()
-						                                            ]))), Integer.MAX_VALUE);
+	default EncodedFlux receive() {
+		return EncodedFlux.encoded(receiveParts().concatMap(parts -> parts.aggregate()
+		                                                                  .doOnNext(
+				                                                                  ByteBuf::retain))
+		                                         .doAfterNext(ByteBuf::release),
+				delegate().alloc());
 	}
 
 	@Override

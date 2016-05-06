@@ -22,6 +22,7 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Flux;
+import reactor.io.netty.common.EncodedFlux;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyInbound;
 import reactor.io.netty.http.multipart.MultipartCodec;
@@ -60,7 +61,7 @@ public interface HttpInbound extends HttpConnection, NettyInbound {
 			}
 
 			@Override
-			public Flux<Flux<ByteBuf>> receiveParts() {
+			public Flux<EncodedFlux> receiveParts() {
 				return MultipartCodec.decode(thiz);
 			}
 

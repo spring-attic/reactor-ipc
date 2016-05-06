@@ -79,17 +79,12 @@ public class HttpClient implements Loopback, Completable {
 		return client;
 	}
 
-	@Override
-	public Object connectedOutput() {
-		return client;
-	}
-
 	/**
 	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ChannelHandler} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<HttpInbound> delete(String url,
@@ -103,7 +98,7 @@ public class HttpClient implements Loopback, Completable {
 	 *
 	 * @param url the target remote URL
 	 *
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for response
 	 */
 	public final Mono<HttpInbound> delete(String url) {
 		return request(HttpMethod.DELETE, url, null);
@@ -114,7 +109,7 @@ public class HttpClient implements Loopback, Completable {
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link Function} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<HttpInbound> get(String url,
@@ -127,7 +122,7 @@ public class HttpClient implements Loopback, Completable {
 	 *
 	 * @param url the target remote URL
 	 *
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for response
 	 */
 	public final Mono<HttpInbound> get(String url) {
 		return request(HttpMethod.GET, url, null);
@@ -138,7 +133,7 @@ public class HttpClient implements Loopback, Completable {
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link Function} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<HttpInbound> patch(String url,
@@ -151,7 +146,7 @@ public class HttpClient implements Loopback, Completable {
 	 *
 	 * @param url the target remote URL
 	 *
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for response
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for response
 	 */
 	public final Mono<HttpInbound> patch(String url) {
 		return request(HttpMethod.PATCH, url, null);
@@ -172,7 +167,7 @@ public class HttpClient implements Loopback, Completable {
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ChannelHandler} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<HttpInbound> post(String url,
@@ -185,7 +180,7 @@ public class HttpClient implements Loopback, Completable {
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
 	 * @param handler the {@link ChannelHandler} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<HttpInbound> put(String url,
@@ -200,7 +195,7 @@ public class HttpClient implements Loopback, Completable {
 	 * @param method the HTTP method to send
 	 * @param url the target remote URL
 	 * @param handler the {@link ChannelHandler} to invoke on open channel
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public Mono<HttpInbound> request(HttpMethod method,
@@ -223,7 +218,7 @@ public class HttpClient implements Loopback, Completable {
 	/**
 	 * WebSocket to the passed URL.
 	 * @param url the target remote URL
-	 * @return a {@link Publisher} of the {@link HttpChannel} ready to consume for
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
 	public final Mono<HttpInbound> ws(String url) {
