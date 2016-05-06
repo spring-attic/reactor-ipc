@@ -66,8 +66,7 @@ final class MonoClientRequest extends Mono<HttpInbound> {
 				  .add(HttpHeaderNames.ACCEPT, ALL);
 
 				if(method == HttpMethod.GET ||
-						method == HttpMethod.HEAD ||
-						method == HttpMethod.DELETE ){
+						method == HttpMethod.HEAD){
 					ch.removeTransferEncodingChunked();
 				}
 
