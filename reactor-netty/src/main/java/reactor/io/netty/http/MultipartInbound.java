@@ -38,7 +38,7 @@ public interface MultipartInbound extends NettyInbound {
 
 	@Override
 	default EncodedFlux receive() {
-		return EncodedFlux.encoded(receiveParts().concatMap(parts -> parts.aggregate()
+		return EncodedFlux.encoded(receiveParts().onBackpressureError().concatMap(parts -> parts.aggregate()
 		                                                                  .doOnNext(
 				                                                                  ByteBuf::retain))
 		                                         .doAfterNext(ByteBuf::release),
