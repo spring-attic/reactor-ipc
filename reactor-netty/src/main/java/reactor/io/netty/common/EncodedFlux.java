@@ -53,8 +53,8 @@ public final class EncodedFlux extends FluxSource<ByteBuf, ByteBuf> {
 		return this.reduceWith(alloc::compositeBuffer,
 				(prev, next) -> prev.addComponent(next.retain()))
 		           .doAfterNext(ByteBuf::release)
-		           .where(ByteBuf::isReadable)
 		           .doOnNext(cbb -> cbb.writerIndex(cbb.capacity()))
+		           .where(ByteBuf::isReadable)
 		           .as(EncodedMono::new);
 	}
 
