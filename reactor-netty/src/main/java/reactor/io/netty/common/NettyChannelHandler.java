@@ -115,15 +115,6 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 				channelSubscriber.onError(new IllegalStateException("Only one connection receive subscriber allowed."));
 			}
 		}
-		if (evt instanceof SslHandshakeCompletionEvent) {
-			ctx.channel()
-			   .config()
-			   .setAutoRead(false);
-
-			if (evt != SslHandshakeCompletionEvent.SUCCESS) {
-				exceptionCaught(ctx , ((SslHandshakeCompletionEvent) evt).cause());
-			}
-		}
 		super.userEventTriggered(ctx, evt);
 	}
 
@@ -175,6 +166,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		}
 	}
 
+
+
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		try {
@@ -217,7 +210,9 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 		}
 		try {
 			if(null == channelSubscriber){
-				log.debug("Dropped packet ", msg);
+				if(log.isDebugEnabled()) {
+					log.debug("Dropped packet {}", msg);
+				}
 				return;
 			}
 			if (msg == Unpooled.EMPTY_BUFFER ) {

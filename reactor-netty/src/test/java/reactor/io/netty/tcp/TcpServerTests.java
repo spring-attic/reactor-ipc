@@ -34,7 +34,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -96,7 +95,7 @@ public class TcpServerTests {
 	public void tcpServerHandlesJsonPojosOverSsl()
 			throws InterruptedException, CertificateException {
 		final int port = SocketUtils.findAvailableTcpPort();
-		final CountDownLatch latch = new CountDownLatch(1);
+		final CountDownLatch latch = new CountDownLatch(2);
 
 		SslContextBuilder clientOptions = SslContextBuilder.forClient()
 		                                                   .trustManager(InsecureTrustManagerFactory.INSTANCE);
@@ -117,11 +116,20 @@ public class TcpServerTests {
 					       latch.countDown();
 				       }
 			       });
-			return Flux.never();
+			return channel.sendString(Mono.just("Hi")).concatWith(Flux.never());
 		});
 
-		client.start(ch -> ch.send(Flux.just(new Pojo("John Doe")), NettyCodec.json(Pojo.class)))
-		      .get();
+		client.start(ch -> {
+			ch.receiveString()
+			  .log("receive")
+			  .subscribe(data -> {
+				  if(data.equals("Hi")){
+					  latch.countDown();
+				  }
+			  });
+			return ch.send(Flux.just(new Pojo("John" + " Doe")), NettyCodec.json(Pojo.class))
+					.concatWith(Flux.never());
+		}).get();
 
 		assertTrue("Latch was counted down", latch.await(5, TimeUnit.SECONDS));
 

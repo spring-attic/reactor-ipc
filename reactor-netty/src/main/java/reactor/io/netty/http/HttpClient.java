@@ -21,11 +21,9 @@ import java.net.URI;
 import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
@@ -230,21 +228,6 @@ public class HttpClient implements Loopback, Completable {
 				secure);
 	}
 
-	final void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-			Object nativeChannel) {
-		SocketChannel ch = (SocketChannel) nativeChannel;
-
-		TcpChannel netChannel = new TcpChannel(client.getDefaultPrefetchSize(), ch);
-
-		ChannelPipeline pipeline = ch.pipeline();
-		if (log.isDebugEnabled()) {
-			pipeline.addLast(new LoggingHandler(HttpClient.class));
-		}
-
-		pipeline.addLast(new HttpClientCodec())
-		        .addLast(new NettyHttpClientHandler(handler, netChannel));
-	}
-
 	static String parseURL(InetSocketAddress base, String url, boolean ws) {
 		if (!url.startsWith(HTTP_SCHEME) && !url.startsWith(WS_SCHEME)) {
 			final String parsedUrl = (ws ? WS_SCHEME : HTTP_SCHEME) + "://";
@@ -265,7 +248,6 @@ public class HttpClient implements Loopback, Completable {
 	final static String WSS_SCHEME   = "wss";
 	final static String HTTP_SCHEME  = "http";
 	final static String HTTPS_SCHEME = "https";
-	final static Logger log = Logger.getLogger(HttpClient.class);
 
 	final class TcpBridgeClient extends TcpClient {
 
@@ -274,19 +256,12 @@ public class HttpClient implements Loopback, Completable {
 		}
 		@Override
 		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-				SocketChannel nativeChannel) {
-			try {
-				if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
-					getOptions().pipelineConfigurer()
-					            .accept(nativeChannel.pipeline());
-				}
-			}
-			catch (Exception e) {
-				nativeChannel.pipeline()
-				             .fireExceptionCaught(e);
-			}
+				SocketChannel ch) {
+			TcpChannel netChannel = new TcpChannel(client.getDefaultPrefetchSize(), ch);
 
-			HttpClient.this.bindChannel(handler, nativeChannel);
+			ch.pipeline()
+			  .addLast(new HttpClientCodec())
+			  .addLast(new NettyHttpClientHandler(handler, netChannel));
 		}
 
 		@Override
@@ -294,6 +269,11 @@ public class HttpClient implements Loopback, Completable {
 				InetSocketAddress address,
 				boolean secure) {
 			return super.doStart(handler, address, secure);
+		}
+
+		@Override
+		protected Class<?> logClass() {
+			return HttpClient.class;
 		}
 	}
 }

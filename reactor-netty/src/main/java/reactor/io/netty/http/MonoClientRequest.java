@@ -23,6 +23,7 @@ import java.util.function.Function;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpUtil;
+import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
@@ -40,6 +41,8 @@ final class MonoClientRequest extends Mono<HttpInbound> {
 	final   URI                                                       currentURI;
 	final   HttpMethod                                                method;
 	final   Function<? super HttpOutbound, ? extends Publisher<Void>> handler;
+
+	static final AsciiString ALL = new AsciiString("*/*");
 
 	public MonoClientRequest(HttpClient client,
 			URI currentURI,
@@ -62,7 +65,7 @@ final class MonoClientRequest extends Mono<HttpInbound> {
 				  .setMethod(method)
 				  .headers()
 				  .add(HttpHeaderNames.HOST, uri.getHost())
-				  .add(HttpHeaderNames.ACCEPT, "*/*");
+				  .add(HttpHeaderNames.ACCEPT, ALL);
 
 				if(method == HttpMethod.GET ||
 						method == HttpMethod.HEAD ||

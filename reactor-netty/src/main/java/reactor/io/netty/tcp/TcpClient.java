@@ -18,25 +18,27 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
 import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoProcessor;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
@@ -49,6 +51,7 @@ import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
+import reactor.io.netty.config.NettyHandlerNames;
 import reactor.io.netty.config.NettyOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 
@@ -174,7 +177,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		return new TcpClient(options);
 	}
 
-	final Bootstrap               bootstrap;
 	final EventLoopGroup          ioGroup;
 	final ChannelGroup            channelGroup;
 	final ClientOptions           options;
@@ -218,21 +220,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 			sslContext = null;
 		}
 
-		Bootstrap _bootstrap = new Bootstrap().group(ioGroup)
-		                                      .channel(NettyNativeDetector.getChannel(ioGroup))
-		                                      .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-		                                      .option(ChannelOption.AUTO_READ, options.ssl() != null)
-				//.remoteAddress(this.connectAddress)
-				;
-
-		_bootstrap = _bootstrap.option(ChannelOption.SO_RCVBUF, options.rcvbuf())
-		                       .option(ChannelOption.SO_SNDBUF, options.sndbuf())
-		                       .option(ChannelOption.SO_KEEPALIVE, options.keepAlive())
-		                       .option(ChannelOption.SO_LINGER, options.linger())
-		                       .option(ChannelOption.TCP_NODELAY, options.tcpNoDelay())
-		                       .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.timeout());
-
-		this.bootstrap = _bootstrap;
 		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
 			log.debug("Client is managed.");
 			this.channelGroup = new DefaultChannelGroup(null);
@@ -306,23 +293,40 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler =
 				null == handler ? (ChannelHandler<ByteBuf, ByteBuf, NettyChannel>) PING : handler;
 
-		bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-			@Override
-			public void initChannel(final SocketChannel ch) throws Exception {
-				if (channelGroup != null) {
-					channelGroup.add(ch);
-				}
+		Bootstrap _bootstrap = new Bootstrap().group(ioGroup)
+		                                      .channel(NettyNativeDetector.getChannel(
+				                                      ioGroup))
+		                                      .option(ChannelOption.ALLOCATOR,
+				                                      PooledByteBufAllocator.DEFAULT)
+		                                      .option(ChannelOption.AUTO_READ,
+				                                      options.ssl() != null)
+		                                      .option(ChannelOption.SO_RCVBUF,
+				                                      options.rcvbuf())
+		                                      .option(ChannelOption.SO_SNDBUF,
+				                                      options.sndbuf())
+		                                      .option(ChannelOption.AUTO_READ, false)
+		                                      .option(ChannelOption.SO_KEEPALIVE,
+				                                      options.keepAlive())
+		                                      .option(ChannelOption.SO_LINGER,
+				                                      options.linger())
+		                                      .option(ChannelOption.TCP_NODELAY,
+				                                      options.tcpNoDelay())
+		                                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+				                                      options.timeout());
+		if (!secure) {
+			_bootstrap.handler(new TcpClientChannelSetup(this, null, targetHandler));
+			return Mono.defer(() -> MonoChannelFuture.from(_bootstrap.connect(address)));
+		}
+		else {
+			MonoProcessor<Void> p = MonoProcessor.create();
+			_bootstrap.handler(new TcpClientChannelSetup(this, p, targetHandler));
+			return MonoChannelFuture.from(_bootstrap.connect(address)).then(p);
 
-				if(secure){
-					addSecureHandler(ch);
-				}
-				bindChannel(targetHandler, ch);
-			}
-		});
+		}
+	}
 
-		return Mono.defer(() ->
-			MonoChannelFuture.from(bootstrap.connect(address))
-		);
+	protected Class<?> logClass() {
+		return TcpClient.class;
 	}
 
 	@Override
@@ -335,32 +339,11 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		return MonoChannelFuture.from(ioGroup.shutdownGracefully());
 	}
 
-	final protected void addSecureHandler(SocketChannel ch){
-		if (null != sslContext) {
-			ch.pipeline().addFirst(sslContext.newHandler(ch.alloc()));
-		}
-		else {
-			ch.config()
-			  .setAutoRead(false);
-		}
-	}
-
 	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel ch)
 			throws Exception {
-
-		ChannelPipeline pipeline = ch.pipeline();
-
 		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
-
-
-		if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
-			getOptions().pipelineConfigurer()
-			            .accept(pipeline);
-		}
-		if (log.isDebugEnabled()) {
-			pipeline.addLast(new LoggingHandler(TcpClient.class));
-		}
-		pipeline.addLast(new NettyChannelHandler(handler, netChannel));
+		ch.pipeline()
+		  .addLast(new NettyChannelHandler(handler, netChannel));
 	}
 
 	@Override
@@ -369,4 +352,66 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	}
 
 	protected static final Logger log = Logger.getLogger(TcpClient.class);
+
+	static final class TcpClientChannelSetup extends ChannelInitializer<SocketChannel> {
+
+		final TcpClient                                      parent;
+		final MonoProcessor<Void>  secureCallback;
+		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler;
+
+		TcpClientChannelSetup(TcpClient parent,
+				MonoProcessor<Void> secureCallback,
+				ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler) {
+			this.parent = parent;
+			this.secureCallback = secureCallback;
+			this.targetHandler = targetHandler;
+		}
+
+		@Override
+		public void initChannel(final SocketChannel ch) throws Exception {
+			if (parent.channelGroup != null) {
+				parent.channelGroup.add(ch);
+			}
+
+			ChannelPipeline pipeline = ch.pipeline();
+			if (secureCallback != null && null != parent.sslContext) {
+				if (log.isTraceEnabled()) {
+					pipeline.addFirst(NettyHandlerNames.SslLoggingHandler,
+							new LoggingHandler(parent.logClass()));
+					pipeline.addAfter(NettyHandlerNames.SslLoggingHandler,
+							NettyHandlerNames.SslHandler,
+							parent.sslContext.newHandler(ch.alloc()));
+				}
+				else {
+					pipeline.addFirst(NettyHandlerNames.SslHandler,
+							parent.sslContext.newHandler(ch.alloc()));
+				}
+				if (log.isDebugEnabled()) {
+					pipeline.addAfter(NettyHandlerNames.SslHandler,
+							NettyHandlerNames.LoggingHandler,
+							new LoggingHandler(parent.logClass()));
+					pipeline.addAfter(NettyHandlerNames.LoggingHandler,
+							NettyHandlerNames.SslReader,
+							new NettySslReader(secureCallback));
+				}
+				else {
+					pipeline.addAfter(NettyHandlerNames.SslHandler,
+							NettyHandlerNames.SslReader,
+							new NettySslReader(secureCallback));
+				}
+
+			}
+			else if (log.isDebugEnabled()) {
+				pipeline.addFirst(NettyHandlerNames.LoggingHandler,
+						new LoggingHandler(parent.logClass()));
+			}
+
+			if (null != parent.options.pipelineConfigurer()) {
+				parent.options.pipelineConfigurer()
+				              .accept(pipeline);
+			}
+
+			parent.bindChannel(targetHandler, ch);
+		}
+	}
 }
