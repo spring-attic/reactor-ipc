@@ -27,10 +27,8 @@ import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
-import reactor.core.subscriber.Subscribers;
 import reactor.core.util.EmptySubscription;
 
-import static reactor.io.netty.http.HttpClient.HTTPS_SCHEME;
 
 /**
  * @author Stephane Maldini
@@ -69,6 +67,7 @@ final class MonoClientRequest extends Mono<HttpInbound> {
 
 				if(method == HttpMethod.GET ||
 						method == HttpMethod.HEAD ||
+						method == HttpMethod.PATCH ||
 						method == HttpMethod.DELETE ){
 					ch.removeTransferEncodingChunked();
 				}

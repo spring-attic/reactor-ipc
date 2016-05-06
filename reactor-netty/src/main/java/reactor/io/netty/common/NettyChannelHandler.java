@@ -272,9 +272,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			channelSubscriber.onError(err);
 		}
 		else {
-			log.debug("Unexpected issue", err);
+			ctx.fireExceptionCaught(err);
 		}
-		ctx.fireExceptionCaught(err);
 	}
 
 	protected ChannelFuture doOnWrite(Object data, ChannelHandlerContext ctx) {
