@@ -49,7 +49,7 @@ public final class EncodedMono extends MonoSource<ByteBuf, ByteBuf> {
 	 * @return a {@link InputStream} inbound {@link Flux}
 	 */
 	public Mono<InputStream> toInputStream() {
-		return map(ByteBufInputStream::new);
+		return where(ByteBuf::isReadable).map(ByteBufInputStream::new);
 	}
 
 	protected EncodedMono(Publisher<? extends ByteBuf> source) {
