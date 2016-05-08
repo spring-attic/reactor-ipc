@@ -257,6 +257,7 @@ project('reactor-aeron') {
 
 	dependencies {
 	  	compile project(":reactor-ipc")
+	  	compile project(":reactor-codec") //FIXME remove when Buffer not required
 
 		compile "uk.co.real-logic:aeron-driver:$aeronVersion",
 				"uk.co.real-logic:aeron-client:$aeronVersion"
