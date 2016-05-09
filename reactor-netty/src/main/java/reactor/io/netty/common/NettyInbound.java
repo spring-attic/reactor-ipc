@@ -44,8 +44,8 @@ public interface NettyInbound extends Inbound<ByteBuf> {
 	NettyChannel.Lifecycle on();
 
 	@Override
-	default EncodedFlux receive() {
-		return new EncodedFlux(receiveObject().map(objectMapper), delegate().alloc());
+	default ByteBufEncodedFlux receive() {
+		return new ByteBufEncodedFlux(receiveObject().map(objectMapper), delegate().alloc());
 	}
 
 	/**

@@ -28,49 +28,62 @@ import reactor.core.publisher.FluxSource;
  *
  * @author Stephane Maldini
  */
-public final class EncodedFlux extends FluxSource<ByteBuf, ByteBuf> {
+public final class ByteBufEncodedFlux extends FluxSource<ByteBuf, ByteBuf> {
 
 	/**
-	 * Decorate as {@link EncodedFlux}
+	 * Decorate as {@link ByteBufEncodedFlux}
 	 *
 	 * @param source publisher to decorate
 	 * @param allocator the channel {@link ByteBufAllocator}
 	 *
-	 * @return a {@link EncodedFlux}
+	 * @return a {@link ByteBufEncodedFlux}
 	 */
-	public final static EncodedFlux encoded(Publisher<? extends ByteBuf> source,
+	public final static ByteBufEncodedFlux encoded(Publisher<? extends ByteBuf> source,
 			ByteBufAllocator allocator) {
-		return new EncodedFlux(source, allocator);
+		return new ByteBufEncodedFlux(source, allocator);
 	}
 
 	/**
 	 * Disable auto memory release on each signal published in order to prevent premature
 	 * recycling when buffers are accumulated downsteams (async).
 	 *
-	 * @return {@link EncodedMono} of retained {@link ByteBuf}
+	 * @return {@link ByteBufEncodedMono} of retained {@link ByteBuf}
 	 */
-	public EncodedMono aggregate() {
-		return this.reduceWith(alloc::compositeBuffer,
-				(prev, next) -> prev.addComponent(next.retain()))
-		           .doAfterNext(ByteBuf::release)
-		           .doOnNext(cbb -> cbb.writerIndex(cbb.capacity()))
-		           .where(ByteBuf::isReadable)
-		           .as(EncodedMono::new);
+	public ByteBufEncodedMono aggregate() {
+		return using(alloc::compositeBuffer,
+				b -> this.reduce(b, (prev, next) -> prev.addComponent(next.retain()))
+				         .doOnNext(cbb -> cbb.writerIndex(cbb.capacity()))
+				         .where(ByteBuf::isReadable),
+				ByteBuf::release).as(ByteBufEncodedMono::new);
 	}
 
 	/**
 	 * Disable auto memory release on each signal published in order to prevent premature
 	 * recycling when buffers are accumulated downsteams (async).
 	 *
-	 * @return {@link EncodedFlux} of retained {@link ByteBuf}
+	 * @return {@link ByteBufEncodedMono} of retained {@link ByteBuf}
 	 */
-	public EncodedFlux retain() {
-		return new EncodedFlux(doOnNext(ByteBuf::retain), alloc);
+	public ByteBufEncodedMono multicast() {
+		return using(alloc::compositeBuffer,
+				b -> this.reduce(b, (prev, next) -> prev.addComponent(next.retain()))
+				         .doOnNext(cbb -> cbb.writerIndex(cbb.capacity()))
+				         .where(ByteBuf::isReadable),
+				ByteBuf::release).as(ByteBufEncodedMono::new);
+	}
+
+	/**
+	 * Disable auto memory release on each signal published in order to prevent premature
+	 * recycling when buffers are accumulated downsteams (async).
+	 *
+	 * @return {@link ByteBufEncodedFlux} of retained {@link ByteBuf}
+	 */
+	public ByteBufEncodedFlux retain() {
+		return new ByteBufEncodedFlux(doOnNext(ByteBuf::retain), alloc);
 	}
 
 	final ByteBufAllocator alloc;
 
-	protected EncodedFlux(Publisher<? extends ByteBuf> source,
+	protected ByteBufEncodedFlux(Publisher<? extends ByteBuf> source,
 			ByteBufAllocator allocator) {
 		super(source);
 		this.alloc = allocator;

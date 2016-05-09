@@ -27,12 +27,13 @@ import org.reactivestreams.Subscription;
 import reactor.core.flow.MultiProducer;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.io.netty.common.EncodedFlux;
+import reactor.io.netty.common.ByteBufEncodedFlux;
 
 /**
  * @author Ben Hale
@@ -43,8 +44,8 @@ final class MultipartParser
 		implements Subscriber<MultipartTokenizer.Token>, Subscription, Runnable, Producer,
 		           MultiProducer, Receiver, Completable {
 
-	final Subscriber<? super EncodedFlux> actual;
-	final ByteBufAllocator                alloc;
+	final Subscriber<? super ByteBufEncodedFlux> actual;
+	final ByteBufAllocator                       alloc;
 
 	volatile int wip;
 	@SuppressWarnings("rawtypes")
@@ -62,7 +63,7 @@ final class MultipartParser
 
 	boolean done;
 
-	MultipartParser(Subscriber<? super EncodedFlux> actual, ByteBufAllocator alloc) {
+	MultipartParser(Subscriber<? super ByteBufEncodedFlux> actual, ByteBufAllocator alloc) {
 		this.actual = actual;
 		this.wip = 1;
 		this.alloc = alloc;
@@ -110,7 +111,9 @@ final class MultipartParser
 
 				window = w;
 
-				actual.onNext(EncodedFlux.encoded(w.doAfterNext(ByteBuf::release), alloc));
+				actual.onNext(ByteBufEncodedFlux.encoded(
+						w.flatMap(b -> Flux.using(() -> b, Flux::just,
+								ByteBuf::release)), alloc));
 		}
 	}
 

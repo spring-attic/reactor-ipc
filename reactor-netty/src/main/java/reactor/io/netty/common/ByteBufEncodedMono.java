@@ -31,16 +31,16 @@ import reactor.core.publisher.MonoSource;
  *
  * @author Stephane Maldini
  */
-public final class EncodedMono extends MonoSource<ByteBuf, ByteBuf> {
+public final class ByteBufEncodedMono extends MonoSource<ByteBuf, ByteBuf> {
 
 	/**
 	 * Disable auto memory release on each signal published in order to prevent premature
 	 * recycling when buffers are accumulated downsteams (async).
 	 *
-	 * @return {@link EncodedMono} of retained {@link ByteBuf}
+	 * @return {@link ByteBufEncodedMono} of retained {@link ByteBuf}
 	 */
-	public EncodedMono retain() {
-		return new EncodedMono(doOnNext(ByteBuf::retain));
+	public ByteBufEncodedMono retain() {
+		return new ByteBufEncodedMono(doOnNext(ByteBuf::retain));
 	}
 
 	/**
@@ -52,7 +52,7 @@ public final class EncodedMono extends MonoSource<ByteBuf, ByteBuf> {
 		return map(ByteBufInputStream::new);
 	}
 
-	protected EncodedMono(Publisher<? extends ByteBuf> source) {
+	protected ByteBufEncodedMono(Publisher<? extends ByteBuf> source) {
 		super(source);
 	}
 

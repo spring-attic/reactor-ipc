@@ -17,12 +17,11 @@ package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Flux;
-import reactor.io.netty.common.EncodedFlux;
+import reactor.io.netty.common.ByteBufEncodedFlux;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyInbound;
 import reactor.io.netty.http.multipart.MultipartCodec;
@@ -61,7 +60,7 @@ public interface HttpInbound extends HttpConnection, NettyInbound {
 			}
 
 			@Override
-			public Flux<EncodedFlux> receiveParts() {
+			public Flux<ByteBufEncodedFlux> receiveParts() {
 				return MultipartCodec.decode(thiz);
 			}
 

@@ -21,12 +21,12 @@ import io.netty.buffer.ByteBufAllocator;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.FluxSource;
-import reactor.io.netty.common.EncodedFlux;
+import reactor.io.netty.common.ByteBufEncodedFlux;
 
 /**
  * @author Ben Hale
  */
-final class MultipartDecoder extends FluxSource<ByteBuf, EncodedFlux> {
+final class MultipartDecoder extends FluxSource<ByteBuf, ByteBufEncodedFlux> {
 
 	final String boundary;
 	final ByteBufAllocator alloc;
@@ -38,7 +38,7 @@ final class MultipartDecoder extends FluxSource<ByteBuf, EncodedFlux> {
 	}
 
 	@Override
-	public void subscribe(Subscriber<? super EncodedFlux> subscriber) {
+	public void subscribe(Subscriber<? super ByteBufEncodedFlux> subscriber) {
 		this.source.subscribe(new MultipartTokenizer(this.boundary,
 				new MultipartParser(subscriber, alloc)));
 	}
