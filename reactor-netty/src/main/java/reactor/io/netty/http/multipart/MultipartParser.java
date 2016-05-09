@@ -111,9 +111,8 @@ final class MultipartParser
 
 				window = w;
 
-				actual.onNext(ByteBufEncodedFlux.encoded(
-						w.flatMap(b -> Flux.using(() -> b, Flux::just,
-								ByteBuf::release)), alloc));
+				actual.onNext(ByteBufEncodedFlux.encoded(w.flatMap(b -> Flux.using(() -> Flux.just(
+						b), b::release)), alloc));
 		}
 	}
 
