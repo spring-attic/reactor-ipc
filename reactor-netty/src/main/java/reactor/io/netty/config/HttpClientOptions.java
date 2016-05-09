@@ -261,6 +261,11 @@ public class HttpClientOptions extends ClientOptions {
 		}
 
 		@Override
+		public HttpClientOptions sslConfigurer(Consumer<? super SslContextBuilder> consumer) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
 		public HttpClientOptions sndbuf(int sndbuf) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}

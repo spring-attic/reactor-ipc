@@ -382,6 +382,11 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
+		public ServerOptions sslConfigurer(Consumer<? super SslContextBuilder> consumer) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
 		public ServerOptions sndbuf(int sndbuf) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}

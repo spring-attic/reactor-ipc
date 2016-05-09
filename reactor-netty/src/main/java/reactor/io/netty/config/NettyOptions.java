@@ -203,6 +203,16 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	}
 
 	/**
+	 * Return eventual {@link SslContextBuilder}
+	 * @param sslConfigurer the callback accepting the current {@link SslContextBuilder}
+	 * @return {@literal this}
+	 */
+	public SO sslConfigurer(Consumer<? super SslContextBuilder> sslConfigurer) {
+		sslConfigurer.accept(sslOptions);
+		return (SO) this;
+	}
+
+	/**
 	 * Gets the configured {@code SO_SNDBUF} (send buffer) size
 	 * @return The configured send buffer size
 	 */
