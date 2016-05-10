@@ -106,7 +106,7 @@ class NettyTcpServerSpec extends Specification {
 			client.start { input ->
 			  input.receive(NettyCodec.from(codec))
 						.log('receive')
-						.consume { latch.countDown() }
+						.subscribe { latch.countDown() }
 
 			  input.send(
 						Flux.range(1, 10)
@@ -157,7 +157,7 @@ class NettyTcpServerSpec extends Specification {
 			client.start { input ->
 			  input.receive(NettyCodec.from(codec))
 						.log('receive')
-						.consume { latch.countDown() }
+						.subscribe { latch.countDown() }
 
 			  input.send(
 						Flux.range(1, elem)
