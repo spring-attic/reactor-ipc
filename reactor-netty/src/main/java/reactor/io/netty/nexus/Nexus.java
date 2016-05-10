@@ -821,10 +821,10 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 
 	final static class NexusLoggerExtension implements Logger.Extension {
 
-		final SignalEmitter<Event> logSink;
+		final SubmissionEmitter<Event> logSink;
 		final String                 hostname;
 
-		public NexusLoggerExtension(String hostname, SignalEmitter<Event> logSink) {
+		public NexusLoggerExtension(String hostname, SubmissionEmitter<Event> logSink) {
 			this.logSink = logSink;
 			this.hostname = hostname;
 		}
@@ -832,7 +832,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		@Override
 		public void log(String category, Level level, String msg, Object... arguments) {
 			String computed = Logger.format(msg, arguments);
-			SignalEmitter.Emission emission;
+			SubmissionEmitter.Emission emission;
 
 			if (arguments != null && arguments.length == 3 && ReactiveStateUtils.isLogging(arguments[2])) {
 				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()) {
