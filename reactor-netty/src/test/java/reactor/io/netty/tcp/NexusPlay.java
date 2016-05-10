@@ -129,9 +129,9 @@ public class NexusPlay {
 
 				int j = 0;
 				for(;;){
-					s1.emit(j);
-					s2.emit(j);
-					s3.emit(j);
+					s1.next(j);
+					s2.next(j);
+					s3.next(j);
 					j++;
 					LockSupport.parkNanos(30_000_000);
 //			if(j == 200){
