@@ -16,6 +16,7 @@
 
 package reactor.io.netty.common;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import io.netty.buffer.ByteBuf;
@@ -49,7 +50,7 @@ public final class ByteBufEncodedMono extends MonoSource<ByteBuf, ByteBuf> {
 	 * @return a {@link InputStream} inbound {@link Flux}
 	 */
 	public Mono<InputStream> toInputStream() {
-		return map(ByteBufInputStream::new);
+		return map(ReleasingBufferInputStream::new);
 	}
 
 	protected ByteBufEncodedMono(Publisher<? extends ByteBuf> source) {

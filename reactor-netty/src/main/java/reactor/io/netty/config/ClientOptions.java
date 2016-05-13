@@ -18,13 +18,14 @@ package reactor.io.netty.config;
 
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.io.netty.common.Peer;
 
@@ -33,20 +34,47 @@ import reactor.io.netty.common.Peer;
  */
 public class ClientOptions extends NettyOptions<ClientOptions> {
 
+	/**
+	 * Proxy Type
+	 */
+	public enum Proxy {
+		HTTP,
+		SOCK4,
+		SOCK5
+	}
+
+	/**
+	 * @return
+	 */
 	public static ClientOptions create(){
 		return new ClientOptions();
 	}
 
+	/**
+	 *
+	 * @param host
+	 * @return
+	 */
 	public static ClientOptions to(String host){
 		return to(host, Peer.DEFAULT_PORT);
 	}
 
+	/**
+	 *
+	 * @param host
+	 * @param port
+	 * @return
+	 */
 	public static ClientOptions to(String host, int port){
 		return create().connect(host, port);
 	}
 
+	String                                       proxyUsername;
+	Function<? extends String, ? extends String> proxyPassword;
+	Supplier<? extends InetSocketAddress>        proxyAddress;
+	Proxy                                        proxyType;
 
-	private Supplier<? extends InetSocketAddress> connectAddress;
+	Supplier<? extends InetSocketAddress> connectAddress;
 
 	ClientOptions(){
 
@@ -85,6 +113,90 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 			throw new IllegalStateException("Connect address is already set.");
 		}
 		this.connectAddress = connectAddress;
+		return this;
+	}
+
+	/**
+	 * The host and port to which this client should connect.
+	 *
+	 * @param host The host to connect to.
+	 * @param port The port to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Proxy type,
+			@Nonnull String host,
+			int port,
+			@Nullable String username,
+			@Nullable Function<? extends String, ? extends String> password) {
+		return proxy(type, new InetSocketAddress(host, port), username, password);
+	}
+
+	/**
+	 * The host and port to which this client should connect.
+	 *
+	 * @param host The host to connect to.
+	 * @param port The port to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Proxy type, @Nonnull String host, int port) {
+		return proxy(type, new InetSocketAddress(host, port));
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Proxy type,
+			@Nonnull InetSocketAddress connectAddress) {
+		return proxy(type, () -> connectAddress, null, null);
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Proxy type,
+			@Nonnull InetSocketAddress connectAddress,
+			@Nullable String username,
+			@Nullable Function<? extends String, ? extends String> password) {
+		return proxy(type, () -> connectAddress, username, password);
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Proxy type,
+			@Nonnull Supplier<? extends InetSocketAddress> connectAddress) {
+		return proxy(type, connectAddress, null, null);
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Proxy type,
+			@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
+			@Nullable String username,
+			@Nullable Function<? extends String, ? extends String> password) {
+		this.proxyUsername = username;
+		this.proxyPassword = password;
+		this.proxyAddress = connectAddress;
+		this.proxyType = type;
 		return this;
 	}
 
@@ -186,6 +298,14 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 
 		@Override
 		public ClientOptions connect(@Nonnull String host, int port) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public ClientOptions proxy(@Nonnull Proxy type,
+				@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
+				@Nullable String username,
+				@Nullable Function<? extends String, ? extends String> password) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 

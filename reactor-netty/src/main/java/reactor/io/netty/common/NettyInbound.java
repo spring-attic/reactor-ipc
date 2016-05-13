@@ -23,7 +23,6 @@ import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufHolder;
-import io.netty.buffer.ByteBufInputStream;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.io.ipc.Inbound;
@@ -88,7 +87,7 @@ public interface NettyInbound extends Inbound<ByteBuf> {
 	 * @return a {@link InputStream} inbound {@link Flux}
 	 */
 	default Flux<InputStream> receiveInputStream() {
-		return receive().map(ByteBufInputStream::new);
+		return receive().map(ReleasingBufferInputStream::new);
 	}
 
 	/**
@@ -138,4 +137,5 @@ public interface NettyInbound extends Inbound<ByteBuf> {
 		throw new IllegalArgumentException("Object "+o+" of type "+o.getClass()+" " +
 				"cannot be converted to ByteBuf");
 	};
+
 }

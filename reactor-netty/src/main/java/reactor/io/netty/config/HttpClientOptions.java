@@ -18,8 +18,10 @@ package reactor.io.netty.config;
 
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -110,6 +112,83 @@ public class HttpClientOptions extends ClientOptions {
 	 */
 	public int followRedirects() {
 		return followRedirect;
+	}
+
+	/**
+	 * The host and port to which this client should connect.
+	 *
+	 * @param host The host to connect to.
+	 * @param port The port to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull String host, int port) {
+		return proxy(new InetSocketAddress(host, port));
+	}
+
+	/**
+	 * The host and port to which this client should connect.
+	 *
+	 * @param host The host to connect to.
+	 * @param port The port to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull String host,
+			int port,
+			@Nullable String username,
+			@Nullable Function<? extends String, ? extends String> password) {
+		return proxy(new InetSocketAddress(host, port), username, password);
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull InetSocketAddress connectAddress) {
+		return proxy(() -> connectAddress, null, null);
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull InetSocketAddress connectAddress,
+			@Nullable String username,
+			@Nullable Function<? extends String, ? extends String> password) {
+		return proxy(() -> connectAddress, username, password);
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Proxy type,
+			@Nonnull Supplier<? extends InetSocketAddress> connectAddress) {
+		return proxy(connectAddress, null, null);
+	}
+
+	/**
+	 * The address to which this client should connect.
+	 *
+	 * @param connectAddress The address to connect to.
+	 *
+	 * @return {@literal this}
+	 */
+	public ClientOptions proxy(@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
+			@Nullable String username,
+			@Nullable Function<? extends String, ? extends String> password) {
+		proxy(Proxy.HTTP, connectAddress, username, password);
+		return this;
 	}
 
 	/**
@@ -227,6 +306,14 @@ public class HttpClientOptions extends ClientOptions {
 
 		@Override
 		public HttpClientOptions keepAlive(boolean keepAlive) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public ClientOptions proxy(@Nonnull Proxy type,
+				@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
+				@Nullable String username,
+				@Nullable Function<? extends String, ? extends String> password) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 

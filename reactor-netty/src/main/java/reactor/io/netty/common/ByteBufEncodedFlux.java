@@ -64,11 +64,7 @@ public final class ByteBufEncodedFlux extends FluxSource<ByteBuf, ByteBuf> {
 	 * @return {@link ByteBufEncodedMono} of retained {@link ByteBuf}
 	 */
 	public ByteBufEncodedMono multicast() {
-		return using(alloc::compositeBuffer,
-				b -> this.reduce(b, (prev, next) -> prev.addComponent(next.retain()))
-				         .doOnNext(cbb -> cbb.writerIndex(cbb.capacity()))
-				         .where(ByteBuf::isReadable),
-				ByteBuf::release).as(ByteBufEncodedMono::new);
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	/**
