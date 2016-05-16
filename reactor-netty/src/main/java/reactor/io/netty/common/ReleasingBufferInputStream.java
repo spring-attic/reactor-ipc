@@ -16,6 +16,7 @@
 package reactor.io.netty.common;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -25,7 +26,12 @@ import io.netty.buffer.ByteBufInputStream;
  */
 final class ReleasingBufferInputStream extends ByteBufInputStream {
 
-	private final ByteBuf bb;
+	final ByteBuf bb;
+
+	volatile int closed;
+
+	static final AtomicIntegerFieldUpdater<ReleasingBufferInputStream> CLOSE =
+	AtomicIntegerFieldUpdater.newUpdater(ReleasingBufferInputStream.class, "closed");
 
 	public ReleasingBufferInputStream(ByteBuf bb) {
 		super(bb.retain());
@@ -34,7 +40,9 @@ final class ReleasingBufferInputStream extends ByteBufInputStream {
 
 	@Override
 	public void close() throws IOException {
-		super.close();
-		bb.release();
+		if(CLOSE.compareAndSet(this, 0, 1)) {
+			super.close();
+			bb.release();
+		}
 	}
 }
