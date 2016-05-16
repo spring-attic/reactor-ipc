@@ -331,9 +331,10 @@ public class TcpClientTests {
 		HttpClient client = HttpClient.create();
 
 		final CountDownLatch latch = new CountDownLatch(1);
-		client.get("http://www.google.com/?q=test%20d%20dq")
+		System.out.println(client.get("http://www.google.com/?q=test%20d%20dq")
+		      .then(r -> r.receiveString().toList())
 		      .doOnSuccess(v -> latch.countDown())
-		      .get();
+		      .get());
 
 
 		assertTrue("Latch didn't time out", latch.await(15, TimeUnit.SECONDS));

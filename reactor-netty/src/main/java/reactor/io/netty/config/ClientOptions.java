@@ -237,6 +237,11 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
+		public ClientOptions toImmutable() {
+			return this;
+		}
+
+		@Override
 		public InetSocketAddress remoteAddress() {
 			return options.remoteAddress();
 		}

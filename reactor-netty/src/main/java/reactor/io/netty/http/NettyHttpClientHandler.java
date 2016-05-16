@@ -113,7 +113,9 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();
 		if (HttpResponse.class.isAssignableFrom(messageClass)) {
+
 			HttpResponse response = (HttpResponse) msg;
+
 			if (httpChannel != null) {
 				httpChannel.setNettyResponse(response);
 			}
@@ -123,17 +125,20 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 						().isAutoRead(), httpChannel.headers().toString());
 			}
 
-			checkResponseCode(ctx, response);
-
-			ctx.fireChannelRead(msg);
-			if(replySubscriber != null){
-				Flux.just(httpChannel).subscribe(replySubscriber);
+			if(checkResponseCode(ctx, response)) {
+				ctx.fireChannelRead(msg);
+				if (replySubscriber != null) {
+					Flux.just(httpChannel)
+					    .subscribe(replySubscriber);
+				}
+				else {
+					log.debug(
+							"No Response/ HttpInbound subscriber on {}, msg is dropped {}",
+							ctx.channel(),
+							msg);
+				}
+				postRead(ctx, msg);
 			}
-			else {
-				log.debug("No Response/ HttpInbound subscriber on {}, msg is dropped {}",
-						ctx.channel(), msg);
-			}
-			postRead(ctx, msg);
 			return;
 		}
 		if(LastHttpContent.EMPTY_LAST_CONTENT != msg){
@@ -152,7 +157,7 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 		return new NettyWebSocketClientHandler(url, protocols, this, textPlain);
 	}
 
-	final void checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws
+	final boolean checkResponseCode(ChannelHandlerContext ctx, HttpResponse response) throws
 	                                                                          Exception {
 		int code = response.status()
 		                   .code();
@@ -161,7 +166,9 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 			if(replySubscriber != null){
 				EmptySubscription.error(replySubscriber, ex);
 			}
+			return false;
 		}
+		return true;
 	}
 
 	protected void postRead(ChannelHandlerContext ctx, Object msg){

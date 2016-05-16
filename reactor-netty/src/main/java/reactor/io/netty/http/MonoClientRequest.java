@@ -17,12 +17,12 @@
 package reactor.io.netty.http;
 
 import java.net.URI;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -61,6 +61,7 @@ final class MonoClientRequest extends Mono<HttpInbound> {
 				  .setUri(uri.getPath() +
 						  (uri.getQuery() == null ? "" : "?" + uri.getRawQuery()))
 				  .setMethod(method)
+				  .setProtocolVersion(HttpVersion.HTTP_1_1)
 				  .headers()
 				  .add(HttpHeaderNames.HOST, uri.getHost())
 				  .add(HttpHeaderNames.ACCEPT, ALL);

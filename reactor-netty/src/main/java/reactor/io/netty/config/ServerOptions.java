@@ -387,6 +387,11 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
+		public ServerOptions toImmutable() {
+			return this;
+		}
+
+		@Override
 		public ServerOptions sndbuf(int sndbuf) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}

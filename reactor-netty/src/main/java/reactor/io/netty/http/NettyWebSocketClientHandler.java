@@ -101,16 +101,18 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 				httpChannel.setNettyResponse(response);
 			}
 
-			checkResponseCode(ctx, response);
+			if(checkResponseCode(ctx, response)) {
 
-			if(!handshaker.isHandshakeComplete()) {
-				handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
-			}
-			ctx.fireChannelRead(msg);
-			handshakerResult.trySuccess();
+				if (!handshaker.isHandshakeComplete()) {
+					handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
+				}
+				ctx.fireChannelRead(msg);
+				handshakerResult.trySuccess();
 
-			if(replySubscriber != null){
-				Flux.just(httpChannel).subscribe(replySubscriber);
+				if (replySubscriber != null) {
+					Flux.just(httpChannel)
+					    .subscribe(replySubscriber);
+				}
 			}
 			return;
 		}

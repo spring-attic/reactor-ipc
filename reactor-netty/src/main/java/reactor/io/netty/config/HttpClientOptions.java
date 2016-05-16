@@ -230,6 +230,11 @@ public class HttpClientOptions extends ClientOptions {
 		}
 
 		@Override
+		public HttpClientOptions toImmutable() {
+			return this;
+		}
+
+		@Override
 		public InetSocketAddress remoteAddress() {
 			return options.remoteAddress();
 		}

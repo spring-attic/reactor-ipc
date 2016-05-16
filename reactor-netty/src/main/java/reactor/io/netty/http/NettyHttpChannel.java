@@ -228,7 +228,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 
 	@Override
 	public HttpOutbound keepAlive(boolean keepAlive) {
-		HttpUtil.setKeepAlive(nettyResponse, keepAlive);
+		HttpUtil.setKeepAlive(nettyRequest, keepAlive);
 		return this;
 	}
 
