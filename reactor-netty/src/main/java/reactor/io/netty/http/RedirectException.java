@@ -16,32 +16,22 @@
 
 package reactor.io.netty.http;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.Objects;
+
+import io.netty.handler.codec.http.HttpHeaderNames;
 
 /**
  * An error for signalling that an error occurred during a communication over HTTP version
  *
- * @author Anatoly Kadyshev
  */
-public class HttpException extends RuntimeException {
+final class RedirectException extends HttpException {
 
-	private final HttpChannel channel;
+	final String location;
 
-	public HttpException(HttpChannel channel) {
-		super("HTTP request failed with code: " + channel.status().code());
-		this.channel = channel;
+	public RedirectException(HttpChannel channel) {
+		super(channel);
+		location = Objects.requireNonNull(channel.responseHeaders().get(HttpHeaderNames
+				.LOCATION));
 	}
 
-	public HttpResponseStatus getResponseStatus() {
-		return channel.status();
-	}
-
-	public HttpChannel getChannel(){
-		return channel;
-	}
-
-	@Override
-	public synchronized Throwable fillInStackTrace() {
-		return null;
-	}
 }

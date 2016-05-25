@@ -161,9 +161,16 @@ class NettyHttpClientHandler extends NettyChannelHandler {
 	                                                                          Exception {
 		int code = response.status()
 		                   .code();
-		if (code >= 400) {
-			Exception ex = new HttpException(httpChannel);
-			if(replySubscriber != null){
+		if (code >= 300) {
+			if (code >= 400) {
+				Exception ex = new HttpException(httpChannel);
+				if (replySubscriber != null) {
+					EmptySubscription.error(replySubscriber, ex);
+				}
+				return false;
+			}
+			Exception ex = new RedirectException(httpChannel);
+			if (replySubscriber != null) {
 				EmptySubscription.error(replySubscriber, ex);
 			}
 			return false;

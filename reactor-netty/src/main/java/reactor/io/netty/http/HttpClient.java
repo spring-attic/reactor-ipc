@@ -18,6 +18,7 @@ package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
@@ -29,10 +30,11 @@ import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Completable;
-import reactor.core.util.Logger;
+import reactor.core.util.Exceptions;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.config.ClientOptions;
+import reactor.io.netty.config.HttpClientOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.tcp.TcpClient;
 
@@ -212,6 +214,37 @@ public class HttpClient implements Loopback, Completable {
 			return Mono.error(e);
 		}
 
+		final int fr;
+		if (client.getOptions() instanceof HttpClientOptions) {
+			fr = ((HttpClientOptions) client.getOptions()).followRedirects();
+		}
+		else {
+			fr = -1;
+		}
+
+		if (fr != 0) {
+			URI[] location = new URI[1];
+			location[0] = currentURI;
+			return Mono.defer(() -> new MonoClientRequest(this, location[0], method, handler))
+			           .retryWhen(errors -> errors.map(e -> {
+				           if(e instanceof RedirectException){
+					           try {
+						           location[0] = new URI(((RedirectException)e).location);
+					           }
+					           catch (URISyntaxException e1) {
+						           throw Exceptions.propagate(e1);
+					           }
+					           return 0;
+				           }
+				           throw Exceptions.propagate(e);
+			           }).as( m -> {
+				           if(fr > 0){
+					           return m.take(fr);
+				           }
+				           return m;
+			           }));
+		}
+
 		return new MonoClientRequest(this, currentURI, method, handler);
 	}
 
@@ -293,6 +326,11 @@ public class HttpClient implements Loopback, Completable {
 		@Override
 		protected Class<?> logClass() {
 			return HttpClient.class;
+		}
+
+		@Override
+		protected ClientOptions getOptions() {
+			return super.getOptions();
 		}
 	}
 }

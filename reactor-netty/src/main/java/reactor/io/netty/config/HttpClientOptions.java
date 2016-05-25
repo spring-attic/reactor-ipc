@@ -230,6 +230,11 @@ public class HttpClientOptions extends ClientOptions {
 		}
 
 		@Override
+		public int followRedirects() {
+			return options.followRedirects();
+		}
+
+		@Override
 		public HttpClientOptions toImmutable() {
 			return this;
 		}
