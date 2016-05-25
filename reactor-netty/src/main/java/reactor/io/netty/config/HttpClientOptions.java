@@ -46,7 +46,7 @@ public class HttpClientOptions extends ClientOptions {
 		return create().connect(host, port);
 	}
 
-	int followRedirect = -1;
+	int followRedirect = 0;
 
 	HttpClientOptions(){
 
