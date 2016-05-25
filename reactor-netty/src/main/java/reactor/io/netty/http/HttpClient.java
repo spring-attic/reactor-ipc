@@ -226,23 +226,24 @@ public class HttpClient implements Loopback, Completable {
 			URI[] location = new URI[1];
 			location[0] = currentURI;
 			return Mono.defer(() -> new MonoClientRequest(this, location[0], method, handler))
-			           .retryWhen(errors -> errors.map(e -> {
-				           if(e instanceof RedirectException){
-					           try {
-						           location[0] = new URI(((RedirectException)e).location);
+			           .retryWhen(errors -> {
+				           int[] tries = new int[1];
+				           tries[0] = 0;
+				           return errors.map(e -> {
+					           if((fr < 0 || tries[0]++ > fr) &&
+							           e instanceof RedirectException){
+						           try {
+							           location[0] = new URI(((RedirectException)e).location);
+						           }
+						           catch (URISyntaxException e1) {
+							           throw Exceptions.propagate(e1);
+						           }
+						           return 0;
 					           }
-					           catch (URISyntaxException e1) {
-						           throw Exceptions.propagate(e1);
-					           }
-					           return 0;
-				           }
-				           throw Exceptions.propagate(e);
-			           }).as( m -> {
-				           if(fr > 0){
-					           return m.take(fr);
-				           }
-				           return m;
-			           }));
+					           throw Exceptions.propagate(e);
+				           });
+
+			           });
 		}
 
 		return new MonoClientRequest(this, currentURI, method, handler);
