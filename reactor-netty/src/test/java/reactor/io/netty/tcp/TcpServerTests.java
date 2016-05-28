@@ -127,8 +127,9 @@ public class TcpServerTests {
 					  latch.countDown();
 				  }
 			  });
-			return ch.send(Flux.just(new Pojo("John" + " Doe")), NettyCodec.json(Pojo.class))
-					.concatWith(Flux.never());
+//			return ch.send(Flux.just(new Pojo("John" + " Doe")), NettyCodec.json(Pojo.class))
+//					.concatWith(Flux.never());
+			return Mono.empty();
 		}).get();
 
 		assertTrue("Latch was counted down", latch.await(5, TimeUnit.SECONDS));

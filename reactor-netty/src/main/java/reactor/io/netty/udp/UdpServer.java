@@ -49,6 +49,7 @@ import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
+import reactor.core.util.PlatformDependent;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
@@ -67,7 +68,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
-		"" + Computations.DEFAULT_POOL_SIZE)
+		"" + PlatformDependent.DEFAULT_POOL_SIZE)
 	);
 
 	/**

@@ -43,6 +43,7 @@ import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
+import reactor.core.util.PlatformDependent;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.MonoChannelFuture;
@@ -62,7 +63,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.selectThreadCount",
-			"" + Computations.DEFAULT_POOL_SIZE / 2));
+			"" + PlatformDependent.DEFAULT_POOL_SIZE / 2));
 
 	public static final int DEFAULT_TCP_SELECT_COUNT =
 			Integer.parseInt(System.getProperty("reactor.tcp.selectThreadCount", "" + DEFAULT_TCP_THREAD_COUNT));

@@ -295,9 +295,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 				                                      ioGroup))
 		                                      .option(ChannelOption.ALLOCATOR,
 				                                      PooledByteBufAllocator.DEFAULT)
-		                                      .option(ChannelOption.AUTO_READ,
-				                                      options.ssl() != null)
-		                                      .option(ChannelOption.SO_RCVBUF,
+		                                       .option(ChannelOption.SO_RCVBUF,
 				                                      options.rcvbuf())
 		                                      .option(ChannelOption.SO_SNDBUF,
 				                                      options.sndbuf())
