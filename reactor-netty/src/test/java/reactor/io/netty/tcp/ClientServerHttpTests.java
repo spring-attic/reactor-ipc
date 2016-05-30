@@ -33,6 +33,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.WorkQueueProcessor;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
@@ -229,7 +230,7 @@ public class ClientServerHttpTests {
 	@After
 	public void clean() throws Exception {
 		httpServer.shutdown().get();
-		Timer.unregisterGlobal();
+		Schedulers.shutdownNow();
 	}
 
 	public Set<Integer> findDuplicates(List<Integer> listContainingDuplicates) {

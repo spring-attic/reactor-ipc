@@ -42,6 +42,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Computations;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
@@ -70,7 +71,7 @@ public class UdpServerTests {
 	public void cleanup() throws InterruptedException {
 		threadPool.shutdown();
 		threadPool.awaitTermination(5, TimeUnit.SECONDS);
-		Timer.unregisterGlobal();
+		Schedulers.shutdownNow();
 	}
 
 	@Test

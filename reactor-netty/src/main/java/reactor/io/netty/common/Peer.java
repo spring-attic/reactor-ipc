@@ -50,8 +50,7 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>
 	}
 
 	protected Peer(TimedScheduler defaultTimer, long prefetch) {
-		this.defaultTimer = defaultTimer == null && Timer.hasGlobal() ? Timer.global() :
-				defaultTimer;
+		this.defaultTimer = defaultTimer == null ? Timer.global() : defaultTimer;
 		this.defaultPrefetch = prefetch > 0 ? prefetch : Long.MAX_VALUE;
 		this.started = new AtomicBoolean();
 	}

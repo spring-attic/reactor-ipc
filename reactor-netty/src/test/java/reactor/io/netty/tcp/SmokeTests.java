@@ -39,6 +39,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.WorkQueueProcessor;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
@@ -103,7 +104,7 @@ public class SmokeTests {
 	public void clean() throws Exception {
 		processor.onComplete();
 		httpServer.shutdown().get();
-		Timer.unregisterGlobal();
+		Schedulers.shutdownNow();
 	}
 
 	public Sender newSender() {

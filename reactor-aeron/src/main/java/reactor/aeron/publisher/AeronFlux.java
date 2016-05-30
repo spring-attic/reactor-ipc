@@ -17,6 +17,7 @@ package reactor.aeron.publisher;
 
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -121,8 +122,11 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 
 		this.context = context;
 		this.aeronInfra = context.aeronInfra();
-		this.executor = ExecutorUtils.singleUse(AeronUtils.makeThreadName(
-				context.name(), "publisher", "signal-poller"), null);
+		this.executor =
+				Executors.newCachedThreadPool(ExecutorUtils.newNamedFactory(AeronUtils.makeThreadName(
+						context.name(),
+						"publisher",
+						"signal-poller"), null, null, false));
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
 		this.sessionId = getSessionId(context);
 		this.serviceMessageSender = new ServiceMessageSender(this, serviceRequestPub, sessionId);

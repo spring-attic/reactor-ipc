@@ -16,6 +16,7 @@
 package reactor.aeron.subscriber;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import reactor.aeron.Context;
 import reactor.aeron.utils.AeronInfra;
@@ -115,8 +116,11 @@ class ServiceMessagePoller implements Runnable, Receiver {
 		this.serviceMessageHandler = serviceMessageHandler;
 		this.aeronInfra = aeronInfra;
 		this.serviceRequestSub = aeronInfra.addSubscription(context.senderChannel(), context.serviceRequestStreamId());
-		this.executor = ExecutorUtils.singleUse(AeronUtils.makeThreadName(
-				context.name(), "subscriber", "service-poller"), null);
+		this.executor = Executors.newCachedThreadPool(ExecutorUtils.newNamedFactory(AeronUtils.makeThreadName(
+				context.name(), "subscriber", "service-poller"),
+				null,
+				null,
+				false));
 	}
 
 	void start() {

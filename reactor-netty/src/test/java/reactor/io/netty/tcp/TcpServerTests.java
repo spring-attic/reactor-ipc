@@ -43,6 +43,7 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.WorkQueueProcessor;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
@@ -88,7 +89,7 @@ public class TcpServerTests {
 	@After
 	public void cleanup() {
 		threadPool.shutdownNow();
-		Timer.unregisterGlobal();
+		Schedulers.shutdownNow();
 	}
 
 	@Test
