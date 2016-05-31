@@ -38,7 +38,6 @@ import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
