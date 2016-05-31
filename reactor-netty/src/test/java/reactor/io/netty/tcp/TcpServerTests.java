@@ -44,7 +44,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.scheduler.Timer;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.FrameCodec;
@@ -81,7 +80,6 @@ public class TcpServerTests {
 
 	@Before
 	public void loadEnv() {
-		Timer.global();
 		latch = new CountDownLatch(msgs * threads);
 		threadPool = Executors.newCachedThreadPool();
 	}

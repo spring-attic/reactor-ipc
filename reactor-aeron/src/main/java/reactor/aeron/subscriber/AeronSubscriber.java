@@ -24,7 +24,8 @@ import reactor.aeron.utils.AeronUtils;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.TopicProcessor;
-import reactor.core.scheduler.Timer;
+import reactor.core.scheduler.Schedulers;
+import reactor.core.scheduler.TimedScheduler;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.Logger;
@@ -213,7 +214,7 @@ public final class AeronSubscriber
 	public void shutdown() {
 		if (alive.compareAndSet(true, false)) {
 			// Doing a shutdown via globalTimer to avoid shutting down Aeron in its thread
-			final Timer globalTimer = Timer.global();
+			final TimedScheduler globalTimer = Schedulers.timer();
 			globalTimer.schedule(() -> {
 					processor.shutdown();
 

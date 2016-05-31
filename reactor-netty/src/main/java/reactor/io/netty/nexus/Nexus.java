@@ -33,7 +33,6 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
@@ -41,10 +40,10 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
-import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.SubmissionEmitter;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
@@ -205,8 +204,8 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		this.server = server;
 		this.eventStream = EmitterProcessor.create(false);
 		this.lastStateMerge = new LastGraphStateMap();
-		this.timer = Timer.create("create-poller");
-		this.group = Computations.parallel("create", 1024, 1, null, null, false, WaitStrategy::blocking);
+		this.timer = Timer.create("nexus-poller");
+		this.group = Schedulers.newParallel("nexus", 4);
 
 		FluxProcessor<Publisher<Event>, Publisher<Event>> cannons = EmitterProcessor.create();
 

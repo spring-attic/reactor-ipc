@@ -15,6 +15,7 @@
  */
 package reactor.aeron.publisher;
 
+import java.sql.Time;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,7 +30,8 @@ import reactor.aeron.utils.ServiceMessagePublicationFailedException;
 import reactor.aeron.utils.ServiceMessageType;
 import reactor.core.flow.Producer;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Timer;
+import reactor.core.scheduler.Schedulers;
+import reactor.core.scheduler.TimedScheduler;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
@@ -197,7 +199,7 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 	public void shutdown() {
 		if (alive.compareAndSet(true, false)) {
 			// Doing a shutdown via timer to avoid shutting down Aeron in its thread
-			final Timer globalTimer = Timer.global();
+			final TimedScheduler globalTimer = Schedulers.timer();
 			globalTimer.schedule(() -> {
 					if (signalPoller != null) {
 						signalPoller.shutdown();

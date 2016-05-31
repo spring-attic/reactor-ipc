@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 import reactor.aeron.Context;
 import reactor.aeron.utils.HeartbeatPublicationFailureException;
 import reactor.core.flow.Cancellation;
-import reactor.core.scheduler.Timer;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * @author Anatoly Kadyshev
@@ -88,7 +88,7 @@ class HeartbeatSender {
 			throw new IllegalStateException("Heartbeat sending task was already scheduled");
 		}
 
-		this.cancellable = Timer.global().schedulePeriodically(task,
+		this.cancellable = Schedulers.timer().schedulePeriodically(task,
 				context.heartbeatIntervalMillis(),
 				context.heartbeatIntervalMillis(), TimeUnit.MILLISECONDS);
 	}

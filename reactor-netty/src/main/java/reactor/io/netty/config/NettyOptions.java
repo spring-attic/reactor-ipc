@@ -268,7 +268,7 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	}
 
 	/**
-	 * Set the default {@link reactor.core.scheduler.Timer} for timed operations.
+	 * Set the default {@link reactor.core.scheduler.TimedScheduler} for timed operations.
 	 *
 	 * @param timer The timer to assign by default
 	 *

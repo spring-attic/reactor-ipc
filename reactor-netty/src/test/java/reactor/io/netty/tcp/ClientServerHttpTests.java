@@ -34,7 +34,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.scheduler.Timer;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.Codec;
 import reactor.io.netty.common.NettyCodec;
@@ -223,7 +222,6 @@ public class ClientServerHttpTests {
 
 	@Before
 	public void loadEnv() throws Exception {
-		Timer.global();
 		setupFakeProtocolListener();
 	}
 

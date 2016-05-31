@@ -39,7 +39,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Computations;
-import reactor.core.scheduler.Timer;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.PlatformDependent;
 import reactor.io.netty.common.NettyCodec;
@@ -71,8 +70,6 @@ public class TcpClientTests {
 
 	@Before
 	public void setup() {
-		Timer.global();
-
 		echoServerPort = SocketUtils.findAvailableTcpPort();
 		echoServer = new EchoServer(echoServerPort);
 		threadPool.submit(echoServer);

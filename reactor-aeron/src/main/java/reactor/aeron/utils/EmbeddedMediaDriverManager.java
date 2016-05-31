@@ -16,14 +16,12 @@
 package reactor.aeron.utils;
 
 import java.io.File;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-import reactor.core.scheduler.Timer;
+import reactor.core.scheduler.Schedulers;
+import reactor.core.scheduler.TimedScheduler;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Logger;
 import uk.co.real_logic.aeron.Aeron;
@@ -91,9 +89,9 @@ public final class EmbeddedMediaDriverManager {
 
 		private final long startNs;
 
-		private final Timer timer;
+		private final TimedScheduler timer;
 
-		public RetryShutdownTask(Timer timer) {
+		public RetryShutdownTask(TimedScheduler timer) {
 			this.startNs = System.nanoTime();
 			this.timer = timer;
 		}
@@ -177,8 +175,11 @@ public final class EmbeddedMediaDriverManager {
 		if (driver != null) {
 			aeron.close();
 
-			Timer timer = Timer.global();
-			timer.schedule(new RetryShutdownTask(timer), retryShutdownMillis, TimeUnit.MILLISECONDS);
+			TimedScheduler timer = Schedulers.timer();
+
+			timer.schedule(new RetryShutdownTask(timer),
+					retryShutdownMillis,
+					TimeUnit.MILLISECONDS);
 		}
 	}
 

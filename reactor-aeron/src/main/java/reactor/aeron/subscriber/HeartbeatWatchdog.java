@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
 import reactor.core.flow.Cancellation;
-import reactor.core.scheduler.Timer;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.util.Logger;
 
 /**
@@ -76,7 +76,7 @@ class HeartbeatWatchdog {
 
 	public void start() {
 		long period = (heartbeatTimeoutNs * 3000) / 2;
-		this.cancellable = Timer.global().schedulePeriodically(
+		this.cancellable = Schedulers.timer().schedulePeriodically(
 				sessionReaper, period, period, TimeUnit .MILLISECONDS);
 
 		logger.debug("HeartbeatWatchdog started");

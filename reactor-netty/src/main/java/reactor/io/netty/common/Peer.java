@@ -19,8 +19,8 @@ package reactor.io.netty.common;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.scheduler.Timer;
 import reactor.core.state.Completable;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
@@ -50,7 +50,7 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>
 	}
 
 	protected Peer(TimedScheduler defaultTimer, long prefetch) {
-		this.defaultTimer = defaultTimer == null ? Timer.global() : defaultTimer;
+		this.defaultTimer = defaultTimer == null ? Schedulers.timer() : defaultTimer;
 		this.defaultPrefetch = prefetch > 0 ? prefetch : Long.MAX_VALUE;
 		this.started = new AtomicBoolean();
 	}

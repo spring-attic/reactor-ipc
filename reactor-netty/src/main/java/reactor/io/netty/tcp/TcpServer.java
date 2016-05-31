@@ -36,8 +36,8 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
@@ -173,7 +173,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	 */
 	public static TcpServer create(String bindAddress, int port) {
 		return create(ServerOptions.create()
-		                           .timer(Timer.globalOrNull())
+		                           .timer(Schedulers.timer())
 		                           .listen(bindAddress, port));
 	}
 
