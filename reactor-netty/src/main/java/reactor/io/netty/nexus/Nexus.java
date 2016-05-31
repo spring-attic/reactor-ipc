@@ -42,7 +42,6 @@ import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.scheduler.Timer;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SubmissionEmitter;
 import reactor.core.util.Exceptions;
@@ -204,7 +203,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		this.server = server;
 		this.eventStream = EmitterProcessor.create(false);
 		this.lastStateMerge = new LastGraphStateMap();
-		this.timer = Timer.create("nexus-poller");
+		this.timer = Schedulers.newTimer("nexus-poller");
 		this.group = Schedulers.newParallel("nexus", 4);
 
 		FluxProcessor<Publisher<Event>, Publisher<Event>> cannons = EmitterProcessor.create();
