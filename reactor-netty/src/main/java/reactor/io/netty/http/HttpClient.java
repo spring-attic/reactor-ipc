@@ -28,7 +28,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Timer;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Completable;
 import reactor.core.util.Exceptions;
 import reactor.io.ipc.ChannelHandler;
@@ -51,7 +51,7 @@ public class HttpClient implements Loopback, Completable {
 	 */
 	public static HttpClient create() {
 		return create(ClientOptions.create()
-		                           .timer(Timer.globalOrNull()).sslSupport());
+		                           .timer(Schedulers.timer()).sslSupport());
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class HttpClient implements Loopback, Completable {
 	 */
 	public static HttpClient create(String address, int port) {
 		return create(ClientOptions.create()
-		                           .timer(Timer.globalOrNull())
+		                           .timer(Schedulers.timer())
 		                           .connect(address, port));
 	}
 

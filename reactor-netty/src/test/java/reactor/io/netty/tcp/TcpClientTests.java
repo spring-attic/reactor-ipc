@@ -38,7 +38,7 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Computations;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.PlatformDependent;
 import reactor.io.netty.common.NettyCodec;
@@ -164,7 +164,7 @@ public class TcpClientTests {
 			channel.send(
 			  Flux.range(1, messages)
 				.map(i -> "Hello World!")
-				.subscribeOn(Computations.concurrent("test-line-feed"))
+				.subscribeOn(Schedulers.parallel())
 			, NettyCodec.linefeed()).subscribe();
 
 			return Flux.never();

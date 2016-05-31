@@ -53,7 +53,7 @@ public final class ByteBufEncodedFlux extends FluxSource<ByteBuf, ByteBuf> {
 		return using(alloc::compositeBuffer,
 				b -> this.reduce(b, (prev, next) -> prev.addComponent(next.retain()))
 				         .doOnNext(cbb -> cbb.writerIndex(cbb.capacity()))
-				         .where(ByteBuf::isReadable),
+				         .filter(ByteBuf::isReadable),
 				ByteBuf::release).as(ByteBufEncodedMono::new);
 	}
 
