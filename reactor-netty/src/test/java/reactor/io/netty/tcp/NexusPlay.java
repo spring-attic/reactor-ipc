@@ -23,8 +23,8 @@ import java.util.logging.Level;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.Computations;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.Logger;
 import reactor.io.netty.nexus.Nexus;
@@ -65,8 +65,10 @@ public class NexusPlay {
 				// =========================================================
 
 				FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
-				Flux<Integer> dispatched = p
-				                                   .publishOn(Computations.parallel("semi-fast",  8192, 4));
+				Flux<Integer> dispatched = p.publishOn(Schedulers.newComputation(
+						"semi-fast",
+						4,
+						8192));
 
 				//slow subscribers
 				for(int i = 0; i < 2; i++) {
@@ -87,7 +89,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.publishOn(Computations.parallel("semi-slow", 1024, 4));
+				dispatched = p.publishOn(Schedulers.newComputation("semi-slow", 4, 1024));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -110,7 +112,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.publishOn(Computations.parallel("slow", 1024, 3));
+				dispatched = p.publishOn(Schedulers.newComputation("slow", 3, 1024));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -147,9 +149,9 @@ public class NexusPlay {
 		new Thread("schedulerGroupSample"){
 			@Override
 			public void run() {
-				Scheduler io = Computations.concurrent();
-				Scheduler single = Computations.single();
-				Scheduler async = Computations.parallel();
+				Scheduler io = Schedulers.parallel();
+				Scheduler single = Schedulers.single();
+				Scheduler async = Schedulers.computation();
 				nexus.monitor(io);
 				nexus.monitor(single);
 				nexus.monitor(async);
