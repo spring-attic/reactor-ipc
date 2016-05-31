@@ -35,13 +35,15 @@ public class NettyNativeDetector {
 
 
 	static {
-		if (!PlatformDependent.isWindows()
-				&&
-				Boolean.parseBoolean(System.getProperty("reactor.io.epoll", "true"))) {
-				epoll = EpollDetector.hasEpoll();
-		}
-		else {
-			epoll = true;
+		if (Boolean.parseBoolean(System.getProperty("reactor.io.epoll", "true"))) {
+			if (!PlatformDependent.isWindows()) {
+					epoll = EpollDetector.hasEpoll();
+			}
+			else {
+				epoll = true;
+			}
+		} else {
+			epoll = false;
 		}
 	}
 
