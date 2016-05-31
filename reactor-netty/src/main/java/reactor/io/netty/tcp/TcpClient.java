@@ -148,7 +148,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	 */
 	public static TcpClient create(String bindAddress, int port) {
 		return create(ClientOptions.to(bindAddress, port)
-		                           .timer(Schedulers.timer());
+		                           .timer(Schedulers.timer()));
 	}
 
 	/**
