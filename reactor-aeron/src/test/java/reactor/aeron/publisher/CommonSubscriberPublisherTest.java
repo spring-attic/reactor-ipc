@@ -85,7 +85,7 @@ public abstract class CommonSubscriberPublisherTest {
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher"));
 
-		TestSubscriber<String> clientSubscriber = new TestSubscriber<String>();
+		TestSubscriber<String> clientSubscriber = TestSubscriber.create();
 		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
 
@@ -97,7 +97,7 @@ public abstract class CommonSubscriberPublisherTest {
 		AeronSubscriber subscriber = AeronSubscriber.create(createContext("subscriber"));
 		AeronFlux publisher = new AeronFlux(createContext("publisher"));
 
-		TestSubscriber<String> clientSubscriber = new TestSubscriber<String>();
+		TestSubscriber<String> clientSubscriber = TestSubscriber.create();
 		Buffer.bufferToString(publisher).subscribe(clientSubscriber);
 
 
@@ -179,7 +179,7 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(true));
-		TestSubscriber<String> client = new TestSubscriber<String>(0);
+		TestSubscriber<String> client = TestSubscriber.create(0);
 		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(1);
@@ -198,7 +198,7 @@ public abstract class CommonSubscriberPublisherTest {
 		Buffer.stringToBuffer(valuePublisher).subscribe(aeronSubscriber);
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(false));
-		TestSubscriber<String> client = new TestSubscriber<String>(0);
+		TestSubscriber<String> client = TestSubscriber.create(0);
 		Buffer.bufferToString(publisher).subscribe(client);
 
 		client.request(1);

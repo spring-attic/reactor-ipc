@@ -86,7 +86,7 @@ public class AeronProcessorTest {
 					Buffer.wrap("Live"))
 			    .subscribe(processor);
 
-			TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
+			TestSubscriber<String> subscriber = TestSubscriber.create(0);
 			Buffer.bufferToString(processor).subscribe(subscriber);
 			subscriber.request(1);
 
@@ -115,7 +115,7 @@ public class AeronProcessorTest {
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
-		TestSubscriber<String>subscriber = new TestSubscriber<String>(0);
+		TestSubscriber<String>subscriber = TestSubscriber.create(0);
 		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(1);
 
@@ -130,7 +130,7 @@ public class AeronProcessorTest {
 				Buffer.wrap("Live"))
 				.subscribe(processor);
 
-		TestSubscriber<String>subscriber = new TestSubscriber<String>(0);
+		TestSubscriber<String>subscriber = TestSubscriber.create(0);
 		Buffer.bufferToString(processor).subscribe(subscriber);
 		subscriber.request(1);
 

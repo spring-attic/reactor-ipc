@@ -51,7 +51,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		AeronFlux publisher1 = new AeronFlux(createContext("publisher1"));
 
-		TestSubscriber<String> client1 = new TestSubscriber<String>(0);
+		TestSubscriber<String> client1 = TestSubscriber.create(0);
 		Buffer.bufferToString(publisher1).subscribe(client1);
 
 
@@ -65,7 +65,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		AeronFlux publisher2 = new AeronFlux(createContext("publisher2")
 				.receiverChannel(AeronTestUtils.availableLocalhostChannel()));
 
-		TestSubscriber<String> client2 = new TestSubscriber<String>(0);
+		TestSubscriber<String> client2 = TestSubscriber.create(0);
 		Buffer.bufferToString(publisher2).subscribe(client2);
 
 
@@ -91,7 +91,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		Flux.fromIterable(createBuffers(6)).subscribe(aeronSubscriber);
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(false));
-		TestSubscriber<String> client = new TestSubscriber<String>(0);
+		TestSubscriber<String> client = TestSubscriber.create(0);
 
 		Buffer.bufferToString(publisher).subscribe(client);
 
@@ -146,7 +146,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		AeronFlux publisher2 = new AeronFlux(createContext("publisher2"));
 
-		TestSubscriber<String> client2 = new TestSubscriber<String>(0);
+		TestSubscriber<String> client2 = TestSubscriber.create(0);
 		Buffer.bufferToString(publisher2).subscribe(client2);
 
 		client2.request(3);
@@ -163,7 +163,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		Flux.fromIterable(createBuffers(3)).subscribe(aeronSubscriber);
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(false));
-		TestSubscriber<String> client = new TestSubscriber<>(0);
+		TestSubscriber<String> client = TestSubscriber.create(0);
 
 		Buffer.bufferToString(publisher).subscribe(client);
 
@@ -184,7 +184,7 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 		Flux.<Buffer>error(new RuntimeException("Oops!")).subscribe(aeronSubscriber);
 
 		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(false));
-		TestSubscriber<String> client = new TestSubscriber<>(0);
+		TestSubscriber<String> client = TestSubscriber.create(0);
 
 		Buffer.bufferToString(publisher).subscribe(client);
 

@@ -73,7 +73,7 @@ public class AeronFluxTest {
 	public void testShutdown() {
 		AeronFlux publisher = new AeronFlux(context);
 
-		TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
+		TestSubscriber<String> subscriber = TestSubscriber.create(0);
 		Buffer.bufferToString(publisher).subscribe(subscriber);
 
 		publisher.shutdown();
@@ -88,7 +88,7 @@ public class AeronFluxTest {
 
 		AeronFlux publisher = new AeronFlux(context);
 
-		TestSubscriber<String> subscriber = new TestSubscriber<String>(0);
+		TestSubscriber<String> subscriber = TestSubscriber.create(0);
 		Buffer.bufferToString(publisher).subscribe(subscriber);
 
 		TestSubscriber.await(Duration.ofSeconds(2), "publisher didn't terminate due to heartbeat loss", publisher::isTerminated);
