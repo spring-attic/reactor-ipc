@@ -23,7 +23,6 @@ import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.ServiceMessageType;
 import reactor.core.flow.Receiver;
-import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import uk.co.real_logic.aeron.FragmentAssembler;
 import uk.co.real_logic.aeron.Subscription;
@@ -116,11 +115,11 @@ class ServiceMessagePoller implements Runnable, Receiver {
 		this.serviceMessageHandler = serviceMessageHandler;
 		this.aeronInfra = aeronInfra;
 		this.serviceRequestSub = aeronInfra.addSubscription(context.senderChannel(), context.serviceRequestStreamId());
-		this.executor = Executors.newCachedThreadPool(ExecutorUtils.newNamedFactory(AeronUtils.makeThreadName(
-				context.name(), "subscriber", "service-poller"),
-				null,
-				null,
-				false));
+		this.executor = Executors.newCachedThreadPool(
+				r -> new Thread(r, AeronUtils.makeThreadName(
+						context.name(),
+						"subscriber",
+						"service-poller")));
 	}
 
 	void start() {

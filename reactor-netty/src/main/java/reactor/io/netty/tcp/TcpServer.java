@@ -40,7 +40,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.io.ipc.Channel;
@@ -195,14 +194,14 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		int ioThreadCount = DEFAULT_TCP_THREAD_COUNT;
 
 		this.selectorGroup = NettyNativeDetector.newEventLoopGroup(selectThreadCount,
-				ExecutorUtils.newNamedFactory("reactor-tcp-server-select"));
+				(Runnable r) -> new Thread(r, "reactor-tcp-server-select"));
 
 		if (null != options.eventLoopGroup()) {
 			this.ioGroup = options.eventLoopGroup();
 		}
 		else {
 			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount,
-					ExecutorUtils.newNamedFactory("reactor-tcp-server-io"));
+					(Runnable r) -> new Thread(r, "reactor-tcp-server-io"));
 		}
 
 		ServerBootstrap _serverBootstrap = new ServerBootstrap().group(selectorGroup, ioGroup)

@@ -39,7 +39,6 @@ import reactor.core.publisher.MonoProcessor;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
@@ -197,7 +196,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		else {
 			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
 			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount,
-					ExecutorUtils.newNamedFactory("reactor-tcp-client-io"));
+					(Runnable r) -> new Thread(r, "reactor-tcp-client-io"));
 		}
 
 		if(options.ssl() != null){

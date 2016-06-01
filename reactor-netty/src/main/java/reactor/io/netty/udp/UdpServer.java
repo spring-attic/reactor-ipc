@@ -40,11 +40,9 @@ import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.io.ipc.Channel;
@@ -183,10 +181,10 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 		} else {
 			int ioThreadCount = DEFAULT_UDP_THREAD_COUNT;
 			this.ioGroup = options.protocolFamily() == null ?
-							NettyNativeDetector.newEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory
-									("reactor-udp-io")) :
-							new NioEventLoopGroup(ioThreadCount, ExecutorUtils.newNamedFactory
-									("reactor-udp-io"));
+							NettyNativeDetector.newEventLoopGroup(ioThreadCount,
+									(Runnable r) -> new Thread(r, "reactor-udp-io")) :
+							new NioEventLoopGroup(ioThreadCount, (Runnable r) -> new
+									Thread(r, "reactor-udp-io"));
 		}
 
 		this.bootstrap = new Bootstrap()

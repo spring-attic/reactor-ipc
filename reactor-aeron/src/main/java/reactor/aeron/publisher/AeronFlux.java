@@ -15,7 +15,6 @@
  */
 package reactor.aeron.publisher;
 
-import java.sql.Time;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,7 +32,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.core.util.UUIDUtils;
 import reactor.io.buffer.Buffer;
@@ -125,10 +123,10 @@ public final class AeronFlux extends Flux<Buffer> implements Producer {
 		this.context = context;
 		this.aeronInfra = context.aeronInfra();
 		this.executor =
-				Executors.newCachedThreadPool(ExecutorUtils.newNamedFactory(AeronUtils.makeThreadName(
+				Executors.newCachedThreadPool(r -> new Thread(r, AeronUtils.makeThreadName(
 						context.name(),
 						"publisher",
-						"signal-poller"), null, null, false));
+						"signal-poller")));
 		this.serviceRequestPub = createServiceRequestPub(context, this.aeronInfra);
 		this.sessionId = getSessionId(context);
 		this.serviceMessageSender = new ServiceMessageSender(this, serviceRequestPub, sessionId);
