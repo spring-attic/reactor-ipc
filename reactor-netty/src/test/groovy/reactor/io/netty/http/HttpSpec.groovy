@@ -50,7 +50,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().get(Duration.ofSeconds(5))
+	!server.start().block(Duration.ofSeconds(5))
 
 	when: "data is sent with Reactor HTTP support"
 
@@ -76,7 +76,7 @@ class HttpSpec extends Specification {
 
 	then: "data was not recieved"
 	//the produced reply should be there soon
-	!content.get(Duration.ofSeconds(5))
+	!content.block(Duration.ofSeconds(5))
   }
 
 
@@ -103,7 +103,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().get(Duration.ofSeconds(5))
+	!server.start().block(Duration.ofSeconds(5))
 
 	when: "data is sent with Reactor HTTP support"
 
@@ -134,7 +134,7 @@ class HttpSpec extends Specification {
 
 	then: "data was recieved"
 	//the produced reply should be there soon
-	content.get(Duration.ofSeconds(5000)) == "Hello World!"
+	content.block(Duration.ofSeconds(5000)) == "Hello World!"
 
 	cleanup: "the client/server where stopped"
 	//note how we order first the client then the server shutdown
@@ -163,7 +163,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().get(Duration.ofSeconds(5))
+	!server.start().block(Duration.ofSeconds(5))
 
 	when:
 	def client = HttpClient.create("localhost", server.listenAddress.port)
@@ -182,7 +182,7 @@ class HttpSpec extends Specification {
 	 			 Mono.just(replies.status().code())
 			  .log("received-status-1")
 			} as Function)
-			.get(Duration.ofSeconds(5))
+			.block(Duration.ofSeconds(5))
 
 
 
@@ -197,7 +197,7 @@ class HttpSpec extends Specification {
 			.flatMap { replies -> replies.receive().log("received-status-2")
 	}
 	.next()
-			.get(Duration.ofSeconds(3))
+			.block(Duration.ofSeconds(3))
 
 	then: "data was recieved"
 	//the produced reply should be there soon
@@ -214,7 +214,7 @@ class HttpSpec extends Specification {
 			  .log("received-status-3")
 	}
 	.next()
-			.get(Duration.ofSeconds(5))
+			.block(Duration.ofSeconds(5))
 
 	then: "data was recieved"
 	//the produced reply should be there soon
@@ -256,7 +256,7 @@ class HttpSpec extends Specification {
 
 		res
 	}
-	server.start().get(Duration.ofSeconds(5))
+	server.start().block(Duration.ofSeconds(5))
 
 	then: "the server was started"
 	server
@@ -286,7 +286,7 @@ class HttpSpec extends Specification {
 			  .doOnNext { clientRes++ }
 	}
 	.take(1000)
-			.toList()
+			.collectList()
 			.cache()
 			.doOnError {
 	  			//something failed during the request or the reply processing

@@ -27,7 +27,7 @@ import reactor.io.netty.common.NettyInbound;
 import reactor.io.netty.http.multipart.MultipartCodec;
 
 /**
- * An Http Reactive client read contract for incoming response. It inherits several accessor related to HTTP
+ * An Http Reactive read contract for incoming response. It inherits several accessor related to HTTP
  * flow : headers, params,
  * URI, method, websocket...
  *

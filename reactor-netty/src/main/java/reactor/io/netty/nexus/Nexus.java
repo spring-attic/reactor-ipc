@@ -389,7 +389,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * @see this#start(ChannelHandler)
 	 */
 	public final void startAndAwait() throws InterruptedException {
-		start().get();
+		start().block();
 		InetSocketAddress addr = server.getListenAddress();
 		log.info("Nexus Warped. Transmitting signal to troops under http://" + addr.getHostName() + ":" + addr.getPort() +
 				API_STREAM_URL);

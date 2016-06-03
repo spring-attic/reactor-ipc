@@ -41,7 +41,7 @@ public class WebsocketTests {
 		httpServer = HttpServer.create(0);
 		httpServer.start(channel -> channel.upgradeToTextWebsocket()
 		                                   .concatWith(channel.sendString(Mono.just("test"))))
-		          .get();
+		          .block();
 	}
 
 	@Test
@@ -52,8 +52,8 @@ public class WebsocketTests {
 					                             .upgradeToTextWebsocket())
 			                       .flatMap(HttpInbound::receiveString)
 			                       .log()
-			                       .toList()
-			                       .get()
+			                       .collectList()
+			                       .block()
 		                       .get(0);
 
 		if (!res.equals("test")) {

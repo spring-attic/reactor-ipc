@@ -46,7 +46,7 @@ public class PostAndGetTests {
 		httpServer = HttpServer.create(0);
 		httpServer.get("/get/{name}", getHandler());
 		httpServer.post("/post", postHandler());
-		httpServer.start().get();
+		httpServer.start().block();
 	}
 
 	ChannelHandler<ByteBuf, ByteBuf, HttpChannel> getHandler() {

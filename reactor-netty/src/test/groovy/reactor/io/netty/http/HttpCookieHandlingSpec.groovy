@@ -38,7 +38,7 @@ public class HttpCookieHandlingSpec extends Specification{
 
 	then: "the server was started"
 	server
-	!server.start().get(Duration.ofSeconds(5))
+	!server.start().block(Duration.ofSeconds(5))
 
 	when: "a request with URI is sent onto the server"
 	def client = HttpClient.create("localhost", server.listenAddress.port)
@@ -56,7 +56,7 @@ public class HttpCookieHandlingSpec extends Specification{
 	then: "data with cookies was received"
 	def value = ""
 	try {
-	  def receivedCookies = cookieResponse.get(Duration.ofSeconds(5))
+	  def receivedCookies = cookieResponse.block(Duration.ofSeconds(5))
 	  value = receivedCookies.get("cookie1")[0].value()
 	} catch (RuntimeException ex) {
 	  println ex.getMessage();

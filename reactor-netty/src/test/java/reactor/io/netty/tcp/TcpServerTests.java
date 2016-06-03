@@ -129,7 +129,7 @@ public class TcpServerTests {
 			return ch.send(Flux.just(new Pojo("John" + " Doe")), NettyCodec.json(Pojo.class))
 					.concatWith(Flux.never());
 //			return Mono.empty();
-		}).get();
+		}).block();
 
 		assertTrue("Latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -171,7 +171,7 @@ public class TcpServerTests {
 			  });
 			  return Flux.never();
 		  }
-		).get();
+		).block();
 
 		start.set(System.currentTimeMillis());
 		for (int i = 0; i < threads; i++) {
@@ -212,7 +212,7 @@ public class TcpServerTests {
 				latch.countDown();
 			});
 			return Flux.never();
-		}).get();
+		}).block();
 
 		System.out.println("Starting on "+port);
 		start.set(System.currentTimeMillis());
@@ -245,10 +245,10 @@ public class TcpServerTests {
 			latch.countDown();
 
 			return Flux.never();
-		}).get();
+		}).block();
 
 		client.start(ch -> ch.sendString(Flux.just("Hello World!")))
-		      .get();
+		      .block();
 
 		assertTrue("latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
@@ -278,10 +278,10 @@ public class TcpServerTests {
 		                                                 .listen(port)
 		);
 
-		server.start(serverHandler).get();
+		server.start(serverHandler).block();
 
 		client.start(ch -> ch.send(Flux.just("Hello World!", "Hello 11!"), NettyCodec.linefeed()))
-		      .get();
+		      .block();
 
 		assertTrue("Latch was counted down", latch.await(10, TimeUnit.SECONDS));
 
@@ -323,7 +323,7 @@ public class TcpServerTests {
 			  );
 		});
 
-		httpServer.start().get();
+		httpServer.start().block();
 
 
 		for (int i = 0; i < 50; i++) {
@@ -351,7 +351,7 @@ public class TcpServerTests {
 			});
 			return Flux.never();
 		})
-		      .get();
+		      .block();
 
 		System.out.println("PORT +"+server.getListenAddress().getPort());
 		TcpClient client = TcpClient.create("127.0.0.1",
@@ -359,7 +359,7 @@ public class TcpServerTests {
 				      .getPort());
 
 		client.start(ch -> ch.sendString(Flux.just("test"))
-		).get();
+		).block();
 
 		assertThat("countDownLatch counted down", countDownLatch.await(5, TimeUnit.SECONDS));
 	}
@@ -374,7 +374,7 @@ public class TcpServerTests {
 			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive())
 			  )
 		);
-		server.start().get();
+		server.start().block();
 		//System.in.read();
 		Thread.sleep(1000000);
 	}
@@ -394,7 +394,7 @@ public class TcpServerTests {
 			                                                          .useCapacity(100))
 			  )
 		);
-		server.start().get();
+		server.start().block();
 		//System.in.read();
 		Thread.sleep(1000000);
 	}

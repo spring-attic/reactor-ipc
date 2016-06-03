@@ -100,7 +100,7 @@ public class ClientServerHttpTests {
 				try {
 					Mono<List<String>> clientDataPromise1 = getClientDataPromise();
 					latch1.countDown();
-					data1.addAll(clientDataPromise1.get());
+					data1.addAll(clientDataPromise1.block());
 				} catch (Exception ie) {
 				}
 			}
@@ -125,7 +125,7 @@ public class ClientServerHttpTests {
 				try {
 					Mono<List<String>> clientDataPromise2 = getClientDataPromise();
 					latch2.countDown();
-					data2.addAll(clientDataPromise2.get());
+					data2.addAll(clientDataPromise2.block());
 				} catch (Exception ie) {
 					ie.printStackTrace();
 				}
@@ -227,7 +227,7 @@ public class ClientServerHttpTests {
 
 	@After
 	public void clean() throws Exception {
-		httpServer.shutdown().get();
+		httpServer.shutdown().block();
 		Schedulers.shutdownNow();
 	}
 
@@ -260,11 +260,11 @@ public class ClientServerHttpTests {
 				                              .concatWith(Flux.just(new ArrayList<>()))
 				                              .useCapacity(1L), NettyCodec.from(codec)));
 
-		httpServer.start().get();
+		httpServer.start().block();
 	}
 
 	private List<String> getClientData() throws Exception {
-		return getClientDataPromise().get();
+		return getClientDataPromise().block();
 	}
 
 	private Mono<List<String>> getClientDataPromise() throws Exception {
@@ -276,7 +276,7 @@ public class ClientServerHttpTests {
 		                 .flatMap(s -> s.receiveString()
 		                                .log("client")
 		                                .next())
-		                 .toList()
+		                 .collectList()
 		                 .cache()
 		                 .subscribe();
 	}
@@ -293,7 +293,7 @@ public class ClientServerHttpTests {
 					latch.await();
 					Mono<List<String>> clientDataPromise = getClientDataPromise();
 					promiseLatch.countDown();
-					datas.add(clientDataPromise.get(Duration.ofSeconds(10)));
+					datas.add(clientDataPromise.block(Duration.ofSeconds(10)));
 				}
 				catch (Exception ie) {
 					ie.printStackTrace();

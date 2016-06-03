@@ -108,7 +108,7 @@ public class UdpServerTests {
 		});
 
 		assertThat("latch was counted down", latch.await(10, TimeUnit.SECONDS));
-		server.shutdown().get();
+		server.shutdown().block();
 	}
 
 	@Test
@@ -153,7 +153,7 @@ public class UdpServerTests {
 				catch (Throwable t) {
 					throw new IllegalStateException(t);
 				}
-			}).get();
+			}).block();
 
 			servers.add(server);
 		}
@@ -180,7 +180,7 @@ public class UdpServerTests {
 		assertThat("latch was not counted down enough: "+latch.getCount()+" left on "+(4 ^ 2), latch.getCount() == 0 );
 
 		for (UdpServer s : servers) {
-			s.shutdown().get();
+			s.shutdown().block();
 		}
 	}
 

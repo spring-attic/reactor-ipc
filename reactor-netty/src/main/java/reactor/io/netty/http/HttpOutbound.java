@@ -16,11 +16,9 @@
 
 package reactor.io.netty.http;
 
-import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.cookie.Cookie;
 import reactor.core.publisher.Mono;
-import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyOutbound;
 
 /**

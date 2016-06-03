@@ -345,7 +345,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 	 * @see this#start()
 	 */
 	public final void startAndAwait() throws TimeoutException {
-		start().get();
+		start().block();
 	}
 
 	/**

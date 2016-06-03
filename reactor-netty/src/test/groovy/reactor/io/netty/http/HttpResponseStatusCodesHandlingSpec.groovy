@@ -40,7 +40,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
 
         then: "the server was started"
           server
-          !server.start().get(Duration.ofSeconds(5))
+          !server.start().block(Duration.ofSeconds(5))
 
         when: "a request with unsupported URI is sent onto the server"
             def client = HttpClient.create("localhost", server.listenAddress.port)
@@ -76,7 +76,7 @@ public class HttpResponseStatusCodesHandlingSpec extends Specification {
             def exceptionMessage = ""
 
             try {
-                content.get();
+                content.block();
             } catch (RuntimeException ex) {
                 exceptionMessage = ex.getMessage();
             }

@@ -102,7 +102,7 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>
 	 */
 	public final void shutdownAndAwait()
 			throws InterruptedException {
-		shutdown().get();
+		shutdown().block();
 	}
 
 	/**
@@ -131,7 +131,7 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>
 	 */
 	public final void startAndAwait(final ChannelHandler<IN, OUT, CONN> handler)
 			throws InterruptedException {
-		start(handler).get();
+		start(handler).block();
 	}
 
 	protected abstract Mono<Void> doStart(

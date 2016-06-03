@@ -101,7 +101,7 @@ public class SmokeTests {
 	@After
 	public void clean() throws Exception {
 		processor.onComplete();
-		httpServer.shutdown().get();
+		httpServer.shutdown().block();
 		Schedulers.shutdownNow();
 	}
 
@@ -298,18 +298,18 @@ public class SmokeTests {
 			                                .useCapacity(1L), NettyCodec.from(codec));
 		});
 
-		httpServer.start().get();
+		httpServer.start().block();
 	}
 
 	private List<String> getClientDataPromise() throws Exception {
 		HttpClient httpClient = HttpClient.create(nettyOptions);
 
 		Mono<List<String>> content = httpClient.get("/data")
-		                                       .then(f -> f.receiveString().toList())
+		                                       .then(f -> f.receiveString().collectList())
 		                                       .cache();
 
-		List<String> res = content.get(Duration.ofSeconds(20));
-		httpClient.shutdown().get();
+		List<String> res = content.block(Duration.ofSeconds(20));
+		httpClient.shutdown().block();
 		return res;
 	}
 

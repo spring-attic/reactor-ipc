@@ -136,7 +136,7 @@ public class TcpClientTests {
 			     .subscribe();
 
 			return Flux.never();
-		}).get(Duration.ofSeconds(5));
+		}).block(Duration.ofSeconds(5));
 
 		latch.await(5, TimeUnit.SECONDS);
 
@@ -168,7 +168,7 @@ public class TcpClientTests {
 			, NettyCodec.linefeed()).subscribe();
 
 			return Flux.never();
-		}).get(Duration.ofSeconds(5));
+		}).block(Duration.ofSeconds(5));
 
 		assertTrue("Expected messages not received. Received " + strings.size() + " messages: " + strings,
 		  latch.await(5, TimeUnit.SECONDS));
@@ -186,7 +186,7 @@ public class TcpClientTests {
 
 		client.start(null);
 
-		client.shutdown().get(Duration.ofSeconds(30));
+		client.shutdown().block(Duration.ofSeconds(30));
 	}
 
 	@Test
@@ -329,9 +329,9 @@ public class TcpClientTests {
 
 		final CountDownLatch latch = new CountDownLatch(1);
 		System.out.println(client.get("http://www.google.com/?q=test%20d%20dq")
-		      .then(r -> r.receiveString().toList())
+		      .then(r -> r.receiveString().collectList())
 		      .doOnSuccess(v -> latch.countDown())
-		      .get());
+		      .block());
 
 
 		assertTrue("Latch didn't time out", latch.await(15, TimeUnit.SECONDS));
