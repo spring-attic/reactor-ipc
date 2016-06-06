@@ -298,7 +298,7 @@ class HttpSpec extends Specification {
 
 	then: "data was recieved"
 	//the produced reply should be there soon
-	content.get(100000)[1000 - 1] == "1000 World!"
+	content.block(Duration.ofSeconds(15))[1000 - 1] == "1000 World!"
 
 	cleanup: "the client/server where stopped"
 	//note how we order first the client then the server shutdown

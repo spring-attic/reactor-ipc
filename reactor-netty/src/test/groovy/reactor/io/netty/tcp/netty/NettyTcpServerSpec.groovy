@@ -45,7 +45,7 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the server is started"
 		server.start { conn -> conn.sendString(Flux.just("Hello World!"))
-			}.get()
+			}.block()
 
 			def client = new SimpleClient(port, dataLatch, "Hello World!")
 			client.start()
@@ -72,7 +72,7 @@ class NettyTcpServerSpec extends Specification {
 							new Pojo(name: "Jane Doe")
 						}
 				  , NettyCodec.json(Pojo))
-		}).get()
+		}).block()
 
 			def client = new SimpleClient(port, dataLatch, "{\"name\":\"John Doe\"}")
 			client.start()
@@ -101,7 +101,7 @@ class NettyTcpServerSpec extends Specification {
 								.log('serve')
 								.useCapacity(5l), NettyCodec.from(codec)
 				)
-			}.get()
+			}.block()
 
 			client.start { input ->
 			  input.receive(NettyCodec.from(codec))
@@ -115,7 +115,7 @@ class NettyTcpServerSpec extends Specification {
 				).subscribe()
 
 			  Flux.never()
-			}.get()
+			}.block()
 
 		then: "the client/server were started"
 			latch.await(5, TimeUnit.SECONDS)
@@ -152,7 +152,7 @@ class NettyTcpServerSpec extends Specification {
 			  }
 			  .useCapacity(10l)
 					  , NettyCodec.from(codec))
-			}.get()
+			}.block()
 
 			client.start { input ->
 			  input.receive(NettyCodec.from(codec))
@@ -166,7 +166,7 @@ class NettyTcpServerSpec extends Specification {
 				).subscribe()
 
 			  Flux.never()
-			}.get()
+			}.block()
 
 		then: "the client/server were started"
 			latch.await(10, TimeUnit.SECONDS)
