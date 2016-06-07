@@ -33,7 +33,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.UUIDUtils;
+import reactor.io.util.UUIDUtils;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 
