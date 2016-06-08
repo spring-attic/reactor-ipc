@@ -27,7 +27,6 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 
@@ -49,7 +48,7 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 			NettyHttpServerHandler originalHandler,
 			boolean plainText
 	) {
-		super(originalHandler.getHandler(), originalHandler.tcpStream);
+		super(originalHandler.getHandler(), null);
 		this.request = originalHandler.request;
 		this.plainText = plainText;
 
@@ -57,16 +56,16 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(wsUrl, protocols, true);
 		handshaker = wsFactory.newHandshaker(request.getNettyRequest());
 		if (handshaker == null) {
-			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(nettyChannel.delegate());
+			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(request
+					.delegate());
 			handshakerResult = null;
 		}
 		else {
 			HttpUtil.setTransferEncodingChunked(request.getNettyResponse(), false);
-			handshakerResult = handshaker.handshake(
-					nettyChannel.delegate(),
+			handshakerResult = handshaker.handshake(request.delegate(),
 					request.getNettyRequest(),
 					request.responseHeaders(),
-					nettyChannel.delegate().newPromise());
+					request.delegate().newPromise());
 		}
 	}
 

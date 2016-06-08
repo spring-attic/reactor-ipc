@@ -52,7 +52,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			String protocols,
 			NettyHttpClientHandler originalHandler,
 			boolean plainText) {
-		super(originalHandler.getHandler(), originalHandler.tcpStream);
+		super(originalHandler.getHandler(), null);
 		this.httpChannel = originalHandler.httpChannel;
 		this.replySubscriber = originalHandler.replySubscriber;
 		this.plainText = plainText;

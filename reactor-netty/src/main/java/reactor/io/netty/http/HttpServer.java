@@ -29,11 +29,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
@@ -46,17 +48,18 @@ import reactor.core.scheduler.Schedulers;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.io.ipc.ChannelHandler;
+import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
-import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.tcp.TcpServer;
 
 /**
  * Base functionality needed by all servers that communicate with clients over HTTP.
  * @author Stephane Maldini
  */
-public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements Loopback {
+public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
+		implements Loopback, ChannelBridge<NettyHttpChannel> {
 
 	/**
 	 * Build a simple Netty HTTP server listening on 127.0.0.1 and 12012
@@ -465,8 +468,6 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 
 	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
 
-		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), nativeChannel);
-
 		ChannelPipeline pipeline = nativeChannel.pipeline();
 
 		if (log.isDebugEnabled()) {
@@ -475,8 +476,16 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel> implements L
 
 		pipeline.addLast(new HttpServerCodec());
 
-		pipeline.addLast(NettyHttpServerHandler.class.getSimpleName(), new NettyHttpServerHandler(handler, netChannel));
+		pipeline.addLast(NettyHttpServerHandler.class.getSimpleName(),
+				new NettyHttpServerHandler(handler, this));
 
+	}
+
+	@Override
+	public NettyHttpChannel createChannelBridge(Channel ioChannel, Object... parameters) {
+		return new HttpServerChannel(getDefaultPrefetchSize(),
+				ioChannel,
+				parameters.length > 0 ? (HttpRequest) parameters[0] : null);
 	}
 
 	static final Logger log = Logger.getLogger(HttpServer.class);

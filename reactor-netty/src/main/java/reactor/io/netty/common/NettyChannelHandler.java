@@ -28,7 +28,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -57,14 +56,13 @@ import reactor.io.ipc.ChannelHandler;
  *
  * @author Stephane Maldini
  */
-public class NettyChannelHandler extends ChannelDuplexHandler
-		implements Introspectable, Loopback, Producer,
-		           Completable  {
+public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHandler
+		implements Introspectable, Producer {
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandler.class);
 
 	protected final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler;
-	protected final NettyChannel                                   nettyChannel;
+	protected final ChannelBridge<C>                               bridgeFactory;
 
 	protected ChannelInputSubscriber channelSubscriber;
 
@@ -72,9 +70,11 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 	protected static final AtomicIntegerFieldUpdater<NettyChannelHandler> CHANNEL_REF =
 			AtomicIntegerFieldUpdater.newUpdater(NettyChannelHandler.class, "channelRef");
 
-	public NettyChannelHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, NettyChannel nettyChannel) {
+	public NettyChannelHandler(
+			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			ChannelBridge<C> bridgeFactory) {
 		this.handler = handler;
-		this.nettyChannel = nettyChannel;
+		this.bridgeFactory = bridgeFactory;
 	}
 
 	@Override
@@ -126,20 +126,8 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 		super.channelActive(ctx);
-		handler.apply(nettyChannel)
+		handler.apply(bridgeFactory.createChannelBridge(ctx.channel()))
 		       .subscribe(new CloseSubscriber(ctx));
-	}
-
-	@Override
-	public boolean isStarted() {
-		return nettyChannel.delegate()
-		                   .isActive();
-	}
-
-	@Override
-	public boolean isTerminated() {
-		return !nettyChannel.delegate()
-		                    .isOpen();
 	}
 
 	@Override
@@ -191,11 +179,6 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 				throw err;
 			}
 		}
-	}
-
-	@Override
-	public Object connectedInput() {
-		return nettyChannel;
 	}
 
 	@Override
@@ -725,6 +708,9 @@ public class NettyChannelHandler extends ChannelDuplexHandler
 			public void operationComplete(ChannelFuture future) throws Exception {
 				if (!future.isSuccess() && future.cause() != null) {
 					promise.tryFailure(future.cause());
+					if(log.isDebugEnabled()) {
+						log.debug("Write error", future.cause());
+					}
 					return;
 				}
 				if (capacity == 1L || --written == 0L) {

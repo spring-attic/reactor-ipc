@@ -46,8 +46,6 @@ public class HttpClientOptions extends ClientOptions {
 		return create().connect(host, port);
 	}
 
-	int followRedirect = 0;
-
 	HttpClientOptions(){
 
 	}
@@ -86,32 +84,6 @@ public class HttpClientOptions extends ClientOptions {
 	public HttpClientOptions connect(@Nonnull Supplier<? extends InetSocketAddress> connectAddress) {
 		super.connect(connectAddress);
 		return this;
-	}
-
-	/**
-	 * Enable http status 302 auto-redirect support
-	 * @return {@literal this}
-	 */
-	public HttpClientOptions followRedirects(boolean follow) {
-		this.followRedirect = follow ? -1 : 0;
-		return this;
-	}
-
-	/**
-	 * Enable http status 302 auto-redirect support
-	 * @return {@literal this}
-	 */
-	public HttpClientOptions followRedirects(int maxRedirect) {
-		this.followRedirect = maxRedirect;
-		return this;
-	}
-
-	/**
-	 * Maximum 302 status automatically followed
-	 * @return * Maximum 302 status automatically followed
-	 */
-	public int followRedirects() {
-		return followRedirect;
 	}
 
 	/**
@@ -227,11 +199,6 @@ public class HttpClientOptions extends ClientOptions {
 			if(options.ssl() != null){
 					super.ssl(options.ssl());
 			}
-		}
-
-		@Override
-		public int followRedirects() {
-			return options.followRedirects();
 		}
 
 		@Override
@@ -364,16 +331,6 @@ public class HttpClientOptions extends ClientOptions {
 
 		@Override
 		public HttpClientOptions sndbuf(int sndbuf) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public HttpClientOptions followRedirects(boolean follow) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public HttpClientOptions followRedirects(int maxRedirect) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 

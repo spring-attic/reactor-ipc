@@ -15,6 +15,8 @@
  */
 package reactor.io.netty.common;
 
+import java.util.function.Supplier;
+
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.reactivestreams.Subscriber;
@@ -28,6 +30,10 @@ public class MonoChannelFuture<C extends Future> extends Mono<Void> {
 
 	public static Mono<Void> from(Future future){
 		return new MonoChannelFuture<Future>(future);
+	}
+
+	public static Mono<Void> from(Supplier<? extends Future> deferredFuture){
+		return Mono.defer(() -> new MonoChannelFuture<Future>(deferredFuture.get()));
 	}
 
 	final C future;

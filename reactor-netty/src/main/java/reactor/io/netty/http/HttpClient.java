@@ -18,10 +18,10 @@ package reactor.io.netty.http;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
@@ -30,11 +30,10 @@ import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Completable;
-import reactor.core.util.Exceptions;
 import reactor.io.ipc.ChannelHandler;
+import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.config.ClientOptions;
-import reactor.io.netty.config.HttpClientOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.tcp.TcpClient;
 
@@ -43,7 +42,8 @@ import reactor.io.netty.tcp.TcpClient;
  *
  * @author Stephane Maldini
  */
-public class HttpClient implements Loopback, Completable {
+public class HttpClient
+		implements Loopback, Completable {
 
 
 	/**
@@ -59,6 +59,13 @@ public class HttpClient implements Loopback, Completable {
 	 */
 	public static HttpClient create(ClientOptions options) {
 		return new HttpClient(options);
+	}
+
+	/**
+	 * @return a simple HTTP client
+	 */
+	public static HttpClient create(String address) {
+		return create(address, 80);
 	}
 
 	/**
@@ -89,8 +96,8 @@ public class HttpClient implements Loopback, Completable {
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpInbound> delete(String url,
-			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
+	public final Mono<HttpClientResponse> delete(String url,
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.DELETE, url, handler);
 	}
 
@@ -102,7 +109,7 @@ public class HttpClient implements Loopback, Completable {
 	 *
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for response
 	 */
-	public final Mono<HttpInbound> delete(String url) {
+	public final Mono<HttpClientResponse> delete(String url) {
 		return request(HttpMethod.DELETE, url, null);
 	}
 
@@ -114,8 +121,8 @@ public class HttpClient implements Loopback, Completable {
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpInbound> get(String url,
-			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
+	public final Mono<HttpClientResponse> get(String url,
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.GET, url, handler);
 	}
 
@@ -126,7 +133,7 @@ public class HttpClient implements Loopback, Completable {
 	 *
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for response
 	 */
-	public final Mono<HttpInbound> get(String url) {
+	public final Mono<HttpClientResponse> get(String url) {
 		return request(HttpMethod.GET, url, null);
 	}
 
@@ -138,8 +145,8 @@ public class HttpClient implements Loopback, Completable {
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpInbound> patch(String url,
-			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
+	public final Mono<HttpClientResponse> patch(String url,
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.PATCH, url, handler);
 	}
 
@@ -150,7 +157,7 @@ public class HttpClient implements Loopback, Completable {
 	 *
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for response
 	 */
-	public final Mono<HttpInbound> patch(String url) {
+	public final Mono<HttpClientResponse> patch(String url) {
 		return request(HttpMethod.PATCH, url, null);
 	}
 
@@ -172,8 +179,8 @@ public class HttpClient implements Loopback, Completable {
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpInbound> post(String url,
-			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
+	public final Mono<HttpClientResponse> post(String url,
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.POST, url, handler);
 	}
 
@@ -185,8 +192,8 @@ public class HttpClient implements Loopback, Completable {
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpInbound> put(String url,
-			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
+	public final Mono<HttpClientResponse> put(String url,
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler) {
 		return request(HttpMethod.PUT, url, handler);
 	}
 
@@ -196,13 +203,13 @@ public class HttpClient implements Loopback, Completable {
 	 * write data to it.
 	 * @param method the HTTP method to send
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelHandler} to invoke on open channel
+	 * @param handler the {@link Function} to invoke on opened TCP connection
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public Mono<HttpInbound> request(HttpMethod method,
+	public Mono<HttpClientResponse> request(HttpMethod method,
 			String url,
-			Function<? super HttpOutbound, ? extends Publisher<Void>> handler) {
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler) {
 		final URI currentURI;
 		try {
 			if (method == null && url == null) {
@@ -213,40 +220,7 @@ public class HttpClient implements Loopback, Completable {
 		catch (Exception e) {
 			return Mono.error(e);
 		}
-
-		final int fr;
-		if (client.getOptions() instanceof HttpClientOptions) {
-			fr = ((HttpClientOptions) client.getOptions()).followRedirects();
-		}
-		else {
-			fr = -1;
-		}
-
-		if (fr != 0) {
-			URI[] location = new URI[1];
-			location[0] = currentURI;
-			return Mono.defer(() -> new MonoClientRequest(this, location[0], method, handler))
-			           .retryWhen(errors -> {
-				           int[] tries = new int[1];
-				           tries[0] = 0;
-				           return errors.map(e -> {
-					           if((fr < 0 || tries[0]++ > fr) &&
-							           e instanceof RedirectException){
-						           try {
-							           location[0] = new URI(((RedirectException)e).location);
-						           }
-						           catch (URISyntaxException e1) {
-							           throw Exceptions.propagate(e1);
-						           }
-						           return 0;
-					           }
-					           throw Exceptions.propagate(e);
-				           });
-
-			           });
-		}
-
-		return new MonoClientRequest(this, currentURI, method, handler);
+		return new MonoHttpClientChannel(this, currentURI, method, handler);
 	}
 
 	/**
@@ -255,10 +229,10 @@ public class HttpClient implements Loopback, Completable {
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
-	public final Mono<HttpInbound> ws(String url) {
+	public final Mono<HttpClientResponse> ws(String url) {
 		return request(HttpMethod.GET,
 				parseURL(client.getConnectAddress(), url, true),
-				HttpOutbound::upgradeToWebsocket);
+				HttpClientRequest::upgradeToWebsocket);
 	}
 
 	/**
@@ -268,7 +242,8 @@ public class HttpClient implements Loopback, Completable {
 		return client.shutdown();
 	}
 
-	Mono<Void> doStart(URI url, ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+	Mono<Void> doStart(URI url, ChannelBridge<? extends
+			TcpChannel> bridge, ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
 
 		boolean secure = url.getScheme() != null && (url.getScheme()
 		                                                .toLowerCase()
@@ -277,7 +252,7 @@ public class HttpClient implements Loopback, Completable {
 		                                                                            .equals(WSS_SCHEME));
 		return client.doStart(inoutChannel -> handler.apply(((NettyHttpChannel) inoutChannel)),
 				new InetSocketAddress(url.getHost(),
-						url.getPort() != -1 ? url.getPort() : (secure ? 443 : 80)),
+						url.getPort() != -1 ? url.getPort() : (secure ? 443 : 80)), bridge,
 				secure);
 	}
 
@@ -302,26 +277,29 @@ public class HttpClient implements Loopback, Completable {
 	final static String HTTP_SCHEME  = "http";
 	final static String HTTPS_SCHEME = "https";
 
+	@SuppressWarnings("unchecked")
 	final class TcpBridgeClient extends TcpClient {
 
 		TcpBridgeClient(ClientOptions options) {
 			super(options);
 		}
+
 		@Override
 		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-				SocketChannel ch) {
-			TcpChannel netChannel = new TcpChannel(client.getDefaultPrefetchSize(), ch);
-
+				SocketChannel ch,
+				ChannelBridge<? extends TcpChannel> channelBridge) {
 			ch.pipeline()
 			  .addLast(new HttpClientCodec())
-			  .addLast(new NettyHttpClientHandler(handler, netChannel));
+			  .addLast(new NettyHttpClientHandler(handler,
+					  (ChannelBridge<HttpClientChannel>) channelBridge));
 		}
 
 		@Override
 		protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 				InetSocketAddress address,
+				ChannelBridge<? extends TcpChannel> channelBridge,
 				boolean secure) {
-			return super.doStart(handler, address, secure);
+			return super.doStart(handler, address, channelBridge, secure);
 		}
 
 		@Override

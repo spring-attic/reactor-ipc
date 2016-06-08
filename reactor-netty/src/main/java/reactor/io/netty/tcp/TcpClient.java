@@ -33,6 +33,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import reactor.core.flow.MultiProducer;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
@@ -42,12 +43,13 @@ import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
+import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
+import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
-import reactor.io.netty.config.NettyHandlerNames;
 import reactor.io.netty.config.NettyOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 
@@ -57,7 +59,8 @@ import reactor.io.netty.util.NettyNativeDetector;
  * @author Jon Brisbin
  * @author Stephane Maldini
  */
-public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements Introspectable, MultiProducer {
+public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
+		implements Introspectable, MultiProducer, ChannelBridge<TcpChannel> {
 
 	public static final ChannelHandler PING = o -> Flux.empty();
 
@@ -279,12 +282,13 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	@Override
 	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
 			handler){
-		return doStart(handler, getConnectAddress(), sslContext != null);
+		return doStart(handler, getConnectAddress(), this, sslContext != null);
 	}
 
 	@SuppressWarnings("unchecked")
 	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
-			handler, InetSocketAddress address, boolean secure) {
+			handler, InetSocketAddress address, ChannelBridge<? extends
+			TcpChannel> channelBridge, boolean secure) {
 
 		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler =
 				null == handler ? (ChannelHandler<ByteBuf, ByteBuf, NettyChannel>) PING : handler;
@@ -308,13 +312,14 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		                                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
 				                                      options.timeout());
 		if (!secure) {
-			_bootstrap.handler(new TcpClientChannelSetup(this, null, targetHandler));
-			return Mono.defer(() -> MonoChannelFuture.from(_bootstrap.connect(address)));
+			_bootstrap.handler(new TcpClientChannelSetup(this, null, channelBridge,
+					targetHandler));
+			return MonoChannelFuture.from(_bootstrap.connect(address));
 		}
 		else {
-			MonoProcessor<Void> p = MonoProcessor.create();
-			_bootstrap.handler(new TcpClientChannelSetup(this, p, targetHandler));
-			return MonoChannelFuture.from(_bootstrap.connect(address)).then(p);
+			DirectProcessor<Void> p = DirectProcessor.create();
+			_bootstrap.handler(new TcpClientChannelSetup(this, p, channelBridge, targetHandler));
+			return MonoChannelFuture.from(_bootstrap.connect(address)).flux().then(p);
 
 		}
 	}
@@ -333,11 +338,11 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		return MonoChannelFuture.from(ioGroup.shutdownGracefully());
 	}
 
-	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel ch)
+	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			SocketChannel ch, ChannelBridge<? extends TcpChannel> channelBridge)
 			throws Exception {
-		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), ch);
 		ch.pipeline()
-		  .addLast(new NettyChannelHandler(handler, netChannel));
+		  .addLast(new NettyChannelHandler<>(handler, channelBridge));
 	}
 
 	@Override
@@ -350,14 +355,17 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 	static final class TcpClientChannelSetup extends ChannelInitializer<SocketChannel> {
 
 		final TcpClient                                      parent;
-		final MonoProcessor<Void>  secureCallback;
+		final ChannelBridge<? extends TcpChannel>            channelBridge;
+		final DirectProcessor<Void>                            secureCallback;
 		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler;
 
 		TcpClientChannelSetup(TcpClient parent,
-				MonoProcessor<Void> secureCallback,
+				DirectProcessor<Void> secureCallback,
+				ChannelBridge<? extends TcpChannel> channelBridge,
 				ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler) {
 			this.parent = parent;
 			this.secureCallback = secureCallback;
+			this.channelBridge = channelBridge;
 			this.targetHandler = targetHandler;
 		}
 
@@ -405,7 +413,13 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 				              .accept(pipeline);
 			}
 
-			parent.bindChannel(targetHandler, ch);
+			parent.bindChannel(targetHandler, ch, channelBridge);
 		}
+	}
+
+	@Override
+	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,
+			Object... parameters) {
+		return new TcpChannel(getDefaultPrefetchSize(), ioChannel);
 	}
 }

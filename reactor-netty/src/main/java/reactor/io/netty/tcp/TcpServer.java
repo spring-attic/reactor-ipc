@@ -44,6 +44,7 @@ import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
+import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -57,7 +58,9 @@ import reactor.io.netty.util.NettyNativeDetector;
  *
  * @author Stephane Maldini
  */
-public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements Introspectable, MultiProducer {
+public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
+                                                                    Introspectable, MultiProducer,
+                                                                    ChannelBridge<TcpChannel> {
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.selectThreadCount",
@@ -366,6 +369,15 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 		};
 	}
 
+	@Override
+	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,
+			Object... parameters) {
+		return new TcpChannel(
+				getDefaultPrefetchSize(),
+				ioChannel
+		);
+	}
+
 	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
 		ChannelPipeline pipeline = nativeChannel.pipeline();
 
@@ -379,13 +391,11 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements I
 			            .accept(pipeline);
 		}
 
-		TcpChannel netChannel = new TcpChannel(getDefaultPrefetchSize(), nativeChannel);
-
 
 		if (log.isDebugEnabled()) {
 			pipeline.addLast(new LoggingHandler(TcpServer.class));
 		}
-		pipeline.addLast(new NettyChannelHandler(handler, netChannel));
+		pipeline.addLast(new NettyChannelHandler<>(handler, this));
 	}
 
 	final static Logger log = Logger.getLogger(TcpServer.class);

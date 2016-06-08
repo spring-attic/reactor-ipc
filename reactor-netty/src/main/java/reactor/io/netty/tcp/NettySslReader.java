@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.MonoProcessor;
 
 /**
@@ -28,18 +29,18 @@ import reactor.core.publisher.MonoProcessor;
  */
 final class NettySslReader extends ChannelDuplexHandler {
 
-	final MonoProcessor<Void> secureCallback;
+	final DirectProcessor<Void> secureCallback;
 
 	boolean handshakeDone;
 
-	NettySslReader(MonoProcessor<Void> secureCallback) {
+	NettySslReader(DirectProcessor<Void> secureCallback) {
 		this.secureCallback = secureCallback;
 	}
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		ctx.read(); //consume handshake
-		super.channelActive(ctx);
+		//super.channelActive(ctx);
 	}
 
 	@Override
@@ -58,6 +59,7 @@ final class NettySslReader extends ChannelDuplexHandler {
 			SslHandshakeCompletionEvent handshake = (SslHandshakeCompletionEvent) evt;
 			if(secureCallback != null) {
 				if (handshake.isSuccess()) {
+					ctx.fireChannelActive();
 					secureCallback.onComplete();
 				}
 				else {
@@ -66,6 +68,9 @@ final class NettySslReader extends ChannelDuplexHandler {
 			}
 			else if(!handshake.isSuccess()){
 				ctx.fireExceptionCaught(handshake.cause());
+			}
+			else{
+				ctx.fireChannelActive();
 			}
 		}
 		super.userEventTriggered(ctx, evt);

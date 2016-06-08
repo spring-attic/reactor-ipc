@@ -17,7 +17,6 @@
 package reactor.io.netty.http;
 
 import java.io.File;
-import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +28,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.DefaultFileRegion;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -55,7 +53,6 @@ import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.tcp.TcpChannel;
@@ -64,23 +61,23 @@ import reactor.io.netty.tcp.TcpChannel;
  * @author Sebastien Deleuze
  * @author Stephane Maldini
  */
-abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, HttpInbound,
-                                                           HttpOutbound, Loopback,
-                                                                 Completable {
+abstract class NettyHttpChannel extends TcpChannel
+		implements HttpChannel, HttpInbound, HttpOutbound {
 
 	final static AsciiString EVENT_STREAM = new AsciiString("text/event-stream");
 
-	final TcpChannel  tcpStream;
 	final HttpRequest nettyRequest;
 	final HttpHeaders headers;
 	HttpResponse nettyResponse;
 	HttpHeaders  responseHeaders;
+
 	volatile int statusAndHeadersSent = 0;
 	Function<? super String, Map<String, Object>> paramsResolver;
 
-	public NettyHttpChannel(TcpChannel tcpStream,
-	                        HttpRequest request
+	public NettyHttpChannel(long prefetch,
+			io.netty.channel.Channel ioChannel, HttpRequest request
 	) {
+		super(prefetch, ioChannel);
 		if (request == null) {
 			nettyRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
 		}
@@ -88,7 +85,6 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 			nettyRequest = request;
 		}
 
-		this.tcpStream = tcpStream;
 		this.nettyResponse = new DefaultHttpResponse(nettyRequest.protocolVersion(), HttpResponseStatus.OK);
 		this.headers = nettyRequest.headers();
 		this.responseHeaders = nettyResponse.headers();
@@ -152,22 +148,6 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	}
 
 	@Override
-	public final Object connectedInput() {
-		return tcpStream;
-	}
-
-	@Override
-	public final Object connectedOutput() {
-		return tcpStream;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public SocketChannel delegate() {
-		return (SocketChannel) tcpStream.delegate();
-	}
-
-	@Override
 	public String getName() {
 		if(isWebsocket()){
 			return "ws:" + uri();
@@ -211,16 +191,6 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	}
 
 	@Override
-	public boolean isStarted() {
-		return tcpStream.isStarted();
-	}
-
-	@Override
-	public boolean isTerminated() {
-		return tcpStream.isTerminated();
-	}
-
-	@Override
 	public boolean isWebsocket() {
 		String isWebsocket = headers.get(HttpHeaderNames.UPGRADE);
 		return isWebsocket != null && isWebsocket.toLowerCase().equals("websocket");
@@ -238,11 +208,6 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 	}
 
 	// RESPONSE contract
-
-	@Override
-	public Lifecycle on() {
-		return tcpStream.on();
-	}
 
 	/**
 	 * Read URI param from the given key
@@ -306,11 +271,6 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 		return null;
 	}
 
-	@Override
-	public InetSocketAddress remoteAddress() {
-		return tcpStream.remoteAddress();
-	}
-
 	/**
 	 * Define the response HTTP header for the given key
 	 * @param name the HTTP response header key to override
@@ -372,25 +332,25 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 		//       No need to notify the upstream handlers - just log.
 		//       If decoding a response, just throw an error.
 		if (HttpUtil.is100ContinueExpected(nettyRequest)) {
-			tcpStream.delegate().writeAndFlush(CONTINUE).addListener(new ChannelFutureListener() {
+			delegate().writeAndFlush(CONTINUE).addListener(new ChannelFutureListener() {
 				@Override
 				public void operationComplete(ChannelFuture future) throws Exception {
 					if (!future.isSuccess()) {
 						subscriber.onError(future.cause());
 					} else {
-						tcpStream.subscribe(subscriber);
+						NettyHttpChannel.super.subscribe(subscriber);
 					}
 				}
 			});
 		} else {
-			tcpStream.subscribe(subscriber);
+			super.subscribe(subscriber);
 		}
 	}
 
 	@Override
 	public Mono<Void> sendFile(File file, long position, long count) {
 		Supplier<Mono<Void>> writeFile = () ->
-				MonoChannelFuture.from(tcpStream.delegate()
+				MonoChannelFuture.from(delegate()
 				                                .writeAndFlush(new DefaultFileRegion(file, position, count)));
 		return sendHeaders().then(writeFile);
 	}
@@ -413,8 +373,8 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 			                                 .map(TextWebSocketFrame::new));
 		}
 
-		return send(Flux.from(dataStream)
-		                .map(s -> tcpStream.delegate().alloc().buffer().writeBytes(s.getBytes(charset))));
+		return sendObject(Flux.from(dataStream)
+		                .map(s -> delegate().alloc().buffer().writeBytes(s.getBytes(charset))));
 	}
 
 	/**
@@ -480,7 +440,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 				doSubscribeHeaders(new HttpOutboundSubscriber(s));
 			}
 			else{
-				tcpStream.emitWriter(source, s);
+				emitWriter(source, s);
 			}
 		}
 
@@ -506,7 +466,7 @@ abstract class NettyHttpChannel extends Flux<Object> implements HttpChannel, Htt
 			@Override
 			public void onComplete() {
 				this.subscription = null;
-				tcpStream.emitWriter(source, s);
+				emitWriter(source, s);
 			}
 
 			@Override

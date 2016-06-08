@@ -47,6 +47,7 @@ import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
+import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -59,7 +60,8 @@ import reactor.io.netty.util.NettyNativeDetector;
  *
  * @author Stephane Maldini
  */
-final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
+final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
+                                                                          ChannelBridge<TcpChannel> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
@@ -380,12 +382,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 	}
 
 	void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-			Object _ioChannel) {
-		DatagramChannel ioChannel = (DatagramChannel) _ioChannel;
-		TcpChannel netChannel = new TcpChannel(
-				getDefaultPrefetchSize(),
-				ioChannel
-		);
+			DatagramChannel ioChannel) {
 
 		ChannelPipeline pipeline = ioChannel.pipeline();
 
@@ -394,7 +391,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 		}
 
 		pipeline.addLast(
-				new NettyChannelHandler(handler, netChannel),
+				new NettyChannelHandler<>(handler, this),
 				new ChannelOutboundHandlerAdapter());
 	}
 
@@ -413,4 +410,12 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> {
 	}
 	final static Logger log = Logger.getLogger(UdpServer.class);
 
+	@Override
+	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,
+			Object... parameters) {
+		return new TcpChannel(
+				getDefaultPrefetchSize(),
+				ioChannel
+		);
+	}
 }

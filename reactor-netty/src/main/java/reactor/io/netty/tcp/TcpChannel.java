@@ -45,7 +45,7 @@ import reactor.io.netty.common.NettyChannelHandler;
  * @author Stephane Maldini
  * @since 2.5
  */
-final public class TcpChannel
+public class TcpChannel
 		extends Flux<Object>
 		implements NettyChannel, Loopback, Completable {
 
@@ -119,7 +119,7 @@ final public class TcpChannel
 		return !ioChannel.isOpen();
 	}
 
-	public void emitWriter(final Publisher<?> encodedWriter,
+	protected void emitWriter(final Publisher<?> encodedWriter,
 			final Subscriber<? super Void> postWriter) {
 
 		final ChannelFutureListener postWriteListener = future -> {

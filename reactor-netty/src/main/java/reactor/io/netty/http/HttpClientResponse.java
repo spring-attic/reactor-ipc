@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package reactor.io.netty.config;
+package reactor.io.netty.http;
 
 /**
+ * An HttpClient Reactive read contract for incoming response. It inherits several
+ * accessor
+ * related to HTTP
+ * flow : headers, params,
+ * URI, method, websocket...
+ *
  * @author Stephane Maldini
+ * @since 2.5
  */
-public interface NettyHandlerNames {
+public interface HttpClientResponse extends HttpInbound {
 
-	String SslHandler        = "sslHandler";
-	String SslReader         = "sslReader";
-	String SslLoggingHandler = "ssLoggingHandler";
-	String LoggingHandler    = "loggingHandler";
+	/**
+	 * Return the previous redirections or empty array
+	 *
+	 * @return the previous redirections or empty array
+	 */
+	String[] redirectedFrom();
 }
