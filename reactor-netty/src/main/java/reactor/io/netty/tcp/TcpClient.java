@@ -18,6 +18,7 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.Bootstrap;
@@ -61,6 +62,8 @@ import reactor.io.netty.util.NettyNativeDetector;
  */
 public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		implements Introspectable, MultiProducer, ChannelBridge<TcpChannel> {
+
+
 
 	public static final ChannelHandler PING = o -> Flux.empty();
 
@@ -223,7 +226,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		else {
 			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
 			this.ioGroup = channelAdapter.newEventLoopGroup(ioThreadCount,
-					(Runnable r) -> new Thread(r, "reactor-tcp-client-io"));
+					(Runnable r) -> new Thread(r, "reactor-tcp-client-io-"+COUNTER.incrementAndGet()));
 		}
 
 		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
@@ -429,4 +432,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 			Object... parameters) {
 		return new TcpChannel(getDefaultPrefetchSize(), ioChannel);
 	}
+
+	static final AtomicLong COUNTER = new AtomicLong();
 }

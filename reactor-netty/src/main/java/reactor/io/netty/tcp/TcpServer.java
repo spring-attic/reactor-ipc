@@ -18,6 +18,7 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -218,14 +219,14 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		}
 
 		this.selectorGroup = channelAdapter.newEventLoopGroup(selectThreadCount,
-				(Runnable r) -> new Thread(r, "reactor-tcp-server-select"));
+				(Runnable r) -> new Thread(r, "reactor-tcp-server-select-"+COUNTER.incrementAndGet()));
 
 		if (null != options.eventLoopGroup()) {
 			this.ioGroup = options.eventLoopGroup();
 		}
 		else {
 			this.ioGroup = channelAdapter.newEventLoopGroup(ioThreadCount,
-					(Runnable r) -> new Thread(r, "reactor-tcp-server-io"));
+					(Runnable r) -> new Thread(r, "reactor-tcp-server-io-"+COUNTER.incrementAndGet()));
 		}
 
 		ServerBootstrap _serverBootstrap = new ServerBootstrap().group(selectorGroup, ioGroup)
@@ -407,4 +408,5 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 
 	final static Logger log = Logger.getLogger(TcpServer.class);
 
+	static final AtomicLong COUNTER = new AtomicLong();
 }

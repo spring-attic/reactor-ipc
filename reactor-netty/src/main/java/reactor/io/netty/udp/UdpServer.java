@@ -20,6 +20,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.ProtocolFamily;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -182,11 +184,12 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 			this.ioGroup = options.eventLoopGroup();
 		} else {
 			int ioThreadCount = DEFAULT_UDP_THREAD_COUNT;
+			ThreadFactory tf = (Runnable r) -> new Thread(r,
+					"reactor-udp-io-" + COUNTER.incrementAndGet());
+
 			this.ioGroup = options.protocolFamily() == null ?
 							NettyNativeDetector.instance().newEventLoopGroup(ioThreadCount,
-									(Runnable r) -> new Thread(r, "reactor-udp-io")) :
-							new NioEventLoopGroup(ioThreadCount, (Runnable r) -> new
-									Thread(r, "reactor-udp-io"));
+									tf) : new NioEventLoopGroup(ioThreadCount, tf);
 		}
 
 		this.bootstrap = new Bootstrap()
@@ -418,4 +421,6 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 				ioChannel
 		);
 	}
+
+	static final AtomicLong COUNTER = new AtomicLong();
 }
