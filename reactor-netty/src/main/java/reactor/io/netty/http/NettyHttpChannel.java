@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -373,8 +374,13 @@ abstract class NettyHttpChannel extends TcpChannel
 			                                 .map(TextWebSocketFrame::new));
 		}
 
-		return sendObject(Flux.from(dataStream)
+		return send(Flux.from(dataStream)
 		                .map(s -> delegate().alloc().buffer().writeBytes(s.getBytes(charset))));
+	}
+
+	@Override
+	public Mono<Void> send(Publisher<? extends ByteBuf> dataStream) {
+		return new MonoOutboundWrite(dataStream);
 	}
 
 	/**
