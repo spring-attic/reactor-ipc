@@ -201,7 +201,7 @@ class HttpSpec extends Specification {
 
 	then: "data was recieved"
 	//the produced reply should be there soon
-	thrown HttpException
+	thrown IllegalStateException
 	errored.await(5, TimeUnit.SECONDS)
 	!content
 
