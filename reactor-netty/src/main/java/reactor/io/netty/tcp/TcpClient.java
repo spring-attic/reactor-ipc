@@ -31,12 +31,12 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoProcessor;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
@@ -176,10 +176,11 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		return new TcpClient(options);
 	}
 
-	final EventLoopGroup          ioGroup;
-	final ChannelGroup            channelGroup;
-	final ClientOptions           options;
-	final SslContext              sslContext;
+	final EventLoopGroup      ioGroup;
+	final ChannelGroup        channelGroup;
+	final ClientOptions       options;
+	final SslContext          sslContext;
+	final NettyNativeDetector channelAdapter;
 
 	final InetSocketAddress connectAddress;
 
@@ -193,14 +194,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		}
 
 		this.options = options.toImmutable();
-		if (null != options.eventLoopGroup()) {
-			this.ioGroup = options.eventLoopGroup();
-		}
-		else {
-			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
-			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount,
-					(Runnable r) -> new Thread(r, "reactor-tcp-client-io"));
-		}
 
 		if(options.ssl() != null){
 			try{
@@ -210,6 +203,10 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 					log.debug("Connecting with SSL enabled using context {}",
 							sslContext.getClass().getSimpleName());
 				}
+
+				channelAdapter = sslContext instanceof JdkSslContext ?
+						NettyNativeDetector.force(false) :
+						NettyNativeDetector.instance();
 			}
 			catch (SSLException ssle){
 				throw Exceptions.bubble(ssle);
@@ -217,6 +214,16 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		}
 		else{
 			sslContext = null;
+			channelAdapter = NettyNativeDetector.instance();
+		}
+
+		if (null != options.eventLoopGroup()) {
+			this.ioGroup = options.eventLoopGroup();
+		}
+		else {
+			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
+			this.ioGroup = channelAdapter.newEventLoopGroup(ioThreadCount,
+					(Runnable r) -> new Thread(r, "reactor-tcp-client-io"));
 		}
 
 		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
@@ -294,7 +301,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 				null == handler ? (ChannelHandler<ByteBuf, ByteBuf, NettyChannel>) PING : handler;
 
 		Bootstrap _bootstrap = new Bootstrap().group(ioGroup)
-		                                      .channel(NettyNativeDetector.getChannel(
+		                                      .channel(channelAdapter.getChannel(
 				                                      ioGroup))
 		                                      .option(ChannelOption.ALLOCATOR,
 				                                      PooledByteBufAllocator.DEFAULT)

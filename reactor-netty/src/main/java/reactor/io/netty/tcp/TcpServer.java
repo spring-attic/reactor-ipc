@@ -33,6 +33,7 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.SocketChannelConfig;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
@@ -178,12 +179,12 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		                           .listen(bindAddress, port));
 	}
 
-	final ServerBootstrap bootstrap;
-	final EventLoopGroup  selectorGroup;
-	final EventLoopGroup  ioGroup;
-	final ChannelGroup    channelGroup;
-	final ServerOptions   options;
-	final SslContext      sslContext;
+	final ServerBootstrap     bootstrap;
+	final EventLoopGroup      selectorGroup;
+	final EventLoopGroup      ioGroup;
+	final ChannelGroup        channelGroup;
+	final ServerOptions       options;
+	final SslContext          sslContext;
 
 	//Carefully reset
 	InetSocketAddress listenAddress;
@@ -196,19 +197,39 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		int selectThreadCount = DEFAULT_TCP_SELECT_COUNT;
 		int ioThreadCount = DEFAULT_TCP_THREAD_COUNT;
 
-		this.selectorGroup = NettyNativeDetector.newEventLoopGroup(selectThreadCount,
+		NettyNativeDetector channelAdapter;
+		if(options.ssl() != null) {
+			try {
+				this.sslContext = options.ssl().build();
+				if (log.isDebugEnabled()) {
+					log.debug("Serving SSL enabled using context {}", sslContext.getClass().getSimpleName());
+				}
+				channelAdapter = sslContext instanceof JdkSslContext ?
+						NettyNativeDetector.force(false) :
+						NettyNativeDetector.instance();
+			}
+			catch (SSLException e) {
+				throw Exceptions.bubble(e);
+			}
+		}
+		else{
+			this.sslContext = null;
+			channelAdapter = NettyNativeDetector.instance();
+		}
+
+		this.selectorGroup = channelAdapter.newEventLoopGroup(selectThreadCount,
 				(Runnable r) -> new Thread(r, "reactor-tcp-server-select"));
 
 		if (null != options.eventLoopGroup()) {
 			this.ioGroup = options.eventLoopGroup();
 		}
 		else {
-			this.ioGroup = NettyNativeDetector.newEventLoopGroup(ioThreadCount,
+			this.ioGroup = channelAdapter.newEventLoopGroup(ioThreadCount,
 					(Runnable r) -> new Thread(r, "reactor-tcp-server-io"));
 		}
 
 		ServerBootstrap _serverBootstrap = new ServerBootstrap().group(selectorGroup, ioGroup)
-		                                                        .channel(NettyNativeDetector.getServerChannel(ioGroup))
+		                                                        .channel(channelAdapter.getServerChannel(ioGroup))
 		                                                        .localAddress((null == listenAddress ?
 				                                                        new InetSocketAddress(0) : listenAddress))
 		                                                        .childOption(ChannelOption.ALLOCATOR,
@@ -221,20 +242,6 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		                                   .option(ChannelOption.SO_SNDBUF, options.sndbuf())
 		                                   .option(ChannelOption.SO_REUSEADDR, options.reuseAddr());
 
-		if(options.ssl() != null) {
-			try {
-				this.sslContext = options.ssl().build();
-				if (log.isDebugEnabled()) {
-					log.debug("Serving SSL enabled using context {}", sslContext.getClass().getSimpleName());
-				}
-			}
-			catch (SSLException e) {
-				throw Exceptions.bubble(e);
-			}
-		}
-		else{
-			this.sslContext = null;
-		}
 		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
 			log.debug("Server is managed.");
 			this.channelGroup = new DefaultChannelGroup(null);

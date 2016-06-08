@@ -29,37 +29,50 @@ import io.netty.util.internal.PlatformDependent;
 /**
  * @author Stephane Maldini
  */
-public class NettyNativeDetector {
+public final class NettyNativeDetector {
 
-	private final static boolean epoll;
+	final static NettyNativeDetector DEFAULT;
 
+	final boolean epoll;
+
+	NettyNativeDetector(boolean epoll) {
+		this.epoll = epoll;
+	}
+
+	public static NettyNativeDetector instance(){
+		return DEFAULT;
+	}
+
+	public static NettyNativeDetector force(boolean _native){
+		return new NettyNativeDetector(_native);
+	}
 
 	static {
 		if (Boolean.parseBoolean(System.getProperty("reactor.io.epoll", "true"))) {
 			if (!PlatformDependent.isWindows()) {
-					epoll = EpollDetector.hasEpoll();
+					DEFAULT = new NettyNativeDetector(EpollDetector.hasEpoll());
 			}
 			else {
-				epoll = true;
+				DEFAULT = new NettyNativeDetector(EpollDetector.hasEpoll());
 			}
 		} else {
-			epoll = false;
+			DEFAULT = new NettyNativeDetector(false);
 		}
 	}
 
-	public static EventLoopGroup newEventLoopGroup(int threads, ThreadFactory factory) {
+	public EventLoopGroup newEventLoopGroup(int threads, ThreadFactory factory) {
 		return epoll ? EpollDetector.newEventLoopGroup(threads, factory) : new NioEventLoopGroup(threads, factory);
 	}
 
-	public static Class<? extends ServerChannel> getServerChannel(EventLoopGroup group) {
+	public Class<? extends ServerChannel> getServerChannel(EventLoopGroup group) {
 		return epoll ? EpollDetector.getServerChannel(group) :  NioServerSocketChannel.class;
 	}
 
-	public static Class<? extends Channel> getChannel(EventLoopGroup group) {
+	public Class<? extends Channel> getChannel(EventLoopGroup group) {
 		return epoll ? EpollDetector.getChannel(group) :  NioSocketChannel.class;
 	}
 
-	public static Class<? extends Channel> getDatagramChannel(EventLoopGroup group) {
+	public Class<? extends Channel> getDatagramChannel(EventLoopGroup group) {
 		return epoll ? EpollDetector.getDatagramChannel(group) :  NioDatagramChannel.class;
 	}
 

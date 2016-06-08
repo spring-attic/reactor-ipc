@@ -183,7 +183,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 		} else {
 			int ioThreadCount = DEFAULT_UDP_THREAD_COUNT;
 			this.ioGroup = options.protocolFamily() == null ?
-							NettyNativeDetector.newEventLoopGroup(ioThreadCount,
+							NettyNativeDetector.instance().newEventLoopGroup(ioThreadCount,
 									(Runnable r) -> new Thread(r, "reactor-udp-io")) :
 							new NioEventLoopGroup(ioThreadCount, (Runnable r) -> new
 									Thread(r, "reactor-udp-io"));
@@ -195,8 +195,8 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 		;
 
 		if ((options.protocolFamily() == null) &&
-				NettyNativeDetector.getDatagramChannel(ioGroup).getSimpleName().startsWith("Epoll")) {
-			bootstrap.channel(NettyNativeDetector.getDatagramChannel(ioGroup));
+				NettyNativeDetector.instance().getDatagramChannel(ioGroup).getSimpleName().startsWith("Epoll")) {
+			bootstrap.channel(NettyNativeDetector.instance().getDatagramChannel(ioGroup));
 		} else {
 			bootstrap.channelFactory(() -> new NioDatagramChannel(toNettyFamily(options.protocolFamily())));
 		}
