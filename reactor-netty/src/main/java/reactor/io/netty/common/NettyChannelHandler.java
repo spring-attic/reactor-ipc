@@ -100,7 +100,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 					@Override
 					public void cancel() {
-						channelSubscriber = null;
+						//channelSubscriber = null;
 						//log.debug("Cancel read");
 						ctx.channel()
 						   .config()
