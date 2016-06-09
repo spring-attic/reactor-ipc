@@ -84,10 +84,18 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 					ch.removeTransferEncodingChunked();
 				}
 
-				ch.delegate()
-				  .pipeline()
-				  .get(NettyHttpClientHandler.class)
-				  .bridgeReply(subscriber, connectSignal);
+				if(ch.delegate().eventLoop().inEventLoop()) {
+					ch.delegate()
+					  .pipeline()
+					  .get(NettyHttpClientHandler.class)
+					  .bridgeReply(subscriber, connectSignal);
+				}
+				else{
+					ch.delegate().eventLoop().execute(() -> ch.delegate()
+					                                          .pipeline()
+					                                          .get(NettyHttpClientHandler.class)
+					                                          .bridgeReply(subscriber, connectSignal));
+				}
 
 				if (handler != null) {
 					return handler.apply(ch);
