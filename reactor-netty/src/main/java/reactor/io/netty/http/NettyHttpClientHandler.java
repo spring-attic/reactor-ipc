@@ -161,8 +161,8 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 	                                                                          Exception {
 		int code = response.status()
 		                   .code();
-		if (code >= 300 && code < 400 && httpChannel.isFollowRedirect()) {
-			Exception ex = new RedirectException(httpChannel);
+		if (code >= 400) {
+			Exception ex = new HttpException(httpChannel);
 			if (connectSignal != null) {
 				connectSignal.onError(ex);
 			}
@@ -171,8 +171,8 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			}
 			return false;
 		}
-		if (code >= 400) {
-			Exception ex = new HttpException(httpChannel);
+		if (code >= 300 && httpChannel.isFollowRedirect()) {
+			Exception ex = new RedirectException(httpChannel);
 			if (connectSignal != null) {
 				connectSignal.onError(ex);
 			}
