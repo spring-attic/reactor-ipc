@@ -109,8 +109,8 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 				return Mono.error(t);
 			}
 			})
-			             .flux()
-			             .then(connectSignal);
+			             .mergeWith(connectSignal)
+			             .then();
 		})
 		    .retry(bridge)
 		    //ignore doStart mono except for fatal errors since replySubscriber is
