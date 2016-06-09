@@ -37,5 +37,20 @@ public class HttpTests {
 			throw new IllegalStateException("test status failed with "+res);
 		}
 	}
+	@Test
+	public void simpleTest404() {
+		int res = HttpClient.create("google.com")
+		                       .get("/unsupportedURI", c -> c.followRedirect()
+		                                                   .sendHeaders())
+		                       .then(r -> Mono.just(r.status().code()))
+		                       .log()
+		                        .otherwise(HttpException.class,
+				                        e -> Mono.just(e.getResponseStatus().code()))
+		                       .block();
+
+		if (res != 404) {
+			throw new IllegalStateException("test status failed with "+res);
+		}
+	}
 
 }
