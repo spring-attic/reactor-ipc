@@ -110,6 +110,7 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 			}
 			})
 			             .mergeWith(connectSignal)
+			             .log("reactor.connection")
 			             .then();
 		})
 		    .retry(bridge)
