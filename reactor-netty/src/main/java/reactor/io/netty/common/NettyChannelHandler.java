@@ -28,6 +28,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.channel.EventLoop;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -35,6 +36,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
+import reactor.core.publisher.Flux;
 import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
@@ -75,6 +77,27 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			ChannelBridge<C> bridgeFactory) {
 		this.handler = handler;
 		this.bridgeFactory = bridgeFactory;
+	}
+
+	/**
+	 * @param subscriber
+	 */
+	public void drain(EventLoop io, Subscriber<? super Object> subscriber) {
+		if (io.inEventLoop()) {
+			if (channelSubscriber != null && channelSubscriber.downstream() == null) {
+				Flux.fromIterable(channelSubscriber.readBackpressureBuffer)
+				    .subscribe(subscriber);
+			}
+		}
+		else {
+			io.execute(() -> {
+				if (channelSubscriber != null && channelSubscriber.downstream() == null) {
+					Flux.fromIterable(channelSubscriber.readBackpressureBuffer)
+					    .subscribe(subscriber);
+				}
+			});
+		}
+
 	}
 
 	@Override

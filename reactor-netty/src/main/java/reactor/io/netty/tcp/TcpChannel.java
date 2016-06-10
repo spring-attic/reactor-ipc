@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleState;
@@ -103,6 +102,12 @@ public class TcpChannel
 	public void subscribe(Subscriber<? super Object> subscriber) {
 		Objects.requireNonNull(subscriber, "subscriber");
 		try {
+			if (!ioChannel.isActive()) {
+				ioChannel.pipeline()
+				         .get(NettyChannelHandler.class)
+				         .drain(ioChannel.eventLoop(), subscriber);
+				return;
+			}
 			ioChannel.pipeline()
 			         .fireUserEventTriggered(new NettyChannelHandler.ChannelInputSubscriber(subscriber, prefetch));
 		}
