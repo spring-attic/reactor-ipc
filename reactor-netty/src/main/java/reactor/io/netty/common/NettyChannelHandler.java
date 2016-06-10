@@ -166,7 +166,9 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		try {
 			if (this.channelSubscriber != null) {
 				channelSubscriber.onComplete();
-				channelSubscriber = null;
+				if(channelSubscriber.inputSubscriber != null) {
+					channelSubscriber = null;
+				}
 			}
 			else{
 				if(log.isDebugEnabled()){
@@ -315,27 +317,29 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	                                                            Subscriber<Object>
 	, Requestable, Completable, Backpressurable, Producer, Cancellable {
 
-		private final Subscriber<? super Object> inputSubscriber;
+		final Subscriber<? super Object> inputSubscriber;
 
-		private volatile Subscription subscription;
+		volatile Subscription subscription;
 
 		@SuppressWarnings("unused")
-		private volatile int                                               terminated = 0;
-		private final    AtomicIntegerFieldUpdater<ChannelInputSubscriber> TERMINATED =
+		volatile int                                               terminated = 0;
+		final    AtomicIntegerFieldUpdater<ChannelInputSubscriber> TERMINATED =
 				AtomicIntegerFieldUpdater.newUpdater(ChannelInputSubscriber.class, "terminated");
 
 		@SuppressWarnings("unused")
-		private volatile long requested;
-		private final AtomicLongFieldUpdater<ChannelInputSubscriber> REQUESTED =
+		volatile long requested;
+		final AtomicLongFieldUpdater<ChannelInputSubscriber> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(ChannelInputSubscriber.class, "requested");
 
 		@SuppressWarnings("unused")
-		private volatile int running;
-		private final AtomicIntegerFieldUpdater<ChannelInputSubscriber> RUNNING =
+		volatile int running;
+		final AtomicIntegerFieldUpdater<ChannelInputSubscriber> RUNNING =
 				AtomicIntegerFieldUpdater.newUpdater(ChannelInputSubscriber.class, "running");
 
 		volatile Throwable                 error;
 		volatile Queue<Object> readBackpressureBuffer;
+
+		volatile boolean cancelled;
 
 		final int bufferSize;
 
@@ -346,7 +350,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void request(long n) {
-			if (terminated == 1) {
+			if (cancelled) {
 				return;
 			}
 			if (BackpressureUtils.checkRequest(n, inputSubscriber)) {
@@ -365,7 +369,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			Subscription subscription = this.subscription;
 			if (subscription != null) {
 				this.subscription = null;
-				if (TERMINATED.compareAndSet(this, 0, 1)) {
+				if (!cancelled) {
+					cancelled = true;
 					subscription.cancel();
 				}
 			}
@@ -373,7 +378,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public boolean isCancelled() {
-			return terminated == 1;
+			return cancelled;
 		}
 
 		@Override
@@ -490,8 +495,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 						Object data;
 						while ((demand == Long.MAX_VALUE || remaining-- > 0)) {
 
-							if(subscription == null){
-								break;
+							if(cancelled){
+								return;
 							}
 
 							data = queue.poll();

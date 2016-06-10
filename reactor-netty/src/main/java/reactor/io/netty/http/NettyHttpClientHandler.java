@@ -187,6 +187,12 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 	protected void postRead(ChannelHandlerContext ctx, Object msg){
 		if (msg instanceof LastHttpContent) {
 			ctx.channel().close();
+			if (this.channelSubscriber != null) {
+				channelSubscriber.onComplete();
+				if(channelSubscriber.downstream() != null) {
+					channelSubscriber = null;
+				}
+			}
 		}
 	}
 
