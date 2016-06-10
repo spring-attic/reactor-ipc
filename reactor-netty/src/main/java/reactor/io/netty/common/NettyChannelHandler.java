@@ -463,10 +463,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onComplete() {
-			if (!TERMINATED.compareAndSet(this, 0, 1)) {
-				drain();
-				throw Exceptions.failWithCancel();
-			}
+			terminated = 1;
 			drain();
 		}
 
