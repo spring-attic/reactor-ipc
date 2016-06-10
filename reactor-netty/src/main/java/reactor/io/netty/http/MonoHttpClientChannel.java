@@ -31,6 +31,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSource;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.io.netty.common.ChannelBridge;
@@ -109,8 +110,7 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 				return Mono.error(t);
 			}
 			})
-			             .mergeWith(connectSignal)
-			             .then();
+			             .concatWith(connectSignal).as(MonoSource::wrap);
 		})
 		    .retry(bridge)
 		    //ignore doStart mono except for fatal errors since replySubscriber is

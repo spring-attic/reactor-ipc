@@ -18,6 +18,7 @@ package reactor.io.netty.http;
 
 import org.junit.Test;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSource;
 
 /**
  * @author Stephane Maldini
