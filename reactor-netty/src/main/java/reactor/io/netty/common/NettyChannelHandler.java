@@ -350,15 +350,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 				return;
 			}
 			if (BackpressureUtils.checkRequest(n, inputSubscriber)) {
-				if (BackpressureUtils.getAndAddCap(REQUESTED, this, n) == 0 && n == Long.MAX_VALUE) {
-					Subscription subscription = this.subscription;
-					if (subscription != null) {
-						subscription.request(n);
-					}
-				}
-				else {
-					drain();
-				}
+				BackpressureUtils.getAndAddCap(REQUESTED, this, n);
+				drain();
 			}
 		}
 
