@@ -18,6 +18,7 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.buffer.ByteBuf;
@@ -100,6 +101,7 @@ public class TcpChannel
 
 	@Override
 	public void subscribe(Subscriber<? super Object> subscriber) {
+		Objects.requireNonNull(subscriber, "subscriber");
 		try {
 			ioChannel.pipeline()
 			         .fireUserEventTriggered(new NettyChannelHandler.ChannelInputSubscriber(subscriber, prefetch));

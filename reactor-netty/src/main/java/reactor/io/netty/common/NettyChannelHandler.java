@@ -84,8 +84,13 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 			@SuppressWarnings("unchecked") ChannelInputSubscriber subscriberEvent = (ChannelInputSubscriber) evt;
 
-			if (null == channelSubscriber) {
+			if (null == channelSubscriber ||
+					null == channelSubscriber.inputSubscriber) {
 				CHANNEL_REF.incrementAndGet(NettyChannelHandler.this);
+				if(channelSubscriber != null){
+					subscriberEvent.readBackpressureBuffer = channelSubscriber
+							.readBackpressureBuffer;
+				}
 				channelSubscriber = subscriberEvent;
 				subscriberEvent.onSubscribe(new Subscription() {
 					@Override
@@ -192,14 +197,11 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			return;
 		}
 		try {
-			if(null == channelSubscriber){
-				if(log.isDebugEnabled()) {
-					log.debug("Dropped packet {}", msg);
-				}
-				return;
-			}
 			if (msg == Unpooled.EMPTY_BUFFER ) {
 				return;
+			}
+			if(null == channelSubscriber){
+				channelSubscriber = new ChannelInputSubscriber(null, 128);
 			}
 
 			channelSubscriber.onNext(msg);
@@ -338,9 +340,6 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		final int bufferSize;
 
 		public ChannelInputSubscriber(Subscriber<? super Object> inputSubscriber, long bufferSize) {
-			if (null == inputSubscriber) {
-				throw new IllegalArgumentException("Connection receive subscriber must not be null.");
-			}
 			this.inputSubscriber = inputSubscriber;
 			this.bufferSize = (int) Math.min(Math.max(bufferSize, 32), 128);
 		}
