@@ -90,6 +90,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 				if(channelSubscriber != null){
 					subscriberEvent.readBackpressureBuffer = channelSubscriber
 							.readBackpressureBuffer;
+					subscriberEvent.terminated = channelSubscriber.terminated;
 				}
 				channelSubscriber = subscriberEvent;
 				subscriberEvent.onSubscribe(new Subscription() {
