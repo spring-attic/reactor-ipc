@@ -42,8 +42,8 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	private boolean                   keepAlive          = true;
 	private int                       linger             = 5;
 	private boolean                   tcpNoDelay         = true;
-	private int                       rcvbuf             = PlatformDependent.SMALL_IO_BUFFER_SIZE;
-	private int                       sndbuf             = PlatformDependent.SMALL_IO_BUFFER_SIZE;
+	private int                       rcvbuf             = 1024 * 1024;
+	private int                       sndbuf             = 1024 * 1024;
 	private long                      prefetch           = Long.MAX_VALUE;
 	private boolean                   managed            = DEFAULT_MANAGED_PEER;
 	private Consumer<ChannelPipeline> pipelineConfigurer = null;
