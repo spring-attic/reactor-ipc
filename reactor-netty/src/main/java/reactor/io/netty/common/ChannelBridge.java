@@ -16,7 +16,7 @@
 package reactor.io.netty.common;
 
 import io.netty.channel.Channel;
-import reactor.io.netty.config.NettyOptions;
+import reactor.core.publisher.Flux;
 
 /**
  * @author Stephane Maldini
@@ -28,7 +28,8 @@ public interface ChannelBridge<C extends NettyChannel> {
 	 *
 	 * @param ioChannel
 	 * @param parameters
-	 * @return
+	 * @return a new {@link NettyChannel}
 	 */
-	C createChannelBridge(Channel ioChannel, Object... parameters);
+	C createChannelBridge(Channel ioChannel, Flux<Object> input, Object...
+			parameters);
 }

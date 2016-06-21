@@ -291,7 +291,7 @@ public class HttpClient
 			ch.pipeline()
 			  .addLast(new HttpClientCodec())
 			  .addLast(new NettyHttpClientHandler(handler,
-					  (ChannelBridge<HttpClientChannel>) channelBridge));
+					  (ChannelBridge<HttpClientChannel>) channelBridge, ch));
 		}
 
 		@Override

@@ -27,6 +27,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.util.Exceptions;
 import reactor.io.netty.common.MonoChannelFuture;
@@ -42,10 +43,10 @@ final class HttpClientChannel extends NettyHttpChannel
 	boolean redirectable;
 	Cookies cookies;
 
-	public HttpClientChannel(long prefetch,
-			io.netty.channel.Channel ioChannel,
+	public HttpClientChannel(io.netty.channel.Channel ioChannel,
+			Flux<Object> input,
 			String[] redirects) {
-		super(prefetch, ioChannel, null);
+		super(ioChannel, input, null);
 		redirectedFrom = redirects == null ? EMPTY_REDIRECTIONS : redirects;
 	}
 

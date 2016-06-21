@@ -20,30 +20,34 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.EmptyByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.EventLoop;
 import io.netty.util.ReferenceCountUtil;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Cancellation;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxEmitter;
 import reactor.core.queue.QueueSupplier;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Introspectable;
 import reactor.core.state.Prefetchable;
-import reactor.core.state.Requestable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
@@ -59,190 +63,71 @@ import reactor.io.ipc.ChannelHandler;
  * @author Stephane Maldini
  */
 public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHandler
-		implements Introspectable, Producer {
+		implements Introspectable, Producer, Publisher<Object> {
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandler.class);
 
 	protected final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler;
 	protected final ChannelBridge<C>                               bridgeFactory;
+	protected final Flux<Object>                                   input;
 
-	protected ChannelInputSubscriber channelSubscriber;
-
-	private volatile       int                                            channelRef  = 0;
-	protected static final AtomicIntegerFieldUpdater<NettyChannelHandler> CHANNEL_REF =
-			AtomicIntegerFieldUpdater.newUpdater(NettyChannelHandler.class, "channelRef");
+	final InboundEmitter inboundEmitter;
 
 	public NettyChannelHandler(
 			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-			ChannelBridge<C> bridgeFactory) {
+			ChannelBridge<C> bridgeFactory,
+			io.netty.channel.Channel ch) {
 		this.handler = handler;
+		this.inboundEmitter = new InboundEmitter(ch);
 		this.bridgeFactory = bridgeFactory;
-	}
 
-	/**
-	 * @param subscriber
-	 */
-	public void drain(EventLoop io, Subscriber<? super Object> subscriber) {
-		if (io.inEventLoop()) {
-			if (channelSubscriber != null && channelSubscriber.downstream() == null) {
-				Flux.fromIterable(channelSubscriber.readBackpressureBuffer)
-				    .subscribe(subscriber);
-			}
-		}
-		else {
-			io.execute(() -> {
-				if (channelSubscriber != null && channelSubscriber.downstream() == null) {
-					Flux.fromIterable(channelSubscriber.readBackpressureBuffer)
-					    .subscribe(subscriber);
-				}
-			});
-		}
-
+		//guard requests/cancel/subscribe
+		this.input = Flux.from(this).subscribeOn(Schedulers.fromExecutor(ch.eventLoop()));
 	}
 
 	@Override
-	public void userEventTriggered(final ChannelHandlerContext ctx, Object evt) throws Exception {
-		if (evt != null && evt.getClass()
-		                      .equals(ChannelInputSubscriber.class)) {
-
-			@SuppressWarnings("unchecked") ChannelInputSubscriber subscriberEvent = (ChannelInputSubscriber) evt;
-
-			if (null == channelSubscriber ||
-					null == channelSubscriber.inputSubscriber) {
-				CHANNEL_REF.incrementAndGet(NettyChannelHandler.this);
-				if(channelSubscriber != null){
-					subscriberEvent.readBackpressureBuffer = channelSubscriber
-							.readBackpressureBuffer;
-					subscriberEvent.terminated = channelSubscriber.terminated;
-				}
-				channelSubscriber = subscriberEvent;
-				subscriberEvent.onSubscribe(new Subscription() {
-					@Override
-					public void request(long n) {
-						if (n == Long.MAX_VALUE) {
-							ctx.channel()
-							   .config()
-							   .setAutoRead(true);
-						}
-						ctx.read();
-					}
-
-					@Override
-					public void cancel() {
-						channelSubscriber = null;
-						//log.debug("Cancel read");
-						ctx.channel()
-						   .config()
-						   .setAutoRead(false);
-						CHANNEL_REF.decrementAndGet(NettyChannelHandler.this);
-					}
-				});
-
-			}
-			else {
-				channelSubscriber.onSubscribe(EmptySubscription.INSTANCE);
-				channelSubscriber.onError(new IllegalStateException("Only one connection receive subscriber allowed."));
-			}
-		}
-		super.userEventTriggered(ctx, evt);
-	}
-
-	@Override
-	public Subscriber downstream() {
-		return channelSubscriber;
+	public FluxEmitter<Object> downstream() {
+		return inboundEmitter;
 	}
 
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 		super.channelActive(ctx);
-		handler.apply(bridgeFactory.createChannelBridge(ctx.channel()))
+		handler.apply(bridgeFactory.createChannelBridge(ctx.channel(), input))
 		       .subscribe(new CloseSubscriber(ctx));
 	}
 
 	@Override
-	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-		if (channelSubscriber == null) {
-			return;
-		}
-
-		try {
-			super.channelReadComplete(ctx);
-			if (channelSubscriber.shouldReadMore()) {
-				ctx.read();
-			}
-
-		}
-		catch (Throwable err) {
-			Exceptions.throwIfFatal(err);
-			if (channelSubscriber != null) {
-				channelSubscriber.onError(err);
-			}
-			else {
-				throw err;
-			}
-		}
-	}
-
-
-
-	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		try {
-			if (this.channelSubscriber != null) {
-				channelSubscriber.onComplete();
-				if(channelSubscriber.inputSubscriber != null) {
-					channelSubscriber = null;
-				}
-			}
-			else{
-				if(log.isDebugEnabled()){
-					log.debug("Connection closed without Subscriber to onComplete");
-				}
-			}
+			inboundEmitter.complete();
 			super.channelInactive(ctx);
 		}
 		catch (Throwable err) {
 			Exceptions.throwIfFatal(err);
-			if (channelSubscriber != null) {
-				channelSubscriber.onError(err);
-			}
-			else {
-				throw err;
-			}
+			inboundEmitter.fail(err);
 		}
 	}
 
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		doRead(ctx, msg);
+		doRead(msg);
 	}
 
 	@SuppressWarnings("unchecked")
-	protected final void doRead(ChannelHandlerContext ctx, Object msg) {
+	protected final void doRead(Object msg) {
 		if (msg == null) {
 			return;
 		}
 		try {
-			if (msg == Unpooled.EMPTY_BUFFER ) {
+			if (msg == Unpooled.EMPTY_BUFFER || msg instanceof EmptyByteBuf) {
 				return;
 			}
-			if(null == channelSubscriber){
-				channelSubscriber = new ChannelInputSubscriber(null, 128);
-			}
-
-			channelSubscriber.onNext(msg);
+			inboundEmitter.next(msg);
 		}
 		catch (Throwable err) {
 			Exceptions.throwIfFatal(err);
-			if (channelSubscriber != null) {
-				channelSubscriber.onError(err);
-			}
-			else {
-				throw err;
-			}
-		}
-		finally {
-			ReferenceCountUtil.release(msg);
+			inboundEmitter.fail(err);
 		}
 	}
 
@@ -259,8 +144,6 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	@Override
 	public void write(final ChannelHandlerContext ctx, Object msg, final ChannelPromise promise) throws Exception {
 		if (msg instanceof Publisher) {
-			CHANNEL_REF.incrementAndGet(this);
-
 			@SuppressWarnings("unchecked") Publisher<?> data = (Publisher<?>) msg;
 			final long capacity = msg instanceof Backpressurable ? ((Backpressurable) data).getCapacity() : Long.MAX_VALUE;
 
@@ -279,12 +162,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable err) throws Exception {
 		Exceptions.throwIfFatal(err);
-		if (channelSubscriber != null) {
-			channelSubscriber.onError(err);
-		}
-		else {
-			ctx.fireExceptionCaught(err);
-		}
+		inboundEmitter.fail(err);
 	}
 
 	protected ChannelFuture doOnWrite(Object data, ChannelHandlerContext ctx) {
@@ -296,22 +174,17 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 	protected void doOnTerminate(ChannelHandlerContext ctx, ChannelFuture last, final ChannelPromise promise, final
 			Throwable exception) {
-		CHANNEL_REF.decrementAndGet(this);
-
 		if (ctx.channel()
 		       .isOpen()) {
-			ChannelFutureListener listener = new ChannelFutureListener() {
-				@Override
-				public void operationComplete(ChannelFuture future) throws Exception {
-					if(exception != null) {
-						promise.tryFailure(exception);
-					}
-					else if (future.isSuccess()) {
-						promise.trySuccess();
-					}
-					else {
-						promise.tryFailure(future.cause());
-					}
+			ChannelFutureListener listener = future -> {
+				if (exception != null) {
+					promise.tryFailure(exception);
+				}
+				else if (future.isSuccess()) {
+					promise.trySuccess();
+				}
+				else {
+					promise.tryFailure(future.cause());
 				}
 			};
 
@@ -331,247 +204,6 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			else {
 				promise.trySuccess();
 			}
-		}
-	}
-
-	/**
-	 * An event to attach a {@link Subscriber} to the {@link NettyChannel} created by {@link NettyChannelHandler}
-	 */
-	public static final class ChannelInputSubscriber implements Subscription,
-	                                                            Subscriber<Object>
-	, Requestable, Completable, Backpressurable, Producer, Cancellable {
-
-		final Subscriber<? super Object> inputSubscriber;
-
-		volatile Subscription subscription;
-
-		@SuppressWarnings("unused")
-		volatile int                                               terminated = 0;
-		final    AtomicIntegerFieldUpdater<ChannelInputSubscriber> TERMINATED =
-				AtomicIntegerFieldUpdater.newUpdater(ChannelInputSubscriber.class, "terminated");
-
-		@SuppressWarnings("unused")
-		volatile long requested;
-		final AtomicLongFieldUpdater<ChannelInputSubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(ChannelInputSubscriber.class, "requested");
-
-		@SuppressWarnings("unused")
-		volatile int running;
-		final AtomicIntegerFieldUpdater<ChannelInputSubscriber> RUNNING =
-				AtomicIntegerFieldUpdater.newUpdater(ChannelInputSubscriber.class, "running");
-
-		volatile Throwable                 error;
-		volatile Queue<Object> readBackpressureBuffer;
-
-		volatile boolean cancelled;
-
-		final int bufferSize;
-
-		public ChannelInputSubscriber(Subscriber<? super Object> inputSubscriber, long bufferSize) {
-			this.inputSubscriber = inputSubscriber;
-			this.bufferSize = (int) Math.min(Math.max(bufferSize, 32), 128);
-		}
-
-		@Override
-		public void request(long n) {
-			if (cancelled) {
-				return;
-			}
-			if (BackpressureUtils.checkRequest(n, inputSubscriber)) {
-				BackpressureUtils.getAndAddCap(REQUESTED, this, n);
-				drain();
-			}
-		}
-
-		@Override
-		public long getCapacity() {
-			return bufferSize;
-		}
-
-		@Override
-		public void cancel() {
-			Subscription subscription = this.subscription;
-			if (subscription != null) {
-				this.subscription = null;
-				if (!cancelled) {
-					cancelled = true;
-					subscription.cancel();
-				}
-			}
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return cancelled;
-		}
-
-		@Override
-		public boolean isStarted() {
-			return true;
-		}
-
-		@Override
-		public boolean isTerminated() {
-			return terminated == 1 && (readBackpressureBuffer == null ||
-					readBackpressureBuffer.isEmpty());
-		}
-
-		@Override
-		public long requestedFromDownstream() {
-			return requested;
-		}
-
-		@Override
-		public long getPending() {
-			return readBackpressureBuffer == null ? -1 : readBackpressureBuffer.size();
-		}
-
-		@Override
-		public Subscriber downstream() {
-			return inputSubscriber;
-		}
-
-		@Override
-		public void onSubscribe(Subscription s) {
-			if (BackpressureUtils.validate(subscription, s)) {
-				subscription = s;
-				inputSubscriber.onSubscribe(this);
-			}
-		}
-
-		@Override
-		public void onNext(Object msg) {
-			if (RUNNING.get(this) == 0 && RUNNING.compareAndSet(this, 0, 1)) {
-				long r = BackpressureUtils.getAndSub(REQUESTED, this, 1L);
-				if(r != 0) {
-					try {
-						inputSubscriber.onNext(msg);
-					}
-					catch (Throwable e) {
-						Exceptions.throwIfFatal(e);
-						cancel();
-						onError(e);
-						return;
-					}
-				}
-				else{
-					Queue<Object> queue = getReadBackpressureBuffer();
-					ReferenceCountUtil.retain(msg);
-					queue.add(msg);
-				}
-				if(RUNNING.decrementAndGet(this) == 0){
-					return;
-				}
-			}
-			else {
-				Queue<Object> queue = getReadBackpressureBuffer();
-				ReferenceCountUtil.retain(msg);
-				queue.add(msg);
-				if(RUNNING.getAndIncrement(this) == 0){
-					return;
-				}
-			}
-
-			drainBackpressureQueue();
-		}
-
-		@Override
-		public void onError(Throwable t) {
-			if (!TERMINATED.compareAndSet(this, 0, 1)) {
-				Exceptions.onErrorDropped(t);
-			}
-			error = t;
-			drain();
-		}
-
-		@Override
-		public void onComplete() {
-			terminated = 1;
-			drain();
-		}
-
-		boolean shouldReadMore() {
-			return requested > 0 ||
-					(readBackpressureBuffer != null && readBackpressureBuffer.size() <
-							bufferSize / 2);
-		}
-
-		void drain(){
-			if(RUNNING.getAndIncrement(this) == 0){
-				drainBackpressureQueue();
-			}
-		}
-
-		void drainBackpressureQueue() {
-			int missed = 1;
-			final Subscriber<? super Object> child = this.inputSubscriber;
-			for (; ; ) {
-				long demand = requested;
-				Queue<Object> queue;
-				if (demand != 0) {
-					long remaining = demand;
-					queue = readBackpressureBuffer;
-					if (queue != null) {
-
-						Object data;
-						while ((demand == Long.MAX_VALUE || remaining-- > 0)) {
-
-							if(cancelled){
-								return;
-							}
-
-							data = queue.poll();
-
-							if(data == null){
-								break;
-							}
-							try {
-								child.onNext(data);
-							}
-							finally {
-								ReferenceCountUtil.release(data);
-							}
-						}
-					}
-					Subscription subscription = this.subscription;
-					if (demand != Long.MAX_VALUE && remaining > 0 && subscription != null) {
-						subscription.request(remaining);
-					}
-				}
-				queue = readBackpressureBuffer;
-				if((queue == null || queue.isEmpty()) && terminated == 1){
-					if(error != null){
-						inputSubscriber.onError(error);
-					}
-					else {
-						inputSubscriber.onComplete();
-					}
-					return;
-				}
-				missed = RUNNING.addAndGet(this, -missed);
-				if (missed == 0){
-					break;
-				}
-			}
-
-		}
-
-		@SuppressWarnings("unchecked")
-		Queue<Object> getReadBackpressureBuffer() {
-			Queue<Object> q = readBackpressureBuffer;
-			if (q == null) {
-				q = QueueSupplier.unbounded(bufferSize).get();
-				readBackpressureBuffer = q;
-			}
-			return q;
-		}
-
-		@Override
-		public String toString() {
-			return "ChannelInputSubscriber{" +
-					"terminated=" + terminated +
-					", requested=" + requested +
-					'}';
 		}
 	}
 
@@ -883,4 +515,339 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		return handler;
 	}
 
+	@Override
+	public void subscribe(Subscriber<? super Object> s) {
+		if(log.isDebugEnabled()){
+			log.debug("Subscribing inbound receiver [pending: " +
+					""+inboundEmitter.getPending()+", done: "+inboundEmitter.done+"]");
+		}
+		if (inboundEmitter.actual == null) {
+			if (inboundEmitter.done) {
+				if (inboundEmitter.error != null) {
+					EmptySubscription.error(s, inboundEmitter.error);
+					return;
+				}
+				else if (inboundEmitter.getPending() == 0) {
+					EmptySubscription.complete(s);
+					return;
+				}
+			}
+
+			inboundEmitter.init(s);
+			s.onSubscribe(inboundEmitter);
+		}
+		else {
+			EmptySubscription.error(s,
+					new IllegalStateException(
+							"Only one connection receive subscriber allowed."));
+		}
+	}
+
+	static final class InboundEmitter
+			implements FluxEmitter<Object>, Cancellation, Subscription, Producer {
+
+		final io.netty.channel.Channel ch;
+
+		/**
+		 * guarded by event loop
+		 */
+		Subscriber<? super Object> actual;
+
+		/**
+		 * guarded by event loop
+		 */
+		boolean caughtUp;
+
+		/**
+		 * guarded by event loop
+		 */
+		Queue<Object> queue;
+
+		volatile boolean done;
+		Throwable error;
+
+		volatile Cancellation cancel;
+		@SuppressWarnings("rawtypes")
+		static final AtomicReferenceFieldUpdater<InboundEmitter, Cancellation> CANCEL =
+				AtomicReferenceFieldUpdater.newUpdater(InboundEmitter.class,
+						Cancellation.class,
+						"cancel");
+
+		volatile long requested;
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<InboundEmitter> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(InboundEmitter.class, "requested");
+
+		volatile int wip;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<InboundEmitter> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(InboundEmitter.class, "wip");
+
+		static final Cancellation CANCELLED = () -> {
+		};
+
+		public InboundEmitter(io.netty.channel.Channel channel) {
+			this.ch = channel;
+			CANCEL.lazySet(this, this);
+		}
+
+		void init(Subscriber<? super Object> s){
+			actual = s;
+			CANCEL.lazySet(this, this);
+			WIP.lazySet(this, 0);
+		}
+
+		@Override
+		public void next(Object value) {
+			if (value == null) {
+				fail(new NullPointerException("value is null"));
+				return;
+			}
+			if (done) {
+				Exceptions.onNextDropped(value);
+				return;
+			}
+			if (caughtUp && actual != null) {
+				try {
+					actual.onNext(value);
+				}
+				finally {
+					ch.read();
+					ReferenceCountUtil.release(value);
+				}
+
+			}
+			else {
+				Queue<Object> q = queue;
+				if (q == null) {
+					q = QueueSupplier.unbounded().get();
+					queue = q;
+				}
+				q.offer(value);
+				if (drain()) {
+					caughtUp = true;
+				}
+			}
+		}
+
+		@Override
+		public void fail(Throwable error) {
+			if (error == null) {
+				error = new NullPointerException("error is null");
+			}
+			if (isCancelled() || done) {
+				Exceptions.onErrorDropped(error);
+				return;
+			}
+			done = true;
+			if (caughtUp && actual != null) {
+				actual.onError(error);
+			}
+			else {
+				this.error = error;
+				done = true;
+				drain();
+			}
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return cancel == CANCELLED;
+		}
+
+		@Override
+		public void complete() {
+			if (isCancelled() || done) {
+				return;
+			}
+			done = true;
+			if (caughtUp && actual != null) {
+				actual.onComplete();
+			}
+			drain();
+		}
+
+		boolean drain() {
+			if (WIP.getAndIncrement(this) != 0) {
+				return false;
+			}
+
+			int missed = 1;
+
+			for (; ; ) {
+				final Queue<Object> q = queue;
+				final Subscriber<? super Object> a = actual;
+
+				if (a == null) {
+					return false;
+				}
+
+				long r = requested;
+				long e = 0L;
+
+				while (e != r) {
+					if (isCancelled()) {
+						return false;
+					}
+
+					boolean d = done;
+					Object v = q != null ? q.poll() : null;
+					boolean empty = v == null;
+
+					if (d && empty) {
+						cancelResource();
+						if (q != null) {
+							q.clear();
+						}
+						Throwable ex = error;
+						if (ex != null) {
+							a.onError(ex);
+						}
+						else {
+							a.onComplete();
+						}
+						return false;
+					}
+
+					if (empty) {
+						break;
+					}
+
+					try {
+						a.onNext(v);
+					}
+					finally {
+						ReferenceCountUtil.release(v);
+						ch.read();
+					}
+
+					e++;
+				}
+
+				if (e == r) {
+					if (isCancelled()) {
+						return false;
+					}
+
+					if (done && (q == null || q.isEmpty())) {
+						cancelResource();
+						if (q != null) {
+							q.clear();
+						}
+						Throwable ex = error;
+						if (ex != null) {
+							a.onError(ex);
+						}
+						else {
+							a.onComplete();
+						}
+						return false;
+					}
+				}
+
+				if (e != 0L) {
+					if (r != Long.MAX_VALUE) {
+						if (REQUESTED.addAndGet(this, -e) > 0L) {
+							ch.read();
+						}
+					}
+				}
+
+				missed = WIP.addAndGet(this, -missed);
+				if (missed == 0) {
+					if (r == Long.MAX_VALUE) {
+						ch.config()
+						  .setAutoRead(true);
+						  ch.read();
+						return true;
+					}
+					return false;
+				}
+			}
+		}
+
+		@Override
+		public void setCancellation(Cancellation c) {
+			if (!CANCEL.compareAndSet(this, null, c)) {
+				if (cancel != CANCELLED && c != null) {
+					c.dispose();
+				}
+			}
+		}
+
+		@Override
+		public void request(long n) {
+			if (BackpressureUtils.validate(n)) {
+				BackpressureUtils.getAndAddCap(REQUESTED, this, n);
+				drain();
+			}
+		}
+
+		void cancelResource() {
+			Cancellation c = cancel;
+			if (c != CANCELLED) {
+				c = CANCEL.getAndSet(this, CANCELLED);
+				if (c != null && c != CANCELLED) {
+					REQUESTED.lazySet(this, 0L);
+					c.dispose();
+				}
+			}
+		}
+
+		@Override
+		public void cancel() {
+			cancelResource();
+
+			if (WIP.getAndIncrement(this) == 0) {
+				Queue<Object> q = queue;
+				if (q != null) {
+					q.clear();
+				}
+			}
+		}
+
+		@Override
+		public long requestedFromDownstream() {
+			return requested;
+		}
+
+		@Override
+		public long getCapacity() {
+			return Long.MAX_VALUE;
+		}
+
+		@Override
+		public long getPending() {
+			return queue != null ? queue.size() : 0;
+		}
+
+		@Override
+		public Throwable getError() {
+			return error;
+		}
+
+		@Override
+		public Object downstream() {
+			return actual;
+		}
+
+		void dereference() {
+			actual = null;
+		}
+
+		@Override
+		public void dispose() {
+			if (ch.eventLoop()
+			      .inEventLoop()) {
+				dereference();
+			}
+			else {
+				ch.eventLoop()
+				  .execute(this::dereference);
+			}
+
+			ch.config()
+			  .setAutoRead(false);
+		}
+	}
 }

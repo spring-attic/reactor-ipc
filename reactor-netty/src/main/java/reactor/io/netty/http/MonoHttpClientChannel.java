@@ -30,6 +30,7 @@ import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.DirectProcessor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
 import reactor.core.util.EmptySubscription;
@@ -132,9 +133,9 @@ final class ReconnectableBridge
 	}
 
 	@Override
-	public HttpClientChannel createChannelBridge(Channel ioChannel,
-			Object... parameters) {
-		return new HttpClientChannel(prefetch, ioChannel, redirectedFrom);
+	public HttpClientChannel createChannelBridge(Channel ioChannel, Flux<Object>
+			input, Object... parameters) {
+		return new HttpClientChannel(ioChannel, input, redirectedFrom);
 	}
 
 	void redirect(String to) {

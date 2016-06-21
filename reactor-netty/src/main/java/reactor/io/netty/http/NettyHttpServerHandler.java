@@ -19,6 +19,7 @@ package reactor.io.netty.http;
 import java.io.IOException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -50,8 +51,9 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 
 	NettyHttpServerHandler(
 			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-			ChannelBridge<NettyHttpChannel> channelBridge) {
-		super(handler, channelBridge);
+			ChannelBridge<NettyHttpChannel> channelBridge,
+			Channel ch) {
+		super(handler, channelBridge, ch);
 	}
 
 	@Override
@@ -64,8 +66,7 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 	public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
 		Class<?> messageClass = msg.getClass();
 		if (request == null && io.netty.handler.codec.http.HttpRequest.class.isAssignableFrom(messageClass)) {
-			request = bridgeFactory.createChannelBridge(ctx.channel(), msg);
-
+			request = bridgeFactory.createChannelBridge(ctx.channel(), input, msg);
 
 			if (request.isWebsocket()) {
 				HttpObjectAggregator agg = new HttpObjectAggregator(65536);
@@ -81,17 +82,13 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 
 		}
 		if (HttpContent.class.isAssignableFrom(messageClass)) {
-			doRead(ctx, msg);
+			doRead(msg);
+			if (LastHttpContent.class.isAssignableFrom(msg.getClass())) {
+				downstream().complete();
+			}
 		}
-		postRead(ctx, msg);
 	}
 
-	protected void postRead(ChannelHandlerContext ctx, Object msg){
-		if (channelSubscriber != null && LastHttpContent.class.isAssignableFrom(msg.getClass())) {
-			channelSubscriber.onComplete();
-			channelSubscriber = null;
-		}
-	}
 	protected void writeLast(ChannelHandlerContext ctx){
 		if(request.markHeadersAsFlushed()){
 			ctx.writeAndFlush(request.getNettyResponse());

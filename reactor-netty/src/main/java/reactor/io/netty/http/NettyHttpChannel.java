@@ -26,8 +26,6 @@ import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -75,10 +73,11 @@ abstract class NettyHttpChannel extends TcpChannel
 	volatile int statusAndHeadersSent = 0;
 	Function<? super String, Map<String, Object>> paramsResolver;
 
-	public NettyHttpChannel(long prefetch,
-			io.netty.channel.Channel ioChannel, HttpRequest request
+	public NettyHttpChannel(io.netty.channel.Channel ioChannel,
+			Flux<Object> input,
+			HttpRequest request
 	) {
-		super(prefetch, ioChannel);
+		super(ioChannel, input);
 		if (request == null) {
 			nettyRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
 		}
@@ -183,7 +182,18 @@ abstract class NettyHttpChannel extends TcpChannel
 
 	@Override
 	public Flux<Object> receiveObject() {
-		return this;
+		// Handle the 'Expect: 100-continue' header if necessary.
+		// TODO: Respond with 413 Request Entity Too Large
+		//   and discard the traffic or close the connection.
+		//       No need to notify the upstream handlers - just log.
+		//       If decoding a response, just throw an error.
+		if (HttpUtil.is100ContinueExpected(nettyRequest)) {
+			return MonoChannelFuture.from(() -> delegate().writeAndFlush(CONTINUE))
+			                        .thenMany(super.receiveObject());
+		}
+		else {
+			return super.receiveObject();
+		}
 	}
 
 	@Override
@@ -326,26 +336,8 @@ abstract class NettyHttpChannel extends TcpChannel
 	}
 
 	@Override
-	public void subscribe(final Subscriber<? super Object> subscriber) {
-		// Handle the 'Expect: 100-continue' header if necessary.
-		// TODO: Respond with 413 Request Entity Too Large
-		//   and discard the traffic or close the connection.
-		//       No need to notify the upstream handlers - just log.
-		//       If decoding a response, just throw an error.
-		if (HttpUtil.is100ContinueExpected(nettyRequest)) {
-			delegate().writeAndFlush(CONTINUE).addListener(new ChannelFutureListener() {
-				@Override
-				public void operationComplete(ChannelFuture future) throws Exception {
-					if (!future.isSuccess()) {
-						subscriber.onError(future.cause());
-					} else {
-						NettyHttpChannel.super.subscribe(subscriber);
-					}
-				}
-			});
-		} else {
-			super.subscribe(subscriber);
-		}
+	public void subscribe(final Subscriber<? super Void> subscriber) {
+		//input.
 	}
 
 	@Override

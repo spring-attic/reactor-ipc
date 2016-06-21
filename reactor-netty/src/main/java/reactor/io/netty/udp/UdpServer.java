@@ -41,6 +41,7 @@ import io.netty.util.NetUtil;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.util.EmptySubscription;
@@ -54,6 +55,7 @@ import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
+import reactor.io.netty.config.NettyScheduler;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.util.NettyNativeDetector;
@@ -187,19 +189,22 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 			ThreadFactory tf = (Runnable r) -> new Thread(r,
 					"reactor-udp-io-" + COUNTER.incrementAndGet());
 
-			this.ioGroup = options.protocolFamily() == null ?
+			this.ioGroup =options.protocolFamily() == null ?
 							NettyNativeDetector.instance().newEventLoopGroup(ioThreadCount,
 									tf) : new NioEventLoopGroup(ioThreadCount, tf);
 		}
 
-		this.bootstrap = new Bootstrap()
-				.group(ioGroup)
-				.option(ChannelOption.AUTO_READ, false)
+		this.bootstrap = new Bootstrap().group(ioGroup)
+		                                .option(ChannelOption.AUTO_READ, false)
 		;
 
-		if ((options.protocolFamily() == null) &&
-				NettyNativeDetector.instance().getDatagramChannel(ioGroup).getSimpleName().startsWith("Epoll")) {
-			bootstrap.channel(NettyNativeDetector.instance().getDatagramChannel(ioGroup));
+		if ((options.protocolFamily() == null) && NettyNativeDetector.instance()
+		                                                             .getDatagramChannel(
+				                                                             ioGroup)
+		                                                             .getSimpleName()
+		                                                             .startsWith("Epoll")) {
+			bootstrap.channel(NettyNativeDetector.instance()
+			                                     .getDatagramChannel(ioGroup));
 		} else {
 			bootstrap.channelFactory(() -> new NioDatagramChannel(toNettyFamily(options.protocolFamily())));
 		}
@@ -375,7 +380,8 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 			@Override
 			protected void doComplete(ChannelFuture future, Subscriber<? super Void> s) {
 				if (null == getOptions() || null == getOptions().eventLoopGroup()) {
-					MonoChannelFuture.from(ioGroup.shutdownGracefully()).subscribe(s);
+					MonoChannelFuture.from(ioGroup.shutdownGracefully())
+					                 .subscribe(s);
 				}
 				else {
 					super.doComplete(future, s);
@@ -393,8 +399,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 			pipeline.addLast(new LoggingHandler(UdpServer.class));
 		}
 
-		pipeline.addLast(
-				new NettyChannelHandler<>(handler, this),
+		pipeline.addLast(new NettyChannelHandler<>(handler, this, ioChannel),
 				new ChannelOutboundHandlerAdapter());
 	}
 
@@ -415,11 +420,9 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 
 	@Override
 	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,
+			Flux<Object> input,
 			Object... parameters) {
-		return new TcpChannel(
-				getDefaultPrefetchSize(),
-				ioChannel
-		);
+		return new TcpChannel(ioChannel, input);
 	}
 
 	static final AtomicLong COUNTER = new AtomicLong();

@@ -48,7 +48,7 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 			NettyHttpServerHandler originalHandler,
 			boolean plainText
 	) {
-		super(originalHandler.getHandler(), null);
+		super(originalHandler.getHandler(), null, originalHandler.request.delegate());
 		this.request = originalHandler.request;
 		this.plainText = plainText;
 
@@ -73,10 +73,7 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 	public void channelRead(ChannelHandlerContext ctx, Object frame) throws Exception {
 		if (CloseWebSocketFrame.class.equals(frame.getClass())) {
 			handshaker.close(ctx.channel(), ((CloseWebSocketFrame) frame).retain());
-			if(channelSubscriber != null) {
-				channelSubscriber.onComplete();
-				channelSubscriber = null;
-			}
+			downstream().complete();
 			return;
 		}
 		if (PingWebSocketFrame.class.isAssignableFrom(frame.getClass())) {
@@ -84,7 +81,7 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 					.content().retain()));
 			return;
 		}
-		doRead(ctx, frame);
+		doRead(frame);
 	}
 
 	protected void writeLast(ChannelHandlerContext ctx){

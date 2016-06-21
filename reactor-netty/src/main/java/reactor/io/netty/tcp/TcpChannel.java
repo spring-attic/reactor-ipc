@@ -18,7 +18,6 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.buffer.ByteBuf;
@@ -38,22 +37,20 @@ import reactor.core.state.Completable;
 import reactor.core.util.EmptySubscription;
 import reactor.io.ipc.Channel;
 import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.common.NettyChannelHandler;
 
 /**
  * {@link Channel} implementation that delegates to Netty.
  * @author Stephane Maldini
  * @since 2.5
  */
-public class TcpChannel
-		extends Flux<Object>
+public class TcpChannel extends Mono<Void>
 		implements NettyChannel, Loopback, Completable {
 
-	private final io.netty.channel.Channel ioChannel;
-	private final long                     prefetch;
+	final io.netty.channel.Channel ioChannel;
+	final Flux<Object>             input;
 
-	public TcpChannel(long prefetch, io.netty.channel.Channel ioChannel) {
-		this.prefetch = prefetch;
+	public TcpChannel(io.netty.channel.Channel ioChannel, Flux<Object> input) {
+		this.input = input;
 		this.ioChannel = ioChannel;
 	}
 
@@ -69,16 +66,12 @@ public class TcpChannel
 
 	@Override
 	public Flux<Object> receiveObject() {
-		return this;
+		return input;
 	}
 
 	@Override
 	public Object connectedInput() {
-		NettyChannelHandler bridge = ioChannel.pipeline().get(NettyChannelHandler.class);
-		if(bridge != null){
-			return bridge.downstream();
-		}
-		return null;
+		return input;
 	}
 
 	@Override
@@ -99,21 +92,8 @@ public class TcpChannel
 	}
 
 	@Override
-	public void subscribe(Subscriber<? super Object> subscriber) {
-		Objects.requireNonNull(subscriber, "subscriber");
-		try {
-			if (!ioChannel.isActive()) {
-				ioChannel.pipeline()
-				         .get(NettyChannelHandler.class)
-				         .drain(ioChannel.eventLoop(), subscriber);
-				return;
-			}
-			ioChannel.pipeline()
-			         .fireUserEventTriggered(new NettyChannelHandler.ChannelInputSubscriber(subscriber, prefetch));
-		}
-		catch (Throwable throwable) {
-			EmptySubscription.error(subscriber, throwable);
-		}
+	public void subscribe(Subscriber<? super Void> subscriber) {
+		Mono.<Void>empty().subscribe(subscriber);
 	}
 
 	@Override
@@ -180,7 +160,7 @@ public class TcpChannel
 				'}';
 	}
 
-	private class NettyLifecycle implements Lifecycle {
+	final class NettyLifecycle implements Lifecycle {
 
 		@Override
 		public Lifecycle close(final Runnable onClose) {

@@ -38,6 +38,7 @@ import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Introspectable;
@@ -180,12 +181,12 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		                           .listen(bindAddress, port));
 	}
 
-	final ServerBootstrap     bootstrap;
-	final EventLoopGroup      selectorGroup;
-	final EventLoopGroup      ioGroup;
-	final ChannelGroup        channelGroup;
-	final ServerOptions       options;
-	final SslContext          sslContext;
+	final ServerBootstrap bootstrap;
+	final EventLoopGroup  selectorGroup;
+	final EventLoopGroup  ioGroup;
+	final ChannelGroup    channelGroup;
+	final ServerOptions   options;
+	final SslContext      sslContext;
 
 	//Carefully reset
 	InetSocketAddress listenAddress;
@@ -226,16 +227,18 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		}
 		else {
 			this.ioGroup = channelAdapter.newEventLoopGroup(ioThreadCount,
-					(Runnable r) -> new Thread(r, "reactor-tcp-server-io-"+COUNTER.incrementAndGet()));
+					(Runnable r) -> new Thread(r,
+							"reactor-tcp-server-io-" + COUNTER.incrementAndGet()));
 		}
 
-		ServerBootstrap _serverBootstrap = new ServerBootstrap().group(selectorGroup, ioGroup)
-		                                                        .channel(channelAdapter.getServerChannel(ioGroup))
-		                                                        .localAddress((null == listenAddress ?
-				                                                        new InetSocketAddress(0) : listenAddress))
-		                                                        .childOption(ChannelOption.ALLOCATOR,
+		ServerBootstrap _serverBootstrap =
+				new ServerBootstrap().group(selectorGroup, ioGroup)
+				                     .channel(channelAdapter.getServerChannel(ioGroup))
+				                     .localAddress((null == listenAddress ?
+						                     new InetSocketAddress(0) : listenAddress))
+				                     .childOption(ChannelOption.ALLOCATOR,
 				                                                        PooledByteBufAllocator.DEFAULT)
-		                                                        .childOption(ChannelOption.AUTO_READ,
+				                     .childOption(ChannelOption.AUTO_READ,
 				                                                        options.ssl() != null);
 
 		_serverBootstrap = _serverBootstrap.option(ChannelOption.SO_BACKLOG, options.backlog())
@@ -379,11 +382,9 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 
 	@Override
 	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,
+			Flux<Object> input,
 			Object... parameters) {
-		return new TcpChannel(
-				getDefaultPrefetchSize(),
-				ioChannel
-		);
+		return new TcpChannel(ioChannel, input);
 	}
 
 	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
@@ -403,7 +404,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		if (log.isDebugEnabled()) {
 			pipeline.addLast(new LoggingHandler(TcpServer.class));
 		}
-		pipeline.addLast(new NettyChannelHandler<>(handler, this));
+		pipeline.addLast(new NettyChannelHandler<>(handler, this, nativeChannel));
 	}
 
 	final static Logger log = Logger.getLogger(TcpServer.class);

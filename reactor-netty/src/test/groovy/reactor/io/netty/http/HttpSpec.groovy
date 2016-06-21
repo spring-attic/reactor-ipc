@@ -17,6 +17,7 @@ package reactor.io.netty.http
 
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import reactor.io.netty.config.ClientOptions
 import spock.lang.Specification
 

@@ -23,6 +23,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.io.netty.common.MonoChannelFuture;
 
@@ -33,8 +34,9 @@ final class HttpServerChannel extends NettyHttpChannel {
 
 	private final Cookies cookies;
 
-	HttpServerChannel(long prefetch, io.netty.channel.Channel ioChannel, HttpRequest msg) {
-		super(prefetch, ioChannel, msg);
+	HttpServerChannel(io.netty.channel.Channel ioChannel,
+			Flux<Object> input, HttpRequest msg) {
+		super(ioChannel, input, msg);
 		this.cookies = Cookies.newServerRequestHolder(headers());
 	}
 

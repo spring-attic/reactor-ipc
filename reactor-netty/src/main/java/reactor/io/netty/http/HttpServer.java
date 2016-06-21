@@ -44,6 +44,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
@@ -466,7 +467,8 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 		return server.shutdown();
 	}
 
-	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
+	final void bindHttpChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			SocketChannel nativeChannel) {
 
 		ChannelPipeline pipeline = nativeChannel.pipeline();
 
@@ -477,14 +479,15 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 		pipeline.addLast(new HttpServerCodec());
 
 		pipeline.addLast(NettyHttpServerHandler.class.getSimpleName(),
-				new NettyHttpServerHandler(handler, this));
+				new NettyHttpServerHandler(handler, this, nativeChannel));
 
 	}
 
 	@Override
-	public NettyHttpChannel createChannelBridge(Channel ioChannel, Object... parameters) {
-		return new HttpServerChannel(getDefaultPrefetchSize(),
-				ioChannel,
+	public NettyHttpChannel createChannelBridge(Channel ioChannel,
+			Flux<Object> input, Object... parameters) {
+		return new HttpServerChannel(ioChannel,
+				input,
 				parameters.length > 0 ? (HttpRequest) parameters[0] : null);
 	}
 
@@ -505,7 +508,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 				            .accept(nativeChannel.pipeline());
 			}
 
-			HttpServer.this.bindChannel(handler, nativeChannel);
+			bindHttpChannel(handler, nativeChannel);
 		}
 	}
 }

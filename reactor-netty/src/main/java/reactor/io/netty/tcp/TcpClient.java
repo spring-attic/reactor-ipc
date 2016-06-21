@@ -352,7 +352,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 			SocketChannel ch, ChannelBridge<? extends TcpChannel> channelBridge)
 			throws Exception {
 		ch.pipeline()
-		  .addLast(new NettyChannelHandler<>(handler, channelBridge));
+		  .addLast(new NettyChannelHandler<>(handler, channelBridge, ch));
 	}
 
 	@Override
@@ -429,8 +429,9 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 
 	@Override
 	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,
+			Flux<Object> input,
 			Object... parameters) {
-		return new TcpChannel(getDefaultPrefetchSize(), ioChannel);
+		return new TcpChannel(ioChannel, input);
 	}
 
 	static final AtomicLong COUNTER = new AtomicLong();

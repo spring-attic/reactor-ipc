@@ -20,16 +20,19 @@ import java.io.IOException;
 import java.net.URI;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.LastHttpContent;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
@@ -47,9 +50,10 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 	DirectProcessor<Void>                  connectSignal;
 	Subscriber<? super HttpClientResponse> replySubscriber;
 
-	public NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
-			ChannelBridge<HttpClientChannel> channelBridge) {
-		super(handler, channelBridge);
+	NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			ChannelBridge<HttpClientChannel> channelBridge,
+			Channel ch) {
+		super(handler, channelBridge, ch);
 	}
 
 	@Override
@@ -60,7 +64,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			return;
 		}
 
-		httpChannel = bridgeFactory.createChannelBridge(ctx.channel());
+		httpChannel = bridgeFactory.createChannelBridge(ctx.channel(), input);
 		httpChannel.keepAlive(true);
 		HttpUtil.setTransferEncodingChunked(httpChannel.nettyRequest, true);
 
@@ -139,7 +143,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			return;
 		}
 		if(LastHttpContent.EMPTY_LAST_CONTENT != msg){
-			doRead(ctx, msg);
+			doRead(msg);
 		}
 		postRead(ctx, msg);
 	}
@@ -187,12 +191,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 	protected void postRead(ChannelHandlerContext ctx, Object msg){
 		if (msg instanceof LastHttpContent) {
 			ctx.channel().close();
-			if (this.channelSubscriber != null) {
-				channelSubscriber.onComplete();
-				if(channelSubscriber.downstream() != null) {
-					channelSubscriber = null;
-				}
-			}
+			downstream().complete();
 		}
 	}
 

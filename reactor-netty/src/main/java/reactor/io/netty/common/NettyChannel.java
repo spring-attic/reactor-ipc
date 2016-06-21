@@ -18,12 +18,21 @@ package reactor.io.netty.common;
 import java.net.InetSocketAddress;
 
 import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import reactor.core.util.EmptySubscription;
 import reactor.io.ipc.Channel;
 
 /**
+ * A bridge between Netty connection and Reactive Stream/Reactor contract. Implement a
+ * {@code Publisher<Void>} that can be implemented by complex lifecycle bound channel
+ * like {@link reactor.io.netty.http.HttpClientRequest} to signal when outbound has
+ * been written.
+ *
  * @author Stephane Maldini
  */
-public interface NettyChannel extends Channel<ByteBuf, ByteBuf>, NettyInbound, NettyOutbound {
+public interface NettyChannel
+		extends Channel<ByteBuf, ByteBuf>, Publisher<Void>, NettyInbound, NettyOutbound {
 
 	@Override
 	io.netty.channel.Channel delegate();
@@ -43,6 +52,14 @@ public interface NettyChannel extends Channel<ByteBuf, ByteBuf>, NettyInbound, N
 	 */
 	@Override
 	InetSocketAddress remoteAddress();
+
+	/**
+	 * Will noop direct subscribers by default.
+	 * @param s
+	 */
+	default void subscribe(Subscriber<? super Void> s) {
+		EmptySubscription.complete(s);
+	}
 
 	/**
 	 * Lifecycle Builder for assigning multiple event handlers on a channel.
