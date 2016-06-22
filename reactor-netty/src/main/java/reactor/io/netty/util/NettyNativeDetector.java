@@ -25,6 +25,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.internal.PlatformDependent;
+import reactor.core.util.Logger;
 
 /**
  * @author Stephane Maldini
@@ -58,6 +59,8 @@ public final class NettyNativeDetector {
 		} else {
 			DEFAULT = new NettyNativeDetector(false);
 		}
+		Logger.getLogger(NettyNativeDetector.class).debug("Default Netty Epoll " +
+				"support : "+DEFAULT.epoll);
 	}
 
 	public EventLoopGroup newEventLoopGroup(int threads, ThreadFactory factory) {
