@@ -48,8 +48,10 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 			NettyHttpServerHandler originalHandler,
 			boolean plainText
 	) {
-		super(originalHandler.getHandler(), null, originalHandler.request.delegate());
-		this.request = originalHandler.request;
+		super(originalHandler.getHandler(),
+				null,
+				originalHandler.request.delegate(),
+				originalHandler);
 		this.plainText = plainText;
 
 		// Handshake
@@ -65,7 +67,7 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 			handshakerResult = handshaker.handshake(request.delegate(),
 					request.getNettyRequest(),
 					request.responseHeaders(),
-					request.delegate().newPromise());
+					request.delegate().newPromise()).addListener((ChannelFutureListener) future -> request.delegate().read());
 		}
 	}
 

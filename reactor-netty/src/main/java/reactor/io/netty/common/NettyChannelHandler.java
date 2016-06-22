@@ -41,7 +41,6 @@ import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxEmitter;
 import reactor.core.queue.QueueSupplier;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
@@ -77,12 +76,28 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
 			ChannelBridge<C> bridgeFactory,
 			io.netty.channel.Channel ch) {
+		this(handler, bridgeFactory, ch, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	public NettyChannelHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			ChannelBridge<C> bridgeFactory,
+			io.netty.channel.Channel ch,
+			NettyChannelHandler parent) {
 		this.handler = handler;
-		this.inboundEmitter = new InboundEmitter(ch);
+		if (parent == null) {
+			this.inboundEmitter = new InboundEmitter(ch);
+			//guard requests/cancel/subscribe
+			this.input = Flux.from(this)
+			                 .subscribeOn(Schedulers.fromExecutor(ch.eventLoop()));
+		}
+		else {
+
+			this.inboundEmitter = parent.inboundEmitter;
+			this.input = parent.input;
+		}
 		this.bridgeFactory = bridgeFactory;
 
-		//guard requests/cancel/subscribe
-		this.input = Flux.from(this).subscribeOn(Schedulers.fromExecutor(ch.eventLoop()));
 	}
 
 	@Override
@@ -139,6 +154,19 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	@Override
 	public int getMode() {
 		return INNER;
+	}
+
+	@Override
+	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+		if (inboundEmitter.requested != 0L) {
+			ctx.read();
+		}
+		else{
+			if(log.isDebugEnabled()) {
+				log.debug("Pausing read due to lack of request");
+			}
+		}
+		ctx.fireChannelReadComplete();
 	}
 
 	@Override
@@ -207,7 +235,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 	}
 
-	private static class CloseSubscriber implements BaseSubscriber<Void> {
+	final static class CloseSubscriber implements BaseSubscriber<Void> {
 
 		private final ChannelHandlerContext ctx;
 
@@ -243,7 +271,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 	}
 
-	private class FlushOnTerminateSubscriber implements BaseSubscriber<Object>, ChannelFutureListener, Loopback {
+	final class FlushOnTerminateSubscriber
+			implements BaseSubscriber<Object>, ChannelFutureListener, Loopback {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -340,7 +369,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 	}
 
-	private class FlushOnCapacitySubscriber
+	final class FlushOnCapacitySubscriber
 			implements Runnable, BaseSubscriber<Object>,
 			           ChannelFutureListener, Loopback, Backpressurable, Completable,
 			           Cancellable, Receiver, Prefetchable {

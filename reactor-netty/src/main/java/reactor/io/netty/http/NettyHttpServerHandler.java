@@ -33,6 +33,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
+import reactor.core.publisher.Flux;
 import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.io.ipc.ChannelHandler;
@@ -54,6 +55,15 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 			ChannelBridge<NettyHttpChannel> channelBridge,
 			Channel ch) {
 		super(handler, channelBridge, ch);
+	}
+
+
+	NettyHttpServerHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			ChannelBridge<NettyHttpChannel> channelBridge,
+			Channel ch, NettyHttpServerHandler parent) {
+		super(handler, channelBridge, ch, parent);
+		this.request = parent.request;
+
 	}
 
 	@Override

@@ -17,7 +17,6 @@ package reactor.io.netty.http
 
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
 import reactor.io.netty.config.ClientOptions
 import spock.lang.Specification
 
@@ -246,16 +245,14 @@ class HttpSpec extends Specification {
 		println req.headers().get('test')
 		//log then transform then log received http request content from the request body and the resolved URL parameter "param"
 		//the returned stream is bound to the request stream and will auto read/close accordingly
-		def res = req.responseHeader("content-type", "text/plain")
+		req.responseHeader("content-type", "text/plain")
+				.upgradeToWebsocket()
+				.thenMany(req
 					.sendString(req.receiveString()
 						.useCapacity(1)
 						.doOnNext { serverRes++ }
 						.map { it + ' ' + req.param('param') + '!' }
-						.log('server-reply'))
-
-		req.upgradeToWebsocket()
-
-		res
+				.log('server-reply')))
 	}
 	server.start().block(Duration.ofSeconds(5))
 
@@ -275,6 +272,7 @@ class HttpSpec extends Specification {
 	  //return a producing stream to send some data along the request
 	  req.upgradeToTextWebsocket().concatWith(req.sendString(Flux
 			  .range(1, 1000)
+	  			.log('client-send')
 			  .useCapacity(1)
 			  .map { it.toString() }
 			  ))

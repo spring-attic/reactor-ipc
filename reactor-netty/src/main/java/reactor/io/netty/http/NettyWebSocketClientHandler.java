@@ -52,9 +52,10 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			String protocols,
 			NettyHttpClientHandler originalHandler,
 			boolean plainText) {
-		super(originalHandler.getHandler(), null, originalHandler.httpChannel.delegate());
-		this.httpChannel = originalHandler.httpChannel;
-		this.replySubscriber = originalHandler.replySubscriber;
+		super(originalHandler.getHandler(),
+				null,
+				originalHandler.httpChannel.delegate(),
+				originalHandler);
 		this.plainText = plainText;
 
 		handshaker =
@@ -122,11 +123,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			return;
 		}
 		if (TextWebSocketFrame.class.isAssignableFrom(messageClass)) {
-			try {
-				downstream().next(msg);
-			} finally {
-				ReferenceCountUtil.release(msg);
-			}
+			downstream().next(msg);
 		} else if (CloseWebSocketFrame.class.isAssignableFrom(messageClass)) {
 			ctx.close();
 		} else {

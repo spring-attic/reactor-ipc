@@ -56,6 +56,15 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 		super(handler, channelBridge, ch);
 	}
 
+	NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			ChannelBridge<HttpClientChannel> channelBridge,
+			Channel ch, NettyHttpClientHandler parent) {
+		super(handler, channelBridge, ch, parent);
+
+		this.httpChannel = parent.httpChannel;
+		this.replySubscriber = parent.replySubscriber;
+	}
+
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 		ctx.fireChannelActive();
