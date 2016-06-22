@@ -581,19 +581,12 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		 * guarded by event loop
 		 */
 		Subscriber<? super Object> actual;
-
-		/**
-		 * guarded by event loop
-		 */
 		boolean caughtUp;
-
-		/**
-		 * guarded by event loop
-		 */
 		Queue<Object> queue;
-
-		volatile boolean done;
+		boolean done;
 		Throwable error;
+		long requested;
+		int wip;
 
 		volatile Cancellation cancel;
 		@SuppressWarnings("rawtypes")
@@ -601,16 +594,6 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 				AtomicReferenceFieldUpdater.newUpdater(InboundEmitter.class,
 						Cancellation.class,
 						"cancel");
-
-		volatile long requested;
-		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<InboundEmitter> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(InboundEmitter.class, "requested");
-
-		volatile int wip;
-		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<InboundEmitter> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(InboundEmitter.class, "wip");
 
 		static final Cancellation CANCELLED = () -> {
 		};
@@ -623,7 +606,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		void init(Subscriber<? super Object> s){
 			actual = s;
 			CANCEL.lazySet(this, this);
-			WIP.lazySet(this, 0);
+			wip = 0;
 		}
 
 		@Override
@@ -697,7 +680,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 
 		boolean drain() {
-			if (WIP.getAndIncrement(this) != 0) {
+			if (wip++ != 0) {
 				return false;
 			}
 
@@ -739,6 +722,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 					}
 
 					if (empty) {
+						ch.read();
 						break;
 					}
 
@@ -776,13 +760,13 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 				if (e != 0L) {
 					if (r != Long.MAX_VALUE) {
-						if (REQUESTED.addAndGet(this, -e) > 0L) {
+						if ((requested -=e) > 0L) {
 							ch.read();
 						}
 					}
 				}
 
-				missed = WIP.addAndGet(this, -missed);
+				missed = (wip = wip - missed);
 				if (missed == 0) {
 					if (r == Long.MAX_VALUE) {
 						ch.config()
@@ -807,7 +791,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
-				BackpressureUtils.getAndAddCap(REQUESTED, this, n);
+				this.requested = BackpressureUtils.addCap(requested, n);
 				drain();
 			}
 		}
@@ -817,7 +801,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			if (c != CANCELLED) {
 				c = CANCEL.getAndSet(this, CANCELLED);
 				if (c != null && c != CANCELLED) {
-					REQUESTED.lazySet(this, 0L);
+					requested = 0L;
 					c.dispose();
 				}
 			}
@@ -827,7 +811,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		public void cancel() {
 			cancelResource();
 
-			if (WIP.getAndIncrement(this) == 0) {
+			if (wip++ == 0) {
 				Queue<Object> q = queue;
 				if (q != null) {
 					q.clear();

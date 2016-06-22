@@ -76,15 +76,6 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 	}
 
 	@Override
-	protected void doOnTerminate(ChannelHandlerContext ctx,
-			ChannelFuture last,
-			ChannelPromise promise,
-			Throwable exception) {
-		ctx.write(new CloseWebSocketFrame());
-		super.doOnTerminate(ctx, last, promise, exception);
-	}
-
-	@Override
 	protected void postRead(ChannelHandlerContext ctx, Object msg) {
 		if(CloseWebSocketFrame.class.isAssignableFrom(msg.getClass())){
 			ctx.channel().close();
