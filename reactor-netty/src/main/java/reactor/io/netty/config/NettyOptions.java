@@ -40,7 +40,7 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	private TimedScheduler            timer              = null;
 	private int                       timeout            = 30000;
 	private boolean                   keepAlive          = true;
-	private int                       linger             = 5;
+	private int                       linger             = 0;
 	private boolean                   tcpNoDelay         = true;
 	private int                       rcvbuf             = 1024 * 1024;
 	private int                       sndbuf             = 1024 * 1024;
