@@ -285,6 +285,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 				                                      options.linger())
 		                                      .option(ChannelOption.TCP_NODELAY,
 				                                      options.tcpNoDelay())
+		                                      .option(ChannelOption.SO_REUSEADDR, true)
 		                                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
 				                                      options.timeout());
 		if (!secure) {
