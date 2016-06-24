@@ -62,7 +62,7 @@ import reactor.io.netty.util.NettyNativeDetector;
  * @author Stephane Maldini
  */
 public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
-		implements Introspectable, MultiProducer, ChannelBridge<TcpChannel> {
+		implements Introspectable, ChannelBridge<TcpChannel> {
 
 
 
@@ -181,7 +181,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	}
 
 	final EventLoopGroup      ioGroup;
-	final ChannelGroup        channelGroup;
 	final ClientOptions       options;
 	final SslContext          sslContext;
 	final NettyNativeDetector channelAdapter;
@@ -231,33 +230,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 							.incrementAndGet())));
 		}
 
-	}
-
-	@Override
-	public long downstreamCount() {
-		return channelGroup == null ? -1 : channelGroup.size();
-	}
-
-	@Override
-	public Iterator<?> downstreams() {
-		if (channelGroup == null) {
-			return null;
-		}
-		return new Iterator<Object>() {
-			final Iterator<io.netty.channel.Channel> channelIterator = channelGroup.iterator();
-
-			@Override
-			public boolean hasNext() {
-				return channelIterator.hasNext();
-			}
-
-			@Override
-			public Object next() {
-				return channelIterator.next()
-				                      .pipeline()
-				                      .get(NettyChannelHandler.class);
-			}
-		};
 	}
 
 	/**
@@ -375,10 +347,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 
 		@Override
 		public void initChannel(final SocketChannel ch) throws Exception {
-			if (parent.channelGroup != null) {
-				parent.channelGroup.add(ch);
-			}
-
 			ChannelPipeline pipeline = ch.pipeline();
 			if (secureCallback != null && null != parent.sslContext) {
 				if (log.isTraceEnabled()) {
