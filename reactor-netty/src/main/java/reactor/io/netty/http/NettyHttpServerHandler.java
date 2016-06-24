@@ -29,6 +29,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -97,15 +98,6 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 				downstream().complete();
 			}
 		}
-	}
-
-	protected void writeLast(ChannelHandlerContext ctx){
-		if(request.markHeadersAsFlushed()){
-			ctx.writeAndFlush(request.getNettyResponse());
-		}
-		ctx
-		  .writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
-		  .addListener(ChannelFutureListener.CLOSE);
 	}
 
 	@Override
@@ -179,20 +171,21 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 		public void onComplete() {
 			if (ctx.channel().isOpen()) {
 				if (log.isDebugEnabled()) {
-					log.debug("Close Http Response ");
+					log.debug("Last Http Response packet");
 				}
-				writeLast(ctx);
-				//ctx.channel().close();
-				/*
-				ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(new ChannelFutureListener() {
-					@Override
-					public void operationComplete(ChannelFuture future) throws Exception {
-						if(ctx.channel().isOpen()){
-							ctx.channel().close();
-						}
+				ChannelFuture f;
+				if(!request.isWebsocket()) {
+					if (request.markHeadersAsFlushed()) {
+						ctx.write(request.getNettyResponse());
 					}
-				});
-				 */
+					f = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+				}
+				else{
+					f = ctx.channel().writeAndFlush(new CloseWebSocketFrame());
+				}
+				if (!request.isKeepAlive()) {
+					f.addListener(ChannelFutureListener.CLOSE);
+				}
 			}
 		}
 	}

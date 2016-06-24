@@ -77,7 +77,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 
 	@Override
 	protected void postRead(ChannelHandlerContext ctx, Object msg) {
-		if(CloseWebSocketFrame.class.isAssignableFrom(msg.getClass())){
+		if(msg instanceof CloseWebSocketFrame){
 			ctx.channel().close();
 		}
 	}

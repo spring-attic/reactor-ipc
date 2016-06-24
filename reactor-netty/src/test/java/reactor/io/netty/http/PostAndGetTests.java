@@ -25,14 +25,17 @@ import io.netty.buffer.ByteBuf;
 import org.apache.http.HttpException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.util.Logger;
 import reactor.io.ipc.ChannelHandler;
 
 /**
  * @author tjreactive
  * @author smaldini
  */
+@Ignore
 public class PostAndGetTests {
 
 	private HttpServer httpServer;
@@ -125,7 +128,9 @@ public class PostAndGetTests {
 			while (channel.read(buf) > -1)
 				;
 			String response = new String(buf.array());
-			System.out.println(String.format("post: << Response: %s", response));
+			Logger.getLogger(PostAndGetTests.class).info("post: << " +
+					"Response: %s",
+					response);
 			channel.close();
 		} catch (IOException e) {
 			e.printStackTrace();
