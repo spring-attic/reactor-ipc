@@ -45,6 +45,7 @@ import reactor.core.util.Logger;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
+import reactor.io.netty.common.ColocatedEventLoopGroup;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -225,13 +226,14 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		}
 		else {
 			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
-			this.ioGroup = channelAdapter.newEventLoopGroup(ioThreadCount,
-					(Runnable r) -> new Thread(r, "reactor-tcp-client-io-"+COUNTER.incrementAndGet()));
+			this.ioGroup = new ColocatedEventLoopGroup(channelAdapter.newEventLoopGroup(ioThreadCount,
+					(Runnable r) -> new Thread(r, "reactor-tcp-client-io-"+COUNTER
+							.incrementAndGet())));
 		}
 
 		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
 			log.debug("Client is managed.");
-			this.channelGroup = new DefaultChannelGroup(null);
+			this.channelGroup = new DefaultChannelGroup(ioGroup.next());
 		}
 		else {
 			log.debug("Client is not managed (Not directly introspectable)");

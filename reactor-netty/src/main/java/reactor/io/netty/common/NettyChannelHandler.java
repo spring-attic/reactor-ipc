@@ -89,7 +89,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			this.inboundEmitter = new InboundEmitter(ch);
 			//guard requests/cancel/subscribe
 			this.input = Flux.from(this)
-			                 .subscribeOn(Schedulers.fromExecutor(ch.eventLoop()));
+			                 .subscribeOn(new PipelinedNettyScheduler(ch.eventLoop()));
 		}
 		else {
 

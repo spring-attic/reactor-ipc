@@ -66,7 +66,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
                                                                     ChannelBridge<TcpChannel> {
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
-			"reactor.tcp.selectThreadCount",
+			"reactor.tcp.ioThreadCount",
 			"" + PlatformDependent.DEFAULT_POOL_SIZE / 2));
 
 	public static final int DEFAULT_TCP_SELECT_COUNT =
@@ -248,7 +248,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 
 		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
 			log.debug("Server is managed.");
-			this.channelGroup = new DefaultChannelGroup(null);
+			this.channelGroup = new DefaultChannelGroup(ioGroup.next());
 		}
 		else {
 			log.debug("Server is not managed (Not directly introspectable)");

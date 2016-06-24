@@ -55,7 +55,6 @@ import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
-import reactor.io.netty.config.NettyScheduler;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.util.NettyNativeDetector;
