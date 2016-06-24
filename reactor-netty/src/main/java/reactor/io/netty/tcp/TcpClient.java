@@ -233,7 +233,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 
 		if (options.isManaged() || NettyOptions.DEFAULT_MANAGED_PEER) {
 			log.debug("Client is managed.");
-			this.channelGroup = new DefaultChannelGroup(ioGroup.next());
+			this.channelGroup = new DefaultChannelGroup(null);
 		}
 		else {
 			log.debug("Client is not managed (Not directly introspectable)");

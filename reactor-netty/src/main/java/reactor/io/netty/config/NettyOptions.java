@@ -35,7 +35,7 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 
 	public static final boolean DEFAULT_MANAGED_PEER = Boolean.parseBoolean(System.getProperty("reactor.io.netty" +
 			".managed.default",
-			"true"));
+			"false"));
 
 	private TimedScheduler            timer              = null;
 	private int                       timeout            = 30000;
