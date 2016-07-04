@@ -35,12 +35,11 @@ import reactor.core.state.Completable;
 import reactor.core.state.Introspectable;
 import reactor.core.state.Prefetchable;
 import reactor.core.state.Requestable;
-import reactor.core.util.ReactiveStateUtils;
 
 /**
  * Navigate and introspect
  * {@link Loopback}, {@link Receiver}, {@link MultiReceiver}, {@link MultiProducer} and {@link Producer}. The scan
- * will produce a {@link ReactiveStateUtils.Graph} representation of a data flow, used for monitoring, debugging or
+ * will produce a {@link Graph} representation of a data flow, used for monitoring, debugging or
  * contextual informations.
  *
  * @author Stephane Maldini
@@ -698,7 +697,7 @@ public enum FlowSerializerUtils {
 	}
 
 	/**
-	 * A logical view representation of an introspected reference from {@link ReactiveStateUtils#scan(Object)}
+	 * A logical view representation of an introspected reference from {@link FlowSerializerUtils#scan(Object)}
 	 */
 	public static class Node implements Comparable<Node> {
 
@@ -717,12 +716,12 @@ public enum FlowSerializerUtils {
 			this.object = o;
 			this.id = id;
 			this.name = name;
-			this.factory = ReactiveStateUtils.isFactory(o);
+			this.factory = FlowSerializerUtils.isFactory(o);
 			this.inner = isContained(o);
-			this.group = ReactiveStateUtils.getGroup(o);
+			this.group = FlowSerializerUtils.getGroup(o);
 			this.unique = isUnique(o);
 			this.rootId = rootId == null ? id : rootId;
-			this.logging = ReactiveStateUtils.isLogging(o);
+			this.logging = FlowSerializerUtils.isLogging(o);
 		}
 
 		private void addEdgeRef(Edge edge) {
@@ -775,31 +774,31 @@ public enum FlowSerializerUtils {
 		}
 
 		public final long getCapacity() {
-			return ReactiveStateUtils.getCapacity(object);
+			return FlowSerializerUtils.getCapacity(object);
 		}
 
 		public final long getBuffered() {
-			return ReactiveStateUtils.getBuffered(object);
+			return FlowSerializerUtils.getBuffered(object);
 		}
 
 		public final long getUpstreamLimit() {
-			return ReactiveStateUtils.getUpstreamLimit(object);
+			return FlowSerializerUtils.getUpstreamLimit(object);
 		}
 
 		public final long getPeriod() {
-			return ReactiveStateUtils.getTimedPeriod(object);
+			return FlowSerializerUtils.getTimedPeriod(object);
 		}
 
 		public final Throwable getFailedState() {
-			return ReactiveStateUtils.getFailedState(object);
+			return FlowSerializerUtils.getFailedState(object);
 		}
 
 		public final long getExpectedUpstream() {
-			return ReactiveStateUtils.getExpectedUpstream(object);
+			return FlowSerializerUtils.getExpectedUpstream(object);
 		}
 
 		public final long getRequestedDownstream() {
-			return ReactiveStateUtils.getRequestedDownstream(object);
+			return FlowSerializerUtils.getRequestedDownstream(object);
 		}
 
 		public final Boolean isActive() {
