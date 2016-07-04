@@ -31,8 +31,7 @@ HttpServer.<String, String>create(spec ->
 				keys.get(9) == KeyEvent.VK_A
 			)
 			.map(isKonami -> isKonami ? "Konami!" : "Nah")
-			.nest()
-			.flatMap(konamis ->
+			.as(konamis ->
 				channel.send(konamis)
 			);
 		})
