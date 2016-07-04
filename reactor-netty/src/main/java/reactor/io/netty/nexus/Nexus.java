@@ -47,7 +47,7 @@ import reactor.core.subscriber.SubmissionEmitter;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
-import reactor.core.util.ReactiveStateUtils;
+import reactor.io.util.FlowSerializerUtils;
 import reactor.core.util.WaitStrategy;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
@@ -58,7 +58,7 @@ import reactor.io.netty.http.HttpInbound;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.tcp.TcpServer;
 
-import static reactor.core.util.ReactiveStateUtils.property;
+import static reactor.io.util.FlowSerializerUtils.property;
 
 /**
  * @author Stephane Maldini
@@ -214,7 +214,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		this.cannons = cannons.connectEmitter();
 
 		lastState = new GraphEvent(server.getListenAddress()
-		                                 .toString(), ReactiveStateUtils.createGraph());
+		                                 .toString(), FlowSerializerUtils.createGraph());
 
 		lastSystemState = new SystemEvent(server.getListenAddress()
 		                                        .toString());
@@ -362,13 +362,13 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		final long _period = period > 0 ?  period : 400L;
 
 		UnicastProcessor<Object> p = UnicastProcessor.create();
-		log.info("State Monitoring Starting on " + ReactiveStateUtils.getName(o));
+		log.info("State Monitoring Starting on " + FlowSerializerUtils.getName(o));
 		timer.schedulePeriodically(() -> {
 				if (!p.isCancelled()) {
-					p.onNext(ReactiveStateUtils.scan(o));
+					p.onNext(FlowSerializerUtils.scan(o));
 				}
 				else {
-					log.info("State Monitoring stopping on " + ReactiveStateUtils.getName(o));
+					log.info("State Monitoring stopping on " + FlowSerializerUtils.getName(o));
 					throw Exceptions.failWithCancel();
 				}
 		}, 0L, _period, unit != null ? unit : TimeUnit.MILLISECONDS);
@@ -530,14 +530,14 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 
 	final static class GraphEvent extends Event {
 
-		final ReactiveStateUtils.Graph graph;
+		final FlowSerializerUtils.Graph graph;
 
-		public GraphEvent(String name, ReactiveStateUtils.Graph graph) {
+		public GraphEvent(String name, FlowSerializerUtils.Graph graph) {
 			super(name);
 			this.graph = graph;
 		}
 
-		public ReactiveStateUtils.Graph getStreams() {
+		public FlowSerializerUtils.Graph getStreams() {
 			return graph;
 		}
 
@@ -593,7 +593,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 			if (args != null && args.length == 3) {
 				this.kind = args[0].toString();
 				this.data = args[1] != null ? args[1].toString() : null;
-				this.origin = ReactiveStateUtils.getIdOrDefault(args[2]);
+				this.origin = FlowSerializerUtils.getIdOrDefault(args[2]);
 			}
 			else {
 				this.origin = null;
@@ -832,7 +832,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 			String computed = Logger.format(msg, arguments);
 			SubmissionEmitter.Emission emission;
 
-			if (arguments != null && arguments.length == 3 && ReactiveStateUtils.isLogging(arguments[2])) {
+			if (arguments != null && arguments.length == 3 && FlowSerializerUtils.isLogging(arguments[2])) {
 				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()) {
 					//System.out.println(emission+ " "+computed);
 				}
@@ -927,8 +927,8 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		public Event apply(Object o) {
 			return new GraphEvent(server.getListenAddress()
 			                            .toString(),
-					ReactiveStateUtils.Graph.class.equals(o.getClass()) ? ((ReactiveStateUtils.Graph) o) :
-							ReactiveStateUtils.scan(o));
+					FlowSerializerUtils.Graph.class.equals(o.getClass()) ? ((FlowSerializerUtils.Graph) o) :
+							FlowSerializerUtils.scan(o));
 		}
 
 	}

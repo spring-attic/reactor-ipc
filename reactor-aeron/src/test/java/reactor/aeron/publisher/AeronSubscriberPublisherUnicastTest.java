@@ -23,7 +23,7 @@ import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.test.TestSubscriber;
-import reactor.core.util.ReactiveStateUtils;
+import reactor.io.util.FlowSerializerUtils;
 import reactor.io.buffer.Buffer;
 
 import java.util.concurrent.CountDownLatch;
@@ -59,8 +59,8 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client1.awaitAndAssertNextValues("1", "2", "3");
 
-		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
-		System.out.println(ReactiveStateUtils.scan(client1).toString());
+		System.out.println(FlowSerializerUtils.scan(aeronSubscriber).toString());
+		System.out.println(FlowSerializerUtils.scan(client1).toString());
 
 		AeronFlux publisher2 = new AeronFlux(createContext("publisher2")
 				.receiverChannel(AeronTestUtils.availableLocalhostChannel()));
@@ -73,15 +73,15 @@ public class AeronSubscriberPublisherUnicastTest extends CommonSubscriberPublish
 
 		client2.awaitAndAssertNextValues("1", "2", "3", "4", "5", "6").assertComplete();
 
-		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
-		System.out.println(ReactiveStateUtils.scan(client2).toString());
-		System.out.println(ReactiveStateUtils.scan(client1).toString());
+		System.out.println(FlowSerializerUtils.scan(aeronSubscriber).toString());
+		System.out.println(FlowSerializerUtils.scan(client2).toString());
+		System.out.println(FlowSerializerUtils.scan(client1).toString());
 
 		client1.request(3);
 
 		client1.awaitAndAssertNextValues("4", "5", "6").assertComplete();
 
-		System.out.println(ReactiveStateUtils.scan(aeronSubscriber).toString());
+		System.out.println(FlowSerializerUtils.scan(aeronSubscriber).toString());
 	}
 
 	@Test

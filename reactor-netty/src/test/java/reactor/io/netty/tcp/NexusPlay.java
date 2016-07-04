@@ -43,7 +43,7 @@ public class NexusPlay {
 		     //.useCapacity(5l)
 		     .startAndAwait();
 
-		//ReactiveStateUtils.scan(o).toString()
+		//FlowSerializerUtils.scan(o).toString()
 
 		//SAMPLE streams to monitor
 		//on.monitor(nexus);
