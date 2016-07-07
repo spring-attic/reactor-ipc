@@ -94,7 +94,7 @@ abstract class NettyHttpChannel extends TcpChannel
 	@Override
 	public HttpOutbound addCookie(Cookie cookie) {
 		if (statusAndHeadersSent == 0) {
-			this.headers.add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+			this.headers.add(HttpHeaderNames.COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
 		}
 		else {
 			throw new IllegalStateException("Status and headers already sent");
