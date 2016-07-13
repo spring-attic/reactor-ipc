@@ -29,6 +29,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import reactor.io.netty.common.ColocatedEventLoopGroup;
 
 /**
  * @author Stephane Maldini
@@ -53,21 +54,25 @@ public class EpollDetector {
 	}
 
 	public static Class<? extends ServerChannel> getServerChannel(EventLoopGroup group) {
-		return EpollEventLoopGroup.class.isAssignableFrom(group.getClass()) && epoll ?
-		  EpollServerSocketChannel.class : NioServerSocketChannel.class;
+		return useEpoll(group) ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
 	}
 
 	public static Class<? extends Channel> getChannel(EventLoopGroup group) {
-		return EpollEventLoopGroup.class.isAssignableFrom(group.getClass()) && epoll ?
-		  EpollSocketChannel.class : NioSocketChannel.class;
+		return useEpoll(group) ? EpollSocketChannel.class : NioSocketChannel.class;
 	}
 
 	public static Class<? extends Channel> getDatagramChannel(EventLoopGroup group) {
-		return EpollEventLoopGroup.class.isAssignableFrom(group.getClass()) && epoll ?
-		  EpollDatagramChannel.class : NioDatagramChannel.class;
+		return useEpoll(group) ? EpollDatagramChannel.class : NioDatagramChannel.class;
 	}
 
-	public static boolean hasEpoll() {
-		return epoll;
+	private static boolean useEpoll(EventLoopGroup group) {
+		if (!epoll) {
+			return false;
+		}
+		if (group instanceof ColocatedEventLoopGroup) {
+			group = ((ColocatedEventLoopGroup) group).getEventLoopGroup();
+		}
+		return group instanceof EpollEventLoopGroup;
 	}
+
 }

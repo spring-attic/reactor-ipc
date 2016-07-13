@@ -79,4 +79,5 @@ public final class NettyNativeDetector {
 		return epoll ? EpollDetector.getDatagramChannel(group) :  NioDatagramChannel.class;
 	}
 
+
 }

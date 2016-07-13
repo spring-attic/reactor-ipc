@@ -201,13 +201,13 @@ public class TcpClientTests {
 			                                    switch (attempt) {
 				                                    case 1:
 					                                    totalDelay.addAndGet(100);
-					                                    return Mono.delay(100L);
+					                                    return Mono.delayMillis(100L);
 				                                    case 2:
 					                                    totalDelay.addAndGet(500);
-					                                    return Mono.delay(500L);
+					                                    return Mono.delayMillis(500L);
 				                                    case 3:
 					                                    totalDelay.addAndGet(1000);
-					                                    return Mono.delay(1000L);
+					                                    return Mono.delayMillis(1000L);
 				                                    default:
 					                                    latch.countDown();
 					                                    return Mono.<Long>empty();
@@ -261,7 +261,7 @@ public class TcpClientTests {
 					latch.countDown();
 				});
 
-			  return Mono.delay(3000).then().log();
+			  return Mono.delayMillis(3000).then().log();
 		  }
 		);
 
@@ -309,7 +309,7 @@ public class TcpClientTests {
 			  List<Publisher<Void>> allWrites = new ArrayList<>();
 			  for (int i = 0; i < 5; i++) {
 				  allWrites.add(connection.sendString(Flux.just("a")
-				                                          .delay(750)));
+				                                          .delayMillis(750)));
 			  }
 			  return Flux.merge(allWrites);
 		  }
