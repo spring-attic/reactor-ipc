@@ -65,6 +65,10 @@ public class EpollDetector {
 		return useEpoll(group) ? EpollDatagramChannel.class : NioDatagramChannel.class;
 	}
 
+	public static boolean hasEpoll() {
+		return epoll;
+	}
+
 	private static boolean useEpoll(EventLoopGroup group) {
 		if (!epoll) {
 			return false;
