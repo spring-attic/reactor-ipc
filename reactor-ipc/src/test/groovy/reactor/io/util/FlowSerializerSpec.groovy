@@ -21,7 +21,6 @@ import reactor.core.scheduler.Schedulers
 import spock.lang.Specification
 
 import static reactor.core.publisher.Flux.*
-import static reactor.core.subscriber.Subscribers.unbounded
 
 /**
  * @author Stephane Maldini
@@ -63,13 +62,10 @@ class FlowSerializerSpec extends Specification {
 
 	def proc1 = EmitterProcessor.create()
 	def proc2 = EmitterProcessor.create()
-	def sub1 = unbounded()
-	def sub2 = unbounded()
-	def sub3 = unbounded()
 	def _group = EmitterProcessor.create()
-	proc1.log(" test").subscribe(sub1)
-	_group.publishOn(Schedulers.single()).subscribe(sub2)
-	proc1.log(" test").subscribe(sub3)
+	def sub1 = proc1.log(" test").subscribe()
+	_group.publishOn(Schedulers.single()).subscribe()
+	proc1.log(" test").subscribe()
 	proc1.log(" test").subscribe(_group)
 	def zip = zip(pub3, proc2)
 
