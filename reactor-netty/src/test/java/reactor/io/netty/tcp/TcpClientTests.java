@@ -39,12 +39,11 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.subscriber.Subscribers;
-import reactor.util.ReactorProperties;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.util.SocketUtils;
+import reactor.util.ReactorProperties;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -230,11 +229,11 @@ public class TcpClientTests {
 			System.out.println("Start");
 			connectionLatch.countDown();
 			connection.receive()
-			          .subscribe(Subscribers.unbounded());
+			          .subscribe();
 			return Flux.never();
 		})
 		         .repeatWhenEmpty(tries -> tries.doOnNext(s -> reconnectionLatch.countDown()))
-		         .subscribe(Subscribers.unbounded());
+		         .subscribe();
 
 		assertTrue("Initial connection is made", connectionLatch.await(5, TimeUnit.SECONDS));
 		assertTrue("A reconnect attempt was made", reconnectionLatch.await(5, TimeUnit.SECONDS));

@@ -203,7 +203,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 
 		@Override
-		public String getId() {
+		public String toString() {
 			return Codec.this.getClass().getSimpleName().replaceAll("Codec","Decoder");
 		}
 	}
@@ -223,7 +223,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 
 		@Override
-		public String getId() {
+		public String toString() {
 			return Codec.this.getClass()
 			                 .getSimpleName()
 			                 .replaceAll("Codec", "Encoder");

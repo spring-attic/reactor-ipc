@@ -17,7 +17,6 @@ package reactor.io.netty.tcp;
 
 import java.util.concurrent.CountDownLatch;
 
-import reactor.core.subscriber.Subscribers;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.nexus.Nexus;
 
@@ -43,7 +42,7 @@ public class NexusFederatePlay {
 		client
 		           .ws("ws://localhost:12014/on/stream")
 				   .subscribe( ch ->
-						   ch.receive().subscribe(Subscribers.consumer(System.out::println))
+						   ch.receive().subscribe(System.out::println)
 				   );
 
 		nexus.monitor(nexus2);
