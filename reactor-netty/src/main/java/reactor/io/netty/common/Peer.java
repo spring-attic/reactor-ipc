@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.state.Completable;
+import reactor.core.subscriber.SubscriberState;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 
@@ -33,8 +33,7 @@ import reactor.io.ipc.ChannelHandler;
  *
  * @author Stephane Maldini
  */
-public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>
-		implements Completable {
+public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>  {
 
 	public static final int    DEFAULT_PORT         =
 			System.getenv("PORT") != null ? Integer.parseInt(System.getenv("PORT")) : 12012;
@@ -71,13 +70,11 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>
 		return defaultTimer;
 	}
 
-	@Override
-	public boolean isStarted() {
-		return started.get();
-	}
-
-	@Override
-	public boolean isTerminated() {
+	/**
+	 * Is shutdown
+	 * @return is shutdown
+	 */
+	public boolean isShutdown() {
 		return !started.get();
 	}
 

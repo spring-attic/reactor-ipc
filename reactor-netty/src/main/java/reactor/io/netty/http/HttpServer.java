@@ -44,7 +44,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
@@ -279,13 +278,8 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	}
 
 	@Override
-	public boolean isStarted() {
-		return server.isStarted();
-	}
-
-	@Override
-	public boolean isTerminated() {
-		return server.isTerminated();
+	public boolean isShutdown() {
+		return server.isShutdown();
 	}
 
 	/**

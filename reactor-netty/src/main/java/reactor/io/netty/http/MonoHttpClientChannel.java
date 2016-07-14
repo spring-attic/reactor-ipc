@@ -33,7 +33,7 @@ import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
-import reactor.core.util.EmptySubscription;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.core.util.Exceptions;
 import reactor.io.netty.common.ChannelBridge;
 
@@ -116,7 +116,7 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 		    .retry(bridge)
 		    //ignore doStart mono except for fatal errors since replySubscriber is
 		    // subscribed via channel event (active)
-		    .subscribe(null, reason -> EmptySubscription.error(subscriber, reason));
+		    .subscribe(null, reason -> SubscriptionHelper.error(subscriber, reason));
 	}
 }
 

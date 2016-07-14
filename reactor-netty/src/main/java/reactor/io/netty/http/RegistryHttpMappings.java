@@ -27,7 +27,6 @@ import reactor.bus.registry.Registry;
 import reactor.bus.selector.Selector;
 import reactor.bus.selector.Selectors;
 import reactor.bus.selector.UriPathSelector;
-import reactor.core.converter.Converters;
 import reactor.io.ipc.ChannelHandler;
 
 /**
@@ -36,7 +35,11 @@ import reactor.io.ipc.ChannelHandler;
 final class RegistryHttpMappings extends HttpMappings {
 
 	static {
-		if (!Converters.hasReactorBus()) {
+		try{
+			RegistryHttpMappings.class.getClassLoader().loadClass("reactor.bus" +
+					".registry.Registry");
+		}
+		catch(ClassNotFoundException cfe){
 			throw new IllegalStateException("io.projectreactor:reactor-bus dependency is missing from the classpath.");
 		}
 	}

@@ -45,6 +45,9 @@ public interface HttpOutbound extends HttpConnection, NettyOutbound {
 	 */
 	HttpOutbound addHeader(CharSequence name, CharSequence value);
 
+	@Override
+	HttpOutbound flushEach();
+
 	/**
 	 * @param name
 	 * @param value

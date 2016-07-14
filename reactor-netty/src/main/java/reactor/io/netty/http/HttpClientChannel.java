@@ -31,6 +31,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.util.Exceptions;
 import reactor.io.netty.common.MonoChannelFuture;
+import reactor.io.netty.common.NettyOutbound;
 
 /**
  * @author Stephane Maldini
@@ -60,6 +61,12 @@ final class HttpClientChannel extends NettyHttpChannel
 	public boolean isWebsocket() {
 		return delegate().pipeline()
 		                 .get(NettyWebSocketClientHandler.class) != null;
+	}
+
+	@Override
+	public HttpClientRequest flushEach() {
+		super.flushEach();
+		return this;
 	}
 
 	@Override

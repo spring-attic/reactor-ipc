@@ -26,10 +26,10 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.core.state.Introspectable;
+import reactor.core.publisher.PublisherConfig;
 import reactor.core.subscriber.SubscriberBarrier;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.PlatformDependent;
+import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.util.ReactorProperties;
 import reactor.io.buffer.Buffer;
 
 /**
@@ -85,11 +85,11 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 	}
 
 	private static final class AggregatingDecoderBarrier<IN>
-			extends SubscriberBarrier<Buffer, IN> implements Introspectable {
+			extends SubscriberBarrier<Buffer, IN> implements PublisherConfig {
 
 		private final static AtomicReferenceFieldUpdater<AggregatingDecoderBarrier, Buffer>
 				AGGREGATE =
-				PlatformDependent.newAtomicReferenceFieldUpdater(AggregatingDecoderBarrier.class, "aggregate");
+				ReactorProperties.newAtomicReferenceFieldUpdater(AggregatingDecoderBarrier.class, "aggregate");
 
 		private final static AtomicIntegerFieldUpdater<AggregatingDecoderBarrier>
 				TERMINATED =
@@ -120,7 +120,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 
 		@Override
 		protected void doRequest(long n) {
-			if (BackpressureUtils.getAndAddCap(PENDING_UPDATER, this, n) == 0) {
+			if (SubscriptionHelper.getAndAddCap(PENDING_UPDATER, this, n) == 0) {
 				super.doRequest(n);
 				if (!tryDrain()) {
 					requestMissing();
@@ -204,12 +204,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 		}
 
 		@Override
-		public int getMode() {
-			return 0;
-		}
-
-		@Override
-		public String getName() {
+		public String getId() {
 			return codec.getClass().getSimpleName().replaceAll("Codec","Decoder");
 		}
 
@@ -230,7 +225,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 				cursor = views.next();
 				if (cursor != null) {
 					next = codec.decodeNext(cursor.get(), decoderContext);
-					if (next != null && BackpressureUtils.getAndSub(PENDING_UPDATER, this, 1L) > 0) {
+					if (next != null && SubscriptionHelper.getAndSub(PENDING_UPDATER, this, 1L) > 0) {
 						subscriber.onNext(next);
 					}
 					else {

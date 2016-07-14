@@ -95,7 +95,6 @@ public class NexusPlay {
 				for(int j = 0; j < 3; j++) {
 					dispatched
 							.log("slow",  Level.FINEST, Logger.ALL)
-							//.useCapacity(5)
 							.subscribe(d ->
 									LockSupport.parkNanos(10_000_000 * (r.nextInt(20) + 1))
 							);
@@ -118,7 +117,6 @@ public class NexusPlay {
 				for(int j = 0; j < 3; j++) {
 					dispatched
 							.log("slow",  Level.FINEST, Logger.ALL)
-							//.useCapacity(5)
 							.subscribe(d ->
 									LockSupport.parkNanos(1000_000_000)
 							);

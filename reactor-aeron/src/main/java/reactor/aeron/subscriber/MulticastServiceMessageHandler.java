@@ -163,11 +163,11 @@ class MulticastServiceMessageHandler implements ServiceMessageHandler {
 			return cursor;
 		}
 
-		long minSequence = Long.MAX_VALUE;
+		long minDemand = Long.MAX_VALUE;
 		for (MulticastSession session: sessionTracker.getSessions()) {
-			minSequence = Math.min(session.getSequence(), minSequence);
+			minDemand = Math.min(session.getDemand(), minDemand);
 		}
-		return minSequence;
+		return minDemand;
 	}
 
 	public void incrementCursor() {

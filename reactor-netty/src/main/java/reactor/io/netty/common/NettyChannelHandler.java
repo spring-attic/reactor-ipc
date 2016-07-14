@@ -18,8 +18,6 @@ package reactor.io.netty.common;
 
 import java.io.IOException;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import io.netty.buffer.ByteBuf;
@@ -40,18 +38,14 @@ import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxEmitter;
-import reactor.core.queue.QueueSupplier;
+import reactor.core.publisher.PublisherConfig;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.state.Backpressurable;
-import reactor.core.state.Cancellable;
-import reactor.core.state.Completable;
-import reactor.core.state.Introspectable;
-import reactor.core.state.Prefetchable;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.EmptySubscription;
+import reactor.core.subscriber.SubscriberState;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
+import reactor.core.util.concurrent.QueueSupplier;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 
@@ -62,7 +56,7 @@ import reactor.io.ipc.ChannelHandler;
  * @author Stephane Maldini
  */
 public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHandler
-		implements Introspectable, Producer, Publisher<Object> {
+		implements PublisherConfig, Producer, Publisher<Object> {
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandler.class);
 
@@ -147,13 +141,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	}
 
 	@Override
-	public String getName() {
-		return "TCP Connection";
-	}
-
-	@Override
-	public int getMode() {
-		return INNER;
+	public String getId() {
+		return null;
 	}
 
 	@Override
@@ -171,15 +160,14 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 	@Override
 	public void write(final ChannelHandlerContext ctx, Object msg, final ChannelPromise promise) throws Exception {
-		if (msg instanceof Publisher) {
-			@SuppressWarnings("unchecked") Publisher<?> data = (Publisher<?>) msg;
-			final long capacity = msg instanceof Backpressurable ? ((Backpressurable) data).getCapacity() : Long.MAX_VALUE;
-
-			if (capacity == Long.MAX_VALUE || capacity == -1L) {
-				data.subscribe(new FlushOnTerminateSubscriber(ctx, promise));
+		if (msg instanceof ChannelWriter) {
+			@SuppressWarnings("unchecked") ChannelWriter dataWriter = (ChannelWriter) msg;
+			if (dataWriter.flushMode == FlushMode.MANUAL_COMPLETE) {
+				dataWriter.writeStream.subscribe(new FlushOnTerminateSubscriber(ctx,
+						promise));
 			}
 			else {
-				data.subscribe(new FlushOnCapacitySubscriber(ctx, promise, capacity));
+				dataWriter.writeStream.subscribe(new FlushOnEachSubscriber(ctx, promise));
 			}
 		}
 		else {
@@ -232,6 +220,27 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			else {
 				promise.trySuccess();
 			}
+		}
+	}
+
+	/**
+	 *
+	 */
+	public enum FlushMode {
+		AUTO_EACH, AUTO_LOOP, MANUAL_COMPLETE, MANUAL_BOUNDARY
+	}
+
+	/**
+	 *
+	 */
+	final public static class ChannelWriter {
+
+		final Publisher<?> writeStream;
+		final FlushMode    flushMode;
+
+		public ChannelWriter(Publisher<?> writeStream, FlushMode flushMode) {
+			this.writeStream = writeStream;
+			this.flushMode = flushMode;
 		}
 	}
 
@@ -302,7 +311,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onSubscribe(final Subscription s) {
-			if (BackpressureUtils.validate(subscription, s)) {
+			if (SubscriptionHelper.validate(subscription, s)) {
 				this.subscription = s;
 
 				ctx.channel()
@@ -369,46 +378,35 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 	}
 
-	final class FlushOnCapacitySubscriber
-			implements Runnable, BaseSubscriber<Object>,
-			           ChannelFutureListener, Loopback, Backpressurable, Completable,
-			           Cancellable, Receiver, Prefetchable {
+	final class FlushOnEachSubscriber
+			implements BaseSubscriber<Object>, ChannelFutureListener, Loopback,
+			           SubscriberState, Receiver {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
-		private final long                  capacity;
 
 		private Subscription subscription;
-		private long written = 0L;
 
 		private final ChannelFutureListener writeListener = new ChannelFutureListener() {
 
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
-				if (!future.isSuccess() && future.cause() != null) {
+				if (!future.isSuccess()) {
 					promise.tryFailure(future.cause());
 					if(log.isDebugEnabled()) {
 						log.debug("Write error", future.cause());
 					}
 					return;
 				}
-				if (capacity == 1L || --written == 0L) {
 					if (subscription != null) {
-						subscription.request(capacity);
+						subscription.request(1L);
 					}
-				}
 			}
 		};
 
-		public FlushOnCapacitySubscriber(ChannelHandlerContext ctx, ChannelPromise promise, long capacity) {
+		public FlushOnEachSubscriber(ChannelHandlerContext ctx, ChannelPromise promise) {
 			this.ctx = ctx;
 			this.promise = promise;
-			this.capacity = capacity;
-		}
-
-		@Override
-		public long getPending() {
-			return ctx.channel().isWritable() ? written : capacity;
 		}
 
 		@Override
@@ -427,25 +425,20 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 
 		@Override
-		public long getCapacity() {
-			return capacity;
-		}
-
-		@Override
 		public Object connectedInput() {
 			return NettyChannelHandler.this;
 		}
 
 		@Override
 		public void onSubscribe(final Subscription s) {
-			if (BackpressureUtils.validate(subscription, s)) {
+			if (SubscriptionHelper.validate(subscription, s)) {
 				subscription = s;
 
 				ctx.channel()
 				   .closeFuture()
 				   .addListener(this);
 
-				s.request(capacity);
+				s.request(1L);
 			}
 		}
 
@@ -460,14 +453,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 				if (cf != null) {
 					cf.addListener(writeListener);
 				}
-				if (capacity == 1L) {
-					ctx.flush();
-				}
-				else {
-					ctx.channel()
-					   .eventLoop()
-					   .execute(this);
-				}
+				ctx.flush();
 			}
 			catch (Throwable t) {
 				log.error("Write error for "+w, t);
@@ -518,25 +504,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 
 		@Override
-		public void run() {
-			if (++written == capacity) {
-				ctx.flush();
-			}
-		}
-
-		@Override
-		public long limit() {
-			return 0;
-		}
-
-		@Override
 		public Object upstream() {
 			return subscription;
-		}
-
-		@Override
-		public long expectedFromUpstream() {
-			return capacity == 1 ? (ctx.channel().isWritable() ? 1 : 0 ) : capacity - written;
 		}
 	}
 
@@ -553,11 +522,11 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		if (inboundEmitter.actual == null) {
 			if (inboundEmitter.done) {
 				if (inboundEmitter.error != null) {
-					EmptySubscription.error(s, inboundEmitter.error);
+					SubscriptionHelper.error(s, inboundEmitter.error);
 					return;
 				}
 				else if (inboundEmitter.getPending() == 0) {
-					EmptySubscription.complete(s);
+					SubscriptionHelper.complete(s);
 					return;
 				}
 			}
@@ -566,7 +535,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			s.onSubscribe(inboundEmitter);
 		}
 		else {
-			EmptySubscription.error(s,
+			SubscriptionHelper.error(s,
 					new IllegalStateException(
 							"Only one connection receive subscriber allowed."));
 		}
@@ -790,8 +759,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void request(long n) {
-			if (BackpressureUtils.validate(n)) {
-				this.requested = BackpressureUtils.addCap(requested, n);
+			if (SubscriptionHelper.validate(n)) {
+				this.requested = SubscriptionHelper.addCap(requested, n);
 				drain();
 			}
 		}

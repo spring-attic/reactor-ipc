@@ -26,7 +26,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import org.reactivestreams.Publisher;
-import reactor.core.converter.Converters;
 import reactor.io.ipc.ChannelHandler;
 
 /**
@@ -34,6 +33,21 @@ import reactor.io.ipc.ChannelHandler;
  */
 public abstract class HttpMappings
 		implements Function<HttpChannel, Iterable<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>>> {
+
+	static final boolean hasBus;
+
+	static {
+		boolean bus;
+		try{
+			RegistryHttpMappings.class.getClassLoader().loadClass("reactor.bus" +
+					".registry.Registry");
+			bus = true;
+		}
+		catch(ClassNotFoundException cfe){
+			bus = false;
+		}
+		hasBus = bus;
+	}
 
 	/**
 	 * An alias for {@link HttpMappings#http}.
@@ -81,7 +95,7 @@ public abstract class HttpMappings
 			return null;
 		}
 
-		if(Converters.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS) {
+		if(hasBus && !FORCE_SIMPLE_MAPPINGS) {
 			return new RegistryHttpMappings.HttpSelector(uri, protocol, method);
 		}
 		else{
@@ -94,7 +108,7 @@ public abstract class HttpMappings
 	 * @return
 	 */
 	public static HttpMappings newMappings() {
-		if(Converters.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS){
+		if(hasBus && !FORCE_SIMPLE_MAPPINGS){
 			return new RegistryHttpMappings();
 		}
 		else{
@@ -149,7 +163,7 @@ public abstract class HttpMappings
 
 		String target = prefix.startsWith("/") ? prefix : "/".concat(prefix);
 		//target = target.endsWith("/") ? target :  prefix.concat("/");
-		if(Converters.hasReactorBus() && !FORCE_SIMPLE_MAPPINGS) {
+		if(hasBus && !FORCE_SIMPLE_MAPPINGS) {
 			return new RegistryHttpMappings.HttpSelector(target+"**", null, method);
 		}
 		else{

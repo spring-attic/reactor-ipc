@@ -17,7 +17,7 @@ package reactor.aeron.utils;
 
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
-import reactor.core.util.BackpressureUtils;
+import reactor.core.subscriber.SubscriptionHelper;
 
 /**
  * Tracks the number of requested items.
@@ -38,7 +38,7 @@ public final class DemandTracker {
 	 * @return the previous demand
 	 */
 	public long request(long n) {
-		return BackpressureUtils.getAndAddCap(requestedUpdater, this, n);
+		return SubscriptionHelper.getAndAddCap(requestedUpdater, this, n);
 	}
 
 	/**

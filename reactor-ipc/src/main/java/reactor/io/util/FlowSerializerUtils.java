@@ -29,18 +29,15 @@ import reactor.core.flow.MultiProducer;
 import reactor.core.flow.MultiReceiver;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
-import reactor.core.state.Backpressurable;
-import reactor.core.state.Cancellable;
-import reactor.core.state.Completable;
-import reactor.core.state.Introspectable;
-import reactor.core.state.Prefetchable;
-import reactor.core.state.Requestable;
+import reactor.core.publisher.PublisherConfig;
+import reactor.core.subscriber.SubscriberState;
 
 /**
  * Navigate and introspect
  * {@link Loopback}, {@link Receiver}, {@link MultiReceiver}, {@link MultiProducer} and {@link Producer}. The scan
  * will produce a {@link Graph} representation of a data flow, used for monitoring, debugging or
  * contextual informations.
+ * FIXME change introspection
  *
  * @author Stephane Maldini
  * @since 2.5
@@ -58,7 +55,8 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * Create an empty graph
-	 * @param trace force introspection on components presenting the option {@link Introspectable#TRACE_ONLY}
+	 * @param trace force introspection on components presenting the option
+	 * {@link PublisherConfig#getId()} null.
 	 * @return a new Graph
 	 */
 	public static Graph createGraph(boolean trace) {
@@ -213,149 +211,153 @@ public enum FlowSerializerUtils {
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link Introspectable#TRACE_ONLY}
+	 * @return true if the tested instance is {@link PublisherConfig}
 	 */
 	public static boolean isTraceOnly(Object o) {
-		return reactiveStateCheck(o, Introspectable.class) &&
-				(((Introspectable)o).getMode() & Introspectable.TRACE_ONLY) == Introspectable.TRACE_ONLY;
+		return reactiveStateCheck(o, PublisherConfig.class) &&
+				((PublisherConfig)o).getId() == null;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link Completable}
+	 * @return true if the tested instance is {@link SubscriberState}
 	 */
 	public static boolean hasSubscription(Object o) {
-		return reactiveStateCheck(o, Completable.class);
+		return reactiveStateCheck(o, SubscriberState.class);
 	}
 
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link Cancellable}
+	 * @return true if the tested instance is {@link SubscriberState}
 	 */
 	public static boolean isCancellable(Object o) {
-		return reactiveStateCheck(o, Cancellable.class);
+		return reactiveStateCheck(o, SubscriberState.class);
 	}
 
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link Introspectable#INNER}
+	 * @return true if the tested instance is {@link PublisherConfig}
 	 */
 	public static boolean isContained(Object o) {
-		return reactiveStateCheck(o, Introspectable.class) &&
-				(((Introspectable)o).getMode() & Introspectable.INNER) == Introspectable.INNER;
+		return reactiveStateCheck(o, SubscriberState.class) &&
+				o.getClass().isMemberClass();
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link Introspectable#LOGGING}
+	 * @return true if the tested instance is {@link PublisherConfig}
 	 */
 	public static boolean isLogging(Object o) {
-		return reactiveStateCheck(o, Introspectable.class) &&
-				(((Introspectable)o).getMode() & Introspectable.LOGGING) == Introspectable.LOGGING;
+		return reactiveStateCheck(o, PublisherConfig.class) &&
+				o.getClass().getSimpleName().contains("Log");
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a capacity if the tested instance is {@link Backpressurable} otherwise {@literal -1}
+	 * @return a capacity if the tested instance is {@link SubscriberState} otherwise {@literal -1}
 	 */
 	public static long getCapacity(Object o) {
-		if (reactiveStateCheck(o, Backpressurable.class)) {
-			return ((Backpressurable) o).getCapacity();
+		if (reactiveStateCheck(o, SubscriberState.class)) {
+			return ((SubscriberState) o).getCapacity();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return an error if the tested instance is {@link Introspectable} and is failed otherwise {@literal null}
+	 * @return an error if the tested instance is {@link SubscriberState} and is failed otherwise
+	 * {@literal null}
 	 */
 	public static Throwable getFailedState(Object o) {
-		if (reactiveStateCheck(o, Introspectable.class)) {
-			return ((Introspectable) o).getError();
+		if (reactiveStateCheck(o, SubscriberState.class)) {
+			return ((SubscriberState) o).getError();
 		}
 		return null;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a time resolution if the tested instance is {@link Introspectable} otherwise {@literal -1}
+	 * @return a time resolution if the tested instance is {@link SubscriberState} otherwise {@literal -1}
 	 */
 	public static long getTimedPeriod(Object o) {
-		if (reactiveStateCheck(o, Introspectable.class)) {
-			return ((Introspectable) o).getPeriod();
+		if (reactiveStateCheck(o, SubscriberState.class)) {
+			return ((SubscriberState) o).getPending();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a threshold limit if the tested instance is {@link Prefetchable} otherwise {@literal -1}
+	 * @return a threshold limit if the tested instance is {@link SubscriberState} otherwise
+	 * {@literal -1}
 	 */
 	public static long getUpstreamLimit(Object o) {
-		if (reactiveStateCheck(o, Prefetchable.class)) {
-			return ((Prefetchable) o).limit();
+		if (reactiveStateCheck(o, SubscriberState.class)) {
+			return ((SubscriberState) o).limit();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return an expected produced metric if the tested instance is {@link Prefetchable} otherwise {@literal -1}
+	 * @return an expected produced metric if the tested instance is {@link SubscriberState} otherwise {@literal -1}
 	 */
 	public static long getExpectedUpstream(Object o) {
-		if (reactiveStateCheck(o, Prefetchable.class)) {
-			return ((Prefetchable) o).expectedFromUpstream();
+		if (reactiveStateCheck(o, SubscriberState.class)) {
+			return ((SubscriberState) o).expectedFromUpstream();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a current requested count if the tested instance is {@link Requestable} otherwise {@literal -1}
+	 * @return a current requested count if the tested instance is {@link SubscriberState} otherwise {@literal -1}
 	 */
 	public static long getRequestedDownstream(Object o) {
-		if (reactiveStateCheck(o, Requestable.class)) {
-			return ((Requestable) o).requestedFromDownstream();
+		if (reactiveStateCheck(o, SubscriberState.class)) {
+			return ((SubscriberState) o).requestedFromDownstream();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return an assigned name if the tested instance is {@link Introspectable} otherwise {@literal anonymous}
+	 * @return an assigned name if the tested instance is {@link PublisherConfig} otherwise
+	 * {@literal anonymous}
 	 */
 	public static String getName(Object o) {
 		if (o == null) {
 			return null;
 		}
 
-		String name =
-				Introspectable.class.isAssignableFrom(o.getClass()) ? (((Introspectable) o).getName()) :
+		Object _name =
+				PublisherConfig.class.isAssignableFrom(o.getClass()) ? ((
+						(PublisherConfig) o).getId()) :
 						null;
-
-		name = name == null ? (o.getClass()
+		String name;
+		name = _name == null ? (o.getClass()
 		                       .getSimpleName()
 		                       .isEmpty() ?
 				o.toString() : o.getClass()
-				                .getSimpleName()): name;
+				                .getSimpleName()): _name.toString();
 
-		name = name.replaceAll("Flux|Subscriber","");
+		name = name.replaceAll("Flux|Mono|Subscriber","");
 
 		return name.isEmpty() ? "anonymous" : name;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a String key if the tested instance is {@link Introspectable} otherwise {@literal null}
+	 * @return a String key if the tested instance is {@link PublisherConfig} otherwise {@literal null}
 	 */
 	public static String getGroup(Object o) {
 		if (o == null) {
 			return null;
 		}
 
-		Object key = Introspectable.class.isAssignableFrom(o.getClass()) ? (((Introspectable) o).getId()) : null;
+		Object key = PublisherConfig.class.isAssignableFrom(o.getClass()) ? (((PublisherConfig) o).getId()) : null;
 
 		if (key == null) {
 			return null;
@@ -366,43 +368,41 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * @param o candidate instance
-	 * @return an identifier name  produced metric if the tested instance is {@link Introspectable#UNIQUE} otherwise return {@code getName(o).hashCode() + ":" + o.hashCode()}
+	 * @return an identifier name  produced metric if the tested instance is {@link PublisherConfig} otherwise return {@code getName(o).hashCode() + ":" + o.hashCode()}
 	 */
 	public static String getIdOrDefault(Object o) {
-		if (reactiveStateCheck(o, Introspectable.class) &&
-				(((Introspectable)o).getMode() & Introspectable.UNIQUE) == Introspectable.UNIQUE) {
-			return  ((Introspectable)o).getId() != null ? ((Introspectable)o).getId().toString() : ((Introspectable) o)
-					.getName();
+		if (reactiveStateCheck(o, PublisherConfig.class)){
+			return  ((PublisherConfig)o).getId() != null ? ((PublisherConfig)o).getId().toString() : (getName(o).hashCode() + ":" + o.hashCode());
 		}
 		return getName(o).hashCode() + ":" + o.hashCode();
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link Introspectable#UNIQUE}
+	 * @return true if the tested instance is {@link PublisherConfig}
 	 */
 	public static boolean isUnique(Object o) {
-		return reactiveStateCheck(o, Introspectable.class) &&
-				(((Introspectable)o).getMode() & Introspectable.UNIQUE) == Introspectable.UNIQUE;
+		return reactiveStateCheck(o, PublisherConfig.class) &&
+				((PublisherConfig)o).getId() != null;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link Introspectable#FACTORY}
+	 * @return true if the tested instance is {@link PublisherConfig}
 	 */
 	public static boolean isFactory(Object o) {
-		return reactiveStateCheck(o, Introspectable.class) &&
-				(((Introspectable)o).getMode() & Introspectable.FACTORY) == Introspectable.FACTORY;
+		return reactiveStateCheck(o, PublisherConfig.class) &&
+				o.getClass().getName().contains("reactor.core.publisher");
 	}
 
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return a waiting count if the tested instance is {@link Backpressurable} otherwise {@literal -1}
+	 * @return a waiting count if the tested instance is {@link SubscriberState} otherwise {@literal -1}
 	 */
 	public static long getBuffered(Object o) {
-		if (reactiveStateCheck(o, Backpressurable.class)) {
-			return ((Backpressurable) o).getPending();
+		if (reactiveStateCheck(o, SubscriberState.class)) {
+			return ((SubscriberState) o).getPending();
 		}
 		return -1L;
 	}
@@ -805,21 +805,21 @@ public enum FlowSerializerUtils {
 			if (!hasSubscription(object)) {
 				return null;
 			}
-			return ((Completable) object).isStarted();
+			return ((SubscriberState) object).isStarted();
 		}
 
 		public final Boolean isTerminated() {
 			if (!hasSubscription(object)) {
 				return null;
 			}
-			return ((Completable) object).isTerminated();
+			return ((SubscriberState) object).isTerminated();
 		}
 
 		public final Boolean isCancelled() {
 			if (!isCancellable(object)) {
 				return null;
 			}
-			return ((Cancellable) object).isCancelled();
+			return ((SubscriberState) object).isCancelled();
 		}
 
 		protected final Edge createEdgeTo(Node to) {

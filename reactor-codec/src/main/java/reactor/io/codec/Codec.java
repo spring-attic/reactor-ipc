@@ -24,8 +24,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
-import reactor.core.state.Backpressurable;
-import reactor.core.state.Introspectable;
+import reactor.core.publisher.PublisherConfig;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.io.buffer.Buffer;
 
@@ -186,7 +185,8 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private final class DecoderBarrier extends SubscriberBarrier<SRC, IN> implements Introspectable {
+	private final class DecoderBarrier extends SubscriberBarrier<SRC, IN> implements
+	                                                                      PublisherConfig {
 		final Function<SRC, IN> decoder;
 
 		public DecoderBarrier(final Subscriber<? super IN> subscriber) {
@@ -205,17 +205,14 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 
 		@Override
-		public int getMode() {
-			return 0;
-		}
-
-		@Override
-		public String getName() {
+		public String getId() {
 			return Codec.this.getClass().getSimpleName().replaceAll("Codec","Decoder");
 		}
 	}
 
-	private class EncoderBarrier extends SubscriberBarrier<OUT, SRC> implements Introspectable {
+	private class EncoderBarrier extends SubscriberBarrier<OUT, SRC> implements
+	                                                                 PublisherConfig {
+
 		final private Function<OUT, SRC> encoder;
 
 		public EncoderBarrier(final Subscriber<? super SRC> subscriber) {
@@ -229,13 +226,10 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 
 		@Override
-		public String getName() {
-			return Codec.this.getClass().getSimpleName().replaceAll("Codec","Encoder");
-		}
-
-		@Override
-		public int getMode() {
-			return 0;
+		public String getId() {
+			return Codec.this.getClass()
+			                 .getSimpleName()
+			                 .replaceAll("Codec", "Encoder");
 		}
 	}
 
@@ -257,7 +251,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	protected abstract static class CodecSource<I, O> extends Flux<O> implements Backpressurable, Receiver {
+	protected abstract static class CodecSource<I, O> extends Flux<O> implements Receiver {
 		protected final Publisher<? extends I> source;
 
 		public CodecSource(Publisher<? extends I> source) {
@@ -265,21 +259,16 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 
 		@Override
-		public long getCapacity() {
-			return Backpressurable.class.isAssignableFrom(source.getClass()) ?
-					((Backpressurable) source).getCapacity() :
+		public long getPrefetch() {
+			return PublisherConfig.class.isAssignableFrom(source.getClass()) ?
+					((PublisherConfig) source).getPrefetch() :
 					-1L;
-		}
-
-		@Override
-		public long getPending() {
-			return -1L;
 		}
 
 		@Override
 		public String toString() {
 			return "{" +
-					" codec : \"" + getName() + "\" " +
+					" codec : \"" + getId() + "\" " +
 					'}';
 		}
 

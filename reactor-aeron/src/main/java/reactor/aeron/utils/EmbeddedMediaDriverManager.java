@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.util.BackpressureUtils;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.core.util.Logger;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
@@ -150,7 +150,7 @@ public final class EmbeddedMediaDriverManager {
 	}
 
 	public synchronized void shutdownDriver() {
-		counter = BackpressureUtils.subOrZero(counter, 1);
+		counter = SubscriptionHelper.subOrZero(counter, 1);
 		if (counter == 0 && shouldShutdownWhenNotUsed) {
 			shutdown();
 		}

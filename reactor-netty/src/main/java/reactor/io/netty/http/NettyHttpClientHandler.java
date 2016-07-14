@@ -27,15 +27,12 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.LastHttpContent;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.EmptySubscription;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -82,7 +79,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			       @Override
 			       public void onSubscribe(final Subscription s) {
 				       ctx.read();
-				       BackpressureUtils.validate(null, s);
+				       SubscriptionHelper.validate(null, s);
 				       s.request(Long.MAX_VALUE);
 			       }
 
@@ -177,7 +174,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 				connectSignal.onError(ex);
 			}
 			else if (replySubscriber != null) {
-				EmptySubscription.error(replySubscriber, ex);
+				SubscriptionHelper.error(replySubscriber, ex);
 			}
 			return false;
 		}
@@ -187,7 +184,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 				connectSignal.onError(ex);
 			}
 			else if (replySubscriber != null) {
-				EmptySubscription.error(replySubscriber, ex);
+				SubscriptionHelper.error(replySubscriber, ex);
 			}
 			return false;
 		}
@@ -202,11 +199,6 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			ctx.channel().close();
 			downstream().complete();
 		}
-	}
-
-	@Override
-	public String getName() {
-		return httpChannel != null ? httpChannel.getName() : "HTTP Client Connection";
 	}
 
 }

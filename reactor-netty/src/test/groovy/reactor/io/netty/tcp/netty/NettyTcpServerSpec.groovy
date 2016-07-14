@@ -67,7 +67,7 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the server is started"
 		server.start({ conn ->
-		  conn.send(conn.receive(NettyCodec.json(Pojo)).take(1).map { pojo ->
+		  conn.map(conn.receive(NettyCodec.json(Pojo)).take(1).map { pojo ->
 							assert pojo.name == "John Doe"
 							new Pojo(name: "Jane Doe")
 						}
@@ -97,9 +97,8 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the client/server are prepared"
 			server.start { input ->
-			  input.send(input.receive(NettyCodec.from(codec))
-								.log('serve')
-								.useCapacity(5l), NettyCodec.from(codec)
+			  input.mapAndFlush(input.receive(NettyCodec.from(codec))
+								.log('serve').window(5), NettyCodec.from(codec)
 				)
 			}.block()
 
@@ -108,7 +107,7 @@ class NettyTcpServerSpec extends Specification {
 						.log('receive')
 						.subscribe { latch.countDown() }
 
-			  input.send(
+			  input.map(
 						Flux.range(1, 10)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send'), NettyCodec.from(codec)
@@ -139,19 +138,16 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the client/server are prepared"
 			server.start { input ->
-			  input.send(input.receive(NettyCodec.from(codec))
-						.flatMap {
+			  input.mapAndFlush(input.receive(NettyCodec.from(codec))
+						.map {
 						  Flux.just(it)
-							.log('flatmap-retry')
-							.doOnNext {
-						if (i++ < 2) {
-							throw new Exception("test")
-						}
-					}
-					.retry(2)
-			  }
-			  .useCapacity(10l)
-					  , NettyCodec.from(codec))
+						  .doOnNext {
+							if (i++ < 2) {
+							  throw new Exception("test")
+							}
+						  }
+						  .retry(2).doOnComplete{ println 'wow '+it }.log('flatmap-retry')
+			  			}, NettyCodec.from(codec))
 			}.block()
 
 			client.start { input ->
@@ -159,7 +155,7 @@ class NettyTcpServerSpec extends Specification {
 						.log('receive')
 						.subscribe { latch.countDown() }
 
-			  input.send(
+			  input.map(
 						Flux.range(1, elem)
 								.map { new Pojo(name: 'test' + it) }
 								.log('send'), NettyCodec.from(codec)

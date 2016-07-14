@@ -276,26 +276,27 @@ public class SmokeTests {
 		httpServer.get("/data", (request) -> {
 			request.responseTransfer(false);
 
-			request.addResponseHeader("Content-type", "text/plain");
-			request.addResponseHeader("Expires", "0");
-			request.addResponseHeader("X-GPFDIST-VERSION", "Spring XD");
-			request.addResponseHeader("X-GP-PROTO", "1");
-			request.addResponseHeader("Cache-Control", "no-cache");
-			request.addResponseHeader("Connection", "close");
-			return request.send(bufferStream.doOnNext(d -> integer.getAndIncrement())
-			                                .take(takeCount)
-			                                .doOnNext(d -> integerPostTake.getAndIncrement())
-			                                .timeout(Duration.ofSeconds(2),
+			return request.addResponseHeader("Content-type", "text/plain")
+			              .addResponseHeader("Expires", "0")
+			              .addResponseHeader("X-GPFDIST-VERSION", "Spring XD")
+			              .addResponseHeader("X-GP-PROTO", "1")
+			              .addResponseHeader("Cache-Control", "no-cache")
+			              .addResponseHeader("Connection", "close")
+			              .flushEach()
+			              .map(bufferStream.doOnNext(d -> integer.getAndIncrement())
+			                               .take(takeCount)
+			                               .doOnNext(d -> integerPostTake.getAndIncrement())
+			                               .timeout(Duration.ofSeconds(2),
 					                                Flux.<Buffer>empty().doOnComplete(() -> System.out.println(
 							                                "timeout after 2 ")))
-			                                .doOnNext(d -> integerPostTimeout.getAndIncrement())
-			                                .concatWith(Flux.just(
+			                               .doOnNext(d -> integerPostTimeout.getAndIncrement())
+			                               .concatWith(Flux.just(
 					                                GpdistCodec.class.equals(codec.getClass()) ?
 							                                Buffer.wrap(new byte[0]) :
 							                                Buffer.wrap("END"))
 			                                                .doOnComplete(() -> integerPostConcat.decrementAndGet()))//END
-			                                .doOnNext(d -> integerPostConcat.getAndIncrement())
-			                                .useCapacity(1L), NettyCodec.from(codec));
+			                               .doOnNext(d -> integerPostConcat.getAndIncrement()),
+					              NettyCodec.from(codec));
 		});
 
 		httpServer.start().block();
@@ -576,7 +577,6 @@ public class SmokeTests {
 //										System.out.println("YYYYY COMPLETE " + Thread.currentThread());
 //									}
 //							)
-							.useCapacity(5L)
 					//.log("writer")
 	 */
 }

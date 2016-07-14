@@ -52,7 +52,7 @@ import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.util.EmptySubscription;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.tcp.TcpChannel;
 
@@ -148,7 +148,7 @@ abstract class NettyHttpChannel extends TcpChannel
 	}
 
 	@Override
-	public String getName() {
+	public String getId() {
 		if(isWebsocket()){
 			return "ws:" + uri();
 		}
@@ -389,6 +389,12 @@ abstract class NettyHttpChannel extends TcpChannel
 		}
 	}
 
+	@Override
+	public HttpOutbound flushEach() {
+		super.flushEach();
+		return this;
+	}
+
 	// RESPONSE contract
 
 	protected abstract void doSubscribeHeaders(Subscriber<? super Void> s);
@@ -509,7 +515,7 @@ abstract class NettyHttpChannel extends TcpChannel
 				doSubscribeHeaders(s);
 			}
 			else {
-				EmptySubscription.error(s, new IllegalStateException("Status and headers already sent"));
+				SubscriptionHelper.error(s, new IllegalStateException("Status and headers already sent"));
 			}
 		}
 	}

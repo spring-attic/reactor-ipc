@@ -16,6 +16,8 @@
 
 package reactor.io.netty.http;
 
+import reactor.io.netty.common.NettyOutbound;
+
 /**
  * An Http Reactive client write contract for outgoing requests. It inherits several
  * accessor related to HTTP flow : headers, params, URI, method, websocket...
@@ -44,4 +46,7 @@ public interface HttpClientRequest extends HttpOutbound {
 	 * @return the previous redirections or empty array
 	 */
 	String[] redirectedFrom();
+
+	@Override
+	HttpOutbound flushEach();
 }

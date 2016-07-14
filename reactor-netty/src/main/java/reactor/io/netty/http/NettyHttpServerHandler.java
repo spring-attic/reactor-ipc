@@ -34,9 +34,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.publisher.Flux;
-import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.subscriber.SubscriberState;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -115,12 +114,8 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 		return new NettyWebSocketServerHandler(url, protocols, this, textPlain);
 	}
 
-	@Override
-	public String getName() {
-		return request != null ? request.getName() : "HTTP Client Connection";
-	}
-
-	final class CloseSubscriber implements BaseSubscriber<Void>, Receiver, Completable {
+	final class CloseSubscriber implements BaseSubscriber<Void>, Receiver,
+	                                       SubscriberState {
 
 		private final ChannelHandlerContext ctx;
 		Subscription subscription;

@@ -44,10 +44,10 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.util.EmptySubscription;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.PlatformDependent;
+import reactor.core.util.ReactorProperties;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
@@ -68,7 +68,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
-		"" + PlatformDependent.DEFAULT_POOL_SIZE)
+		"" + ReactorProperties.DEFAULT_POOL_SIZE)
 	);
 
 	/**
@@ -76,10 +76,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to read
 	 * any incoming data. <p> To reply data on the active connection, {@link Channel#send} can subscribe to
-	 * any passed {@link Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
-	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
-	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
-	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
+	 * any passed {@link Publisher}. <p> Emitted channels will run on the same thread
 	 * they have beem receiving IO events.
 	 *
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -94,10 +91,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 	 * classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are on the
 	 * classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to read
 	 * any incoming data. <p> To reply data on the active connection, {@link Channel#send} can subscribe to
-	 * any passed {@link Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity}
-	 * will be used to switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value,
-	 * write on flush and auto read will apply. Otherwise, data will be flushed every capacity batch size and read will
-	 * pause when capacity number of elements have been dispatched. <p> Emitted channels will run on the same thread
+	 * any passed {@link Publisher}. Emitted channels will run on the same thread
 	 * they have beem receiving IO events.
 	 *
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -113,10 +107,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 	 * is scanned from the classpath on Class init. Support for Netty is provided as long as the relevant library
 	 * dependencies are on the classpath. <p> <p> From the emitted {@link Channel}, one can decide to add
 	 * in-channel consumers to read any incoming data. <p> To reply data on the active connection, {@link
-	 * Channel#send} can subscribe to any passed {@link Publisher}. <p> Note that
-	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
-	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
+	 * Channel#send} can subscribe to any passed {@link Publisher}.  <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -132,10 +123,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
 	 * on the classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to
 	 * read any incoming data. <p> To reply data on the active connection, {@link Channel#send} can
-	 * subscribe to any passed {@link Publisher}. <p> Note that {@link
-	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
-	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
+	 * subscribe to any passed {@link Publisher}. <p> Emitted
 	 * channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -152,10 +140,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
 	 * on the classpath. <p> <p> From the emitted {@link Channel}, one can decide to add in-channel consumers to
 	 * read any incoming data. <p> To reply data on the active connection, {@link Channel#send} can
-	 * subscribe to any passed {@link Publisher}. <p> Note that {@link
-	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on write
-	 * mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be flushed
-	 * every capacity batch size and read will pause when capacity number of elements have been dispatched. <p> Emitted
+	 * subscribe to any passed {@link Publisher}. <p> Emitted
 	 * channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -354,7 +339,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 				future.addListener(new ChannelFutureListener() {
 					@Override
 					public void operationComplete(ChannelFuture future) throws Exception {
-						subscriber.onSubscribe(EmptySubscription.INSTANCE);
+						subscriber.onSubscribe(SubscriptionHelper.empty());
 						if (future.isSuccess()) {
 							log.info("BIND {}",
 									future.channel()

@@ -126,8 +126,9 @@ public class TcpServerTests {
 					  latch.countDown();
 				  }
 			  });
-			return ch.send(Flux.just(new Pojo("John" + " Doe")), NettyCodec.json(Pojo.class))
-					.concatWith(Flux.never());
+			return ch.map(Flux.just(new Pojo("John" + " Doe")),
+					NettyCodec.json(Pojo.class))
+			         .concatWith(Flux.never());
 //			return Mono.empty();
 		}).block();
 
@@ -280,7 +281,8 @@ public class TcpServerTests {
 
 		server.start(serverHandler).block();
 
-		client.start(ch -> ch.send(Flux.just("Hello World!", "Hello 11!"), NettyCodec.linefeed()))
+		client.start(ch -> ch.map(Flux.just("Hello World!", "Hello 11!"),
+				NettyCodec.linefeed()))
 		      .block();
 
 		assertTrue("Latch was counted down", latch.await(10, TimeUnit.SECONDS));
@@ -358,8 +360,8 @@ public class TcpServerTests {
 				server.getListenAddress()
 				      .getPort());
 
-		client.start(ch -> ch.sendString(Flux.just("test"))
-		).block();
+		client.start(ch -> ch.sendString(Flux.just("test")))
+		      .block();
 
 		assertThat("countDownLatch counted down", countDownLatch.await(5, TimeUnit.SECONDS));
 	}
@@ -390,9 +392,8 @@ public class TcpServerTests {
 					                                  .concatWith(requestOut.sendString(
 							                                  Mono.just("ping")))
 			  )
-			          .flatMap(repliesOut -> requestIn.send(repliesOut.receive()
-			                                                          .useCapacity(100))
-			  )
+			          .flatMap(repliesOut -> requestIn.sendAndFlush(repliesOut.receive()
+			                                                                  .window(100)))
 		);
 		server.start().block();
 		//System.in.read();

@@ -22,7 +22,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.util.PlatformDependent;
+import reactor.core.util.ReactorProperties;
 
 /**
  * Encapsulates common socket options.

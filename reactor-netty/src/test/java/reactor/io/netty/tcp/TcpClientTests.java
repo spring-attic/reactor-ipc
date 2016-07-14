@@ -40,7 +40,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.subscriber.Subscribers;
-import reactor.core.util.PlatformDependent;
+import reactor.core.util.ReactorProperties;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.http.HttpClient;
@@ -161,7 +161,7 @@ public class TcpClientTests {
 						latch.countDown();
 					});
 
-			channel.send(
+			channel.map(
 			  Flux.range(1, messages)
 				.map(i -> "Hello World!")
 				.subscribeOn(Schedulers.parallel())
@@ -361,7 +361,7 @@ public class TcpClientTests {
 				while (true) {
 					SocketChannel ch = server.accept();
 
-					ByteBuffer buffer = ByteBuffer.allocate(PlatformDependent.SMALL_IO_BUFFER_SIZE);
+					ByteBuffer buffer = ByteBuffer.allocate(ReactorProperties.SMALL_IO_BUFFER_SIZE);
 					while (true) {
 						int read = ch.read(buffer);
 						if (read > 0) {

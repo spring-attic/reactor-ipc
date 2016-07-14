@@ -16,22 +16,16 @@
 package reactor.aeron.subscriber;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
-import reactor.core.queue.RingBuffer;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Sequence;
+import reactor.core.subscriber.SubscriptionHelper;
 
 /**
  * @author Anatoly Kadyshev
  */
-class MulticastSession implements Session {
+class MulticastSession extends AtomicLong implements Session {
 
 	private final String sessionId;
-
-	/**
-	 * Sequence corresponding to demand = demand - 1
-	 */
-	private final Sequence sequence;
 
 	private volatile long lastHeartbeatTimeNs;
 
@@ -43,7 +37,6 @@ class MulticastSession implements Session {
 		}
 
 		this.sessionId = sessionId;
-		this.sequence = RingBuffer.newSequence(sequence);
 	}
 
 	@Override
@@ -52,7 +45,7 @@ class MulticastSession implements Session {
 	}
 
 	public long requestMore(long n) {
-		return BackpressureUtils.getAndAddCap(sequence, n);
+		return SubscriptionHelper.addAndGet(this, n);
 	}
 
 	@Override
@@ -65,15 +58,15 @@ class MulticastSession implements Session {
 		this.lastHeartbeatTimeNs = lastHeartbeatTimeNs;
 	}
 
-	public long getSequence() {
-		return sequence.getAsLong();
+	public long getDemand() {
+		return get();
 	}
 
 	@Override
 	public String toString() {
 		return "MulticastSession["
 				+ "sessionId=" + sessionId
-				+ ", sequence=" + sequence
+				+ ", sequence=" + get()
 				+ "]";
 	}
 }

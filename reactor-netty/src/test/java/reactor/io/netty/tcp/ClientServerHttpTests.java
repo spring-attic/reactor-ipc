@@ -254,11 +254,12 @@ public class ClientServerHttpTests {
 		httpServer = HttpServer.create(0);
 
 		httpServer.get("/data",
-				(request) -> request.send(Flux.from(processor)
-				                              .log("server")
-				                              .timeout(Duration.ofSeconds(2), Flux.empty())
-				                              .concatWith(Flux.just(new ArrayList<>()))
-				                              .useCapacity(1L), NettyCodec.from(codec)));
+				(request) -> request.flushEach()
+				                    .map(Flux.from(processor)
+				                             .log("server")
+				                             .timeout(Duration.ofSeconds(2), Flux.empty())
+				                             .concatWith(Flux.just(new ArrayList<>())),
+						                    NettyCodec.from(codec)));
 
 		httpServer.start().block();
 	}

@@ -27,7 +27,7 @@ import reactor.aeron.utils.BasicAeronInfra;
 import reactor.aeron.utils.BasicExceptionSerializer;
 import reactor.aeron.utils.Serializer;
 import reactor.core.util.Logger;
-import reactor.core.util.PlatformDependent;
+import reactor.core.util.ReactorProperties;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 
@@ -100,7 +100,7 @@ public class Context {
 	 * Size of an internal ring buffer used for processing of messages
 	 * to be published into Aeron
 	 */
-	private int ringBufferSize = PlatformDependent.MEDIUM_BUFFER_SIZE;
+	private int ringBufferSize = ReactorProperties.MEDIUM_BUFFER_SIZE;
 
 	/**
 	 * Consumer of errors happened

@@ -36,7 +36,7 @@ ext {
 	gradleVersion = '2.8'
 	gradleScriptDir = "${rootProject.projectDir}/gradle"
 
-	reactorVersion = version
+	reactorVersion = '3.0.0.BUILD-SNAPSHOT'
 
 	// Languages
 	groovyVersion = '2.4.1'
@@ -46,7 +46,7 @@ ext {
 	logbackVersion = '1.1.2'
 
 	// Libraries
-	nettyVersion = '4.1.0.Final'
+	nettyVersion = '4.1.2.Final'
 	jacksonDatabindVersion = '2.5.1'
 	protobufVersion = '2.6.1'
 	kryoVersion = '3.0.3'

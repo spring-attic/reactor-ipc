@@ -33,8 +33,8 @@ server.start( input ->
 			.decode(codec) //transform Buffer into Pojo
 			.log("serve")
 			.map(codec)    //transform Pojo into Buffer
-			.useCapacity(5l)  //auto-flush every 5 elements
-	)
+
+	, 5) //auto-flush every 5 elements
 ).await();
 
 client.start( input -> {

@@ -33,10 +33,12 @@ import reactor.core.flow.Loopback;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.state.Completable;
-import reactor.core.util.EmptySubscription;
+import reactor.core.subscriber.SubscriberState;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.io.ipc.Channel;
 import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.NettyChannelHandler;
+import reactor.io.netty.common.NettyOutbound;
 
 /**
  * {@link Channel} implementation that delegates to Netty.
@@ -44,10 +46,12 @@ import reactor.io.netty.common.NettyChannel;
  * @since 2.5
  */
 public class TcpChannel extends Mono<Void>
-		implements NettyChannel, Loopback, Completable {
+		implements NettyChannel, Loopback, SubscriberState {
 
 	final io.netty.channel.Channel ioChannel;
 	final Flux<Object>             input;
+
+	volatile boolean flushEach;
 
 	public TcpChannel(io.netty.channel.Channel ioChannel, Flux<Object> input) {
 		this.input = input;
@@ -106,11 +110,11 @@ public class TcpChannel extends Mono<Void>
 		return !ioChannel.isOpen();
 	}
 
-	protected void emitWriter(final Publisher<?> encodedWriter,
+	final protected void emitWriter(final Publisher<?> encodedWriter,
 			final Subscriber<? super Void> postWriter) {
 
 		final ChannelFutureListener postWriteListener = future -> {
-			postWriter.onSubscribe(EmptySubscription.INSTANCE);
+			postWriter.onSubscribe(SubscriptionHelper.empty());
 			if (future.isSuccess()) {
 				postWriter.onComplete();
 			}
@@ -119,21 +123,32 @@ public class TcpChannel extends Mono<Void>
 			}
 		};
 
+		NettyChannelHandler.FlushMode mode;
+		if (flushEach) {
+			mode = NettyChannelHandler.FlushMode.AUTO_EACH;
+		}
+		else {
+			mode = NettyChannelHandler.FlushMode.MANUAL_COMPLETE;
+		}
+
+		NettyChannelHandler.ChannelWriter writer =
+				new NettyChannelHandler.ChannelWriter(encodedWriter, mode);
+
 		if (ioChannel.eventLoop()
 		             .inEventLoop()) {
 
-			ioChannel.write(encodedWriter)
+			ioChannel.write(writer)
 			         .addListener(postWriteListener);
 		}
 		else {
 			ioChannel.eventLoop()
-			         .execute(() -> ioChannel.write(encodedWriter)
+			         .execute(() -> ioChannel.write(writer)
 	                                 .addListener(postWriteListener));
 		}
 	}
 
 	@Override
-	public String getName() {
+	public String getId() {
 		return ioChannel.toString();
 	}
 
@@ -158,6 +173,12 @@ public class TcpChannel extends Mono<Void>
 		           .getName() + " {" +
 				"channel=" + ioChannel +
 				'}';
+	}
+
+	@Override
+	public NettyOutbound flushEach() {
+		flushEach = true;
+		return this;
 	}
 
 	final class NettyLifecycle implements Lifecycle {
@@ -210,7 +231,7 @@ public class TcpChannel extends Mono<Void>
 		}
 	}
 
-	private class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
+	final class PostWritePublisher extends Mono<Void> implements Receiver, Loopback {
 
 		private final Publisher<?> dataStream;
 
@@ -224,7 +245,7 @@ public class TcpChannel extends Mono<Void>
 				emitWriter(dataStream, s);
 			}
 			catch (Throwable throwable) {
-				EmptySubscription.error(s, throwable);
+				SubscriptionHelper.error(s, throwable);
 			}
 		}
 

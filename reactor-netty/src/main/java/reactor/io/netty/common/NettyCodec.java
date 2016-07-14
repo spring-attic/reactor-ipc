@@ -165,15 +165,16 @@ public final class NettyCodec<IN, OUT> {
 	 *
 	 * @return
 	 */
-	public Function<? super Flux<ByteBuf>, ? extends Publisher<IN>> decoder() {
-		return flux -> codec.decode(flux.map(bb -> new Buffer(bb.nioBuffer())));
+	public Function<? super Publisher<ByteBuf>, ? extends Publisher<IN>> decoder() {
+		return flux -> codec.decode(Flux.from(flux)
+		                                .map(bb -> new Buffer(bb.nioBuffer())));
 	}
 
 	/**
 	 *
 	 * @return
 	 */
-	public Function<Flux<? extends OUT>, ? extends Publisher<ByteBuf>> encoder() {
+	public Function<? super Flux<? extends OUT>, ? extends Publisher<ByteBuf>> encoder() {
 		return flux -> codec.encode(flux).map(b -> Unpooled.wrappedBuffer(b.byteBuffer()));
 	}
 }

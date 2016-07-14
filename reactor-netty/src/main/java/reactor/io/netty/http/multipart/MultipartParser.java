@@ -29,10 +29,10 @@ import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
-import reactor.core.queue.QueueSupplier;
-import reactor.core.state.Completable;
-import reactor.core.util.BackpressureUtils;
+import reactor.core.subscriber.SubscriberState;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.core.util.Exceptions;
+import reactor.core.util.concurrent.QueueSupplier;
 import reactor.io.netty.common.ByteBufEncodedFlux;
 
 /**
@@ -42,7 +42,7 @@ import reactor.io.netty.common.ByteBufEncodedFlux;
 
 final class MultipartParser
 		implements Subscriber<MultipartTokenizer.Token>, Subscription, Runnable, Producer,
-		           MultiProducer, Receiver, Completable {
+		           MultiProducer, Receiver, SubscriberState {
 
 	final Subscriber<? super ByteBufEncodedFlux> actual;
 	final ByteBufAllocator                       alloc;
@@ -71,7 +71,7 @@ final class MultipartParser
 
 	@Override
 	public void onSubscribe(Subscription s) {
-		if (BackpressureUtils.validate(this.s, s)) {
+		if (SubscriptionHelper.validate(this.s, s)) {
 			this.s = s;
 			actual.onSubscribe(this);
 		}

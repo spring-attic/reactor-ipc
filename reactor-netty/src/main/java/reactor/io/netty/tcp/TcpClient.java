@@ -17,7 +17,6 @@
 package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLException;
 
@@ -28,18 +27,15 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
-import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.PublisherConfig;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
 import reactor.io.ipc.Channel;
@@ -52,7 +48,6 @@ import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
-import reactor.io.netty.config.NettyOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 
 /**
@@ -62,7 +57,7 @@ import reactor.io.netty.util.NettyNativeDetector;
  * @author Stephane Maldini
  */
 public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
-		implements Introspectable, ChannelBridge<TcpChannel> {
+		implements PublisherConfig, ChannelBridge<TcpChannel> {
 
 
 
@@ -76,9 +71,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * org.reactivestreams.Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -97,9 +90,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	 * onComplete when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * org.reactivestreams.Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -119,9 +110,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * org.reactivestreams.Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -141,9 +130,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * org.reactivestreams.Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -165,9 +152,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	 * when client is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link org.reactivestreams.Publisher}.
-	 * <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in
-	 * auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply.
-	 * Otherwise, data will be flushed every capacity batch size and read will pause when capacity number of elements
+	 * <p> Note that read will pause when capacity number of elements
 	 * have been dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
 	 * <p>
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -242,7 +227,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	}
 
 	@Override
-	public String getName() {
+	public String getId() {
 		return "TcpClient:" + getConnectAddress().toString();
 	}
 

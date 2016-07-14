@@ -37,6 +37,45 @@ public interface NettyOutbound extends Outbound<ByteBuf> {
 	io.netty.channel.Channel delegate();
 
 	/**
+	 * Enable flush on each packet sent via {@link #send}, {@link #sendString},
+	 * {@link #sendObject},{@link #sendByteArray}, {@link #sendByteBuffer}.
+	 *
+	 * @return {@code this} instance
+	 */
+	NettyOutbound flushEach();
+
+	/**
+	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
+	 *
+	 * @param dataStream the dataStream publishing OLD_OUT items to write on this channel after encoding
+	 * @param codec an encoding {@link NettyCodec} providing a send-ready {@link Publisher}
+	 *
+	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	default <OLD_OUT> Mono<Void> map(Publisher<? extends OLD_OUT> dataStream,
+			NettyCodec<?, OLD_OUT> codec) {
+		return map(dataStream, codec.encoder());
+	}
+
+	/**
+	 * Transform and Send data to the peer, listen for any error on write and close on
+	 * terminal signal (complete|error). Each individual {@link Publisher} completion will
+	 * flush the underlying IO runtime.
+	 *
+	 * @param dataStreams a sequence of data streams publishing OLD_OUT items to write on
+	 * this channel after encoding
+	 * @param codec an encoding {@link NettyCodec} providing a send-ready {@link
+	 * Publisher}
+	 *
+	 *  @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or
+	 * any error during write
+	 */
+	default <OLD_OUT> Mono<Void> mapAndFlush(Publisher<? extends Publisher<? extends
+			OLD_OUT>> dataStreams, NettyCodec<?, OLD_OUT> codec) {
+		return mapAndFlush(dataStreams, codec.encoder());
+	}
+
+	/**
 	 * Assign event handlers to certain channel lifecycle events.
 	 *
 	 * @return Lifecycle to build the events handlers
@@ -53,18 +92,6 @@ public interface NettyOutbound extends Outbound<ByteBuf> {
 	@Override
 	default Mono<Void> send(Publisher<? extends ByteBuf> dataStream) {
 		return sendObject(dataStream);
-	}
-
-	/**
-	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
-	 *
-	 * @param dataStream the dataStream publishing OLD_OUT items to write on this channel after encoding
-	 * @param codec an encoding {@link NettyCodec} providing a send-ready {@link Publisher}
-	 *
-	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default <OLD_OUT> Mono<Void> send(Publisher<? extends OLD_OUT> dataStream, NettyCodec<?, OLD_OUT> codec) {
-		return send(dataStream, codec.encoder());
 	}
 
 	/**
@@ -116,8 +143,22 @@ public interface NettyOutbound extends Outbound<ByteBuf> {
 	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
 	 */
 	default Mono<Void> sendFile(File file, long position, long count) {
-		return MonoChannelFuture.from(delegate().writeAndFlush(new DefaultFileRegion(file, position, count)));
+		return MonoChannelFuture.from(delegate().writeAndFlush(new DefaultFileRegion(file,
+				position,
+				count)));
 	}
+
+	/**
+	 * Send Object to the peer, listen for any error on write and close on terminal signal
+	 * (complete|error). If more than one publisher is attached (multiple calls to send())
+	 * completion occurs after all publishers complete.
+	 *
+	 * @param dataStream the dataStream publishing Buffer items to write on this channel
+	 *
+	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any
+	 * error during write
+	 */
+	Mono<Void> sendObject(Publisher<?> dataStream);
 
 	/**
 	 * Send String to the peer, listen for any error on write and close on terminal signal (complete|error). If more
@@ -142,17 +183,8 @@ public interface NettyOutbound extends Outbound<ByteBuf> {
 	 */
 	default Mono<Void> sendString(Publisher<? extends String> dataStream, Charset charset) {
 		return send(Flux.from(dataStream)
-		                .map(s -> delegate().alloc().buffer().writeBytes(s.getBytes(charset))));
+		                .map(s -> delegate().alloc()
+		                                    .buffer()
+		                                    .writeBytes(s.getBytes(charset))));
 	}
-
-	/**
-	 * Send Object to the peer, listen for any error on write and close on terminal
-	 * signal (complete|error). If more
-	 * than one publisher is attached (multiple calls to send()) completion occurs after all publishers complete.
-	 *
-	 * @param dataStream the dataStream publishing Buffer items to write on this channel
-	 *
-	 * @return A Publisher to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	Mono<Void> sendObject(Publisher<?> dataStream);
 }

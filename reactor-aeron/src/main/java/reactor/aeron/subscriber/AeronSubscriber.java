@@ -26,8 +26,8 @@ import reactor.core.flow.Receiver;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.state.Completable;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.subscriber.SubscriberState;
 import reactor.core.util.Logger;
 import reactor.io.buffer.Buffer;
 
@@ -97,7 +97,7 @@ import reactor.io.buffer.Buffer;
  * @since 2.5
  */
 public final class AeronSubscriber
-		implements Completable, Receiver, Loopback, BaseSubscriber<Buffer> {
+		implements SubscriberState, Receiver, Loopback, BaseSubscriber<Buffer> {
 
 	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
 

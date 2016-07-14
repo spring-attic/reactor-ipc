@@ -37,18 +37,17 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.PublisherConfig;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.state.Introspectable;
 import reactor.core.subscriber.SubmissionEmitter;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.PlatformDependent;
-import reactor.io.util.FlowSerializerUtils;
-import reactor.core.util.WaitStrategy;
+import reactor.core.util.ReactorProperties;
+import reactor.core.util.concurrent.WaitStrategy;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.Peer;
@@ -57,6 +56,7 @@ import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpInbound;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.tcp.TcpServer;
+import reactor.io.util.FlowSerializerUtils;
 
 import static reactor.io.util.FlowSerializerUtils.property;
 
@@ -92,9 +92,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -114,9 +112,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -136,9 +132,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -501,14 +495,12 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	Flux<? extends ByteBuf> federateAndEncode(HttpChannel c, Flux<Event> stream) {
 		FederatedClient[] clients = federatedClients;
 		if (clients == null || clients.length == 0) {
-			return stream.map(BUFFER_STRING_FUNCTION)
-			             .useCapacity(websocketCapacity);
+			return stream.map(BUFFER_STRING_FUNCTION);
 		}
 		Flux<ByteBuf> mergedUpstreams = Flux.merge(Flux.fromArray(clients)
 		                                              .map(new FederatedMerger(c)));
 
-		return Flux.merge(stream.map(BUFFER_STRING_FUNCTION), mergedUpstreams)
-		           .useCapacity(websocketCapacity);
+		return Flux.merge(stream.map(BUFFER_STRING_FUNCTION), mergedUpstreams);
 	}
 
 	static class Event {
@@ -873,7 +865,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	}
 
 	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED              =
-			PlatformDependent.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
+			ReactorProperties.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
 	static final Logger                                                log                    =
 			Logger.getLogger(Nexus.class);
 	static final String                                                API_STREAM_URL         =
@@ -882,7 +874,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	                                                                   BUFFER_STRING_FUNCTION =
 			new StringToBuffer();
 
-	class LastGraphStateMap implements Function<Event, Event>, Introspectable {
+	class LastGraphStateMap implements Function<Event, Event>, PublisherConfig {
 
 		@Override
 		public Event apply(Event event) {
@@ -901,12 +893,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 
 		@Override
-		public int getMode() {
-			return 0;
-		}
-
-		@Override
-		public String getName() {
+		public String getId() {
 			return "ScanIfGraphEvent";
 		}
 	}

@@ -248,8 +248,8 @@ class HttpSpec extends Specification {
 		req.responseHeader("content-type", "text/plain")
 				.upgradeToWebsocket()
 				.thenMany(req
+				.flushEach()
 					.sendString(req.receiveString()
-						.useCapacity(1)
 						.doOnNext { serverRes++ }
 						.map { it + ' ' + req.param('param') + '!' }
 				.log('server-reply')))
@@ -270,12 +270,11 @@ class HttpSpec extends Specification {
 	  req.header('Content-Type', 'text/plain').header("test", "test")
 
 	  //return a producing stream to send some data along the request
-	  req.upgradeToTextWebsocket().concatWith(req.sendString(Flux
-			  .range(1, 1000)
-	  			.log('client-send')
-			  .useCapacity(1)
-			  .map { it.toString() }
-			  ))
+	  req.flushEach()
+			  .upgradeToTextWebsocket().concatWith(req.sendString(Flux
+				.range(1, 1000)
+				  .log('client-send')
+				.map { it.toString() }))
 
 	}.flatMap { replies ->
 	  //successful handshake, listen for the first returned next replies and pass it downstream

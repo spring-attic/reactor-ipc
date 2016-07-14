@@ -21,7 +21,6 @@ import java.net.URI;
 import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
@@ -29,7 +28,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.state.Completable;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -43,7 +41,7 @@ import reactor.io.netty.tcp.TcpClient;
  * @author Stephane Maldini
  */
 public class HttpClient
-		implements Loopback, Completable {
+		implements Loopback {
 
 
 	/**
@@ -161,14 +159,12 @@ public class HttpClient
 		return request(HttpMethod.PATCH, url, null);
 	}
 
-	@Override
-	public boolean isStarted() {
-		return client.isStarted();
-	}
-
-	@Override
-	public boolean isTerminated() {
-		return client.isTerminated();
+	/**
+	 * Is shutdown
+	 * @return is shutdown
+	 */
+	public boolean isShutdown() {
+		return client.isShutdown();
 	}
 
 	/**

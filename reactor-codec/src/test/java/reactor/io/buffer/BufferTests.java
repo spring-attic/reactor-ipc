@@ -29,18 +29,18 @@ public class BufferTests {
 	@Ignore
 	public void testAutoExpand() {
 
-		int initial_small_size = PlatformDependent.SMALL_IO_BUFFER_SIZE;
-		int initial_max_size = PlatformDependent.MAX_IO_BUFFER_SIZE;
+		int initial_small_size = ReactorProperties.SMALL_IO_BUFFER_SIZE;
+		int initial_max_size = ReactorProperties.MAX_IO_BUFFER_SIZE;
 		try {
 			Buffer b = new Buffer();
-			PlatformDependent.SMALL_IO_BUFFER_SIZE = 20;        // to speed up the test
-			PlatformDependent.MAX_IO_BUFFER_SIZE = 100;
-			for (int i = 0; i < PlatformDependent.MAX_IO_BUFFER_SIZE - PlatformDependent.SMALL_IO_BUFFER_SIZE; i++) {
+			ReactorProperties.SMALL_IO_BUFFER_SIZE = 20;        // to speed up the test
+			ReactorProperties.MAX_IO_BUFFER_SIZE = 100;
+			for (int i = 0; i < ReactorProperties.MAX_IO_BUFFER_SIZE - ReactorProperties.SMALL_IO_BUFFER_SIZE; i++) {
 				b.append((byte) 0x1);
 			}
 		} finally {
-			PlatformDependent.SMALL_IO_BUFFER_SIZE = initial_small_size;
-			PlatformDependent.MAX_IO_BUFFER_SIZE = initial_max_size;
+			ReactorProperties.SMALL_IO_BUFFER_SIZE = initial_small_size;
+			ReactorProperties.MAX_IO_BUFFER_SIZE = initial_max_size;
 		}
 	}*/
 

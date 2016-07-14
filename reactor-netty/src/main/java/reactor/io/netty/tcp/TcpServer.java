@@ -40,11 +40,11 @@ import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.PublisherConfig;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.state.Introspectable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Logger;
-import reactor.core.util.PlatformDependent;
+import reactor.core.util.ReactorProperties;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
@@ -52,7 +52,6 @@ import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
-import reactor.io.netty.config.NettyOptions;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 
@@ -62,12 +61,13 @@ import reactor.io.netty.util.NettyNativeDetector;
  * @author Stephane Maldini
  */
 public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
-                                                                    Introspectable, MultiProducer,
+                                                                    PublisherConfig,
+                                                                    MultiProducer,
                                                                     ChannelBridge<TcpChannel> {
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.ioThreadCount",
-			"" + PlatformDependent.DEFAULT_POOL_SIZE / 2));
+			"" + ReactorProperties.DEFAULT_POOL_SIZE / 2));
 
 	public static final int DEFAULT_TCP_SELECT_COUNT =
 			Integer.parseInt(System.getProperty("reactor.tcp.selectThreadCount", "" + DEFAULT_TCP_THREAD_COUNT));
@@ -77,9 +77,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	 * scanned from the classpath on Class init. Support for Netty is provided as long as the
 	 * relevant library dependencies are on the classpath. <p> To reply data on the active connection, {@link
 	 * Channel#send} can subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that
-	 * {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
-	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
+	 * read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -96,10 +94,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	 * emit: - onNext {@link Channel} to consume data from - onComplete when server is shutdown - onError when any
 	 * error (more specifically IO error) occurs From the emitted {@link Channel}, one can decide to add in-channel
 	 * consumers to read any incoming data. <p> To reply data on the active connection, {@link Channel#send} can
-	 * subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that {@link
-	 * reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read / flush on
-	 * write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data will be
-	 * flushed every capacity batch size and read will pause when capacity number of elements have been dispatched. <p>
+	 * subscribe to any passed {@link org.reactivestreams.Publisher}. <p> Note that read will pause when capacity number of elements have been dispatched. <p>
 	 * Emitted channels will run on the same thread they have beem receiving IO events.
 	 * <p>
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -120,9 +115,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * org.reactivestreams.Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -142,9 +135,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	 * onComplete when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted
 	 * {@link Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data
 	 * on the active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * org.reactivestreams.Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -164,9 +155,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	 * when server is shutdown - onError when any error (more specifically IO error) occurs From the emitted {@link
 	 * Channel}, one can decide to add in-channel consumers to read any incoming data. <p> To reply data on the
 	 * active connection, {@link Channel#send} can subscribe to any passed {@link
-	 * org.reactivestreams.Publisher}. <p> Note that {@link reactor.core.state.Backpressurable#getCapacity} will be used to
-	 * switch on/off a channel in auto-read / flush on write mode. If the capacity is Long.MAX_Value, write on flush and
-	 * auto read will apply. Otherwise, data will be flushed every capacity batch size and read will pause when capacity
+	 * org.reactivestreams.Publisher}. <p> Note that  read will pause when capacity
 	 * number of elements have been dispatched. <p> Emitted channels will run on the same thread they have beem
 	 * receiving IO events.
 	 *
@@ -323,13 +312,8 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	}
 
 	@Override
-	public String getName() {
+	public String getId() {
 		return "TcpServer:" + getListenAddress().toString();
-	}
-
-	@Override
-	public int getMode() {
-		return 0;
 	}
 
 	@Override

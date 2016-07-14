@@ -18,13 +18,13 @@ package reactor.aeron.subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.utils.DemandTracker;
 import reactor.core.flow.Producer;
-import reactor.core.state.Introspectable;
+import reactor.core.publisher.PublisherConfig;
 import uk.co.real_logic.aeron.Publication;
 
 /**
  * @author Anatoly Kadyshev
  */
-class UnicastSession implements Session, Introspectable, Producer {
+class UnicastSession implements Session, PublisherConfig, Producer {
 
 	private final Publication publication;
 
@@ -56,12 +56,7 @@ class UnicastSession implements Session, Introspectable, Producer {
 	}
 
 	@Override
-	public int getMode() {
-		return INNER;
-	}
-
-	@Override
-	public String getName() {
+	public String getId() {
 		return sessionId;
 	}
 
