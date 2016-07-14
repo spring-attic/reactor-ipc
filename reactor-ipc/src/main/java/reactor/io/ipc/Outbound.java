@@ -22,6 +22,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static reactor.core.publisher.Flux.just;
+
 /**
  * A {@link Outbound} is a reactive gateway for outgoing data flows.
  * <p>
@@ -85,6 +87,17 @@ public interface Outbound<OUT>  {
 	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
 	 */
 	Mono<Void> send(Publisher<? extends OUT> dataStream);
+
+
+	/**
+	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
+	 *
+	 * @param dataStream the dataStream publishing OUT items to write on this channel
+	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
+	 */
+	default Mono<Void> sendOne(OUT dataStream){
+		return send(just(dataStream));
+	}
 
 	/**
 	 * Send data to the peer, listen for any error on write and close on terminal signal
