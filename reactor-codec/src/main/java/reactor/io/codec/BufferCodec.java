@@ -29,7 +29,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.PublisherConfig;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.subscriber.SubscriptionHelper;
-import reactor.core.util.ReactorProperties;
+import reactor.util.ReactorProperties;
 import reactor.io.buffer.Buffer;
 
 /**

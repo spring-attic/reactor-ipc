@@ -25,7 +25,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.internal.PlatformDependent;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 
 /**
  * @author Stephane Maldini

@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.flow.Receiver;
+import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.PublisherConfig;
 import reactor.core.subscriber.SubscriberBarrier;

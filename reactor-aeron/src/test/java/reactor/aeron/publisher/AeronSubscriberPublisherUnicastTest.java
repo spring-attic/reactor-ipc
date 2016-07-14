@@ -22,7 +22,7 @@ import reactor.aeron.Context;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.core.publisher.Flux;
-import reactor.core.test.TestSubscriber;
+import reactor.test.subscriber.TestSubscriber;
 import reactor.io.util.FlowSerializerUtils;
 import reactor.io.buffer.Buffer;
 

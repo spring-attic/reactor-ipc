@@ -17,8 +17,8 @@ package reactor.aeron.publisher;
 
 import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.ServiceMessageType;
-import reactor.core.flow.Loopback;
-import reactor.core.flow.Producer;
+import reactor.core.Loopback;
+import reactor.core.Producer;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;

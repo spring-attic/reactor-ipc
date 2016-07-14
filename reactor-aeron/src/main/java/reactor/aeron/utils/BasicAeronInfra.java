@@ -18,7 +18,7 @@ package reactor.aeron.utils;
 import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.Subscription;

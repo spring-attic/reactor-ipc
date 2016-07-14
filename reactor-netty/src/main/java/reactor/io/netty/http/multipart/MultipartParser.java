@@ -24,15 +24,15 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.flow.MultiProducer;
-import reactor.core.flow.Producer;
-import reactor.core.flow.Receiver;
+import reactor.core.MultiProducer;
+import reactor.core.Producer;
+import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.subscriber.SubscriberState;
 import reactor.core.subscriber.SubscriptionHelper;
-import reactor.core.util.Exceptions;
-import reactor.core.util.concurrent.QueueSupplier;
+import reactor.util.Exceptions;
+import reactor.util.concurrent.QueueSupplier;
 import reactor.io.netty.common.ByteBufEncodedFlux;
 
 /**

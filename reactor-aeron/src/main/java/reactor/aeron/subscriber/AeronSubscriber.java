@@ -21,14 +21,14 @@ import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
 import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronUtils;
-import reactor.core.flow.Loopback;
-import reactor.core.flow.Receiver;
+import reactor.core.Loopback;
+import reactor.core.Receiver;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.SubscriberState;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
 
 /**

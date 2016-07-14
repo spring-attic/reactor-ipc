@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 import reactor.aeron.Context;
 import reactor.aeron.utils.HeartbeatPublicationFailureException;
-import reactor.core.flow.Cancellation;
+import reactor.core.Cancellation;
 import reactor.core.scheduler.Schedulers;
 
 /**

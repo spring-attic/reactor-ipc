@@ -29,7 +29,7 @@ import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.util.Exceptions;
+import reactor.util.Exceptions;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyOutbound;
 

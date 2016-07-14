@@ -22,7 +22,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberBarrier;
-import reactor.core.util.Exceptions;
+import reactor.util.Exceptions;
 
 /**
  * @author Ben Hale

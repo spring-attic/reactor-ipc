@@ -24,7 +24,7 @@ import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.Serializer;
 import reactor.aeron.utils.SignalType;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 

@@ -44,7 +44,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.FrameCodec;
 import reactor.io.codec.LengthFieldCodec;

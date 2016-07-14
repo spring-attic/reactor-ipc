@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import reactor.core.flow.Loopback;
-import reactor.core.flow.MultiProducer;
-import reactor.core.flow.MultiReceiver;
-import reactor.core.flow.Producer;
-import reactor.core.flow.Receiver;
+import reactor.core.Loopback;
+import reactor.core.MultiProducer;
+import reactor.core.MultiReceiver;
+import reactor.core.Producer;
+import reactor.core.Receiver;
 import reactor.core.publisher.PublisherConfig;
 import reactor.core.subscriber.SubscriberState;
 

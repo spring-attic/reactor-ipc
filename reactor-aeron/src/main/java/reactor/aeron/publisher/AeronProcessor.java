@@ -22,7 +22,7 @@ import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
 import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
 
 /**

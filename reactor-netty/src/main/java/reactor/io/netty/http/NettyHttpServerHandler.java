@@ -33,7 +33,7 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.flow.Receiver;
+import reactor.core.Receiver;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.SubscriberState;
 import reactor.io.ipc.ChannelHandler;

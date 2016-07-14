@@ -42,8 +42,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.util.Logger;
-import reactor.core.util.ReactorProperties;
+import reactor.util.Logger;
+import reactor.util.ReactorProperties;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.SocketUtils;
 

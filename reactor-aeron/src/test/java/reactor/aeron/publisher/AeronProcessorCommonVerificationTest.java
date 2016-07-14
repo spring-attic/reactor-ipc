@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 import reactor.aeron.Context;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.aeron.utils.EmbeddedMediaDriverManager;
-import reactor.core.test.TestSubscriber;
+import reactor.test.subscriber.TestSubscriber;
 import reactor.io.buffer.Buffer;
 
 /**

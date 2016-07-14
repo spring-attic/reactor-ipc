@@ -21,7 +21,7 @@ import java.util.function.Function;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
 import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
-import reactor.core.util.ReactorProperties;
+import reactor.util.ReactorProperties;
 import reactor.io.codec.SerializationCodec;
 
 /**

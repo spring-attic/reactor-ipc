@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
-import reactor.core.flow.Cancellation;
+import reactor.core.Cancellation;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 
 /**
  * @author Anatoly Kadyshev

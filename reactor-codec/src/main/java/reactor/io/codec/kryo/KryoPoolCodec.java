@@ -23,7 +23,7 @@ import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
 import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
-import reactor.core.util.ReactorProperties;
+import reactor.util.ReactorProperties;
 import reactor.io.codec.SerializationCodec;
 
 /**

@@ -25,7 +25,7 @@ import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.aeron.utils.TestAeronInfra;
 import reactor.aeron.utils.ThreadSnapshot;
-import reactor.core.test.TestSubscriber;
+import reactor.test.subscriber.TestSubscriber;
 import reactor.io.buffer.Buffer;
 
 import static org.junit.Assert.assertTrue;

@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.util.ReactorProperties;
+import reactor.util.ReactorProperties;
 
 /**
  * A {@literal Buffer} is a general-purpose IO utility class that wraps a {@link ByteBuffer}. It provides optional

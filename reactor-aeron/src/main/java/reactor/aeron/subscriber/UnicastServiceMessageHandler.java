@@ -26,9 +26,9 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.SignalType;
-import reactor.core.flow.MultiProducer;
+import reactor.core.MultiProducer;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 

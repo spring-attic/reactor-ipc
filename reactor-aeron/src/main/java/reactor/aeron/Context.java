@@ -26,8 +26,8 @@ import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.BasicAeronInfra;
 import reactor.aeron.utils.BasicExceptionSerializer;
 import reactor.aeron.utils.Serializer;
-import reactor.core.util.Logger;
-import reactor.core.util.ReactorProperties;
+import reactor.util.Logger;
+import reactor.util.ReactorProperties;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 

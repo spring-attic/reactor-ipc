@@ -27,7 +27,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.util.Exceptions;
+import reactor.util.Exceptions;
 import reactor.io.netty.common.Peer;
 
 /**

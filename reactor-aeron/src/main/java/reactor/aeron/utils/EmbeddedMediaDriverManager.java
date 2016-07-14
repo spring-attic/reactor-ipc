@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.subscriber.SubscriptionHelper;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 import uk.co.real_logic.agrona.CloseHelper;

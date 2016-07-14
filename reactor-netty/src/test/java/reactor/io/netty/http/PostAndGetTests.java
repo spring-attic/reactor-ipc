@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import reactor.io.ipc.ChannelHandler;
 
 /**

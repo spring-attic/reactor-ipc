@@ -26,7 +26,7 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.subscriber.SignalEmitter;
-import reactor.core.util.Logger;
+import reactor.util.Logger;
 import reactor.io.netty.nexus.Nexus;
 
 /**

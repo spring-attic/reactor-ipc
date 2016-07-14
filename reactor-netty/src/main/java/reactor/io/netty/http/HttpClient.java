@@ -25,7 +25,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
-import reactor.core.flow.Loopback;
+import reactor.core.Loopback;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.ChannelHandler;

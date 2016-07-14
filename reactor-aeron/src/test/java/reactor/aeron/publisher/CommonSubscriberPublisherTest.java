@@ -37,7 +37,7 @@ import reactor.aeron.utils.SignalPublicationFailedException;
 import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.publisher.Flux;
 import reactor.core.subscriber.BaseSubscriber;
-import reactor.core.test.TestSubscriber;
+import reactor.test.subscriber.TestSubscriber;
 import reactor.io.buffer.Buffer;
 
 import static org.junit.Assert.*;
