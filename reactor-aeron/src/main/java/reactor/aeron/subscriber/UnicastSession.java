@@ -18,13 +18,12 @@ package reactor.aeron.subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.utils.DemandTracker;
 import reactor.core.Producer;
-import reactor.core.publisher.PublisherConfig;
 import uk.co.real_logic.aeron.Publication;
 
 /**
  * @author Anatoly Kadyshev
  */
-class UnicastSession implements Session, PublisherConfig, Producer {
+class UnicastSession implements Session, Producer {
 
 	private final Publication publication;
 
@@ -49,14 +48,6 @@ class UnicastSession implements Session, PublisherConfig, Producer {
 
 	@Override
 	public String toString() {
-		return "UnicastSession["
-				+ "sessionId=" + sessionId
-				+ ", lastHeartbeatTimeNs=" + lastHeartbeatTimeNs
-				+ "]";
-	}
-
-	@Override
-	public String getId() {
 		return sessionId;
 	}
 

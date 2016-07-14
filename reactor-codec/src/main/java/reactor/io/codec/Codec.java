@@ -24,7 +24,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.PublisherConfig;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.io.buffer.Buffer;
 
@@ -185,8 +184,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private final class DecoderBarrier extends SubscriberBarrier<SRC, IN> implements
-	                                                                      PublisherConfig {
+	private final class DecoderBarrier extends SubscriberBarrier<SRC, IN> {
 		final Function<SRC, IN> decoder;
 
 		public DecoderBarrier(final Subscriber<? super IN> subscriber) {
@@ -210,8 +208,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private class EncoderBarrier extends SubscriberBarrier<OUT, SRC> implements
-	                                                                 PublisherConfig {
+	private class EncoderBarrier extends SubscriberBarrier<OUT, SRC> {
 
 		final private Function<OUT, SRC> encoder;
 
@@ -259,16 +256,9 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 
 		@Override
-		public long getPrefetch() {
-			return PublisherConfig.class.isAssignableFrom(source.getClass()) ?
-					((PublisherConfig) source).getPrefetch() :
-					-1L;
-		}
-
-		@Override
 		public String toString() {
 			return "{" +
-					" codec : \"" + getId() + "\" " +
+					" codec : \"" + super.toString() + "\" " +
 					'}';
 		}
 

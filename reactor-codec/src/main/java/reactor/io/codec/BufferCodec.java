@@ -26,11 +26,10 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.PublisherConfig;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.subscriber.SubscriptionHelper;
-import reactor.util.ReactorProperties;
 import reactor.io.buffer.Buffer;
+import reactor.util.ReactorProperties;
 
 /**
  * Implementations of a {@literal BufferCodec} are codec manipulating Buffer sources
@@ -85,7 +84,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 	}
 
 	private static final class AggregatingDecoderBarrier<IN>
-			extends SubscriberBarrier<Buffer, IN> implements PublisherConfig {
+			extends SubscriberBarrier<Buffer, IN>  {
 
 		private final static AtomicReferenceFieldUpdater<AggregatingDecoderBarrier, Buffer>
 				AGGREGATE =
@@ -204,7 +203,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 		}
 
 		@Override
-		public String getId() {
+		public String toString() {
 			return codec.getClass().getSimpleName().replaceAll("Codec","Decoder");
 		}
 

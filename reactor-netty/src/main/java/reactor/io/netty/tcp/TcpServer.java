@@ -40,11 +40,7 @@ import org.reactivestreams.Subscriber;
 import reactor.core.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.PublisherConfig;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.Exceptions;
-import reactor.util.Logger;
-import reactor.util.ReactorProperties;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
@@ -54,6 +50,9 @@ import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
+import reactor.util.Exceptions;
+import reactor.util.Logger;
+import reactor.util.ReactorProperties;
 
 /**
  * Base functionality needed by all servers that communicate with clients over TCP.
@@ -61,7 +60,6 @@ import reactor.io.netty.util.NettyNativeDetector;
  * @author Stephane Maldini
  */
 public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
-                                                                    PublisherConfig,
                                                                     MultiProducer,
                                                                     ChannelBridge<TcpChannel> {
 
@@ -312,7 +310,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	}
 
 	@Override
-	public String getId() {
+	public String toString() {
 		return "TcpServer:" + getListenAddress().toString();
 	}
 

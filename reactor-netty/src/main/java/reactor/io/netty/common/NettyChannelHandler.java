@@ -38,7 +38,6 @@ import reactor.core.Producer;
 import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxEmitter;
-import reactor.core.publisher.PublisherConfig;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.SubscriberState;
@@ -56,7 +55,7 @@ import reactor.io.ipc.ChannelHandler;
  * @author Stephane Maldini
  */
 public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHandler
-		implements PublisherConfig, Producer, Publisher<Object> {
+		implements Producer, Publisher<Object> {
 
 	protected static final Logger log = Logger.getLogger(NettyChannelHandler.class);
 
@@ -138,11 +137,6 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			Exceptions.throwIfFatal(err);
 			inboundEmitter.fail(err);
 		}
-	}
-
-	@Override
-	public String getId() {
-		return null;
 	}
 
 	@Override

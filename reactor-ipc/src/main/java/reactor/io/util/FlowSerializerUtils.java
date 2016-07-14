@@ -29,7 +29,7 @@ import reactor.core.MultiProducer;
 import reactor.core.MultiReceiver;
 import reactor.core.Producer;
 import reactor.core.Receiver;
-import reactor.core.publisher.PublisherConfig;
+import reactor.core.publisher.GroupedFlux;
 import reactor.core.subscriber.SubscriberState;
 
 /**
@@ -55,8 +55,7 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * Create an empty graph
-	 * @param trace force introspection on components presenting the option
-	 * {@link PublisherConfig#getId()} null.
+	 * @param trace force introspection on most lowest level components.
 	 * @return a new Graph
 	 */
 	public static Graph createGraph(boolean trace) {
@@ -209,16 +208,6 @@ public enum FlowSerializerUtils {
 	}
 
 	/**
-	 *
-	 * @param o candidate instance
-	 * @return true if the tested instance is {@link PublisherConfig}
-	 */
-	public static boolean isTraceOnly(Object o) {
-		return reactiveStateCheck(o, PublisherConfig.class) &&
-				((PublisherConfig)o).getId() == null;
-	}
-
-	/**
 	 * @param o candidate instance
 	 * @return true if the tested instance is {@link SubscriberState}
 	 */
@@ -238,7 +227,7 @@ public enum FlowSerializerUtils {
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link PublisherConfig}
+	 * @return true if the tested instance is {@link SubscriberState}
 	 */
 	public static boolean isContained(Object o) {
 		return reactiveStateCheck(o, SubscriberState.class) &&
@@ -247,11 +236,12 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link PublisherConfig}
+	 * @return true if the tested instance is containing "Log"
 	 */
 	public static boolean isLogging(Object o) {
-		return reactiveStateCheck(o, PublisherConfig.class) &&
-				o.getClass().getSimpleName().contains("Log");
+		return o != null && o.getClass()
+		                     .getSimpleName()
+		                     .contains("Log");
 	}
 
 	/**
@@ -324,24 +314,15 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * @param o candidate instance
-	 * @return an assigned name if the tested instance is {@link PublisherConfig} otherwise
+	 * @return an assigned name derived from {@link Object#toString()}
 	 * {@literal anonymous}
 	 */
 	public static String getName(Object o) {
 		if (o == null) {
 			return null;
 		}
-
-		Object _name =
-				PublisherConfig.class.isAssignableFrom(o.getClass()) ? ((
-						(PublisherConfig) o).getId()) :
-						null;
 		String name;
-		name = _name == null ? (o.getClass()
-		                       .getSimpleName()
-		                       .isEmpty() ?
-				o.toString() : o.getClass()
-				                .getSimpleName()): _name.toString();
+		name = o.toString();
 
 		name = name.replaceAll("Flux|Mono|Subscriber","");
 
@@ -350,14 +331,16 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * @param o candidate instance
-	 * @return a String key if the tested instance is {@link PublisherConfig} otherwise {@literal null}
+	 * @return a String key if the tested instance is {@link reactor.core.publisher.GroupedFlux} otherwise
+	 * {@literal null}
 	 */
 	public static String getGroup(Object o) {
 		if (o == null) {
 			return null;
 		}
 
-		Object key = PublisherConfig.class.isAssignableFrom(o.getClass()) ? (((PublisherConfig) o).getId()) : null;
+		Object key = GroupedFlux.class.isAssignableFrom(o.getClass()) ? (((GroupedFlux)
+				o).key()) : null;
 
 		if (key == null) {
 			return null;
@@ -368,31 +351,19 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * @param o candidate instance
-	 * @return an identifier name  produced metric if the tested instance is {@link PublisherConfig} otherwise return {@code getName(o).hashCode() + ":" + o.hashCode()}
+	 * @return {@code getName(o).hashCode() + ":" + o.hashCode()}
 	 */
 	public static String getIdOrDefault(Object o) {
-		if (reactiveStateCheck(o, PublisherConfig.class)){
-			return  ((PublisherConfig)o).getId() != null ? ((PublisherConfig)o).getId().toString() : (getName(o).hashCode() + ":" + o.hashCode());
-		}
 		return getName(o).hashCode() + ":" + o.hashCode();
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link PublisherConfig}
-	 */
-	public static boolean isUnique(Object o) {
-		return reactiveStateCheck(o, PublisherConfig.class) &&
-				((PublisherConfig)o).getId() != null;
-	}
-
-	/**
-	 * @param o candidate instance
-	 * @return true if the tested instance is {@link PublisherConfig}
+	 * @return true if the tested instance is child of ParallelFlux, Flux or Mono
 	 */
 	public static boolean isFactory(Object o) {
-		return reactiveStateCheck(o, PublisherConfig.class) &&
-				o.getClass().getName().contains("reactor.core.publisher");
+		return o.getClass().getSuperclass().getSimpleName().contains("Flux") ||
+		 o.getClass().getSuperclass().getSimpleName().contains("Mono");
 	}
 
 	/**
@@ -525,25 +496,17 @@ public enum FlowSerializerUtils {
 			if (target == null) {
 				return;
 			}
-			Node child;
-			if (trace || !isTraceOnly(target.object)) {
-				child = target;
+			Node child = target;
 				if (nodes.containsKey(child.getId()) && grandchild != null) {
 					cyclic = true;
 					return;
 				}
 				nodes.put(child.getId(), child);
-			}
-			else {
-				child = grandchild;
-			}
 			if (hasUpstream(target.object)) {
 				Object in = ((Receiver) target.object).upstream();
 				if (!virtualRef(in, target)) {
 					Node upstream = expandReactiveSate(in, target.rootId);
-					if (child != null && (trace || !isTraceOnly(upstream.object))) {
-						addEdge(upstream.createEdgeTo(child));
-					}
+					addEdge(upstream.createEdgeTo(child));
 					addUpstream(upstream, child);
 				}
 			}
@@ -578,23 +541,17 @@ public enum FlowSerializerUtils {
 			if (origin == null) {
 				return;
 			}
-			Node root;
-			if (trace || !isTraceOnly(origin.object)) {
-				root = origin;
+			Node root = origin;
 				if (nodes.containsKey(root.getId()) && ancestor != null) {
 					cyclic = true;
 					return;
 				}
 				nodes.put(root.getId(), root);
-			}
-			else {
-				root = ancestor;
-			}
 			if (hasDownstream(origin.object)) {
 				Object out = ((Producer) origin.object).downstream();
 				if (!virtualRef(out, origin)) {
 					Node downstream = expandReactiveSate(out, origin.rootId);
-					if (root != null && (trace || !isTraceOnly(downstream.object))) {
+					if (root != null) {
 						addEdge(root.createEdgeTo(downstream));
 					}
 					addDownstream(downstream, root);
@@ -638,7 +595,7 @@ public enum FlowSerializerUtils {
 
 			Node r = new Node(name, id, o, rootid);
 
-			if ((trace || !isTraceOnly(o)) && hasFeedbackLoop(o)) {
+			if (hasFeedbackLoop(o)) {
 				Loopback loop = (Loopback) o;
 
 				Object target = loop.connectedInput();
@@ -719,7 +676,7 @@ public enum FlowSerializerUtils {
 			this.factory = FlowSerializerUtils.isFactory(o);
 			this.inner = isContained(o);
 			this.group = FlowSerializerUtils.getGroup(o);
-			this.unique = isUnique(o);
+			this.unique = false; //FIXME
 			this.rootId = rootId == null ? id : rootId;
 			this.logging = FlowSerializerUtils.isLogging(o);
 		}

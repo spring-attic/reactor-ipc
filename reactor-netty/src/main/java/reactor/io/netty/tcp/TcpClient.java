@@ -34,10 +34,7 @@ import io.netty.handler.ssl.SslContext;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.PublisherConfig;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.Exceptions;
-import reactor.util.Logger;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
@@ -49,6 +46,8 @@ import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.util.NettyNativeDetector;
+import reactor.util.Exceptions;
+import reactor.util.Logger;
 
 /**
  * The base class for a Reactor-based TCP client.
@@ -57,7 +56,7 @@ import reactor.io.netty.util.NettyNativeDetector;
  * @author Stephane Maldini
  */
 public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
-		implements PublisherConfig, ChannelBridge<TcpChannel> {
+		implements ChannelBridge<TcpChannel> {
 
 
 
@@ -227,7 +226,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	}
 
 	@Override
-	public String getId() {
+	public String toString() {
 		return "TcpClient:" + getConnectAddress().toString();
 	}
 

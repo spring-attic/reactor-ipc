@@ -37,17 +37,12 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.PublisherConfig;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.subscriber.SubmissionEmitter;
-import reactor.util.Exceptions;
-import reactor.util.Logger;
-import reactor.util.ReactorProperties;
-import reactor.util.concurrent.WaitStrategy;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.Peer;
@@ -57,6 +52,10 @@ import reactor.io.netty.http.HttpInbound;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.util.FlowSerializerUtils;
+import reactor.util.Exceptions;
+import reactor.util.Logger;
+import reactor.util.ReactorProperties;
+import reactor.util.concurrent.WaitStrategy;
 
 import static reactor.io.util.FlowSerializerUtils.property;
 
@@ -874,7 +873,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	                                                                   BUFFER_STRING_FUNCTION =
 			new StringToBuffer();
 
-	class LastGraphStateMap implements Function<Event, Event>, PublisherConfig {
+	class LastGraphStateMap implements Function<Event, Event> {
 
 		@Override
 		public Event apply(Event event) {
@@ -893,7 +892,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 
 		@Override
-		public String getId() {
+		public String toString() {
 			return "ScanIfGraphEvent";
 		}
 	}
