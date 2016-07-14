@@ -148,7 +148,7 @@ abstract class NettyHttpChannel extends TcpChannel
 	}
 
 	@Override
-	public String getId() {
+	public String toString() {
 		if(isWebsocket()){
 			return "ws:" + uri();
 		}

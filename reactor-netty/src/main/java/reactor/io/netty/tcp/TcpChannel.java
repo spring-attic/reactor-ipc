@@ -148,7 +148,7 @@ public class TcpChannel extends Mono<Void>
 	}
 
 	@Override
-	public String getId() {
+	public String toString() {
 		return ioChannel.toString();
 	}
 
@@ -165,14 +165,6 @@ public class TcpChannel extends Mono<Void>
 	@Override
 	public io.netty.channel.Channel delegate() {
 		return ioChannel;
-	}
-
-	@Override
-	public String toString() {
-		return this.getClass()
-		           .getName() + " {" +
-				"channel=" + ioChannel +
-				'}';
 	}
 
 	@Override
