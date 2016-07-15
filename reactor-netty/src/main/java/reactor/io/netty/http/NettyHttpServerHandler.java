@@ -34,8 +34,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Receiver;
-import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.SubscriberState;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -86,7 +86,7 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 			}
 
 			final Publisher<Void> closePublisher = handler.apply(request);
-			final Subscriber<Void> closeSub = new CloseSubscriber(ctx);
+			final Subscriber<Void> closeSub = new HttpServerCloseSubscriber(request, ctx);
 
 			closePublisher.subscribe(closeSub);
 
@@ -114,20 +114,24 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 		return new NettyWebSocketServerHandler(url, protocols, this, textPlain);
 	}
 
-	final class CloseSubscriber implements BaseSubscriber<Void>, Receiver,
-	                                       SubscriberState {
+	final static class HttpServerCloseSubscriber implements Subscriber<Void>, Receiver,
+	                                                        SubscriberState {
 
-		private final ChannelHandlerContext ctx;
+		final NettyHttpChannel request;
+		final ChannelHandlerContext ctx;
 		Subscription subscription;
 
-		public CloseSubscriber(ChannelHandlerContext ctx) {
+		public HttpServerCloseSubscriber(NettyHttpChannel request, ChannelHandlerContext ctx) {
 			this.ctx = ctx;
+			this.request = request;
 		}
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			subscription = s;
-			s.request(Long.MAX_VALUE);
+			if(SubscriptionHelper.validate(subscription, s)) {
+				subscription = s;
+				s.request(Long.MAX_VALUE);
+			}
 		}
 
 		@Override
@@ -145,6 +149,11 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 				       .writeAndFlush(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR))
 						.addListener(ChannelFutureListener.CLOSE);
 			}
+		}
+
+		@Override
+		public void onNext(Void aVoid) {
+
 		}
 
 		@Override

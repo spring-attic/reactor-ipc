@@ -36,7 +36,6 @@ import reactor.aeron.utils.AeronTestUtils;
 import reactor.aeron.utils.SignalPublicationFailedException;
 import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.publisher.Flux;
-import reactor.core.subscriber.BaseSubscriber;
 import reactor.test.subscriber.TestSubscriber;
 import reactor.io.buffer.Buffer;
 
@@ -121,20 +120,12 @@ public abstract class CommonSubscriberPublisherTest {
 		AeronFlux publisher = new AeronFlux(createContext("publisher").autoCancel(false));
 
 		CountDownLatch onNextLatch = new CountDownLatch(1);
-		publisher.subscribe(new BaseSubscriber<Buffer>() {
-			@Override
-			public void onSubscribe(Subscription s) {
-				s.request(Long.MAX_VALUE);
-			}
-
-			@Override
-			public void onNext(Buffer buffer) {
+		publisher.subscribe(buffer -> {
 				try {
 					onNextLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
-			}
 		});
 
 		assertTrue(gotErrorLatch.await(TIMEOUT.getSeconds(), TimeUnit.SECONDS));

@@ -39,7 +39,6 @@ import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxEmitter;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.SubscriberState;
 import reactor.core.subscriber.SubscriptionHelper;
 import reactor.util.Exceptions;
@@ -238,7 +237,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 	}
 
-	final static class CloseSubscriber implements BaseSubscriber<Void> {
+	final static class CloseSubscriber implements Subscriber<Void> {
 
 		private final ChannelHandlerContext ctx;
 
@@ -248,8 +247,11 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			BaseSubscriber.super.onSubscribe(s);
 			s.request(Long.MAX_VALUE);
+		}
+
+		@Override
+		public void onNext(Void aVoid) {
 		}
 
 		@Override
@@ -275,7 +277,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	}
 
 	final class FlushOnTerminateSubscriber
-			implements BaseSubscriber<Object>, ChannelFutureListener, Loopback {
+			implements Subscriber<Object>, ChannelFutureListener, Loopback {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -318,7 +320,9 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onNext(final Object w) {
-			BaseSubscriber.super.onNext(w);
+			if (w == null) {
+				throw Exceptions.argumentIsNullException();
+			}
 			if (subscription == null) {
 				throw Exceptions.failWithCancel();
 			}
@@ -347,7 +351,9 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onError(Throwable t) {
-			BaseSubscriber.super.onError(t);
+			if (t == null) {
+				throw Exceptions.argumentIsNullException();
+			}
 			if (subscription == null) {
 				throw new IllegalStateException("already flushed", t);
 			}
@@ -373,7 +379,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	}
 
 	final class FlushOnEachSubscriber
-			implements BaseSubscriber<Object>, ChannelFutureListener, Loopback,
+			implements Subscriber<Object>, ChannelFutureListener, Loopback,
 			           SubscriberState, Receiver {
 
 		private final ChannelHandlerContext ctx;
@@ -438,7 +444,9 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onNext(Object w) {
-			BaseSubscriber.super.onNext(w);
+			if (w == null) {
+				throw Exceptions.argumentIsNullException();
+			}
 			if (subscription == null) {
 				throw Exceptions.failWithCancel();
 			}
@@ -458,7 +466,9 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onError(Throwable t) {
-			BaseSubscriber.super.onError(t);
+			if (t == null) {
+				throw Exceptions.argumentIsNullException();
+			}
 			if (subscription == null) {
 				throw new IllegalStateException("already flushed", t);
 			}

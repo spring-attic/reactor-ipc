@@ -17,6 +17,7 @@ package reactor.aeron.subscriber;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
 import reactor.aeron.utils.AeronInfra;
@@ -26,10 +27,9 @@ import reactor.core.Receiver;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.SubscriberState;
-import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
+import reactor.util.Logger;
 
 /**
  * The subscriber part of Reactive Streams over Aeron transport implementation
@@ -97,7 +97,7 @@ import reactor.io.buffer.Buffer;
  * @since 2.5
  */
 public final class AeronSubscriber
-		implements SubscriberState, Receiver, Loopback, BaseSubscriber<Buffer> {
+		implements Subscriber<Buffer>, SubscriberState, Receiver, Loopback {
 
 	private static final Logger logger = Logger.getLogger(AeronSubscriber.class);
 
@@ -175,22 +175,16 @@ public final class AeronSubscriber
 
 	@Override
 	public void onSubscribe(Subscription s) {
-		BaseSubscriber.super.onSubscribe(s);
-
 		processor.onSubscribe(s);
 	}
 
 	@Override
 	public void onNext(Buffer buffer) {
-		BaseSubscriber.super.onNext(buffer);
-
 		processor.onNext(buffer);
 	}
 
 	@Override
 	public void onError(Throwable t) {
-		BaseSubscriber.super.onError(t);
-
 		processor.onError(t);
 	}
 

@@ -30,8 +30,9 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.subscriber.SubscriptionHelper;
 import reactor.io.buffer.Buffer;
+import reactor.util.Exceptions;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
 /**
@@ -69,24 +70,33 @@ public class SubscriberThreadingPOCTest {
 
 		}
 
-		final class SenderSubscriber implements BaseSubscriber<Buffer> {
+		final class SenderSubscriber implements Subscriber<Buffer> {
 
 			private Subscription subscription;
 
 			@Override
 			public void onSubscribe(Subscription s) {
-				BaseSubscriber.super.onSubscribe(s);
-				this.subscription = s;
-				log(this.getClass().getSimpleName() + ".onSubscribe: " + s);
+				if(SubscriptionHelper.validate(subscription, s)) {
+					this.subscription = s;
+					log(this.getClass()
+					        .getSimpleName() + ".onSubscribe: " + s);
 
-				started.countDown();
+					started.countDown();
+				}
 			}
 
 			@Override
 			public void onNext(Buffer buffer) {
-				BaseSubscriber.super.onNext(buffer);
+				if (buffer == null) {
+					throw Exceptions.argumentIsNullException();
+				}
 
 				log(this.getClass().getSimpleName() + ".onNext: " + buffer.asString());
+			}
+
+			@Override
+			public void onError(Throwable t) {
+
 			}
 
 			@Override

@@ -31,12 +31,12 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.SubscriptionHelper;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
+import reactor.util.Exceptions;
 
 /**
  * @author Stephane Maldini
@@ -75,30 +75,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 		HttpUtil.setTransferEncodingChunked(httpChannel.nettyRequest, true);
 
 		handler.apply(httpChannel)
-		       .subscribe(new BaseSubscriber<Void>() {
-			       @Override
-			       public void onSubscribe(final Subscription s) {
-				       ctx.read();
-				       SubscriptionHelper.validate(null, s);
-				       s.request(Long.MAX_VALUE);
-			       }
-
-			       @Override
-			       public void onError(Throwable t) {
-				       BaseSubscriber.super.onError(t);
-				       if(t instanceof IOException && t.getMessage() != null && t.getMessage().contains("Broken pipe")){
-					       if (log.isDebugEnabled()) {
-						       log.debug("Connection closed remotely", t);
-					       }
-					       return;
-				       }
-				       if (ctx.channel()
-				              .isOpen()) {
-					       ctx.channel()
-					          .close();
-				       }
-			       }
-		       });
+		       .subscribe(new HttpClientCloseSubscriber(ctx));
 	}
 
 	void bridgeReply(Subscriber<? super HttpClientResponse> replySubscriber,
@@ -201,4 +178,45 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 		}
 	}
 
+	static class HttpClientCloseSubscriber implements Subscriber<Void> {
+
+		private final ChannelHandlerContext ctx;
+
+		public HttpClientCloseSubscriber(ChannelHandlerContext ctx) {
+			this.ctx = ctx;
+		}
+
+		@Override
+		public void onSubscribe(final Subscription s) {
+			ctx.read();
+			SubscriptionHelper.validate(null, s);
+			s.request(Long.MAX_VALUE);
+		}
+
+		@Override
+		public void onError(Throwable t) {
+			if (t == null) {
+				throw Exceptions.argumentIsNullException();
+			}
+			if(t instanceof IOException && t.getMessage() != null && t.getMessage().contains("Broken pipe")){
+				if (log.isDebugEnabled()) {
+					log.debug("Connection closed remotely", t);
+				}
+				return;
+			}
+			if (ctx.channel()
+			       .isOpen()) {
+				ctx.channel()
+				   .close();
+			}
+		}
+
+		@Override
+		public void onNext(Void aVoid) {
+		}
+
+		@Override
+		public void onComplete() {
+		}
+	}
 }
