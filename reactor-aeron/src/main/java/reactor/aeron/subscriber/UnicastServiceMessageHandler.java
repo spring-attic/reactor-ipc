@@ -27,8 +27,9 @@ import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.SignalType;
 import reactor.core.MultiProducer;
+import reactor.core.Reactor;
 import reactor.core.publisher.FluxProcessor;
-import reactor.util.Logger;
+import static reactor.core.Reactor.Logger;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
@@ -39,7 +40,7 @@ import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
  */
 class UnicastServiceMessageHandler implements ServiceMessageHandler, MultiProducer {
 
-	private static final Logger logger = Logger.getLogger(UnicastServiceMessageHandler.class);
+	private static final Logger logger = Reactor.getLogger(UnicastServiceMessageHandler.class);
 
 	/**
 	 * Timeout for a subscription to be assigned into {@link InnerSubscriber}

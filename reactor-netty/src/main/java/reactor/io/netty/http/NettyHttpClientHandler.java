@@ -31,7 +31,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.publisher.Operators;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -151,7 +151,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 				connectSignal.onError(ex);
 			}
 			else if (replySubscriber != null) {
-				SubscriptionHelper.error(replySubscriber, ex);
+				Operators.error(replySubscriber, ex);
 			}
 			return false;
 		}
@@ -161,7 +161,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 				connectSignal.onError(ex);
 			}
 			else if (replySubscriber != null) {
-				SubscriptionHelper.error(replySubscriber, ex);
+				Operators.error(replySubscriber, ex);
 			}
 			return false;
 		}
@@ -189,7 +189,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 		@Override
 		public void onSubscribe(final Subscription s) {
 			ctx.read();
-			SubscriptionHelper.validate(null, s);
+			Operators.validate(null, s);
 			s.request(Long.MAX_VALUE);
 		}
 

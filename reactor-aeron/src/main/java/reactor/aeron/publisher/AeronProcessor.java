@@ -21,8 +21,9 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.aeron.Context;
 import reactor.aeron.subscriber.AeronSubscriber;
+import reactor.core.Reactor;
 import reactor.core.publisher.FluxProcessor;
-import reactor.util.Logger;
+import static reactor.core.Reactor.Logger;
 import reactor.io.buffer.Buffer;
 
 /**
@@ -44,7 +45,7 @@ import reactor.io.buffer.Buffer;
  */
 public final class AeronProcessor extends FluxProcessor<Buffer, Buffer> {
 
-	private static final Logger logger = Logger.getLogger(AeronProcessor.class);
+	private static final Logger logger = Reactor.getLogger(AeronProcessor.class);
 
 	/**
 	 * Reactive Publisher part of the processor - signals sender

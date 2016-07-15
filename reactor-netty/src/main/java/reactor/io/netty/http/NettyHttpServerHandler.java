@@ -34,8 +34,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Receiver;
-import reactor.core.subscriber.SubscriberState;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.Trackable;
+import reactor.core.publisher.Operators;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -115,7 +115,7 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 	}
 
 	final static class HttpServerCloseSubscriber implements Subscriber<Void>, Receiver,
-	                                                        SubscriberState {
+	                                                        Trackable {
 
 		final NettyHttpChannel request;
 		final ChannelHandlerContext ctx;
@@ -128,7 +128,7 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			if(SubscriptionHelper.validate(subscription, s)) {
+			if(Operators.validate(subscription, s)) {
 				subscription = s;
 				s.request(Long.MAX_VALUE);
 			}

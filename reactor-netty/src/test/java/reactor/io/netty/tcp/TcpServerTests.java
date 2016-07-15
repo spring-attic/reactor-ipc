@@ -39,12 +39,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
+import reactor.core.Reactor;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.Logger;
+import static reactor.core.Reactor.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.FrameCodec;
 import reactor.io.codec.LengthFieldCodec;
@@ -68,7 +69,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class TcpServerTests {
 
-	final Logger log = Logger.getLogger(TcpServerTests.class);
+	final Logger log = Reactor.getLogger(TcpServerTests.class);
 	ExecutorService threadPool;
 	final int msgs    = 10;
 	final int threads = 4;

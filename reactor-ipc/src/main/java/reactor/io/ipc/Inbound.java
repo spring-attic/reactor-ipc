@@ -27,7 +27,7 @@ import reactor.core.publisher.Flux;
  * <p>
  *
  * @author Stephane Maldini
- * @since 2.5
+ * @since 0.5
  */
 @FunctionalInterface
 public interface Inbound<IN>  {

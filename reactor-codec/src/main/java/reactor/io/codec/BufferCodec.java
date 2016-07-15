@@ -26,10 +26,10 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.core.subscriber.SubscriberBarrier;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.publisher.OperatorAdapter;
+import reactor.core.publisher.Operators;
 import reactor.io.buffer.Buffer;
-import reactor.util.ReactorProperties;
+import reactor.core.Reactor;
 
 /**
  * Implementations of a {@literal BufferCodec} are codec manipulating Buffer sources
@@ -84,11 +84,11 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 	}
 
 	private static final class AggregatingDecoderBarrier<IN>
-			extends SubscriberBarrier<Buffer, IN>  {
+			extends OperatorAdapter<Buffer, IN>  {
 
 		private final static AtomicReferenceFieldUpdater<AggregatingDecoderBarrier, Buffer>
 				AGGREGATE =
-				ReactorProperties.newAtomicReferenceFieldUpdater(AggregatingDecoderBarrier.class, "aggregate");
+				Reactor.newAtomicReferenceFieldUpdater(AggregatingDecoderBarrier.class, "aggregate");
 
 		private final static AtomicIntegerFieldUpdater<AggregatingDecoderBarrier>
 				TERMINATED =
@@ -119,7 +119,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 
 		@Override
 		protected void doRequest(long n) {
-			if (SubscriptionHelper.getAndAddCap(PENDING_UPDATER, this, n) == 0) {
+			if (Operators.getAndAddCap(PENDING_UPDATER, this, n) == 0) {
 				super.doRequest(n);
 				if (!tryDrain()) {
 					requestMissing();
@@ -224,7 +224,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 				cursor = views.next();
 				if (cursor != null) {
 					next = codec.decodeNext(cursor.get(), decoderContext);
-					if (next != null && SubscriptionHelper.getAndSub(PENDING_UPDATER, this, 1L) > 0) {
+					if (next != null && Operators.getAndSub(PENDING_UPDATER, this, 1L) > 0) {
 						subscriber.onNext(next);
 					}
 					else {

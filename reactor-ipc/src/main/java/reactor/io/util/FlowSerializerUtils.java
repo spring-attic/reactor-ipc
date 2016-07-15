@@ -29,8 +29,8 @@ import reactor.core.MultiProducer;
 import reactor.core.MultiReceiver;
 import reactor.core.Producer;
 import reactor.core.Receiver;
+import reactor.core.Trackable;
 import reactor.core.publisher.GroupedFlux;
-import reactor.core.subscriber.SubscriberState;
 
 /**
  * Navigate and introspect
@@ -40,9 +40,9 @@ import reactor.core.subscriber.SubscriberState;
  * FIXME change introspection
  *
  * @author Stephane Maldini
- * @since 2.5
+ * @since 0.5
  */
-public enum FlowSerializerUtils {
+public abstract class FlowSerializerUtils {
 	;
 
 	/**
@@ -209,28 +209,28 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link SubscriberState}
+	 * @return true if the tested instance is {@link Trackable}
 	 */
 	public static boolean hasSubscription(Object o) {
-		return reactiveStateCheck(o, SubscriberState.class);
+		return reactiveStateCheck(o, Trackable.class);
 	}
 
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link SubscriberState}
+	 * @return true if the tested instance is {@link Trackable}
 	 */
 	public static boolean isCancellable(Object o) {
-		return reactiveStateCheck(o, SubscriberState.class);
+		return reactiveStateCheck(o, Trackable.class);
 	}
 
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return true if the tested instance is {@link SubscriberState}
+	 * @return true if the tested instance is {@link Trackable}
 	 */
 	public static boolean isContained(Object o) {
-		return reactiveStateCheck(o, SubscriberState.class) &&
+		return reactiveStateCheck(o, Trackable.class) &&
 				o.getClass().isMemberClass();
 	}
 
@@ -246,68 +246,68 @@ public enum FlowSerializerUtils {
 
 	/**
 	 * @param o candidate instance
-	 * @return a capacity if the tested instance is {@link SubscriberState} otherwise {@literal -1}
+	 * @return a capacity if the tested instance is {@link Trackable} otherwise {@literal -1}
 	 */
 	public static long getCapacity(Object o) {
-		if (reactiveStateCheck(o, SubscriberState.class)) {
-			return ((SubscriberState) o).getCapacity();
+		if (reactiveStateCheck(o, Trackable.class)) {
+			return ((Trackable) o).getCapacity();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return an error if the tested instance is {@link SubscriberState} and is failed otherwise
+	 * @return an error if the tested instance is {@link Trackable} and is failed otherwise
 	 * {@literal null}
 	 */
 	public static Throwable getFailedState(Object o) {
-		if (reactiveStateCheck(o, SubscriberState.class)) {
-			return ((SubscriberState) o).getError();
+		if (reactiveStateCheck(o, Trackable.class)) {
+			return ((Trackable) o).getError();
 		}
 		return null;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a time resolution if the tested instance is {@link SubscriberState} otherwise {@literal -1}
+	 * @return a time resolution if the tested instance is {@link Trackable} otherwise {@literal -1}
 	 */
 	public static long getTimedPeriod(Object o) {
-		if (reactiveStateCheck(o, SubscriberState.class)) {
-			return ((SubscriberState) o).getPending();
+		if (reactiveStateCheck(o, Trackable.class)) {
+			return ((Trackable) o).getPending();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a threshold limit if the tested instance is {@link SubscriberState} otherwise
+	 * @return a threshold limit if the tested instance is {@link Trackable} otherwise
 	 * {@literal -1}
 	 */
 	public static long getUpstreamLimit(Object o) {
-		if (reactiveStateCheck(o, SubscriberState.class)) {
-			return ((SubscriberState) o).limit();
+		if (reactiveStateCheck(o, Trackable.class)) {
+			return ((Trackable) o).limit();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return an expected produced metric if the tested instance is {@link SubscriberState} otherwise {@literal -1}
+	 * @return an expected produced metric if the tested instance is {@link Trackable} otherwise {@literal -1}
 	 */
 	public static long getExpectedUpstream(Object o) {
-		if (reactiveStateCheck(o, SubscriberState.class)) {
-			return ((SubscriberState) o).expectedFromUpstream();
+		if (reactiveStateCheck(o, Trackable.class)) {
+			return ((Trackable) o).expectedFromUpstream();
 		}
 		return -1L;
 	}
 
 	/**
 	 * @param o candidate instance
-	 * @return a current requested count if the tested instance is {@link SubscriberState} otherwise {@literal -1}
+	 * @return a current requested count if the tested instance is {@link Trackable} otherwise {@literal -1}
 	 */
 	public static long getRequestedDownstream(Object o) {
-		if (reactiveStateCheck(o, SubscriberState.class)) {
-			return ((SubscriberState) o).requestedFromDownstream();
+		if (reactiveStateCheck(o, Trackable.class)) {
+			return ((Trackable) o).requestedFromDownstream();
 		}
 		return -1L;
 	}
@@ -369,11 +369,11 @@ public enum FlowSerializerUtils {
 	/**
 	 *
 	 * @param o candidate instance
-	 * @return a waiting count if the tested instance is {@link SubscriberState} otherwise {@literal -1}
+	 * @return a waiting count if the tested instance is {@link Trackable} otherwise {@literal -1}
 	 */
 	public static long getBuffered(Object o) {
-		if (reactiveStateCheck(o, SubscriberState.class)) {
-			return ((SubscriberState) o).getPending();
+		if (reactiveStateCheck(o, Trackable.class)) {
+			return ((Trackable) o).getPending();
 		}
 		return -1L;
 	}
@@ -762,21 +762,21 @@ public enum FlowSerializerUtils {
 			if (!hasSubscription(object)) {
 				return null;
 			}
-			return ((SubscriberState) object).isStarted();
+			return ((Trackable) object).isStarted();
 		}
 
 		public final Boolean isTerminated() {
 			if (!hasSubscription(object)) {
 				return null;
 			}
-			return ((SubscriberState) object).isTerminated();
+			return ((Trackable) object).isTerminated();
 		}
 
 		public final Boolean isCancelled() {
 			if (!isCancellable(object)) {
 				return null;
 			}
-			return ((SubscriberState) object).isCancelled();
+			return ((Trackable) object).isCancelled();
 		}
 
 		protected final Edge createEdgeTo(Node to) {

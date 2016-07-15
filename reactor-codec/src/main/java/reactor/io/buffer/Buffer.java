@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.util.ReactorProperties;
+import reactor.core.Reactor;
 
 /**
  * A {@literal Buffer} is a general-purpose IO utility class that wraps a {@link ByteBuffer}. It provides optional
@@ -112,10 +112,10 @@ public class Buffer implements Comparable<Buffer>,
 	 */
 	public Buffer(int atLeast, boolean fixed) {
 		if (fixed) {
-			if (atLeast <= ReactorProperties.MAX_IO_BUFFER_SIZE) {
+			if (atLeast <= Reactor.MAX_IO_BUFFER_SIZE) {
 				this.buffer = ByteBuffer.allocate(atLeast);
 			} else {
-				throw new IllegalArgumentException("Requested buffer size exceeds maximum allowed (" + ReactorProperties.MAX_IO_BUFFER_SIZE
+				throw new IllegalArgumentException("Requested buffer size exceeds maximum allowed (" + Reactor.MAX_IO_BUFFER_SIZE
 				  + ")");
 			}
 		} else {
@@ -389,7 +389,7 @@ public class Buffer implements Comparable<Buffer>,
 	 * @return The current capacity.
 	 */
 	public int capacity() {
-		return (null == buffer ? ReactorProperties.SMALL_IO_BUFFER_SIZE : buffer.capacity());
+		return (null == buffer ? Reactor.SMALL_IO_BUFFER_SIZE : buffer.capacity());
 	}
 
 	/**
@@ -399,7 +399,7 @@ public class Buffer implements Comparable<Buffer>,
 	 * @return The number of bytes available in this {@literal Buffer}.
 	 */
 	public int remaining() {
-		return (null == buffer ? ReactorProperties.SMALL_IO_BUFFER_SIZE : buffer.remaining());
+		return (null == buffer ? Reactor.SMALL_IO_BUFFER_SIZE : buffer.remaining());
 	}
 
 	/**
@@ -1297,7 +1297,7 @@ public class Buffer implements Comparable<Buffer>,
 
 	private synchronized void ensureCapacity(int atLeast) {
 		if (null == buffer) {
-			buffer = ByteBuffer.allocate(Math.max(atLeast, ReactorProperties.SMALL_IO_BUFFER_SIZE));
+			buffer = ByteBuffer.allocate(Math.max(atLeast, Reactor.SMALL_IO_BUFFER_SIZE));
 			return;
 		}
 		int pos = buffer.position();
@@ -1309,7 +1309,7 @@ public class Buffer implements Comparable<Buffer>,
 				expand(neededCapacity - cap);
 			}
 			buffer.limit(Math.max(neededCapacity, buffer.limit()));
-		} else if (pos + ReactorProperties.SMALL_IO_BUFFER_SIZE > ReactorProperties.MAX_IO_BUFFER_SIZE) {
+		} else if (pos + Reactor.SMALL_IO_BUFFER_SIZE > Reactor.MAX_IO_BUFFER_SIZE) {
 			throw new BufferOverflowException();
 		}
 	}

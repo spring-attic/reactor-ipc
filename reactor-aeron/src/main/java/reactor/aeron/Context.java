@@ -26,8 +26,8 @@ import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.BasicAeronInfra;
 import reactor.aeron.utils.BasicExceptionSerializer;
 import reactor.aeron.utils.Serializer;
-import reactor.util.Logger;
-import reactor.util.ReactorProperties;
+import static reactor.core.Reactor.Logger;
+import reactor.core.Reactor;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 
@@ -100,7 +100,7 @@ public class Context {
 	 * Size of an internal ring buffer used for processing of messages
 	 * to be published into Aeron
 	 */
-	private int ringBufferSize = ReactorProperties.MEDIUM_BUFFER_SIZE;
+	private int ringBufferSize = Reactor.MEDIUM_BUFFER_SIZE;
 
 	/**
 	 * Consumer of errors happened
@@ -129,7 +129,7 @@ public class Context {
 
 	static class LoggingErrorConsumer implements Consumer<Throwable> {
 
-		private static final Logger logger = Logger.getLogger(LoggingErrorConsumer.class);
+		private static final Logger logger = Reactor.getLogger(LoggingErrorConsumer.class);
 
 		@Override
 		public void accept(Throwable t) {

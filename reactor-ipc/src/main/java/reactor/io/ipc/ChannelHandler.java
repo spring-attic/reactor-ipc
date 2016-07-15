@@ -27,7 +27,7 @@ import org.reactivestreams.Publisher;
  * @param <IN>  the type of the received data
  * @param <OUT> the type of replied data
  * @author Stephane Maldini
- * @since 2.5
+ * @since 0.5
  */
 public interface ChannelHandler<IN, OUT, CONN extends Channel<IN, OUT>>
 		extends Function<CONN, Publisher<Void>> {

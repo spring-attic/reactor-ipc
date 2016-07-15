@@ -33,8 +33,8 @@ import reactor.core.Loopback;
 import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.subscriber.SubscriberState;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.Trackable;
+import reactor.core.publisher.Operators;
 import reactor.io.ipc.Channel;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -46,7 +46,7 @@ import reactor.io.netty.common.NettyOutbound;
  * @since 2.5
  */
 public class TcpChannel extends Mono<Void>
-		implements NettyChannel, Loopback, SubscriberState {
+		implements NettyChannel, Loopback, Trackable {
 
 	final io.netty.channel.Channel ioChannel;
 	final Flux<Object>             input;
@@ -114,7 +114,7 @@ public class TcpChannel extends Mono<Void>
 			final Subscriber<? super Void> postWriter) {
 
 		final ChannelFutureListener postWriteListener = future -> {
-			postWriter.onSubscribe(SubscriptionHelper.empty());
+			postWriter.onSubscribe(Operators.emptySubscription());
 			if (future.isSuccess()) {
 				postWriter.onComplete();
 			}
@@ -237,7 +237,7 @@ public class TcpChannel extends Mono<Void>
 				emitWriter(dataStream, s);
 			}
 			catch (Throwable throwable) {
-				SubscriptionHelper.error(s, throwable);
+				Operators.error(s, throwable);
 			}
 		}
 

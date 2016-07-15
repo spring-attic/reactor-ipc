@@ -17,7 +17,7 @@
 
 package reactor.io.buffer
 
-import reactor.util.ReactorProperties
+import reactor.core.Reactor
 import spock.lang.Specification
 
 import java.nio.BufferOverflowException
@@ -414,7 +414,7 @@ class BufferSpec extends Specification {
 			def copy = buffer.copy()
 
 		then: "a new Buffer is created on a copy"
-			copy.capacity() == ReactorProperties.SMALL_IO_BUFFER_SIZE
+			copy.capacity() == Reactor.SMALL_IO_BUFFER_SIZE
 			copy.asString() == "Hello World!"
 	}
 

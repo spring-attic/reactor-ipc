@@ -35,14 +35,15 @@ import org.reactivestreams.Subscription;
 import reactor.core.Cancellation;
 import reactor.core.Loopback;
 import reactor.core.Producer;
+import reactor.core.Reactor;
 import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxEmitter;
+import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.subscriber.SubscriberState;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.Trackable;
+import reactor.core.publisher.Operators;
 import reactor.util.Exceptions;
-import reactor.util.Logger;
+import static reactor.core.Reactor.Logger;
 import reactor.util.concurrent.QueueSupplier;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
@@ -56,7 +57,7 @@ import reactor.io.ipc.ChannelHandler;
 public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHandler
 		implements Producer, Publisher<Object> {
 
-	protected static final Logger log = Logger.getLogger(NettyChannelHandler.class);
+	protected static final Logger log = Reactor.getLogger(NettyChannelHandler.class);
 
 	protected final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler;
 	protected final ChannelBridge<C>                               bridgeFactory;
@@ -93,7 +94,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	}
 
 	@Override
-	public FluxEmitter<Object> downstream() {
+	public FluxSink<Object> downstream() {
 		return inboundEmitter;
 	}
 
@@ -307,7 +308,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onSubscribe(final Subscription s) {
-			if (SubscriptionHelper.validate(subscription, s)) {
+			if (Operators.validate(subscription, s)) {
 				this.subscription = s;
 
 				ctx.channel()
@@ -380,7 +381,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 	final class FlushOnEachSubscriber
 			implements Subscriber<Object>, ChannelFutureListener, Loopback,
-			           SubscriberState, Receiver {
+			           Trackable, Receiver {
 
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
@@ -431,7 +432,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onSubscribe(final Subscription s) {
-			if (SubscriptionHelper.validate(subscription, s)) {
+			if (Operators.validate(subscription, s)) {
 				subscription = s;
 
 				ctx.channel()
@@ -526,11 +527,11 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		if (inboundEmitter.actual == null) {
 			if (inboundEmitter.done) {
 				if (inboundEmitter.error != null) {
-					SubscriptionHelper.error(s, inboundEmitter.error);
+					Operators.error(s, inboundEmitter.error);
 					return;
 				}
 				else if (inboundEmitter.getPending() == 0) {
-					SubscriptionHelper.complete(s);
+					Operators.complete(s);
 					return;
 				}
 			}
@@ -539,14 +540,14 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			s.onSubscribe(inboundEmitter);
 		}
 		else {
-			SubscriptionHelper.error(s,
+			Operators.error(s,
 					new IllegalStateException(
 							"Only one connection receive subscriber allowed."));
 		}
 	}
 
 	static final class InboundEmitter
-			implements FluxEmitter<Object>, Cancellation, Subscription, Producer {
+			implements FluxSink<Object>, Trackable, Cancellation, Subscription, Producer {
 
 		final io.netty.channel.Channel ch;
 
@@ -763,8 +764,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void request(long n) {
-			if (SubscriptionHelper.validate(n)) {
-				this.requested = SubscriptionHelper.addCap(requested, n);
+			if (Operators.validate(n)) {
+				this.requested = Operators.addCap(requested, n);
 				drain();
 			}
 		}

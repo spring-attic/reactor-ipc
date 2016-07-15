@@ -32,7 +32,7 @@ import static reactor.core.publisher.Flux.just;
  * When a drained Publisher completes or error, the channel will automatically "flush" its pending writes.
  *
  * @author Stephane Maldini
- * @since 2.5
+ * @since 0.5
  */
 @FunctionalInterface
 public interface Outbound<OUT>  {

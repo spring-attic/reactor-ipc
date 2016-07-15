@@ -20,10 +20,11 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.*;
 import reactor.core.MultiProducer;
 import reactor.core.Producer;
-import reactor.core.subscriber.SubscriberState;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.Reactor;
+import reactor.core.Trackable;
+import reactor.core.publisher.Operators;
 import reactor.util.Exceptions;
-import reactor.util.Logger;
+import static reactor.core.Reactor.Logger;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.ControlledFragmentAssembler;
 import uk.co.real_logic.aeron.logbuffer.ControlledFragmentHandler;
@@ -38,9 +39,9 @@ import java.util.Iterator;
  * Signals receiver functionality which polls for signals sent by senders
  */
 class SignalPoller implements org.reactivestreams.Subscription, Runnable, Producer,
-                              SubscriberState, MultiProducer {
+                              Trackable, MultiProducer {
 
-	private static final Logger logger = Logger.getLogger(SignalPoller.class);
+	private static final Logger logger = Reactor.getLogger(SignalPoller.class);
 
 	private final AeronInfra aeronInfra;
 
@@ -208,7 +209,7 @@ class SignalPoller implements org.reactivestreams.Subscription, Runnable, Produc
 
 	@Override
 	public void request(long n) {
-		if (running && SubscriptionHelper.checkRequest(n, subscriber)) {
+		if (running && Operators.checkRequest(n, subscriber)) {
 			try {
 				serviceMessageSender.sendRequest(n);
 				demandTracker.request(n);

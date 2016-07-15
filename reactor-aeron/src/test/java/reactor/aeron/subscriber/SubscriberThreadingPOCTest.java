@@ -30,7 +30,7 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.publisher.Operators;
 import reactor.io.buffer.Buffer;
 import reactor.util.Exceptions;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
@@ -76,7 +76,7 @@ public class SubscriberThreadingPOCTest {
 
 			@Override
 			public void onSubscribe(Subscription s) {
-				if(SubscriptionHelper.validate(subscription, s)) {
+				if(Operators.validate(subscription, s)) {
 					this.subscription = s;
 					log(this.getClass()
 					        .getSimpleName() + ".onSubscribe: " + s);

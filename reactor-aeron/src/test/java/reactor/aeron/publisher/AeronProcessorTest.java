@@ -24,7 +24,7 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.publisher.Flux;
-import reactor.test.subscriber.TestSubscriber;
+import reactor.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 import reactor.io.netty.util.SocketUtils;
 import uk.co.real_logic.aeron.Aeron;

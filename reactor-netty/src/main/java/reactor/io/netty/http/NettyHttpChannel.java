@@ -52,7 +52,7 @@ import reactor.core.Producer;
 import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.publisher.Operators;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.tcp.TcpChannel;
 
@@ -515,7 +515,7 @@ abstract class NettyHttpChannel extends TcpChannel
 				doSubscribeHeaders(s);
 			}
 			else {
-				SubscriptionHelper.error(s, new IllegalStateException("Status and headers already sent"));
+				Operators.error(s, new IllegalStateException("Status and headers already sent"));
 			}
 		}
 	}

@@ -27,7 +27,7 @@ import org.reactivestreams.Publisher;
  * When a drained Publisher completes or error, the channel will automatically "flush" its pending writes.
  *
  * @author Stephane Maldini
- * @since 2.5
+ * @since 0.5
  */
 public interface Channel<IN, OUT> extends Inbound<IN>, Outbound<OUT>  {
 

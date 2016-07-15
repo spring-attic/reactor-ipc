@@ -18,7 +18,7 @@ package reactor.aeron.subscriber;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.publisher.Operators;
 
 /**
  * @author Anatoly Kadyshev
@@ -45,7 +45,7 @@ class MulticastSession extends AtomicLong implements Session {
 	}
 
 	public long requestMore(long n) {
-		return SubscriptionHelper.addAndGet(this, n);
+		return Operators.addAndGet(this, n);
 	}
 
 	@Override

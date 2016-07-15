@@ -21,14 +21,14 @@ import java.nio.charset.Charset;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.reactivestreams.Subscriber;
-import reactor.core.subscriber.SubscriberBarrier;
+import reactor.core.publisher.OperatorAdapter;
 import reactor.util.Exceptions;
 
 /**
  * @author Ben Hale
  */
 final class MultipartTokenizer
-		extends SubscriberBarrier<ByteBuf, MultipartTokenizer.Token> {
+		extends OperatorAdapter<ByteBuf, MultipartTokenizer.Token> {
 
 	private static final char[] CRLF = new char[]{'\r', '\n'};
 

@@ -44,10 +44,10 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.publisher.Operators;
 import reactor.util.Exceptions;
-import reactor.util.Logger;
-import reactor.util.ReactorProperties;
+import static reactor.core.Reactor.Logger;
+import reactor.core.Reactor;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
@@ -68,7 +68,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
-		"" + ReactorProperties.DEFAULT_POOL_SIZE)
+		"" + Reactor.DEFAULT_POOL_SIZE)
 	);
 
 	/**
@@ -339,7 +339,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 				future.addListener(new ChannelFutureListener() {
 					@Override
 					public void operationComplete(ChannelFuture future) throws Exception {
-						subscriber.onSubscribe(SubscriptionHelper.empty());
+						subscriber.onSubscribe(Operators.emptySubscription());
 						if (future.isSuccess()) {
 							log.info("BIND {}",
 									future.channel()
@@ -400,7 +400,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 				throw new IllegalArgumentException("Unsupported protocolFamily: " + family.name());
 		}
 	}
-	final static Logger log = Logger.getLogger(UdpServer.class);
+	final static Logger log = Reactor.getLogger(UdpServer.class);
 
 	@Override
 	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,

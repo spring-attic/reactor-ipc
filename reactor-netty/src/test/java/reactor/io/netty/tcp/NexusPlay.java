@@ -20,13 +20,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Level;
 
+import reactor.core.publisher.BlockingSink;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.subscriber.SignalEmitter;
-import reactor.util.Logger;
+import reactor.core.publisher.SynchronousSink;
+import static reactor.core.Reactor.Logger;
 import reactor.io.netty.nexus.Nexus;
 
 /**
@@ -39,7 +40,6 @@ public class NexusPlay {
 
 		Nexus nexus = Nexus.create();
 		nexus.withSystemStats()
-		     .withLogTail()
 		     //.useCapacity(5l)
 		     .startAndAwait();
 
@@ -83,7 +83,7 @@ public class NexusPlay {
 				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
-				SignalEmitter<Integer> s1 = p.connectEmitter();
+				BlockingSink<Integer> s1 = p.connectEmitter();
 				nexus.monitor(s1);
 
 				// =========================================================
@@ -104,7 +104,7 @@ public class NexusPlay {
 				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
-				SignalEmitter<Integer> s2 = p.connectEmitter();
+				BlockingSink<Integer> s2 = p.connectEmitter();
 
 				nexus.monitor(s2);
 
@@ -123,7 +123,7 @@ public class NexusPlay {
 				}
 
 
-				SignalEmitter<Integer> s3 = p.connectEmitter();
+				BlockingSink<Integer> s3 = p.connectEmitter();
 				nexus.monitor(s3);
 
 

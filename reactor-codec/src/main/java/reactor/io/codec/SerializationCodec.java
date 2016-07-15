@@ -21,8 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import reactor.util.Logger;
+import reactor.core.Reactor;
 import reactor.io.buffer.Buffer;
+import static reactor.core.Reactor.Logger;
 
 /**
  * Abstract base class for {@code Codec Codecs} that perform serialization of objects. Optionally handles writing class
@@ -33,7 +34,7 @@ import reactor.io.buffer.Buffer;
  */
 public abstract class SerializationCodec<E, IN, OUT> extends BufferCodec<IN, OUT> {
 
-	private final Logger                 log   = Logger.getLogger(getClass());
+	private final Logger                 log   = Reactor.getLogger(getClass());
 	private final Map<String, Class<IN>> types = new ConcurrentHashMap<String, Class<IN>>();
 	private final E                      engine;
 	private final boolean                lengthFieldFraming;

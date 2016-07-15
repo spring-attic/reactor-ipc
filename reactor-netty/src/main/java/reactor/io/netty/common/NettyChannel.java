@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.subscriber.SubscriptionHelper;
+import reactor.core.publisher.Operators;
 import reactor.io.ipc.Channel;
 
 /**
@@ -58,7 +58,7 @@ public interface NettyChannel
 	 * @param s
 	 */
 	default void subscribe(Subscriber<? super Void> s) {
-		SubscriptionHelper.complete(s);
+		Operators.complete(s);
 	}
 
 	/**

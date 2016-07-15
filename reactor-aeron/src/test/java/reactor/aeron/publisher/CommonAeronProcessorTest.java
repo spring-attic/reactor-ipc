@@ -32,7 +32,7 @@ import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
-import reactor.test.subscriber.TestSubscriber;
+import reactor.test.TestSubscriber;
 import reactor.io.buffer.Buffer;
 
 import static org.hamcrest.Matchers.is;

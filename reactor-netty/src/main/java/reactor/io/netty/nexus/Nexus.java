@@ -33,16 +33,16 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import reactor.core.Loopback;
+import reactor.core.Reactor;
+import reactor.core.publisher.BlockingSink;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.core.subscriber.SubmissionEmitter;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.Peer;
@@ -53,10 +53,8 @@ import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.util.FlowSerializerUtils;
 import reactor.util.Exceptions;
-import reactor.util.Logger;
-import reactor.util.ReactorProperties;
-import reactor.util.concurrent.WaitStrategy;
 
+import static reactor.core.Reactor.Logger;
 import static reactor.io.util.FlowSerializerUtils.property;
 
 /**
@@ -71,9 +69,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 * implementation is scanned from the classpath on Class init. Support for Netty is provided
 	 * as long as the relevant library dependencies are on the classpath. <p> To reply data on the active connection,
 	 * {@link Channel#send} can subscribe to any passed {@link Publisher}. <p> Note
-	 * that {@link reactor.core.state.Backpressurable#getCapacity} will be used to switch on/off a channel in auto-read /
-	 * flush on write mode. If the capacity is Long.MAX_Value, write on flush and auto read will apply. Otherwise, data
-	 * will be flushed every capacity batch size and read will pause when capacity number of elements have been
+	 * that read will pause when capacity number of elements have been
 	 * dispatched. <p> Emitted channels will run on the same thread they have beem receiving IO events.
 	 *
 	 * <p> The type of emitted data or received data is {@link ByteBuf}
@@ -172,14 +168,14 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		stopped.await();
 	}
 
-	final HttpServer                          server;
-	final GraphEvent                          lastState;
-	final SystemEvent                         lastSystemState;
-	final FluxProcessor<Event, Event>         eventStream;
-	final Scheduler                           group;
-	final Function<Event, Event>              lastStateMerge;
-	final TimedScheduler                      timer;
-	final SubmissionEmitter<Publisher<Event>> cannons;
+	final HttpServer                     server;
+	final GraphEvent                     lastState;
+	final SystemEvent                    lastSystemState;
+	final FluxProcessor<Event, Event>    eventStream;
+	final Scheduler                      group;
+	final Function<Event, Event>         lastStateMerge;
+	final TimedScheduler                 timer;
+	final BlockingSink<Publisher<Event>> cannons;
 
 	static final AsciiString ALL = new AsciiString("*");
 
@@ -187,8 +183,6 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	volatile FederatedClient[] federatedClients;
 	long                 systemStatsPeriod;
 	boolean              systemStats;
-	boolean              logExtensionEnabled;
-	NexusLoggerExtension logExtension;
 	long websocketCapacity = 1L;
 
 	Nexus(TimedScheduler defaultTimer, HttpServer server) {
@@ -258,13 +252,6 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		return server;
 	}
 
-	/**
-	 * @return
-	 */
-	public final Nexus disableLogTail() {
-		this.logExtensionEnabled = false;
-		return this;
-	}
 
 	/**
 	 * @param urls
@@ -315,7 +302,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	/**
 	 * @return
 	 */
-	public final SubmissionEmitter<Object> metricCannon() {
+	public final BlockingSink<Object> metricCannon() {
 		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new MetricMapper()));
 		return p.connectEmitter();
@@ -391,7 +378,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	/**
 	 * @return
 	 */
-	public final SubmissionEmitter<Object> streamCannon() {
+	public final BlockingSink<Object> streamCannon() {
 		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new GraphMapper()));
 		return p.connectEmitter();
@@ -405,13 +392,6 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		return this;
 	}
 
-	/**
-	 * @return
-	 */
-	public final Nexus withLogTail() {
-		this.logExtensionEnabled = true;
-		return this;
-	}
 
 	/**
 	 * @return
@@ -446,20 +426,6 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	@Override
 	protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>> handler) {
 
-		if (logExtensionEnabled) {
-			FluxProcessor<Event, Event> p =
-					TopicProcessor.share("create-log-sink", 256, WaitStrategy.blocking());
-			cannons.submit(p);
-			logExtension = new NexusLoggerExtension(server.getListenAddress()
-			                                              .toString(), p.connectEmitter());
-
-			//monitor(p);
-			if (!Logger.enableExtension(logExtension)) {
-				log.warn("Couldn't setup logger extension as one is already in place");
-				logExtension = null;
-			}
-		}
-
 		if (systemStats) {
 			UnicastProcessor<Event> p = UnicastProcessor.create();
 			this.cannons.submit(p);
@@ -483,11 +449,6 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		timer.shutdown();
 		this.cannons.finish();
 		this.eventStream.onComplete();
-		if (logExtension != null) {
-			Logger.disableExtension(logExtension);
-			logExtension.logSink.complete();
-			logExtension = null;
-		}
 		return server.shutdown();
 	}
 
@@ -808,34 +769,6 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		}
 	}
 
-	final static class NexusLoggerExtension implements Logger.Extension {
-
-		final SubmissionEmitter<Event> logSink;
-		final String                 hostname;
-
-		public NexusLoggerExtension(String hostname, SubmissionEmitter<Event> logSink) {
-			this.logSink = logSink;
-			this.hostname = hostname;
-		}
-
-		@Override
-		public void log(String category, Level level, String msg, Object... arguments) {
-			String computed = Logger.format(msg, arguments);
-			SubmissionEmitter.Emission emission;
-
-			if (arguments != null && arguments.length == 3 && FlowSerializerUtils.isLogging(arguments[2])) {
-				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed, arguments))).isOk()) {
-					//System.out.println(emission+ " "+computed);
-				}
-			}
-			else {
-				if (!(emission = logSink.emit(new LogEvent(hostname, category, level, computed))).isOk()) {
-					//System.out.println(emission+ " "+computed);
-				}
-			}
-		}
-	}
-
 	static final class FederatedMerger
 			implements Function<FederatedClient, Publisher<ByteBuf>> {
 
@@ -864,9 +797,9 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	}
 
 	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED              =
-			ReactorProperties.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
+			Reactor.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
 	static final Logger                                                log                    =
-			Logger.getLogger(Nexus.class);
+			Reactor.getLogger(Nexus.class);
 	static final String                                                API_STREAM_URL         =
 			"/nexus/stream";
 	static final Function<Event, ByteBuf>
