@@ -198,7 +198,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 		Flux.merge(cannons)
 		    .subscribe(eventStream);
 
-		this.cannons = cannons.connectEmitter();
+		this.cannons = cannons.connectSink();
 
 		lastState = new GraphEvent(server.getListenAddress()
 		                                 .toString(), FlowSerializerUtils.createGraph());
@@ -305,7 +305,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	public final BlockingSink<Object> metricCannon() {
 		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new MetricMapper()));
-		return p.connectEmitter();
+		return p.connectSink();
 	}
 
 	/**
@@ -381,7 +381,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	public final BlockingSink<Object> streamCannon() {
 		UnicastProcessor<Object> p = UnicastProcessor.create();
 		this.cannons.submit(p.map(new GraphMapper()));
-		return p.connectEmitter();
+		return p.connectSink();
 	}
 
 	/**

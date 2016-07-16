@@ -83,7 +83,7 @@ public class NexusPlay {
 				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
-				BlockingSink<Integer> s1 = p.connectEmitter();
+				BlockingSink<Integer> s1 = p.connectSink();
 				nexus.monitor(s1);
 
 				// =========================================================
@@ -104,7 +104,7 @@ public class NexusPlay {
 				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
 
 
-				BlockingSink<Integer> s2 = p.connectEmitter();
+				BlockingSink<Integer> s2 = p.connectSink();
 
 				nexus.monitor(s2);
 
@@ -123,7 +123,7 @@ public class NexusPlay {
 				}
 
 
-				BlockingSink<Integer> s3 = p.connectEmitter();
+				BlockingSink<Integer> s3 = p.connectSink();
 				nexus.monitor(s3);
 
 
