@@ -63,7 +63,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	protected final ChannelBridge<C>                               bridgeFactory;
 	protected final Flux<Object>                                   input;
 
-	final InboundEmitter inboundEmitter;
+	final InboundSink inboundEmitter;
 
 	public NettyChannelHandler(
 			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
@@ -79,7 +79,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			NettyChannelHandler parent) {
 		this.handler = handler;
 		if (parent == null) {
-			this.inboundEmitter = new InboundEmitter(ch);
+			this.inboundEmitter = new InboundSink(ch);
 			//guard requests/cancel/subscribe
 			this.input = Flux.from(this)
 			                 .subscribeOn(Schedulers.fromExecutor(ch.eventLoop()));
@@ -546,7 +546,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 	}
 
-	static final class InboundEmitter
+	static final class InboundSink
 			implements FluxSink<Object>, Trackable, Cancellation, Subscription, Producer {
 
 		final io.netty.channel.Channel ch;
@@ -564,15 +564,15 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		volatile Cancellation cancel;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<InboundEmitter, Cancellation> CANCEL =
-				AtomicReferenceFieldUpdater.newUpdater(InboundEmitter.class,
+		static final AtomicReferenceFieldUpdater<InboundSink, Cancellation> CANCEL =
+				AtomicReferenceFieldUpdater.newUpdater(InboundSink.class,
 						Cancellation.class,
 						"cancel");
 
 		static final Cancellation CANCELLED = () -> {
 		};
 
-		public InboundEmitter(io.netty.channel.Channel channel) {
+		public InboundSink(io.netty.channel.Channel channel) {
 			this.ch = channel;
 			CANCEL.lazySet(this, this);
 		}
