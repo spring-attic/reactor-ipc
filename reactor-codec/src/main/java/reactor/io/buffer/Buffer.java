@@ -1324,7 +1324,7 @@ public class Buffer implements Comparable<Buffer>,
 				expand(neededCapacity - cap);
 			}
 			buffer.limit(Math.max(neededCapacity, buffer.limit()));
-		} else if (pos + SMALL_IO_BUFFER_SIZE > SMALL_IO_BUFFER_SIZE) {
+		} else if (pos + SMALL_IO_BUFFER_SIZE > MAX_IO_BUFFER_SIZE) {
 			throw new BufferOverflowException();
 		}
 	}
