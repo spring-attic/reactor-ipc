@@ -29,7 +29,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.OperatorAdapter;
 import reactor.core.publisher.Operators;
 import reactor.io.buffer.Buffer;
-import reactor.core.Reactor;
 
 /**
  * Implementations of a {@literal BufferCodec} are codec manipulating Buffer sources
@@ -88,7 +87,9 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 
 		private final static AtomicReferenceFieldUpdater<AggregatingDecoderBarrier, Buffer>
 				AGGREGATE =
-				Reactor.newAtomicReferenceFieldUpdater(AggregatingDecoderBarrier.class, "aggregate");
+				AtomicReferenceFieldUpdater.newUpdater(AggregatingDecoderBarrier.class,
+						Buffer.class,
+				"aggregate");
 
 		private final static AtomicIntegerFieldUpdater<AggregatingDecoderBarrier>
 				TERMINATED =

@@ -797,7 +797,9 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	}
 
 	static final AtomicReferenceFieldUpdater<Nexus, FederatedClient[]> FEDERATED              =
-			Reactor.newAtomicReferenceFieldUpdater(Nexus.class, "federatedClients");
+			AtomicReferenceFieldUpdater.newUpdater(Nexus.class,
+					FederatedClient[].class,
+					"federatedClients");
 	static final Logger                                                log                    =
 			Reactor.getLogger(Nexus.class);
 	static final String                                                API_STREAM_URL         =
