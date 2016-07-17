@@ -42,7 +42,6 @@ class FlowSerializerSpec extends Specification {
 
 	then: "scan values correct"
 	t.nodes
-	t.edges
 
 	when: "merged"
 
@@ -56,7 +55,6 @@ class FlowSerializerSpec extends Specification {
 
 	then: "scan values correct"
 	t.nodes
-	t.edges
 
 	when: "processors"
 
