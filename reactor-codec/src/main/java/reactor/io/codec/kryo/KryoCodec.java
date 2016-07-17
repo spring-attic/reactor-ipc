@@ -21,7 +21,7 @@ import java.util.function.Function;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
 import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
-import reactor.core.Reactor;
+import reactor.io.buffer.Buffer;
 import reactor.io.codec.SerializationCodec;
 
 /**
@@ -53,7 +53,8 @@ public class KryoCodec<IN, OUT> extends SerializationCodec<Kryo, IN, OUT> {
 		return new Function<OUT, byte[]>() {
 			@Override
 			public byte[] apply(OUT o) {
-				UnsafeMemoryOutput out = new UnsafeMemoryOutput(Reactor.SMALL_IO_BUFFER_SIZE, Reactor.SMALL_IO_BUFFER_SIZE);
+				UnsafeMemoryOutput out = new UnsafeMemoryOutput
+						(Buffer.SMALL_IO_BUFFER_SIZE, Buffer.SMALL_IO_BUFFER_SIZE);
 				engine.writeObject(out, o);
 				out.flush();
 				return out.toBytes();

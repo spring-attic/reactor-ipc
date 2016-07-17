@@ -36,8 +36,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 import reactor.core.Reactor;
+import reactor.core.publisher.Flux;
 
 /**
  * A {@literal Buffer} is a general-purpose IO utility class that wraps a {@link ByteBuffer}. It provides optional
@@ -51,6 +51,21 @@ public class Buffer implements Comparable<Buffer>,
                                Iterable<Byte>,
                                ReadableByteChannel,
                                WritableByteChannel {
+
+
+	/**
+	 * The size, in bytes, of a small buffer. Can be configured using the {@code reactor.io.defaultBufferSize} system
+	 * property. Default to 16384 bytes.
+	 */
+	public static final  int     SMALL_IO_BUFFER_SIZE            =
+			Integer.parseInt(System.getProperty("reactor.io.defaultBufferSize", "" + 1024 * 16));
+	/**
+	 * The maximum allowed buffer size in bytes. Can be configured using the {@code reactor.io.maxBufferSize} system
+	 * property. Defaults to 16384000 bytes.
+	 */
+	public static final  int     MAX_IO_BUFFER_SIZE              =
+			Integer.parseInt(System.getProperty("reactor.io.maxBufferSize", "" + 1024 * 1000 * 16));
+	
 
 	private static final Charset UTF8 = Charset.forName("UTF-8");
 	private final boolean        dynamic;
@@ -112,10 +127,10 @@ public class Buffer implements Comparable<Buffer>,
 	 */
 	public Buffer(int atLeast, boolean fixed) {
 		if (fixed) {
-			if (atLeast <= Reactor.MAX_IO_BUFFER_SIZE) {
+			if (atLeast <= SMALL_IO_BUFFER_SIZE) {
 				this.buffer = ByteBuffer.allocate(atLeast);
 			} else {
-				throw new IllegalArgumentException("Requested buffer size exceeds maximum allowed (" + Reactor.MAX_IO_BUFFER_SIZE
+				throw new IllegalArgumentException("Requested buffer size exceeds maximum allowed (" + SMALL_IO_BUFFER_SIZE
 				  + ")");
 			}
 		} else {
@@ -389,7 +404,7 @@ public class Buffer implements Comparable<Buffer>,
 	 * @return The current capacity.
 	 */
 	public int capacity() {
-		return (null == buffer ? Reactor.SMALL_IO_BUFFER_SIZE : buffer.capacity());
+		return (null == buffer ? SMALL_IO_BUFFER_SIZE : buffer.capacity());
 	}
 
 	/**
@@ -399,7 +414,7 @@ public class Buffer implements Comparable<Buffer>,
 	 * @return The number of bytes available in this {@literal Buffer}.
 	 */
 	public int remaining() {
-		return (null == buffer ? Reactor.SMALL_IO_BUFFER_SIZE : buffer.remaining());
+		return (null == buffer ? SMALL_IO_BUFFER_SIZE : buffer.remaining());
 	}
 
 	/**
@@ -1297,7 +1312,7 @@ public class Buffer implements Comparable<Buffer>,
 
 	private synchronized void ensureCapacity(int atLeast) {
 		if (null == buffer) {
-			buffer = ByteBuffer.allocate(Math.max(atLeast, Reactor.SMALL_IO_BUFFER_SIZE));
+			buffer = ByteBuffer.allocate(Math.max(atLeast, SMALL_IO_BUFFER_SIZE));
 			return;
 		}
 		int pos = buffer.position();
@@ -1309,7 +1324,7 @@ public class Buffer implements Comparable<Buffer>,
 				expand(neededCapacity - cap);
 			}
 			buffer.limit(Math.max(neededCapacity, buffer.limit()));
-		} else if (pos + Reactor.SMALL_IO_BUFFER_SIZE > Reactor.MAX_IO_BUFFER_SIZE) {
+		} else if (pos + SMALL_IO_BUFFER_SIZE > SMALL_IO_BUFFER_SIZE) {
 			throw new BufferOverflowException();
 		}
 	}

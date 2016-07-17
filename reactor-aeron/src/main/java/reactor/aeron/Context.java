@@ -100,7 +100,7 @@ public class Context {
 	 * Size of an internal ring buffer used for processing of messages
 	 * to be published into Aeron
 	 */
-	private int ringBufferSize = Reactor.MEDIUM_BUFFER_SIZE;
+	private int ringBufferSize = 8192;
 
 	/**
 	 * Consumer of errors happened

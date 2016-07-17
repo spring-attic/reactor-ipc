@@ -39,11 +39,11 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.io.buffer.Buffer;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.util.SocketUtils;
-import reactor.core.Reactor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -360,7 +360,7 @@ public class TcpClientTests {
 				while (true) {
 					SocketChannel ch = server.accept();
 
-					ByteBuffer buffer = ByteBuffer.allocate(Reactor.SMALL_IO_BUFFER_SIZE);
+					ByteBuffer buffer = ByteBuffer.allocate(Buffer.SMALL_IO_BUFFER_SIZE);
 					while (true) {
 						int read = ch.read(buffer);
 						if (read > 0) {
