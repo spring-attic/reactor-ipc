@@ -127,7 +127,7 @@ public class Buffer implements Comparable<Buffer>,
 	 */
 	public Buffer(int atLeast, boolean fixed) {
 		if (fixed) {
-			if (atLeast <= SMALL_IO_BUFFER_SIZE) {
+			if (atLeast <= MAX_IO_BUFFER_SIZE) {
 				this.buffer = ByteBuffer.allocate(atLeast);
 			} else {
 				throw new IllegalArgumentException("Requested buffer size exceeds maximum allowed (" + SMALL_IO_BUFFER_SIZE
