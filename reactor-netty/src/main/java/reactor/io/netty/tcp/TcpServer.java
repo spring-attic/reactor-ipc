@@ -221,17 +221,16 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		ServerBootstrap _serverBootstrap =
 				new ServerBootstrap().group(selectorGroup, ioGroup)
 				                     .channel(channelAdapter.getServerChannel(ioGroup))
-				                     .localAddress((null == listenAddress ?
-						                     new InetSocketAddress(0) : listenAddress))
 				                     .childOption(ChannelOption.ALLOCATOR,
 				                                                        PooledByteBufAllocator.DEFAULT)
 				                     .childOption(ChannelOption.AUTO_READ,
-				                                                        options.ssl() != null);
-
-		_serverBootstrap = _serverBootstrap.option(ChannelOption.SO_BACKLOG, options.backlog())
+				                                                        options.ssl() != null)
+				                     .option(ChannelOption.SO_BACKLOG, options.backlog())
 		                                   .option(ChannelOption.SO_RCVBUF, options.rcvbuf())
 		                                   .option(ChannelOption.SO_SNDBUF, options.sndbuf())
-		                                   .option(ChannelOption.SO_REUSEADDR, options.reuseAddr());
+		                                   .option(ChannelOption.SO_REUSEADDR, options.reuseAddr())
+		                                   .localAddress((null == listenAddress ?
+				                                   new InetSocketAddress(0) : listenAddress));
 
 		if (options.isManaged()) {
 			log.debug("Server is managed.");
