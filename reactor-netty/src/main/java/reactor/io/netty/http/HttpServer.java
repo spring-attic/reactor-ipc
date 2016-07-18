@@ -201,7 +201,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 				return channel.sendFile(p.toFile());
 			}
 			else {
-				return Mono.error(Exceptions.CancelException.INSTANCE);
+				return Mono.error(Exceptions.failWithCancel());
 			}
 		});
 		return this;
