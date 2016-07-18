@@ -31,7 +31,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.core.Trackable;
 import reactor.core.publisher.Operators;
-import reactor.util.Exceptions;
+import reactor.core.Exceptions;
 import reactor.util.concurrent.QueueSupplier;
 import reactor.io.netty.common.ByteBufEncodedFlux;
 

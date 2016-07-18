@@ -33,7 +33,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import reactor.core.Loopback;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.publisher.BlockingSink;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
@@ -52,9 +52,9 @@ import reactor.io.netty.http.HttpInbound;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.util.FlowSerializerUtils;
-import reactor.util.Exceptions;
+import reactor.core.Exceptions;
 
-import static reactor.core.Reactor.Logger;
+import reactor.util.Logger;
 import static reactor.io.util.FlowSerializerUtils.property;
 
 /**
@@ -801,7 +801,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 					FederatedClient[].class,
 					"federatedClients");
 	static final Logger                                                log                    =
-			Reactor.getLogger(Nexus.class);
+			Loggers.getLogger(Nexus.class);
 	static final String                                                API_STREAM_URL         =
 			"/nexus/stream";
 	static final Function<Event, ByteBuf>

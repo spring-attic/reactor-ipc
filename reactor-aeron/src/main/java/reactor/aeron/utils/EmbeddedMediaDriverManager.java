@@ -20,11 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.publisher.Operators;
-import static reactor.core.Reactor.Logger;
+import reactor.util.Logger;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 import uk.co.real_logic.agrona.CloseHelper;
@@ -35,7 +35,7 @@ import uk.co.real_logic.agrona.IoUtil;
  */
 public final class EmbeddedMediaDriverManager {
 
-	private static final Logger logger = Reactor.getLogger(EmbeddedMediaDriverManager.class);
+	private static final Logger logger = Loggers.getLogger(EmbeddedMediaDriverManager.class);
 
 	private static final EmbeddedMediaDriverManager INSTANCE = new EmbeddedMediaDriverManager();
 

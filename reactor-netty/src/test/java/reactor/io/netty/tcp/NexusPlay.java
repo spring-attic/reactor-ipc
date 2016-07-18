@@ -26,9 +26,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.publisher.SynchronousSink;
-import static reactor.core.Reactor.Logger;
 import reactor.io.netty.nexus.Nexus;
+import reactor.util.Logger;
 
 /**
  * @author Stephane Maldini
@@ -73,14 +72,14 @@ public class NexusPlay {
 				//slow subscribers
 				for(int i = 0; i < 2; i++) {
 					dispatched
-							.log("semi-fast",  Level.FINEST, Logger.ALL)
+							.log("semi-fast",  Level.FINEST)
 							.subscribe(d ->
 									LockSupport.parkNanos(100_000 * (r.nextInt(80) + 1))
 							);
 				}
 
 				//fast subscriber
-				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
+				dispatched.log("fast",  Level.FINEST).subscribe();
 
 
 				BlockingSink<Integer> s1 = p.connectSink();
@@ -94,14 +93,14 @@ public class NexusPlay {
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
 					dispatched
-							.log("slow",  Level.FINEST, Logger.ALL)
+							.log("slow",  Level.FINEST)
 							.subscribe(d ->
 									LockSupport.parkNanos(10_000_000 * (r.nextInt(20) + 1))
 							);
 				}
 
 				//fast subscriber
-				dispatched.log("fast",  Level.FINEST, Logger.ALL).subscribe();
+				dispatched.log("fast",  Level.FINEST).subscribe();
 
 
 				BlockingSink<Integer> s2 = p.connectSink();
@@ -116,7 +115,7 @@ public class NexusPlay {
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
 					dispatched
-							.log("slow",  Level.FINEST, Logger.ALL)
+							.log("slow",  Level.FINEST)
 							.subscribe(d ->
 									LockSupport.parkNanos(1000_000_000)
 							);

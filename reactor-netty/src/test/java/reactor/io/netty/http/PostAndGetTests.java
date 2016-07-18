@@ -27,9 +27,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.publisher.Flux;
-import static reactor.core.Reactor.Logger;
+import reactor.util.Logger;
 import reactor.io.ipc.ChannelHandler;
 
 /**
@@ -129,7 +129,7 @@ public class PostAndGetTests {
 			while (channel.read(buf) > -1)
 				;
 			String response = new String(buf.array());
-			Reactor.getLogger(PostAndGetTests.class).info("post: << " +
+			Loggers.getLogger(PostAndGetTests.class).info("post: << " +
 					"Response: %s",
 					response);
 			channel.close();

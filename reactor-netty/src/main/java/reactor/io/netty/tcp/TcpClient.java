@@ -31,7 +31,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,8 +47,8 @@ import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.util.NettyNativeDetector;
-import reactor.util.Exceptions;
-import static reactor.core.Reactor.Logger;
+import reactor.core.Exceptions;
+import reactor.util.Logger;
 
 /**
  * The base class for a Reactor-based TCP client.
@@ -312,7 +312,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		return false;
 	}
 
-	protected static final Logger log = Reactor.getLogger(TcpClient.class);
+	protected static final Logger log = Loggers.getLogger(TcpClient.class);
 
 	static final class TcpClientChannelSetup extends ChannelInitializer<SocketChannel> {
 

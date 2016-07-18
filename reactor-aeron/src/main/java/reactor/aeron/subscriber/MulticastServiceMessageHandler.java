@@ -23,9 +23,9 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.Serializer;
 import reactor.aeron.utils.SignalType;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.publisher.FluxProcessor;
-import static reactor.core.Reactor.Logger;
+import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 
@@ -34,7 +34,7 @@ import uk.co.real_logic.aeron.Publication;
  */
 class MulticastServiceMessageHandler implements ServiceMessageHandler {
 
-	private static final Logger logger = Reactor.getLogger(MulticastServiceMessageHandler.class);
+	private static final Logger logger = Loggers.getLogger(MulticastServiceMessageHandler.class);
 
 	private final Context context;
 

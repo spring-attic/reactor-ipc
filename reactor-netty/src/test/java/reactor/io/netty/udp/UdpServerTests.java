@@ -42,8 +42,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
-import static reactor.core.Reactor.Logger;
-import reactor.core.Reactor;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.SocketUtils;
 
@@ -55,7 +55,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class UdpServerTests {
 
-	final Logger log = Reactor.getLogger(getClass());
+	final Logger log = Loggers.getLogger(getClass());
 
 	ExecutorService threadPool;
 
@@ -158,7 +158,7 @@ public class UdpServerTests {
 			servers.add(server);
 		}
 
-		for (int i = 0; i < Reactor.DEFAULT_POOL_SIZE; i++) {
+		for (int i = 0; i < Schedulers.DEFAULT_POOL_SIZE; i++) {
 			threadPool.submit(() -> {
 				try {
 					MulticastSocket multicast = new MulticastSocket();

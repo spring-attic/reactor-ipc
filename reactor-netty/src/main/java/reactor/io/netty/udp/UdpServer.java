@@ -43,11 +43,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Operators;
-import reactor.util.Exceptions;
-import static reactor.core.Reactor.Logger;
-import reactor.core.Reactor;
+import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
@@ -58,6 +55,9 @@ import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.util.NettyNativeDetector;
+import reactor.core.Exceptions;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 /**
  *
@@ -68,7 +68,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
 	  System.getProperty("reactor.udp.ioThreadCount",
-		"" + Reactor.DEFAULT_POOL_SIZE)
+		"" + Schedulers.DEFAULT_POOL_SIZE)
 	);
 
 	/**
@@ -400,7 +400,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 				throw new IllegalArgumentException("Unsupported protocolFamily: " + family.name());
 		}
 	}
-	final static Logger log = Reactor.getLogger(UdpServer.class);
+	final static Logger log = Loggers.getLogger(UdpServer.class);
 
 	@Override
 	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,

@@ -21,16 +21,16 @@ import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
 import reactor.core.Cancellation;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.scheduler.Schedulers;
-import static reactor.core.Reactor.Logger;
+import reactor.util.Logger;
 
 /**
  * @author Anatoly Kadyshev
  */
 class HeartbeatWatchdog {
 
-	private static final Logger logger = Reactor.getLogger(HeartbeatWatchdog.class);
+	private static final Logger logger = Loggers.getLogger(HeartbeatWatchdog.class);
 
 	private final ServiceMessageHandler serviceMessageHandler;
 

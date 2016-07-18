@@ -26,8 +26,8 @@ import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.BasicAeronInfra;
 import reactor.aeron.utils.BasicExceptionSerializer;
 import reactor.aeron.utils.Serializer;
-import static reactor.core.Reactor.Logger;
-import reactor.core.Reactor;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.logbuffer.FragmentHandler;
 
@@ -129,7 +129,7 @@ public class Context {
 
 	static class LoggingErrorConsumer implements Consumer<Throwable> {
 
-		private static final Logger logger = Reactor.getLogger(LoggingErrorConsumer.class);
+		private static final Logger logger = Loggers.getLogger(LoggingErrorConsumer.class);
 
 		@Override
 		public void accept(Throwable t) {

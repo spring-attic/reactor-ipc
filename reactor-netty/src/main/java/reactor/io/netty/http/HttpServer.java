@@ -42,12 +42,12 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
 import reactor.core.Loopback;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.Exceptions;
-import static reactor.core.Reactor.Logger;
+import reactor.core.Exceptions;
+import reactor.util.Logger;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -486,7 +486,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 				parameters.length > 0 ? (HttpRequest) parameters[0] : null);
 	}
 
-	static final Logger log = Reactor.getLogger(HttpServer.class);
+	static final Logger log = Loggers.getLogger(HttpServer.class);
 
 	final class TcpBridgeServer extends TcpServer {
 

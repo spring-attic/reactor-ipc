@@ -50,9 +50,9 @@ import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
-import reactor.util.Exceptions;
-import static reactor.core.Reactor.Logger;
-import reactor.core.Reactor;
+import reactor.core.Exceptions;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 /**
  * Base functionality needed by all servers that communicate with clients over TCP.
@@ -65,7 +65,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 
 	public static final int DEFAULT_TCP_THREAD_COUNT = Integer.parseInt(System.getProperty(
 			"reactor.tcp.ioThreadCount",
-			"" + Reactor.DEFAULT_POOL_SIZE / 2));
+			"" + Schedulers.DEFAULT_POOL_SIZE / 2));
 
 	public static final int DEFAULT_TCP_SELECT_COUNT =
 			Integer.parseInt(System.getProperty("reactor.tcp.selectThreadCount", "" + DEFAULT_TCP_THREAD_COUNT));
@@ -389,7 +389,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		pipeline.addLast(new NettyChannelHandler<>(handler, this, nativeChannel));
 	}
 
-	final static Logger log = Reactor.getLogger(TcpServer.class);
+	final static Logger log = Loggers.getLogger(TcpServer.class);
 
 	static final AtomicLong COUNTER = new AtomicLong();
 }

@@ -32,7 +32,7 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Operators;
 import reactor.io.buffer.Buffer;
-import reactor.util.Exceptions;
+import reactor.core.Exceptions;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
 /**

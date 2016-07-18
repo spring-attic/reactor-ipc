@@ -18,9 +18,9 @@ package reactor.aeron.utils;
 import java.util.concurrent.TimeUnit;
 
 import reactor.aeron.Context;
-import static reactor.core.Reactor.Logger;
+import reactor.util.Logger;
 
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.Subscription;
@@ -35,7 +35,7 @@ import uk.co.real_logic.agrona.concurrent.IdleStrategy;
  */
 public final class BasicAeronInfra implements AeronInfra {
 
-	private static final Logger logger = Reactor.getLogger(BasicAeronInfra.class);
+	private static final Logger logger = Loggers.getLogger(BasicAeronInfra.class);
 
 	private final boolean launchEmbeddedMediaDriver;
 

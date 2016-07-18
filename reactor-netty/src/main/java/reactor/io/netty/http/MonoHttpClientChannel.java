@@ -34,7 +34,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
 import reactor.core.publisher.Operators;
-import reactor.util.Exceptions;
+import reactor.core.Exceptions;
 import reactor.io.netty.common.ChannelBridge;
 
 /**

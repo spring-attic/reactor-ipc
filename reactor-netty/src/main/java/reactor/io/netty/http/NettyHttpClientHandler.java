@@ -36,7 +36,7 @@ import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
-import reactor.util.Exceptions;
+import reactor.core.Exceptions;
 
 /**
  * @author Stephane Maldini

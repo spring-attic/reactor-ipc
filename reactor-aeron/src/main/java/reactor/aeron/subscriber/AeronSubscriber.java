@@ -23,14 +23,14 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronUtils;
 import reactor.core.Loopback;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.Receiver;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.Trackable;
 import reactor.io.buffer.Buffer;
-import static reactor.core.Reactor.Logger;
+import reactor.util.Logger;
 
 /**
  * The subscriber part of Reactive Streams over Aeron transport implementation
@@ -100,7 +100,7 @@ import static reactor.core.Reactor.Logger;
 public final class AeronSubscriber
 		implements Subscriber<Buffer>, Trackable, Receiver, Loopback {
 
-	private static final Logger logger = Reactor.getLogger(AeronSubscriber.class);
+	private static final Logger logger = Loggers.getLogger(AeronSubscriber.class);
 
 	private final AtomicBoolean alive = new AtomicBoolean(true);
 

@@ -28,12 +28,12 @@ import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.ServiceMessagePublicationFailedException;
 import reactor.aeron.utils.ServiceMessageType;
 import reactor.core.Producer;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.util.Exceptions;
-import static reactor.core.Reactor.Logger;
+import reactor.core.Exceptions;
+import reactor.util.Logger;
 import reactor.io.util.UUIDUtils;
 import reactor.io.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
@@ -82,7 +82,7 @@ import uk.co.real_logic.aeron.Publication;
  */
 public final class AeronFlux extends Flux<Buffer> implements Producer {
 
-	private static final Logger logger = Reactor.getLogger(AeronFlux.class);
+	private static final Logger logger = Loggers.getLogger(AeronFlux.class);
 
 	final AeronInfra aeronInfra;
 

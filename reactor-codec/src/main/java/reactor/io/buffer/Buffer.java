@@ -36,7 +36,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
-import reactor.core.Reactor;
+import reactor.util.Loggers;
 import reactor.core.publisher.Flux;
 
 /**
