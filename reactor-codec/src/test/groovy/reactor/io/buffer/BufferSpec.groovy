@@ -17,7 +17,6 @@
 
 package reactor.io.buffer
 
-import reactor.core.Reactor
 import spock.lang.Specification
 
 import java.nio.BufferOverflowException
