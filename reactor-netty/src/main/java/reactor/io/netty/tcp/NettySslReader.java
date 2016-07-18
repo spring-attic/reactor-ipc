@@ -16,13 +16,10 @@
 
 package reactor.io.netty.tcp;
 
-import java.util.function.Consumer;
-
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import reactor.core.publisher.DirectProcessor;
-import reactor.core.publisher.MonoProcessor;
 
 /**
  * @author Stephane Maldini
