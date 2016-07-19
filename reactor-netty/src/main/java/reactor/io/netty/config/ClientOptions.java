@@ -430,7 +430,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 
 		@Override
 		public InetSocketAddress get() {
-			return connectAddress.isUnresolved() && parent.proxyType != null ?
+			return connectAddress.isUnresolved() ?
 					new InetSocketAddress(connectAddress.getHostName(),
 							connectAddress.getPort()) : connectAddress;
 		}
