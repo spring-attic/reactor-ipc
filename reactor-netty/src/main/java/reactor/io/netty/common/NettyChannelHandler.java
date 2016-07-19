@@ -199,8 +199,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			};
 
 			if (last != null) {
-				ctx.flush();
 				last.addListener(listener);
+				ctx.flush();
 			}
 		}
 		else {
@@ -262,12 +262,12 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 			log.error("Error processing connection. Closing the channel.", t);
 
-			ctx.close();
+			ctx.channel().eventLoop().execute(ctx::close);
 		}
 
 		@Override
 		public void onComplete() {
-			ctx.close();
+			ctx.channel().eventLoop().execute(ctx::close);
 		}
 	}
 

@@ -19,10 +19,12 @@ package reactor.io.netty.http;
 import java.io.IOException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -102,6 +104,14 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 	@Override
 	protected ChannelFuture doOnWrite(final Object data, final ChannelHandlerContext ctx) {
 		return ctx.write(data);
+	}
+
+	@Override
+	protected void doOnTerminate(ChannelHandlerContext ctx,
+			ChannelFuture last,
+			ChannelPromise promise,
+			Throwable exception) {
+		super.doOnTerminate(ctx, ctx.channel().write(Unpooled.EMPTY_BUFFER), promise, exception);
 	}
 
 	final NettyWebSocketServerHandler withWebsocketSupport(String url, String

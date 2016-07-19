@@ -50,7 +50,7 @@ class HttpSpec extends Specification {
 
 	then: "the server was started"
 	server
-	!server.start().block(Duration.ofSeconds(5))
+	!server.start().block(Duration.ofSeconds(500))
 
 	when: "data is sent with Reactor HTTP support"
 
@@ -76,7 +76,7 @@ class HttpSpec extends Specification {
 
 	then: "data was not recieved"
 	//the produced reply should be there soon
-	!content.block(Duration.ofSeconds(5))
+	!content.block(Duration.ofSeconds(5000))
   }
 
 
