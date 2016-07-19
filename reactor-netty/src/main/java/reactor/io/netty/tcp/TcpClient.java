@@ -344,37 +344,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		@Override
 		public void initChannel(final SocketChannel ch) throws Exception {
 			ChannelPipeline pipeline = ch.pipeline();
-			if (parent.options.proxyType() != null) {
-				ProxyHandler proxy;
-				InetSocketAddress proxyAddr = parent.options.proxyAddress()
-				                                            .get();
-				String username = parent.options.proxyUsername();
-				String password =
-						username != null && parent.options.proxyPassword() != null ?
-								parent.options.proxyPassword()
-								              .apply(username) : null;
-
-				switch (parent.options.proxyType()) {
-
-					default:
-					case HTTP:
-						proxy = username != null && password != null ?
-								new HttpProxyHandler(proxyAddr, username, password) :
-								new HttpProxyHandler(proxyAddr);
-						break;
-					case SOCKS4:
-						proxy = username != null ?
-								new Socks4ProxyHandler(proxyAddr, username) :
-								new Socks4ProxyHandler(proxyAddr);
-						break;
-					case SOCKS5:
-						proxy = username != null && password != null ?
-								new Socks5ProxyHandler(proxyAddr, username, password) :
-								new Socks5ProxyHandler(proxyAddr);
-						break;
-				}
-				pipeline.addFirst(NettyHandlerNames.ProxyHandler, proxy);
-			}
 
 			if (secureCallback != null && null != parent.sslContext) {
 				SslHandler sslHandler = parent.sslContext.newHandler(ch.alloc());
@@ -408,6 +377,38 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 			else if (log.isDebugEnabled()) {
 				pipeline.addFirst(NettyHandlerNames.LoggingHandler,
 						new LoggingHandler(parent.logClass()));
+			}
+
+			if (parent.options.proxyType() != null) {
+				ProxyHandler proxy;
+				InetSocketAddress proxyAddr = parent.options.proxyAddress()
+				                                            .get();
+				String username = parent.options.proxyUsername();
+				String password =
+						username != null && parent.options.proxyPassword() != null ?
+								parent.options.proxyPassword()
+								              .apply(username) : null;
+
+				switch (parent.options.proxyType()) {
+
+					default:
+					case HTTP:
+						proxy = username != null && password != null ?
+								new HttpProxyHandler(proxyAddr, username, password) :
+								new HttpProxyHandler(proxyAddr);
+						break;
+					case SOCKS4:
+						proxy = username != null ?
+								new Socks4ProxyHandler(proxyAddr, username) :
+								new Socks4ProxyHandler(proxyAddr);
+						break;
+					case SOCKS5:
+						proxy = username != null && password != null ?
+								new Socks5ProxyHandler(proxyAddr, username, password) :
+								new Socks5ProxyHandler(proxyAddr);
+						break;
+				}
+				pipeline.addFirst(NettyHandlerNames.ProxyHandler, proxy);
 			}
 
 			if (null != parent.options.pipelineConfigurer()) {
