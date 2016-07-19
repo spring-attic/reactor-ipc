@@ -36,17 +36,16 @@ import java.util.concurrent.TimeUnit
  */
 class NettyTcpServerSpec extends Specification {
 
-	static final int port = SocketUtils.findAvailableTcpPort()
-
   def "TcpServer responds to requests from clients"() {
 		given: "a simple TcpServer"
 			def dataLatch = new CountDownLatch(1)
-			def server = TcpServer.create("127.0.0.1", port)
+			def server = TcpServer.create("127.0.0.1")
 
 		when: "the server is started"
 		server.start { conn -> conn.sendString(Flux.just("Hello World!")) }.block()
 
-			def client = new SimpleClient(port, dataLatch, "Hello World!")
+			def client = new SimpleClient(server.listenAddress.port, dataLatch,
+					"Hello World!")
 			client.start()
 			dataLatch.await(5, TimeUnit.SECONDS)
 
@@ -62,7 +61,7 @@ class NettyTcpServerSpec extends Specification {
   def "TcpServer can encode and decode JSON"() {
 		given: "a TcpServer with JSON defaultCodec"
 			def dataLatch = new CountDownLatch(1)
-		TcpServer server = TcpServer.create(port)
+		TcpServer server = TcpServer.create()
 
 		when: "the server is started"
 		server.start({ conn ->
@@ -73,7 +72,7 @@ class NettyTcpServerSpec extends Specification {
 				  , NettyCodec.json(Pojo))
 		}).block()
 
-			def client = new SimpleClient(port, dataLatch, "{\"name\":\"John Doe\"}")
+			def client = new SimpleClient(server.listenAddress.port, dataLatch, "{\"name\":\"John Doe\"}")
 			client.start()
 			dataLatch.await(5, TimeUnit.SECONDS)
 
@@ -90,8 +89,8 @@ class NettyTcpServerSpec extends Specification {
 		given: "a TcpServer and a TcpClient"
 			def latch = new CountDownLatch(10)
 
-			def server = TcpServer.create(port)
-			def client = TcpClient.create("localhost", port)
+			def server = TcpServer.create()
+			def client = TcpClient.create("localhost", server.listenAddress.port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 
 		when: "the client/server are prepared"
@@ -130,8 +129,8 @@ class NettyTcpServerSpec extends Specification {
 			def elem = 10
 			def latch = new CountDownLatch(elem)
 
-		TcpServer server = TcpServer.create("localhost", port)
-			def client = TcpClient.create("localhost", port)
+		TcpServer server = TcpServer.create("localhost")
+			def client = TcpClient.create("localhost", server.listenAddress.port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 			def i = 0
 
