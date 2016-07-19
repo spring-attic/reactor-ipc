@@ -36,6 +36,7 @@ import io.netty.channel.socket.SocketChannelConfig;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 import org.reactivestreams.Subscriber;
 import reactor.core.MultiProducer;
 import reactor.core.publisher.Flux;
@@ -47,6 +48,7 @@ import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
+import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
@@ -164,7 +166,6 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	 */
 	public static TcpServer create(String bindAddress, int port) {
 		return create(ServerOptions.create()
-		                           .timer(Schedulers.timer())
 		                           .listen(bindAddress, port));
 	}
 
@@ -180,7 +181,6 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	ChannelFuture     bindFuture;
 
 	protected TcpServer(ServerOptions options) {
-		super(options.timer(), options.prefetch());
 		this.listenAddress = options.listenAddress();
 		this.options = options.toImmutable();
 		int selectThreadCount = DEFAULT_TCP_SELECT_COUNT;
@@ -223,8 +223,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 				                     .channel(channelAdapter.getServerChannel(ioGroup))
 				                     .childOption(ChannelOption.ALLOCATOR,
 				                                                        PooledByteBufAllocator.DEFAULT)
-				                     .childOption(ChannelOption.AUTO_READ,
-				                                                        options.ssl() != null)
+				                     .childOption(ChannelOption.AUTO_READ, false)
 				                     .option(ChannelOption.SO_BACKLOG, options.backlog())
 		                                   .option(ChannelOption.SO_RCVBUF, options.rcvbuf())
 		                                   .option(ChannelOption.SO_SNDBUF, options.sndbuf())
@@ -372,8 +371,10 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		ChannelPipeline pipeline = nativeChannel.pipeline();
 
 		if (sslContext != null) {
+			SslHandler sslHandler =  sslContext.newHandler
+					(nativeChannel.alloc());
 			pipeline
-			  .addFirst(sslContext.newHandler(nativeChannel.alloc()));
+			  .addFirst(NettyHandlerNames.SslHandler, sslHandler);
 		}
 
 		if (null != getOptions() && null != getOptions().pipelineConfigurer()) {

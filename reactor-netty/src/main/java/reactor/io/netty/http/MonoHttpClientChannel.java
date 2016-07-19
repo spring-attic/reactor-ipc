@@ -61,8 +61,7 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 
 	@Override
 	public void subscribe(final Subscriber<? super HttpClientResponse> subscriber) {
-		ReconnectableBridge bridge =
-				new ReconnectableBridge(client.client.getDefaultPrefetchSize());
+		ReconnectableBridge bridge = new ReconnectableBridge();
 
 		bridge.activeURI = currentURI;
 
@@ -123,14 +122,8 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 final class ReconnectableBridge
 		implements ChannelBridge<HttpClientChannel>, Predicate<Throwable> {
 
-	final long prefetch;
-
 	URI      activeURI;
 	String[] redirectedFrom;
-
-	ReconnectableBridge(long prefetch) {
-		this.prefetch = prefetch;
-	}
 
 	@Override
 	public HttpClientChannel createChannelBridge(Channel ioChannel, Flux<Object>

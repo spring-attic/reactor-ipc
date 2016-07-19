@@ -107,7 +107,6 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 */
 	public static HttpServer create(String bindAddress, int port) {
 		return create(ServerOptions.create()
-		                           .timer(Schedulers.timer())
 		                           .listen(bindAddress, port));
 	}
 
@@ -116,7 +115,6 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	HttpMappings httpMappings;
 
 	HttpServer(final ServerOptions options) {
-		super(options.timer());
 		this.server = new TcpBridgeServer(options);
 	}
 

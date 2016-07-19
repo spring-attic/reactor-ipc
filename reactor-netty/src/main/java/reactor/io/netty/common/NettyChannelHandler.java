@@ -262,14 +262,12 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 			log.error("Error processing connection. Closing the channel.", t);
 
-			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-			   .addListener(ChannelFutureListener.CLOSE);
+			ctx.close();
 		}
 
 		@Override
 		public void onComplete() {
-			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-			   .addListener(ChannelFutureListener.CLOSE);
+			ctx.close();
 		}
 	}
 

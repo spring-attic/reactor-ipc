@@ -16,9 +16,7 @@
 
 package reactor.io.netty.config;
 
-import java.net.InetSocketAddress;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -38,16 +36,17 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 			".managed.default",
 			"false"));
 
-	private TimedScheduler            timer              = null;
-	private int                       timeout            = 30000;
-	private boolean                   keepAlive          = true;
-	private int                       linger             = 0;
-	private boolean                   tcpNoDelay         = true;
-	private int                       rcvbuf             = 1024 * 1024;
-	private int                       sndbuf             = 1024 * 1024;
-	private long                      prefetch           = Long.MAX_VALUE;
-	private boolean                   managed            = DEFAULT_MANAGED_PEER;
-	private Consumer<ChannelPipeline> pipelineConfigurer = null;
+	private TimedScheduler            timer               = null;
+	private int                       timeout             = 30000;
+	private int                       sslHandshakeTimeout = 30000;
+	private boolean                   keepAlive           = true;
+	private int                       linger              = 0;
+	private boolean                   tcpNoDelay          = true;
+	private int                       rcvbuf              = 1024 * 1024;
+	private int                       sndbuf              = 1024 * 1024;
+	private long                      prefetch            = Long.MAX_VALUE;
+	private boolean                   managed             = DEFAULT_MANAGED_PEER;
+	private Consumer<ChannelPipeline> pipelineConfigurer  = null;
 	private EventLoopGroup            eventLoopGroup     = null;
 	private SslContextBuilder         sslOptions         = null;
 
@@ -142,30 +141,6 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	}
 
 	/**
-	 * Gets the {@code prefetch} maximum in-flight value
-	 * @return the prefetch value, {@code Long.MAX} if undefined
-	 */
-	public long prefetch() {
-		return prefetch;
-	}
-
-	/**
-	 * Set the Consuming capacity along with eventual flushing strategy each given
-	 * prefetch iteration. Long.MAX will instruct the channels to be unbounded (e.g.
-	 * limited by the dispatcher capacity if any or a slow consumer). When unbounded the
-	 * system will take a maximum of data off the channel incoming connection. Setting a
-	 * value of 10 will however pause the channel after 10 successful reads until the next
-	 * request from the consumer.
-	 * @param prefetch The {@code prefetch} in-flight data over this channel ({@code
-	 * Long.MAX_VALUE} for unbounded).
-	 * @return {@code this}
-	 */
-	public SO prefetch(long prefetch) {
-		this.prefetch = prefetch;
-		return (SO) this;
-	}
-
-	/**
 	 * Gets the configured {@code SO_RCVBUF} (receive buffer) size
 	 * @return The configured receive buffer size
 	 */
@@ -192,10 +167,31 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	}
 
 	/**
-	 * Set the options to use for configuring SSL. Setting this to {@code null} means don't use SSL at all (the
-	 * default).
+	 * Set the options to use for configuring SSL handshake timeout. Default to 10000 ms.
+	 *
+	 * @param sslHandshakeTimeout The timeout in milliseconds
+	 * @return {@literal this}
+	 */
+	public SO ssl(int sslHandshakeTimeout) {
+		this.sslHandshakeTimeout = sslHandshakeTimeout;
+		return (SO) this;
+	}
+
+	/**
+	 * Return SSL handshake timeout value in milliseconds
+	 *
+	 * @return the SSL handshake timeout
+	 */
+	public int sslHandshakeTimeout() {
+		return sslHandshakeTimeout;
+	}
+
+	/**
+	 * Set the options to use for configuring SSL. Setting this to {@code null} means
+	 * don't use SSL at all (the default).
 	 *
 	 * @param sslOptions The options to set when configuring SSL
+	 *
 	 * @return {@literal this}
 	 */
 	public SO ssl(SslContextBuilder sslOptions) {
@@ -267,27 +263,4 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 		this.timeout = timeout;
 		return (SO) this;
 	}
-
-	/**
-	 * Set the default {@link reactor.core.scheduler.TimedScheduler} for timed operations.
-	 *
-	 * @param timer The timer to assign by default
-	 *
-	 * @return {@literal this}
-	 */
-	@SuppressWarnings("unchecked")
-	public SO timer(TimedScheduler timer) {
-		this.timer = timer;
-		return (SO) this;
-	}
-
-	/**
-	 * Return optional {@link TimedScheduler}
-	 *
-	 * @return optional {@link TimedScheduler}
-	 */
-	public TimedScheduler timer() {
-		return this.timer;
-	}
-
 }

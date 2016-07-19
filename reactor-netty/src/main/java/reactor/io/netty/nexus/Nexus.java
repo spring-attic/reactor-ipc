@@ -147,7 +147,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	 */
 	public static Nexus create(HttpServer server) {
 
-		Nexus nexus = new Nexus(server.getDefaultTimer(), server);
+		Nexus nexus = new Nexus(server);
 		log.info("Warping Nexus...");
 
 		server.get(API_STREAM_URL, nexus);
@@ -185,8 +185,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	boolean              systemStats;
 	long websocketCapacity = 1L;
 
-	Nexus(TimedScheduler defaultTimer, HttpServer server) {
-		super(defaultTimer);
+	Nexus(HttpServer server) {
 		this.server = server;
 		this.eventStream = EmitterProcessor.create(false);
 		this.lastStateMerge = new LastGraphStateMap();

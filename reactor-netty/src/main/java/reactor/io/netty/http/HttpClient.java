@@ -49,7 +49,7 @@ public class HttpClient
 	 */
 	public static HttpClient create() {
 		return create(ClientOptions.create()
-		                           .timer(Schedulers.timer()).sslSupport());
+		                           .sslSupport());
 	}
 
 	/**
@@ -71,7 +71,6 @@ public class HttpClient
 	 */
 	public static HttpClient create(String address, int port) {
 		return create(ClientOptions.create()
-		                           .timer(Schedulers.timer())
 		                           .connect(address, port));
 	}
 

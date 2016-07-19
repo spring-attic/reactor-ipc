@@ -248,11 +248,6 @@ public class HttpClientOptions extends ClientOptions {
 		}
 
 		@Override
-		public long prefetch() {
-			return options.prefetch();
-		}
-
-		@Override
 		public int rcvbuf() {
 			return options.rcvbuf();
 		}
@@ -272,10 +267,6 @@ public class HttpClientOptions extends ClientOptions {
 			return options.timeout();
 		}
 
-		@Override
-		public TimedScheduler timer() {
-			return options.timer();
-		}
 
 		@Override
 		public HttpClientOptions connect(@Nonnull String host, int port) {
@@ -321,11 +312,6 @@ public class HttpClientOptions extends ClientOptions {
 		}
 
 		@Override
-		public HttpClientOptions prefetch(long prefetch) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
 		public HttpClientOptions rcvbuf(int rcvbuf) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
@@ -352,11 +338,6 @@ public class HttpClientOptions extends ClientOptions {
 
 		@Override
 		public HttpClientOptions timeout(int timeout) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public HttpClientOptions timer(TimedScheduler timer) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 	}

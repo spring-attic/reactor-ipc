@@ -277,11 +277,6 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
-		public long prefetch() {
-			return options.prefetch();
-		}
-
-		@Override
 		public int rcvbuf() {
 			return options.rcvbuf();
 		}
@@ -302,13 +297,8 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
-		public TimedScheduler timer() {
-			return options.timer();
-		}
-
-		@Override
 		public ServerOptions backlog(int backlog) {
-			return super.backlog(backlog);
+			throw new UnsupportedOperationException("Immutable Options");
 		}
 
 		@Override
@@ -367,11 +357,6 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
-		public ServerOptions prefetch(long prefetch) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
 		public ServerOptions rcvbuf(int rcvbuf) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
@@ -403,11 +388,6 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 
 		@Override
 		public ServerOptions timeout(int timeout) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public ServerOptions timer(TimedScheduler timer) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 	}

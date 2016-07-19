@@ -132,9 +132,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static UdpServer create(String bindAddress, int port) {
-		return create(ServerOptions.create()
-		                                  .listen(bindAddress, port)
-		                                  .timer(Schedulers.timer()));
+		return create(ServerOptions.create().listen(bindAddress, port));
 	}/**
 	 * Bind a new UDP server to the given bind address and port. The default server implementation is scanned
 	 * from the classpath on Class init. Support for Netty is provided as long as the relevant library dependencies are
@@ -161,7 +159,6 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 	volatile DatagramChannel channel;
 
 	UdpServer(ServerOptions options) {
-		super(options.timer(), options.prefetch());
 		this.listenAddress = options.listenAddress();
 		this.multicastInterface = options.multicastInterface();
 		this.options = options.toImmutable();

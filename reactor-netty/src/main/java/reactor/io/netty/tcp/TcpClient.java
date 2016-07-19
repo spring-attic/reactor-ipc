@@ -35,6 +35,7 @@ import io.netty.handler.proxy.Socks4ProxyHandler;
 import io.netty.handler.proxy.Socks5ProxyHandler;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.resolver.NoopAddressResolverGroup;
 import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
@@ -145,8 +146,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static TcpClient create(String bindAddress, int port) {
-		return create(ClientOptions.to(bindAddress, port)
-		                           .timer(Schedulers.timer()));
+		return create(ClientOptions.to(bindAddress, port));
 	}
 
 	/**
@@ -178,7 +178,6 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	final InetSocketAddress connectAddress;
 
 	protected TcpClient(ClientOptions options) {
-		super(options.timer(), options.prefetch());
 		if (null == options.remoteAddress()) {
 			this.connectAddress = new InetSocketAddress("127.0.0.1", 3000);
 		}
@@ -378,16 +377,18 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 			}
 
 			if (secureCallback != null && null != parent.sslContext) {
+				SslHandler sslHandler = parent.sslContext.newHandler(ch.alloc());
+
 				if (log.isTraceEnabled()) {
 					pipeline.addFirst(NettyHandlerNames.SslLoggingHandler,
 							new LoggingHandler(parent.logClass()));
 					pipeline.addAfter(NettyHandlerNames.SslLoggingHandler,
 							NettyHandlerNames.SslHandler,
-							parent.sslContext.newHandler(ch.alloc()));
+							sslHandler);
 				}
 				else {
 					pipeline.addFirst(NettyHandlerNames.SslHandler,
-							parent.sslContext.newHandler(ch.alloc()));
+							sslHandler);
 				}
 				if (log.isDebugEnabled()) {
 					pipeline.addAfter(NettyHandlerNames.SslHandler,

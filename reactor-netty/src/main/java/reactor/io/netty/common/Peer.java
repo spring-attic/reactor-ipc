@@ -39,36 +39,7 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>  {
 			System.getenv("PORT") != null ? Integer.parseInt(System.getenv("PORT")) : 12012;
 	public static final String DEFAULT_BIND_ADDRESS = "127.0.0.1";
 
-	protected final AtomicBoolean  started;
-
-	final           TimedScheduler defaultTimer;
-	final           long           defaultPrefetch;
-
-	protected Peer(TimedScheduler defaultTimer) {
-		this(defaultTimer, Long.MAX_VALUE);
-	}
-
-	protected Peer(TimedScheduler defaultTimer, long prefetch) {
-		this.defaultTimer = defaultTimer == null ? Schedulers.timer() : defaultTimer;
-		this.defaultPrefetch = prefetch > 0 ? prefetch : Long.MAX_VALUE;
-		this.started = new AtomicBoolean();
-	}
-
-	/**
-	 * Get the default batch read/write size
-	 * @return the default capacity, default Long.MAX for unbounded
-	 */
-	public final long getDefaultPrefetchSize() {
-		return defaultPrefetch;
-	}
-
-	/**
-	 * Get the default environment for all Channel
-	 * @return The default environment
-	 */
-	public final TimedScheduler getDefaultTimer() {
-		return defaultTimer;
-	}
+	protected final AtomicBoolean  started = new AtomicBoolean();
 
 	/**
 	 * Is shutdown

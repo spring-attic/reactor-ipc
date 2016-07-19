@@ -305,11 +305,6 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
-		public long prefetch() {
-			return options.prefetch();
-		}
-
-		@Override
 		public int rcvbuf() {
 			return options.rcvbuf();
 		}
@@ -327,11 +322,6 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		@Override
 		public int timeout() {
 			return options.timeout();
-		}
-
-		@Override
-		public TimedScheduler timer() {
-			return options.timer();
 		}
 
 		@Override
@@ -398,11 +388,6 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
-		public ClientOptions prefetch(long prefetch) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
 		public ClientOptions rcvbuf(int rcvbuf) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
@@ -429,11 +414,6 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 
 		@Override
 		public ClientOptions timeout(int timeout) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public ClientOptions timer(TimedScheduler timer) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 	}
