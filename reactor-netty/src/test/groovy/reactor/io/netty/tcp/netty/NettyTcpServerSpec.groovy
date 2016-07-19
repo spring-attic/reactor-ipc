@@ -41,11 +41,10 @@ class NettyTcpServerSpec extends Specification {
   def "TcpServer responds to requests from clients"() {
 		given: "a simple TcpServer"
 			def dataLatch = new CountDownLatch(1)
-			def server = TcpServer.create(port)
+			def server = TcpServer.create("127.0.0.1", port)
 
 		when: "the server is started"
-		server.start { conn -> conn.sendString(Flux.just("Hello World!"))
-			}.block()
+		server.start { conn -> conn.sendString(Flux.just("Hello World!")) }.block()
 
 			def client = new SimpleClient(port, dataLatch, "Hello World!")
 			client.start()

@@ -135,8 +135,8 @@ public class TcpServerTests {
 
 		assertTrue("Latch was counted down", latch.await(5, TimeUnit.SECONDS));
 
+		server.shutdown().block();
 		client.shutdown();
-		server.shutdown();
 	}
 
 	@Test
