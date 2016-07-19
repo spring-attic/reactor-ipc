@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -89,7 +90,9 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			ChannelFuture last,
 			ChannelPromise promise,
 			Throwable exception) {
-		super.doOnTerminate(ctx, ctx.channel().write(LastHttpContent.EMPTY_LAST_CONTENT), promise, exception);
+		super.doOnTerminate(ctx, ctx.channel().write(Unpooled.EMPTY_BUFFER),
+				promise,
+				exception);
 	}
 
 	@Override
@@ -172,6 +175,9 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 
 	protected void postRead(ChannelHandlerContext ctx, Object msg){
 		if (msg instanceof LastHttpContent) {
+			if(log.isDebugEnabled()){
+				log.debug("Read last http packet");
+			}
 			ctx.channel().close();
 			downstream().complete();
 		}
@@ -205,6 +211,9 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			}
 			if (ctx.channel()
 			       .isOpen()) {
+				if(log.isDebugEnabled()){
+					log.error("Closing HTTP channel due to error", t);
+				}
 				ctx.channel()
 				   .close();
 			}

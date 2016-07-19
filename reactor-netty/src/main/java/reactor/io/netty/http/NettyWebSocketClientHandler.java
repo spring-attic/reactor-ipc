@@ -78,6 +78,9 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 	@Override
 	protected void postRead(ChannelHandlerContext ctx, Object msg) {
 		if(msg instanceof CloseWebSocketFrame){
+			if(log.isDebugEnabled()){
+				log.debug("Closing Websocket");
+			}
 			ctx.channel().close();
 		}
 	}
@@ -116,6 +119,9 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 		if (TextWebSocketFrame.class.isAssignableFrom(messageClass)) {
 			downstream().next(msg);
 		} else if (CloseWebSocketFrame.class.isAssignableFrom(messageClass)) {
+			if(log.isDebugEnabled()){
+				log.debug("Closing Websocket");
+			}
 			ctx.close();
 		} else {
 			doRead(msg);

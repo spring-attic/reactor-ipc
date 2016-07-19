@@ -267,6 +267,9 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void onComplete() {
+			if (log.isDebugEnabled()) {
+				log.debug("Closing connection");
+			}
 			ctx.channel().eventLoop().execute(ctx::close);
 		}
 	}
@@ -286,13 +289,14 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
-			if (log.isDebugEnabled()) {
-				log.debug("Cancel connection");
-			}
-			if(subscription != null) {
+			Subscription subscription = this.subscription;
+			this.subscription = null;
+			if(subscription != null && inboundEmitter.getPending() == 0L) {
+				if (log.isDebugEnabled()) {
+					log.debug("Cancel from remotely closed connection");
+				}
 				subscription.cancel();
 			}
-			subscription = null;
 		}
 
 		@Override
@@ -380,7 +384,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		private final ChannelHandlerContext ctx;
 		private final ChannelPromise        promise;
 
-		private Subscription subscription;
+		volatile Subscription subscription;
 
 		private final ChannelFutureListener writeListener = new ChannelFutureListener() {
 
@@ -393,6 +397,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 					}
 					return;
 				}
+				Subscription subscription = FlushOnEachSubscriber.this.subscription;
 					if (subscription != null) {
 						subscription.request(1L);
 					}
@@ -493,13 +498,14 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
-			if (log.isDebugEnabled()) {
-				log.debug("Cancel connection");
-			}
-			if(subscription != null) {
+			Subscription subscription = this.subscription;
+			this.subscription = null;
+			if(subscription != null && inboundEmitter.getPending() == 0L) {
+				if (log.isDebugEnabled()) {
+					log.debug("Cancel from remotely closed connection");
+				}
 				subscription.cancel();
 			}
-			subscription = null;
 		}
 
 		@Override
@@ -782,7 +788,10 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			if (wip++ == 0) {
 				Queue<Object> q = queue;
 				if (q != null) {
-					q.clear();
+					Object o;
+					while((o = q.poll()) != null){
+						ReferenceCountUtil.release(o);
+					}
 				}
 			}
 		}

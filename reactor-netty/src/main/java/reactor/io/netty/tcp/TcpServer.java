@@ -236,7 +236,8 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		                             .childOption(ChannelOption.TCP_NODELAY,
 				                             options.tcpNoDelay())
 		                             .option(ChannelOption.SO_REUSEADDR, options.reuseAddr())
-		                             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+		                             .childOption(ChannelOption.SO_REUSEADDR, options.reuseAddr())
+		                             .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS,
 				                             (int) Math.min(Integer.MAX_VALUE,
 						                             options
 								                             .timeoutMillis()))
