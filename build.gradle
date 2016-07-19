@@ -37,6 +37,7 @@ ext {
 	gradleScriptDir = "${rootProject.projectDir}/gradle"
 
 	reactorVersion = '3.0.0.RC1'
+	reactorBusVersion = '3.0.0.BUILD-SNAPSHOT'
 
 	// Languages
 	groovyVersion = '2.4.1'
@@ -211,7 +212,7 @@ project('reactor-netty') {
 		compile project(":reactor-ipc")
 
 		//Improved Http routing
-		optional("io.projectreactor:reactor-bus:$reactorVersion") {
+		optional("io.projectreactor:reactor-bus:$reactorBusVersion") {
 			transitive = false
 		}
 
