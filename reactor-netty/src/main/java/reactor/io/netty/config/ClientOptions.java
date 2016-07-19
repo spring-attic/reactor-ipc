@@ -168,7 +168,8 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 			@Nonnull InetSocketAddress connectAddress,
 			@Nullable String username,
 			@Nullable Function<? super String, ? extends String> password) {
-		return proxy(type, () -> connectAddress, username, password);
+		return proxy(type, new InetResolverProxySupplier(connectAddress), username,
+				password);
 	}
 
 	/**
