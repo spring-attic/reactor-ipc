@@ -67,7 +67,7 @@ class NettyTcpServerSpec extends Specification {
 
 		when: "the server is started"
 		server.start({ conn ->
-		  conn.map(conn.receive(NettyCodec.json(Pojo)).take(1).map { pojo ->
+		  conn.map(conn.receive(NettyCodec.json(Pojo)).log().take(1).map { pojo ->
 							assert pojo.name == "John Doe"
 							new Pojo(name: "Jane Doe")
 						}

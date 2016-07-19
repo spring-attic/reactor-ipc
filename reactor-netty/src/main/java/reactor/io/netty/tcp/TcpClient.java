@@ -29,9 +29,14 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.proxy.HttpProxyHandler;
+import io.netty.handler.proxy.ProxyHandler;
+import io.netty.handler.proxy.Socks4ProxyHandler;
+import io.netty.handler.proxy.Socks5ProxyHandler;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
-import reactor.util.Loggers;
+import io.netty.resolver.NoopAddressResolverGroup;
+import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,8 +52,8 @@ import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.util.NettyNativeDetector;
-import reactor.core.Exceptions;
 import reactor.util.Logger;
+import reactor.util.Loggers;
 
 /**
  * The base class for a Reactor-based TCP client.
@@ -254,7 +259,13 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler =
 				null == handler ? (ChannelHandler<ByteBuf, ByteBuf, NettyChannel>) PING : handler;
 
-		Bootstrap _bootstrap = new Bootstrap().group(ioGroup)
+		Bootstrap _bootstrap = new Bootstrap().group(ioGroup);
+
+		if (options.getProxyType() != null) {
+			_bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
+		}
+
+		_bootstrap
 		                                      .channel(channelAdapter.getChannel(
 				                                      ioGroup))
 		                                      .option(ChannelOption.ALLOCATOR,
@@ -334,6 +345,38 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		@Override
 		public void initChannel(final SocketChannel ch) throws Exception {
 			ChannelPipeline pipeline = ch.pipeline();
+			if (parent.options.getProxyType() != null) {
+				ProxyHandler proxy;
+				InetSocketAddress proxyAddr = parent.options.getProxyAddress()
+				                                            .get();
+				String username = parent.options.getProxyUsername();
+				String password =
+						username != null && parent.options.getProxyPassword() != null ?
+								parent.options.getProxyPassword()
+								              .apply(username) : null;
+
+				switch (parent.options.getProxyType()) {
+
+					default:
+					case HTTP:
+						proxy = username != null && password != null ?
+								new HttpProxyHandler(proxyAddr, username, password) :
+								new HttpProxyHandler(proxyAddr);
+						break;
+					case SOCKS4:
+						proxy = username != null ?
+								new Socks4ProxyHandler(proxyAddr, username) :
+								new Socks4ProxyHandler(proxyAddr);
+						break;
+					case SOCKS5:
+						proxy = username != null && password != null ?
+								new Socks5ProxyHandler(proxyAddr, username, password) :
+								new Socks5ProxyHandler(proxyAddr);
+						break;
+				}
+				pipeline.addFirst(NettyHandlerNames.ProxyHandler, proxy);
+			}
+
 			if (secureCallback != null && null != parent.sslContext) {
 				if (log.isTraceEnabled()) {
 					pipeline.addFirst(NettyHandlerNames.SslLoggingHandler,

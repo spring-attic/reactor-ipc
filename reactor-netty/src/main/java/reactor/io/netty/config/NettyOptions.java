@@ -16,13 +16,14 @@
 
 package reactor.io.netty.config;
 
+import java.net.InetSocketAddress;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
 import reactor.core.scheduler.TimedScheduler;
-import reactor.util.Loggers;
 
 /**
  * Encapsulates common socket options.
@@ -288,4 +289,5 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	public TimedScheduler timer() {
 		return this.timer;
 	}
+
 }

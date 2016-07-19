@@ -17,6 +17,7 @@
 package reactor.io.netty.config;
 
 import java.net.InetSocketAddress;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -39,8 +40,8 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 */
 	public enum Proxy {
 		HTTP,
-		SOCK4,
-		SOCK5
+		SOCKS4,
+		SOCKS5
 	}
 
 	/**
@@ -70,7 +71,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	}
 
 	String                                       proxyUsername;
-	Function<? extends String, ? extends String> proxyPassword;
+	Function<? super String, ? extends String> proxyPassword;
 	Supplier<? extends InetSocketAddress>        proxyAddress;
 	Proxy                                        proxyType;
 
@@ -89,7 +90,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * @return {@literal this}
 	 */
 	public ClientOptions connect(@Nonnull String host, int port) {
-		return connect(new InetSocketAddress(host, port));
+		return connect(InetSocketAddress.createUnresolved(host, port));
 	}
 
 	/**
@@ -99,7 +100,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * @return {@literal this}
 	 */
 	public ClientOptions connect(@Nonnull InetSocketAddress connectAddress) {
-		return connect(() -> connectAddress);
+		return connect(new InetResolverSupplier(connectAddress, this));
 	}
 
 	/**
@@ -128,8 +129,8 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 			@Nonnull String host,
 			int port,
 			@Nullable String username,
-			@Nullable Function<? extends String, ? extends String> password) {
-		return proxy(type, new InetSocketAddress(host, port), username, password);
+			@Nullable Function<? super String, ? extends String> password) {
+		return proxy(type, InetSocketAddress.createUnresolved(host, port), username, password);
 	}
 
 	/**
@@ -141,7 +142,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * @return {@literal this}
 	 */
 	public ClientOptions proxy(@Nonnull Proxy type, @Nonnull String host, int port) {
-		return proxy(type, new InetSocketAddress(host, port));
+		return proxy(type, InetSocketAddress.createUnresolved(host, port));
 	}
 
 	/**
@@ -153,7 +154,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 */
 	public ClientOptions proxy(@Nonnull Proxy type,
 			@Nonnull InetSocketAddress connectAddress) {
-		return proxy(type, () -> connectAddress, null, null);
+		return proxy(type, new InetResolverProxySupplier(connectAddress), null, null);
 	}
 
 	/**
@@ -166,7 +167,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	public ClientOptions proxy(@Nonnull Proxy type,
 			@Nonnull InetSocketAddress connectAddress,
 			@Nullable String username,
-			@Nullable Function<? extends String, ? extends String> password) {
+			@Nullable Function<? super String, ? extends String> password) {
 		return proxy(type, () -> connectAddress, username, password);
 	}
 
@@ -192,11 +193,11 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	public ClientOptions proxy(@Nonnull Proxy type,
 			@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
 			@Nullable String username,
-			@Nullable Function<? extends String, ? extends String> password) {
+			@Nullable Function<? super String, ? extends String> password) {
 		this.proxyUsername = username;
 		this.proxyPassword = password;
-		this.proxyAddress = connectAddress;
-		this.proxyType = type;
+		this.proxyAddress = Objects.requireNonNull(connectAddress, "addressSupplier");
+		this.proxyType = Objects.requireNonNull(type, "proxyType");
 		return this;
 	}
 
@@ -215,6 +216,38 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	public ClientOptions sslSupport() {
 		ssl(SslContextBuilder.forClient());
 		return this;
+	}
+
+	/**
+	 * Proxy username if any
+	 * @return a proxy username String
+	 */
+	public String getProxyUsername() {
+		return proxyUsername;
+	}
+
+	/**
+	 * Proxy password selector if any
+	 * @return a proxy password selector
+	 */
+	public Function<? super String, ? extends String> getProxyPassword() {
+		return proxyPassword;
+	}
+
+	/**
+	 * Proxy address supplier if any
+	 * @return a proxy address supplier
+	 */
+	public Supplier<? extends InetSocketAddress> getProxyAddress() {
+		return proxyAddress;
+	}
+
+	/**
+	 * {@link Proxy} category to use
+	 * @return {@link Proxy} category to use
+	 */
+	public Proxy getProxyType() {
+		return proxyType;
 	}
 
 	/**
@@ -302,6 +335,26 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
+		public Proxy getProxyType() {
+			return options.getProxyType();
+		}
+
+		@Override
+		public String getProxyUsername() {
+			return options.getProxyUsername();
+		}
+
+		@Override
+		public Function<? super String, ? extends String> getProxyPassword() {
+			return options.getProxyPassword();
+		}
+
+		@Override
+		public Supplier<? extends InetSocketAddress> getProxyAddress() {
+			return options.getProxyAddress();
+		}
+
+		@Override
 		public ClientOptions connect(@Nonnull String host, int port) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
@@ -310,7 +363,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		public ClientOptions proxy(@Nonnull Proxy type,
 				@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
 				@Nullable String username,
-				@Nullable Function<? extends String, ? extends String> password) {
+				@Nullable Function<? super String, ? extends String> password) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 
@@ -385,4 +438,37 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 	}
 
+	static final class InetResolverSupplier implements Supplier<InetSocketAddress> {
+
+		final InetSocketAddress connectAddress;
+		final ClientOptions parent;
+
+		public InetResolverSupplier(InetSocketAddress address, ClientOptions parent) {
+			this.connectAddress = address;
+			this.parent = parent;
+		}
+
+		@Override
+		public InetSocketAddress get() {
+			return connectAddress.isUnresolved() && parent.proxyType != null ?
+					new InetSocketAddress(connectAddress.getHostName(),
+							connectAddress.getPort()) : connectAddress;
+		}
+	}
+
+	static final class InetResolverProxySupplier implements Supplier<InetSocketAddress> {
+
+		final InetSocketAddress connectAddress;
+
+		public InetResolverProxySupplier(InetSocketAddress address) {
+			this.connectAddress = address;
+		}
+
+		@Override
+		public InetSocketAddress get() {
+			return connectAddress.isUnresolved() ?
+					new InetSocketAddress(connectAddress.getHostName(),
+							connectAddress.getPort()) : connectAddress;
+		}
+	}
 }

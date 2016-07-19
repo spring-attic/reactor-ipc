@@ -60,7 +60,7 @@ public class HttpClientOptions extends ClientOptions {
 	 */
 	@Override
 	public HttpClientOptions connect(@Nonnull String host, int port) {
-		return connect(new InetSocketAddress(host, port));
+		return connect(InetSocketAddress.createUnresolved(host, port));
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class HttpClientOptions extends ClientOptions {
 	 */
 	@Override
 	public HttpClientOptions connect(@Nonnull InetSocketAddress connectAddress) {
-		return connect(() -> connectAddress);
+		return connect(new InetResolverSupplier(connectAddress, this));
 	}
 
 	/**
@@ -95,7 +95,7 @@ public class HttpClientOptions extends ClientOptions {
 	 * @return {@literal this}
 	 */
 	public ClientOptions proxy(@Nonnull String host, int port) {
-		return proxy(new InetSocketAddress(host, port));
+		return proxy(InetSocketAddress.createUnresolved(host, port));
 	}
 
 	/**
@@ -109,8 +109,8 @@ public class HttpClientOptions extends ClientOptions {
 	public ClientOptions proxy(@Nonnull String host,
 			int port,
 			@Nullable String username,
-			@Nullable Function<? extends String, ? extends String> password) {
-		return proxy(new InetSocketAddress(host, port), username, password);
+			@Nullable Function<? super String, ? extends String> password) {
+		return proxy(InetSocketAddress.createUnresolved(host, port), username, password);
 	}
 
 	/**
@@ -121,7 +121,7 @@ public class HttpClientOptions extends ClientOptions {
 	 * @return {@literal this}
 	 */
 	public ClientOptions proxy(@Nonnull InetSocketAddress connectAddress) {
-		return proxy(() -> connectAddress, null, null);
+		return proxy(new InetResolverProxySupplier(connectAddress), null, null);
 	}
 
 	/**
@@ -133,8 +133,8 @@ public class HttpClientOptions extends ClientOptions {
 	 */
 	public ClientOptions proxy(@Nonnull InetSocketAddress connectAddress,
 			@Nullable String username,
-			@Nullable Function<? extends String, ? extends String> password) {
-		return proxy(() -> connectAddress, username, password);
+			@Nullable Function<? super String, ? extends String> password) {
+		return proxy(new InetResolverProxySupplier(connectAddress), username, password);
 	}
 
 	/**
@@ -158,18 +158,9 @@ public class HttpClientOptions extends ClientOptions {
 	 */
 	public ClientOptions proxy(@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
 			@Nullable String username,
-			@Nullable Function<? extends String, ? extends String> password) {
+			@Nullable Function<? super String, ? extends String> password) {
 		proxy(Proxy.HTTP, connectAddress, username, password);
 		return this;
-	}
-
-	/**
-	 * Return the eventual remote host
-	 * @return the eventual remote host
-	 */
-	@Override
-	public InetSocketAddress remoteAddress() {
-		return super.remoteAddress();
 	}
 
 	/**
@@ -204,6 +195,26 @@ public class HttpClientOptions extends ClientOptions {
 		@Override
 		public HttpClientOptions toImmutable() {
 			return this;
+		}
+
+		@Override
+		public String getProxyUsername() {
+			return options.getProxyUsername();
+		}
+
+		@Override
+		public Function<? super String, ? extends String> getProxyPassword() {
+			return options.getProxyPassword();
+		}
+
+		@Override
+		public Supplier<? extends InetSocketAddress> getProxyAddress() {
+			return options.getProxyAddress();
+		}
+
+		@Override
+		public Proxy getProxyType() {
+			return options.getProxyType();
 		}
 
 		@Override
@@ -290,7 +301,7 @@ public class HttpClientOptions extends ClientOptions {
 		public ClientOptions proxy(@Nonnull Proxy type,
 				@Nonnull Supplier<? extends InetSocketAddress> connectAddress,
 				@Nullable String username,
-				@Nullable Function<? extends String, ? extends String> password) {
+				@Nullable Function<? super String, ? extends String> password) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 

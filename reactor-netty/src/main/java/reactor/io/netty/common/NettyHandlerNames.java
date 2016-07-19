@@ -23,6 +23,7 @@ public interface NettyHandlerNames {
 
 	String SslHandler        = "sslHandler";
 	String SslReader         = "sslReader";
-	String SslLoggingHandler = "ssLoggingHandler";
+	String SslLoggingHandler = "sslLoggingHandler";
+	String ProxyHandler      = "proxyHandler";
 	String LoggingHandler    = "loggingHandler";
 }
