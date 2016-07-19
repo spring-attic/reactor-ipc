@@ -89,8 +89,7 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 			ChannelFuture last,
 			ChannelPromise promise,
 			Throwable exception) {
-		ctx.channel().write(LastHttpContent.EMPTY_LAST_CONTENT);
-		super.doOnTerminate(ctx, last, promise, exception);
+		super.doOnTerminate(ctx, ctx.channel().write(LastHttpContent.EMPTY_LAST_CONTENT), promise, exception);
 	}
 
 	@Override
