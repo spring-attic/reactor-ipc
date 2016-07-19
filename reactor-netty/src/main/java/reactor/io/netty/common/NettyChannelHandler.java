@@ -202,10 +202,6 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 				ctx.flush();
 				last.addListener(listener);
 			}
-			else {
-				ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-				   .addListener(listener);
-			}
 		}
 		else {
 			if(exception != null) {
