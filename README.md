@@ -26,7 +26,7 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
     }
 
     dependencies {
-      compile "io.projectreactor:reactor-aeron:2.5.0.BUILD-SNAPSHOT"
+      compile "io.projectreactor:reactor-aeron:0.5.0.BUILD-SNAPSHOT"
     }
 ```
 
