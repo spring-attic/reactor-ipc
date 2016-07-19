@@ -36,15 +36,13 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 			".managed.default",
 			"false"));
 
-	private TimedScheduler            timer               = null;
 	private int                       timeout             = 30000;
-	private int                       sslHandshakeTimeout = 30000;
+	private int                       sslHandshakeTimeout = 10000;
 	private boolean                   keepAlive           = true;
 	private int                       linger              = 0;
 	private boolean                   tcpNoDelay          = true;
 	private int                       rcvbuf              = 1024 * 1024;
 	private int                       sndbuf              = 1024 * 1024;
-	private long                      prefetch            = Long.MAX_VALUE;
 	private boolean                   managed             = DEFAULT_MANAGED_PEER;
 	private Consumer<ChannelPipeline> pipelineConfigurer  = null;
 	private EventLoopGroup            eventLoopGroup     = null;

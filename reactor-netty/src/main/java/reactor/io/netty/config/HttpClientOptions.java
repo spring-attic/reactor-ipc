@@ -198,23 +198,23 @@ public class HttpClientOptions extends ClientOptions {
 		}
 
 		@Override
-		public String getProxyUsername() {
-			return options.getProxyUsername();
+		public String proxyUsername() {
+			return options.proxyUsername();
 		}
 
 		@Override
-		public Function<? super String, ? extends String> getProxyPassword() {
-			return options.getProxyPassword();
+		public Function<? super String, ? extends String> proxyPassword() {
+			return options.proxyPassword();
 		}
 
 		@Override
-		public Supplier<? extends InetSocketAddress> getProxyAddress() {
-			return options.getProxyAddress();
+		public Supplier<? extends InetSocketAddress> proxyAddress() {
+			return options.proxyAddress();
 		}
 
 		@Override
-		public Proxy getProxyType() {
-			return options.getProxyType();
+		public Proxy proxyType() {
+			return options.proxyType();
 		}
 
 		@Override

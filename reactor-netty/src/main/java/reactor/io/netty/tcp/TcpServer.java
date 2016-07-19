@@ -373,6 +373,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		if (sslContext != null) {
 			SslHandler sslHandler =  sslContext.newHandler
 					(nativeChannel.alloc());
+			sslHandler.setHandshakeTimeoutMillis(options.sslHandshakeTimeout());
 			pipeline
 			  .addFirst(NettyHandlerNames.SslHandler, sslHandler);
 		}

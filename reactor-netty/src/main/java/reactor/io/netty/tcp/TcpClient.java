@@ -260,7 +260,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 
 		Bootstrap _bootstrap = new Bootstrap().group(ioGroup);
 
-		if (options.getProxyType() != null) {
+		if (options.proxyType() != null) {
 			_bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
 		}
 
@@ -344,17 +344,17 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		@Override
 		public void initChannel(final SocketChannel ch) throws Exception {
 			ChannelPipeline pipeline = ch.pipeline();
-			if (parent.options.getProxyType() != null) {
+			if (parent.options.proxyType() != null) {
 				ProxyHandler proxy;
-				InetSocketAddress proxyAddr = parent.options.getProxyAddress()
+				InetSocketAddress proxyAddr = parent.options.proxyAddress()
 				                                            .get();
-				String username = parent.options.getProxyUsername();
+				String username = parent.options.proxyUsername();
 				String password =
-						username != null && parent.options.getProxyPassword() != null ?
-								parent.options.getProxyPassword()
+						username != null && parent.options.proxyPassword() != null ?
+								parent.options.proxyPassword()
 								              .apply(username) : null;
 
-				switch (parent.options.getProxyType()) {
+				switch (parent.options.proxyType()) {
 
 					default:
 					case HTTP:
@@ -378,7 +378,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 
 			if (secureCallback != null && null != parent.sslContext) {
 				SslHandler sslHandler = parent.sslContext.newHandler(ch.alloc());
-
+				sslHandler.setHandshakeTimeoutMillis(parent.options.sslHandshakeTimeout());
 				if (log.isTraceEnabled()) {
 					pipeline.addFirst(NettyHandlerNames.SslLoggingHandler,
 							new LoggingHandler(parent.logClass()));

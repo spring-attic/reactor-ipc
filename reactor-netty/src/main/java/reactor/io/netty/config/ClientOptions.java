@@ -222,7 +222,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * Proxy username if any
 	 * @return a proxy username String
 	 */
-	public String getProxyUsername() {
+	public String proxyUsername() {
 		return proxyUsername;
 	}
 
@@ -230,7 +230,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * Proxy password selector if any
 	 * @return a proxy password selector
 	 */
-	public Function<? super String, ? extends String> getProxyPassword() {
+	public Function<? super String, ? extends String> proxyPassword() {
 		return proxyPassword;
 	}
 
@@ -238,7 +238,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * Proxy address supplier if any
 	 * @return a proxy address supplier
 	 */
-	public Supplier<? extends InetSocketAddress> getProxyAddress() {
+	public Supplier<? extends InetSocketAddress> proxyAddress() {
 		return proxyAddress;
 	}
 
@@ -246,7 +246,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * {@link Proxy} category to use
 	 * @return {@link Proxy} category to use
 	 */
-	public Proxy getProxyType() {
+	public Proxy proxyType() {
 		return proxyType;
 	}
 
@@ -325,23 +325,23 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
-		public Proxy getProxyType() {
-			return options.getProxyType();
+		public Proxy proxyType() {
+			return options.proxyType();
 		}
 
 		@Override
-		public String getProxyUsername() {
-			return options.getProxyUsername();
+		public String proxyUsername() {
+			return options.proxyUsername();
 		}
 
 		@Override
-		public Function<? super String, ? extends String> getProxyPassword() {
-			return options.getProxyPassword();
+		public Function<? super String, ? extends String> proxyPassword() {
+			return options.proxyPassword();
 		}
 
 		@Override
-		public Supplier<? extends InetSocketAddress> getProxyAddress() {
-			return options.getProxyAddress();
+		public Supplier<? extends InetSocketAddress> proxyAddress() {
+			return options.proxyAddress();
 		}
 
 		@Override
