@@ -26,7 +26,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
-import reactor.core.scheduler.TimedScheduler;
 import reactor.core.Exceptions;
 import reactor.io.netty.common.Peer;
 
@@ -292,8 +291,8 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
-		public int timeout() {
-			return options.timeout();
+		public long timeoutMillis() {
+			return options.timeoutMillis();
 		}
 
 		@Override
@@ -387,7 +386,22 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
-		public ServerOptions timeout(int timeout) {
+		public ServerOptions sslHandshakeTimeoutMillis(long sslHandshakeTimeoutMillis) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public ServerOptions sslSelfSigned() {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public long sslHandshakeTimeoutMillis() {
+			return options.sslHandshakeTimeoutMillis();
+		}
+
+		@Override
+		public ServerOptions timeoutMillis(long timeout) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 	}

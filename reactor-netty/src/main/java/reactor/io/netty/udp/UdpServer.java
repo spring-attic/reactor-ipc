@@ -193,7 +193,8 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 			bootstrap.option(ChannelOption.SO_RCVBUF, options.rcvbuf())
 			         .option(ChannelOption.SO_SNDBUF, options.sndbuf())
 			         .option(ChannelOption.SO_REUSEADDR, options.reuseAddr())
-			         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.timeout());
+			         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int)Math.min
+					         (Integer.MAX_VALUE, options.timeoutMillis()));
 
 		if (null != listenAddress) {
 			bootstrap.localAddress(listenAddress);

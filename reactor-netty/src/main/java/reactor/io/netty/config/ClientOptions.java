@@ -27,7 +27,6 @@ import javax.annotation.Nullable;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
-import reactor.core.scheduler.TimedScheduler;
 import reactor.io.netty.common.Peer;
 
 /**
@@ -316,13 +315,28 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
+		public ClientOptions sslSupport() {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public ClientOptions timeoutMillis(long timeout) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public ClientOptions sslHandshakeTimeoutMillis(long sslHandshakeTimeoutMillis) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
 		public boolean tcpNoDelay() {
 			return options.tcpNoDelay();
 		}
 
 		@Override
-		public int timeout() {
-			return options.timeout();
+		public long timeoutMillis() {
+			return options.timeoutMillis();
 		}
 
 		@Override
@@ -343,6 +357,11 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		@Override
 		public Supplier<? extends InetSocketAddress> proxyAddress() {
 			return options.proxyAddress();
+		}
+
+		@Override
+		public long sslHandshakeTimeoutMillis() {
+			return options.sslHandshakeTimeoutMillis();
 		}
 
 		@Override
@@ -410,11 +429,6 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 
 		@Override
 		public ClientOptions tcpNoDelay(boolean tcpNoDelay) {
-			throw new UnsupportedOperationException("Immutable Options");
-		}
-
-		@Override
-		public ClientOptions timeout(int timeout) {
 			throw new UnsupportedOperationException("Immutable Options");
 		}
 	}

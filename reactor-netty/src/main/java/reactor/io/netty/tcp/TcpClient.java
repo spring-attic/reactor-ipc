@@ -41,7 +41,6 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.Channel;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
@@ -280,9 +279,10 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 				                                      options.linger())
 		                                      .option(ChannelOption.TCP_NODELAY,
 				                                      options.tcpNoDelay())
-		                                      .option(ChannelOption.SO_REUSEADDR, true)
 		                                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
-				                                      options.timeout());
+				                                      (int) Math.min(Integer.MAX_VALUE,
+						                                      options
+						                                      .timeoutMillis()));
 		if (!secure) {
 			_bootstrap.handler(new TcpClientChannelSetup(this, null, channelBridge,
 					targetHandler));
@@ -347,7 +347,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 
 			if (secureCallback != null && null != parent.sslContext) {
 				SslHandler sslHandler = parent.sslContext.newHandler(ch.alloc());
-				sslHandler.setHandshakeTimeoutMillis(parent.options.sslHandshakeTimeout());
+				sslHandler.setHandshakeTimeoutMillis(parent.options.sslHandshakeTimeoutMillis());
 				if (log.isTraceEnabled()) {
 					pipeline.addFirst(NettyHandlerNames.SslLoggingHandler,
 							new LoggingHandler(parent.logClass()));

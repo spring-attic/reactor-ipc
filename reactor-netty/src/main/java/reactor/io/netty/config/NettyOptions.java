@@ -16,12 +16,12 @@
 
 package reactor.io.netty.config;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
-import reactor.core.scheduler.TimedScheduler;
 
 /**
  * Encapsulates common socket options.
@@ -36,16 +36,16 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 			".managed.default",
 			"false"));
 
-	private int                       timeout             = 30000;
-	private int                       sslHandshakeTimeout = 10000;
-	private boolean                   keepAlive           = true;
-	private int                       linger              = 0;
-	private boolean                   tcpNoDelay          = true;
-	private int                       rcvbuf              = 1024 * 1024;
-	private int                       sndbuf              = 1024 * 1024;
-	private boolean                   managed             = DEFAULT_MANAGED_PEER;
-	private Consumer<ChannelPipeline> pipelineConfigurer  = null;
-	private EventLoopGroup            eventLoopGroup     = null;
+	private long                      timeout                   = 30000L;
+	private long                      sslHandshakeTimeoutMillis = 10000L;
+	private boolean                   keepAlive                 = true;
+	private int                       linger                    = 0;
+	private boolean                   tcpNoDelay                = true;
+	private int                       rcvbuf                    = 1024 * 1024;
+	private int                       sndbuf                    = 1024 * 1024;
+	private boolean                   managed                   = DEFAULT_MANAGED_PEER;
+	private Consumer<ChannelPipeline> pipelineConfigurer        = null;
+	private EventLoopGroup            eventLoopGroup            = null;
 	private SslContextBuilder         sslOptions         = null;
 
 	/**
@@ -165,26 +165,6 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	}
 
 	/**
-	 * Set the options to use for configuring SSL handshake timeout. Default to 10000 ms.
-	 *
-	 * @param sslHandshakeTimeout The timeout in milliseconds
-	 * @return {@literal this}
-	 */
-	public SO ssl(int sslHandshakeTimeout) {
-		this.sslHandshakeTimeout = sslHandshakeTimeout;
-		return (SO) this;
-	}
-
-	/**
-	 * Return SSL handshake timeout value in milliseconds
-	 *
-	 * @return the SSL handshake timeout
-	 */
-	public int sslHandshakeTimeout() {
-		return sslHandshakeTimeout;
-	}
-
-	/**
 	 * Set the options to use for configuring SSL. Setting this to {@code null} means
 	 * don't use SSL at all (the default).
 	 *
@@ -205,6 +185,36 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	public SO sslConfigurer(Consumer<? super SslContextBuilder> sslConfigurer) {
 		sslConfigurer.accept(sslOptions);
 		return (SO) this;
+	}
+
+	/**
+	 * Set the options to use for configuring SSL handshake timeout. Default to 10000 ms.
+	 *
+	 * @param sslHandshakeTimeout The timeout {@link Duration}
+	 * @return {@literal this}
+	 */
+	public final SO sslHandshakeTimeoutMillis(Duration sslHandshakeTimeout) {
+		return sslHandshakeTimeoutMillis(sslHandshakeTimeout.toMillis());
+	}
+
+	/**
+	 * Set the options to use for configuring SSL handshake timeout. Default to 10000 ms.
+	 *
+	 * @param sslHandshakeTimeoutMillis The timeout in milliseconds
+	 * @return {@literal this}
+	 */
+	public SO sslHandshakeTimeoutMillis(long sslHandshakeTimeoutMillis) {
+		this.sslHandshakeTimeoutMillis = sslHandshakeTimeoutMillis;
+		return (SO) this;
+	}
+
+	/**
+	 * Return SSL handshake timeout value in milliseconds
+	 *
+	 * @return the SSL handshake timeout
+	 */
+	public long sslHandshakeTimeoutMillis() {
+		return sslHandshakeTimeoutMillis;
 	}
 
 	/**
@@ -248,8 +258,18 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	 * Gets the {@code SO_TIMEOUT} value
 	 * @return the timeout value
 	 */
-	public int timeout() {
+	public long timeoutMillis() {
 		return timeout;
+	}
+
+	/**
+	 * Set the {@code SO_TIMEOUT} value in millis.
+	 * @param timeout The {@code SO_TIMEOUT} value.
+	 * @return {@code this}
+	 */
+	public SO timeoutMillis(long timeout) {
+		this.timeout = timeout;
+		return (SO) this;
 	}
 
 	/**
@@ -257,8 +277,7 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	 * @param timeout The {@code SO_TIMEOUT} value.
 	 * @return {@code this}
 	 */
-	public SO timeout(int timeout) {
-		this.timeout = timeout;
-		return (SO) this;
+	public final SO timeout(Duration timeout) {
+		return timeoutMillis(timeout.toMillis());
 	}
 }

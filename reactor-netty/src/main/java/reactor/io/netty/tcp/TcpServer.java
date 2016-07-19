@@ -221,13 +221,25 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		ServerBootstrap _serverBootstrap =
 				new ServerBootstrap().group(selectorGroup, ioGroup)
 				                     .channel(channelAdapter.getServerChannel(ioGroup))
-				                     .childOption(ChannelOption.ALLOCATOR,
-				                                                        PooledByteBufAllocator.DEFAULT)
-				                     .childOption(ChannelOption.AUTO_READ, false)
 				                     .option(ChannelOption.SO_BACKLOG, options.backlog())
-		                                   .option(ChannelOption.SO_RCVBUF, options.rcvbuf())
-		                                   .option(ChannelOption.SO_SNDBUF, options.sndbuf())
-		                                   .option(ChannelOption.SO_REUSEADDR, options.reuseAddr())
+		                             .childOption(ChannelOption.ALLOCATOR,
+				                             PooledByteBufAllocator.DEFAULT)
+		                             .childOption(ChannelOption.SO_RCVBUF,
+				                             options.rcvbuf())
+		                             .childOption(ChannelOption.SO_SNDBUF,
+				                             options.sndbuf())
+		                             .childOption(ChannelOption.AUTO_READ, false)
+		                             .childOption(ChannelOption.SO_KEEPALIVE,
+				                             options.keepAlive())
+		                             .childOption(ChannelOption.SO_LINGER,
+				                             options.linger())
+		                             .childOption(ChannelOption.TCP_NODELAY,
+				                             options.tcpNoDelay())
+		                             .option(ChannelOption.SO_REUSEADDR, options.reuseAddr())
+		                             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+				                             (int) Math.min(Integer.MAX_VALUE,
+						                             options
+								                             .timeoutMillis()))
 		                                   .localAddress((null == listenAddress ?
 				                                   new InetSocketAddress(0) : listenAddress));
 
@@ -317,18 +329,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
-			public void initChannel(final SocketChannel ch) throws Exception {
-				if (getOptions() != null) {
-					SocketChannelConfig config = ch.config();
-					config.setReceiveBufferSize(getOptions().rcvbuf());
-					config.setSendBufferSize(getOptions().sndbuf());
-					config.setKeepAlive(getOptions().keepAlive());
-					config.setReuseAddress(getOptions().reuseAddr());
-					config.setSoLinger(getOptions().linger());
-					config.setTcpNoDelay(getOptions().tcpNoDelay());
-				}
-
-				if (log.isDebugEnabled()) {
+			public void initChannel(final SocketChannel ch) throws Exception {if (log.isDebugEnabled()) {
 					log.debug("CONNECT {}", ch);
 				}
 
@@ -373,7 +374,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		if (sslContext != null) {
 			SslHandler sslHandler =  sslContext.newHandler
 					(nativeChannel.alloc());
-			sslHandler.setHandshakeTimeoutMillis(options.sslHandshakeTimeout());
+			sslHandler.setHandshakeTimeoutMillis(options.sslHandshakeTimeoutMillis());
 			pipeline
 			  .addFirst(NettyHandlerNames.SslHandler, sslHandler);
 		}
