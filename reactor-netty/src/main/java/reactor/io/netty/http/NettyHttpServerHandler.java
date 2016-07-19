@@ -111,7 +111,9 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 			ChannelFuture last,
 			ChannelPromise promise,
 			Throwable exception) {
-		super.doOnTerminate(ctx, ctx.channel().write(Unpooled.EMPTY_BUFFER), promise, exception);
+		super.doOnTerminate(ctx, ctx.channel().write(Unpooled.EMPTY_BUFFER),
+				promise,
+				exception);
 	}
 
 	final NettyWebSocketServerHandler withWebsocketSupport(String url, String

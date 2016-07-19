@@ -361,7 +361,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			ctx.channel()
 			   .closeFuture()
 			   .removeListener(this);
-			doOnTerminate(ctx, lastWrite, promise, t);
+			ctx.channel().eventLoop().execute(() -> doOnTerminate(ctx, lastWrite, promise,
+					t));
 		}
 
 		@Override
@@ -373,7 +374,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			ctx.channel()
 			   .closeFuture()
 			   .removeListener(this);
-			doOnTerminate(ctx, lastWrite, promise, null);
+			ctx.channel().eventLoop().execute(() -> doOnTerminate(ctx, lastWrite,
+					promise, null));
 		}
 	}
 
@@ -477,7 +479,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			ctx.channel()
 			   .closeFuture()
 			   .removeListener(this);
-			doOnTerminate(ctx, null, promise, t);
+			ctx.channel().eventLoop().execute(() -> doOnTerminate(ctx, null, promise, t));
 		}
 
 		@Override
@@ -493,7 +495,8 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 			   .closeFuture()
 			   .removeListener(this);
 
-			doOnTerminate(ctx, null, promise, null);
+			ctx.channel().eventLoop().execute(() -> doOnTerminate(ctx, null, promise,
+					null));
 		}
 
 		@Override
