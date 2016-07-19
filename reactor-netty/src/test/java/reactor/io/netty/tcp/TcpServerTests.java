@@ -94,17 +94,11 @@ public class TcpServerTests {
 	@Test
 	public void tcpServerHandlesJsonPojosOverSsl()
 			throws InterruptedException, CertificateException {
-		final int port = SocketUtils.findAvailableTcpPort();
 		final CountDownLatch latch = new CountDownLatch(2);
 
 		SslContextBuilder clientOptions = SslContextBuilder.forClient()
 		                                                   .trustManager(InsecureTrustManagerFactory.INSTANCE);
-		final TcpClient client = TcpClient.create(ClientOptions.to("localhost", port)
-		                                                       .ssl(clientOptions));
-
-
-
-		final TcpServer server = TcpServer.create(ServerOptions.on("localhost", port)
+		final TcpServer server = TcpServer.create(ServerOptions.on("localhost")
 		                                                       .sslSelfSigned()
 		);
 
@@ -117,7 +111,13 @@ public class TcpServerTests {
 				       }
 			       });
 			return channel.sendString(Mono.just("Hi")).concatWith(Flux.never());
-		});
+		}).block();
+
+		final TcpClient client = TcpClient.create(ClientOptions.to("localhost", server
+				.getListenAddress().getPort())
+		                                                       .ssl(clientOptions));
+
+
 
 		client.start(ch -> {
 			ch.receiveString()

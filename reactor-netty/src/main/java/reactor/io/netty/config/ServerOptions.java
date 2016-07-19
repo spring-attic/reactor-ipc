@@ -51,6 +51,13 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 	public static ServerOptions on(int port) {
 		return on(Peer.DEFAULT_BIND_ADDRESS, port);
 	}
+	/**
+	 *
+	 * @return
+	 */
+	public static ServerOptions on(String bind_address) {
+		return on(bind_address, 0);
+	}
 
 	/**
 	 *
