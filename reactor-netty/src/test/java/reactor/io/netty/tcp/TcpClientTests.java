@@ -232,8 +232,9 @@ public class TcpClientTests {
 			          .subscribe();
 			return Flux.never();
 		})
-		         .repeatWhenEmpty(tries -> tries.doOnNext(s -> reconnectionLatch.countDown()))
-		         .subscribe();
+		         .repeatWhenEmpty(tries -> tries.take(1).doOnNext(s -> reconnectionLatch
+				         .countDown()))
+		         .block();
 
 		assertTrue("Initial connection is made", connectionLatch.await(5, TimeUnit.SECONDS));
 		assertTrue("A reconnect attempt was made", reconnectionLatch.await(5, TimeUnit.SECONDS));
