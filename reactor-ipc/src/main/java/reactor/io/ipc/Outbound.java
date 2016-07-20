@@ -77,7 +77,8 @@ public interface Outbound<OUT>  {
 			Function<? super Flux<? extends OLD_OUT>, ? extends Publisher<OUT>> encoder) {
 
 		return sendAndFlush(Flux.from(dataStreams)
-		                        .map(p -> encoder.apply(Flux.from(p))));
+		                        .map(p -> encoder.apply(Flux
+				                        .<OLD_OUT>from(p))));
 	}
 
 	/**
