@@ -43,6 +43,7 @@ class NettyTcpServerSpec extends Specification {
 		when: "the server is started"
 		server.start { conn -> conn.sendString(Flux.just("Hello World!")) }.block()
 
+
 			def client = new SimpleClient(server.listenAddress.port, dataLatch,
 					"Hello World!")
 			client.start()
