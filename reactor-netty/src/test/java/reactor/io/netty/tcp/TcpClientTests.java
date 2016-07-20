@@ -321,6 +321,7 @@ public class TcpClientTests {
 		long duration = System.currentTimeMillis() - start;
 
 		assertThat(duration, is(greaterThanOrEqualTo(500l)));
+		client.shutdown();
 	}
 
 	@Test

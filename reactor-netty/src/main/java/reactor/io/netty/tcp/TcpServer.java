@@ -144,7 +144,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	 * @return a new Stream of Channel, typically a peer of connections.
 	 */
 	public static TcpServer create(String bindAddress) {
-		return create(bindAddress, DEFAULT_PORT);
+		return create(bindAddress, 0);
 	}
 
 	/**
