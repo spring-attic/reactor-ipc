@@ -193,7 +193,7 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	 * @param sslHandshakeTimeout The timeout {@link Duration}
 	 * @return {@literal this}
 	 */
-	public final SO sslHandshakeTimeoutMillis(Duration sslHandshakeTimeout) {
+	public final SO sslHandshakeTimeout(Duration sslHandshakeTimeout) {
 		return sslHandshakeTimeoutMillis(sslHandshakeTimeout.toMillis());
 	}
 
