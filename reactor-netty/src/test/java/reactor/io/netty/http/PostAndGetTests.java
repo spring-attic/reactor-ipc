@@ -20,17 +20,16 @@ import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.function.Function;
 
-import io.netty.buffer.ByteBuf;
 import org.apache.http.HttpException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import reactor.util.Loggers;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.util.Logger;
-import reactor.io.ipc.ChannelHandler;
+import reactor.util.Loggers;
 
 /**
  * @author tjreactive
@@ -53,7 +52,7 @@ public class PostAndGetTests {
 		httpServer.start().block();
 	}
 
-	ChannelHandler<ByteBuf, ByteBuf, HttpChannel> getHandler() {
+	Function<? super HttpChannel, ? extends Publisher<Void>> getHandler() {
 		return channel -> {
 			channel.headers().entries().forEach(entry1 -> System.out.println(String.format("header [%s=>%s]", entry1
 			  .getKey
@@ -68,7 +67,7 @@ public class PostAndGetTests {
 		};
 	}
 
-	ChannelHandler<ByteBuf, ByteBuf, HttpChannel> postHandler() {
+	Function<? super HttpChannel, ? extends Publisher<Void>> postHandler() {
 		return channel -> {
 
 			channel.headers().entries().forEach(entry -> System.out.println(String.format("header [%s=>%s]", entry

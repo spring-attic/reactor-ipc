@@ -18,6 +18,7 @@ package reactor.io.netty.tcp;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.Bootstrap;
@@ -37,12 +38,12 @@ import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.resolver.NoopAddressResolverGroup;
+import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.io.ipc.Channel;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.ColocatedEventLoopGroup;
 import reactor.io.netty.common.MonoChannelFuture;
@@ -66,7 +67,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 
 
 
-	public static final ChannelHandler PING = o -> Flux.empty();
+	public static final Function PING = o -> Flux.empty();
 
 	/**
 	 * Bind a new TCP client to the localhost on port 12012. The default client implementation is scanned
@@ -244,18 +245,18 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 	}
 
 	@Override
-	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
+	protected Mono<Void> doStart(final Function<? super NettyChannel, ? extends Publisher<Void>>
 			handler){
 		return doStart(handler, getConnectAddress(), this, sslContext != null);
 	}
 
 	@SuppressWarnings("unchecked")
-	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
+	protected Mono<Void> doStart(final Function<? super NettyChannel, ? extends Publisher<Void>>
 			handler, InetSocketAddress address, ChannelBridge<? extends
 			TcpChannel> channelBridge, boolean secure) {
 
-		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler =
-				null == handler ? (ChannelHandler<ByteBuf, ByteBuf, NettyChannel>) PING : handler;
+		final Function<? super NettyChannel, ? extends Publisher<Void>> targetHandler =
+				null == handler ? (Function<? super NettyChannel, ? extends Publisher<Void>>) PING : handler;
 
 		Bootstrap _bootstrap = new Bootstrap().group(ioGroup);
 
@@ -310,7 +311,7 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		return MonoChannelFuture.from(ioGroup.shutdownGracefully());
 	}
 
-	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+	protected void bindChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			SocketChannel ch, ChannelBridge<? extends TcpChannel> channelBridge)
 			throws Exception {
 		ch.pipeline()
@@ -329,12 +330,12 @@ public class TcpClient extends Peer<ByteBuf, ByteBuf, NettyChannel>
 		final TcpClient                                      parent;
 		final ChannelBridge<? extends TcpChannel>            channelBridge;
 		final DirectProcessor<Void>                            secureCallback;
-		final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler;
+		final Function<? super NettyChannel, ? extends Publisher<Void>> targetHandler;
 
 		TcpClientChannelSetup(TcpClient parent,
 				DirectProcessor<Void> secureCallback,
 				ChannelBridge<? extends TcpChannel> channelBridge,
-				ChannelHandler<ByteBuf, ByteBuf, NettyChannel> targetHandler) {
+				Function<? super NettyChannel, ? extends Publisher<Void>> targetHandler) {
 			this.parent = parent;
 			this.secureCallback = secureCallback;
 			this.channelBridge = channelBridge;

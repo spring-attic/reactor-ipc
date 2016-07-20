@@ -19,6 +19,7 @@ package reactor.io.netty.common;
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.EmptyByteBuf;
@@ -33,20 +34,19 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Cancellation;
+import reactor.core.Exceptions;
 import reactor.core.Loopback;
 import reactor.core.Producer;
-import reactor.util.Loggers;
 import reactor.core.Receiver;
+import reactor.core.Trackable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import reactor.core.scheduler.Schedulers;
-import reactor.core.Trackable;
 import reactor.core.publisher.Operators;
-import reactor.core.Exceptions;
-import reactor.util.Logger;
-import reactor.util.concurrent.QueueSupplier;
+import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.Channel;
-import reactor.io.ipc.ChannelHandler;
+import reactor.util.Logger;
+import reactor.util.Loggers;
+import reactor.util.concurrent.QueueSupplier;
 
 /**
  * Netty {@link io.netty.channel.ChannelInboundHandler} implementation that passes data to a Reactor {@link
@@ -59,21 +59,21 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 
 	protected static final Logger log = Loggers.getLogger(NettyChannelHandler.class);
 
-	protected final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler;
+	protected final Function<? super NettyChannel, ? extends Publisher<Void>> handler;
 	protected final ChannelBridge<C>                               bridgeFactory;
 	protected final Flux<Object>                                   input;
 
 	final InboundSink inboundEmitter;
 
 	public NettyChannelHandler(
-			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			ChannelBridge<C> bridgeFactory,
 			io.netty.channel.Channel ch) {
 		this(handler, bridgeFactory, ch, null);
 	}
 
 	@SuppressWarnings("unchecked")
-	public NettyChannelHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+	public NettyChannelHandler(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			ChannelBridge<C> bridgeFactory,
 			io.netty.channel.Channel ch,
 			NettyChannelHandler parent) {
@@ -517,7 +517,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 	}
 
-	public ChannelHandler<ByteBuf, ByteBuf, NettyChannel> getHandler() {
+	public Function<? super NettyChannel, ? extends Publisher<Void>> getHandler() {
 		return handler;
 	}
 

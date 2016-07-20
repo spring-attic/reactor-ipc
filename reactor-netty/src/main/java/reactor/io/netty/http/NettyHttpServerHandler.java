@@ -17,8 +17,8 @@
 package reactor.io.netty.http;
 
 import java.io.IOException;
+import java.util.function.Function;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -38,7 +38,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.Receiver;
 import reactor.core.Trackable;
 import reactor.core.publisher.Operators;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
@@ -53,14 +52,14 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 	     NettyHttpChannel request;
 
 	NettyHttpServerHandler(
-			ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+			Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			ChannelBridge<NettyHttpChannel> channelBridge,
 			Channel ch) {
 		super(handler, channelBridge, ch);
 	}
 
 
-	NettyHttpServerHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+	NettyHttpServerHandler(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			ChannelBridge<NettyHttpChannel> channelBridge,
 			Channel ch, NettyHttpServerHandler parent) {
 		super(handler, channelBridge, ch, parent);

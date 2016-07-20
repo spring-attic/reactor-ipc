@@ -22,6 +22,7 @@ import java.net.NetworkInterface;
 import java.net.ProtocolFamily;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -41,12 +42,12 @@ import io.netty.util.NetUtil;
 import io.netty.util.concurrent.Future;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.Channel;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
@@ -55,7 +56,6 @@ import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.util.NettyNativeDetector;
-import reactor.core.Exceptions;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
@@ -317,7 +317,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> channelHandler) {
+	protected Mono<Void> doStart(final Function<? super NettyChannel, ? extends Publisher<Void>> channelHandler) {
 		return new Mono<Void>() {
 
 			@Override
@@ -372,7 +372,7 @@ final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implem
 		};
 	}
 
-	void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+	void bindChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			DatagramChannel ioChannel) {
 
 		ChannelPipeline pipeline = ioChannel.pipeline();

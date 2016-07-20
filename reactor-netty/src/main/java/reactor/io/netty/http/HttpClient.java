@@ -20,14 +20,12 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.function.Function;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
 import reactor.core.Loopback;
 import reactor.core.publisher.Mono;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.config.ClientOptions;
@@ -88,7 +86,7 @@ public class HttpClient
 	 * HTTP DELETE the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelHandler} to invoke on open channel
+	 * @param handler the {@link Function} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -169,7 +167,7 @@ public class HttpClient
 	 * HTTP POST the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelHandler} to invoke on open channel
+	 * @param handler the {@link Function} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -182,7 +180,7 @@ public class HttpClient
 	 * HTTP PUT the passed URL. When connection has been made, the passed handler is
 	 * invoked and can be used to build precisely the request and write data to it.
 	 * @param url the target remote URL
-	 * @param handler the {@link ChannelHandler} to invoke on open channel
+	 * @param handler the {@link Function} to invoke on open channel
 	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for
 	 * response
 	 */
@@ -237,7 +235,7 @@ public class HttpClient
 	}
 
 	Mono<Void> doStart(URI url, ChannelBridge<? extends
-			TcpChannel> bridge, ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+			TcpChannel> bridge, Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 
 		boolean secure = url.getScheme() != null && (url.getScheme()
 		                                                .toLowerCase()
@@ -283,7 +281,7 @@ public class HttpClient
 		}
 
 		@Override
-		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+		protected void bindChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 				SocketChannel ch,
 				ChannelBridge<? extends TcpChannel> channelBridge) {
 			ch.pipeline()
@@ -293,7 +291,7 @@ public class HttpClient
 		}
 
 		@Override
-		protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+		protected Mono<Void> doStart(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 				InetSocketAddress address,
 				ChannelBridge<? extends TcpChannel> channelBridge,
 				boolean secure) {

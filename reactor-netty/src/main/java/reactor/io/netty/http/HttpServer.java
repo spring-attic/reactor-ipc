@@ -41,19 +41,17 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.logging.LoggingHandler;
 import org.reactivestreams.Publisher;
+import reactor.core.Exceptions;
 import reactor.core.Loopback;
-import reactor.util.Loggers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-import reactor.core.Exceptions;
-import reactor.util.Logger;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpServer;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 /**
  * Base functionality needed by all servers that communicate with clients over HTTP.
@@ -137,7 +135,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer delete(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+	public final HttpServer delete(String path, final Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 		route(HttpMappings.delete(path), handler);
 		return this;
 	}
@@ -266,7 +264,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer get(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+	public final HttpServer get(String path, final Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 		route(HttpMappings.get(path), handler);
 		return this;
 	}
@@ -290,7 +288,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer post(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+	public final HttpServer post(String path, final Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 		route(HttpMappings.post(path), handler);
 		return this;
 	}
@@ -304,7 +302,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer put(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+	public final HttpServer put(String path, final Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 		route(HttpMappings.put(path), handler);
 		return this;
 	}
@@ -318,7 +316,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 */
 	@SuppressWarnings("unchecked")
 	public HttpServer route(final Predicate<HttpChannel> condition,
-			final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> serviceFunction) {
+			final Function<? super HttpChannel, ? extends Publisher<Void>> serviceFunction) {
 
 		if (this.httpMappings == null) {
 			this.httpMappings = HttpMappings.newMappings();
@@ -354,7 +352,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 * @param handler an handler to invoke for the given condition
 	 * @return {@code this}
 	 */
-	public final HttpServer ws(String path, final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+	public final HttpServer ws(String path, final Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 		return ws(path, handler, null);
 	}
 
@@ -369,7 +367,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	 * @return {@code this}
 	 */
 	public final HttpServer ws(String path,
-			final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler,
+			final Function<? super HttpChannel, ? extends Publisher<Void>> handler,
 			final String protocols) {
 		return route(HttpMappings.get(path), channel -> {
 			String connection = channel.headers()
@@ -382,7 +380,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 	}
 
 	@Override
-	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, HttpChannel> defaultHandler) {
+	protected Mono<Void> doStart(final Function<? super HttpChannel, ? extends Publisher<Void>> defaultHandler) {
 		return server.start(ch -> {
 			NettyHttpChannel request = (NettyHttpChannel) ch;
 
@@ -427,7 +425,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 			return null;
 		}
 
-		final Iterator<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>> selected =
+		final Iterator<? extends Function<? super HttpChannel, ? extends Publisher<Void>>> selected =
 				httpMappings.apply(ch)
 				            .iterator();
 
@@ -435,7 +433,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 			return null;
 		}
 
-		ChannelHandler<ByteBuf, ByteBuf, HttpChannel> channelHandler = selected.next();
+		Function<? super HttpChannel, ? extends Publisher<Void>> channelHandler = selected.next();
 
 		if (!selected.hasNext()) {
 			return channelHandler.apply(ch);
@@ -460,7 +458,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 		return server.shutdown();
 	}
 
-	final void bindHttpChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+	final void bindHttpChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			SocketChannel nativeChannel) {
 
 		ChannelPipeline pipeline = nativeChannel.pipeline();
@@ -493,7 +491,7 @@ public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
 		}
 
 		@Override
-		protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+		protected void bindChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 				SocketChannel nativeChannel) {
 
 			if (null != getOptions() && null != getOptions().pipelineConfigurer()) {

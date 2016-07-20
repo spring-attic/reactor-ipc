@@ -18,8 +18,8 @@ package reactor.io.netty.http;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.function.Function;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -28,16 +28,16 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.LastHttpContent;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Operators;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
-import reactor.core.Exceptions;
 
 /**
  * @author Stephane Maldini
@@ -48,13 +48,13 @@ class NettyHttpClientHandler extends NettyChannelHandler<HttpClientChannel> {
 	DirectProcessor<Void>                  connectSignal;
 	Subscriber<? super HttpClientResponse> replySubscriber;
 
-	NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+	NettyHttpClientHandler(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			ChannelBridge<HttpClientChannel> channelBridge,
 			Channel ch) {
 		super(handler, channelBridge, ch);
 	}
 
-	NettyHttpClientHandler(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler,
+	NettyHttpClientHandler(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			ChannelBridge<HttpClientChannel> channelBridge,
 			Channel ch, NettyHttpClientHandler parent) {
 		super(handler, channelBridge, ch, parent);

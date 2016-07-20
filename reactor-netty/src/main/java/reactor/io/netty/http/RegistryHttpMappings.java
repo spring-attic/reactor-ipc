@@ -19,15 +19,14 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
+import org.reactivestreams.Publisher;
 import reactor.bus.registry.Registries;
 import reactor.bus.registry.Registry;
 import reactor.bus.selector.Selector;
 import reactor.bus.selector.Selectors;
 import reactor.bus.selector.UriPathSelector;
-import reactor.io.ipc.ChannelHandler;
 
 /**
  * @author Stephane Maldini
@@ -48,7 +47,7 @@ final class RegistryHttpMappings extends HttpMappings {
 			Registries.create();
 
 	@Override
-	public Iterable<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>> apply(
+	public Iterable<? extends Function<? super HttpChannel, ? extends Publisher<Void>>> apply(
 			HttpChannel channel) {
 		return routedWriters.selectValues(channel);
 	}
@@ -56,7 +55,7 @@ final class RegistryHttpMappings extends HttpMappings {
 	@Override
 	@SuppressWarnings("unchecked")
 	public HttpMappings add(Predicate<? super HttpChannel> condition,
-			ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+			Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 
 		Selector<HttpChannel> selector;
 

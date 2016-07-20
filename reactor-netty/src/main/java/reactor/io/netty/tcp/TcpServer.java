@@ -19,6 +19,7 @@ package reactor.io.netty.tcp;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import javax.net.ssl.SSLException;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -32,18 +33,18 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.SocketChannelConfig;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.Exceptions;
 import reactor.core.MultiProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.Channel;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
@@ -52,7 +53,6 @@ import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
-import reactor.core.Exceptions;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
@@ -326,7 +326,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 	}
 
 	@Override
-	protected Mono<Void> doStart(final ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler) {
+	protected Mono<Void> doStart(final Function<? super NettyChannel, ? extends Publisher<Void>> handler) {
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
@@ -369,7 +369,7 @@ public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
 		return new TcpChannel(ioChannel, input);
 	}
 
-	protected void bindChannel(ChannelHandler<ByteBuf, ByteBuf, NettyChannel> handler, SocketChannel nativeChannel) {
+	protected void bindChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler, SocketChannel nativeChannel) {
 		ChannelPipeline pipeline = nativeChannel.pipeline();
 
 		if (sslContext != null) {

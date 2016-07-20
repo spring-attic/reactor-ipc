@@ -22,17 +22,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import org.reactivestreams.Publisher;
-import reactor.io.ipc.ChannelHandler;
 
 /**
  * @author Stephane Maldini
  */
 public abstract class HttpMappings
-		implements Function<HttpChannel, Iterable<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>>> {
+		implements Function<HttpChannel, Iterable<? extends Function<? super HttpChannel, ? extends Publisher<Void>>>> {
 
 	static final boolean hasBus;
 
@@ -194,19 +192,19 @@ public abstract class HttpMappings
 	 * @return
 	 */
 	public abstract HttpMappings add(Predicate<? super HttpChannel> condition,
-			ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler);
+			Function<? super HttpChannel, ? extends Publisher<Void>> handler);
 
 	/**
 	 */
 	static final class HttpHandlerMapping
-			implements ChannelHandler<ByteBuf, ByteBuf, HttpChannel>, Predicate<HttpChannel> {
+			implements Function<HttpChannel, Publisher<Void>>, Predicate<HttpChannel> {
 
 		private final Predicate<? super HttpChannel>                condition;
-		private final ChannelHandler<ByteBuf, ByteBuf, HttpChannel>   handler;
+		private final Function<? super HttpChannel, ? extends Publisher<Void>>   handler;
 		private final Function<? super String, Map<String, Object>> resolver;
 
 		HttpHandlerMapping(Predicate<? super HttpChannel> condition,
-				ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler,
+				Function<? super HttpChannel, ? extends Publisher<Void>> handler,
 				Function<? super String, Map<String, Object>>         resolver) {
 			this.condition = condition;
 			this.handler = handler;
@@ -218,7 +216,7 @@ public abstract class HttpMappings
 			return handler.apply(channel.paramsResolver(resolver));
 		}
 
-		ChannelHandler<ByteBuf, ByteBuf, HttpChannel> getHandler() {
+		Function<? super HttpChannel, ? extends Publisher<Void>> getHandler() {
 			return handler;
 		}
 
@@ -235,18 +233,18 @@ public abstract class HttpMappings
 
 		@Override
 		public HttpMappings add(Predicate<? super HttpChannel> condition,
-				ChannelHandler<ByteBuf, ByteBuf, HttpChannel> handler) {
+				Function<? super HttpChannel, ? extends Publisher<Void>> handler) {
 
 			handlers.add(new HttpHandlerMapping(condition, handler, null));
 			return this;
 		}
 
 		@Override
-		public Iterable<? extends ChannelHandler<ByteBuf, ByteBuf, HttpChannel>> apply(final HttpChannel channel) {
+		public Iterable<? extends Function<? super HttpChannel, ? extends Publisher<Void>>> apply(final HttpChannel channel) {
 
-			return (Iterable<ChannelHandler<ByteBuf, ByteBuf, HttpChannel>>) () -> {
+			return (Iterable<Function<? super HttpChannel, ? extends Publisher<Void>>>) () -> {
 				final Iterator<HttpHandlerMapping> iterator = handlers.iterator();
-				return new Iterator<ChannelHandler<ByteBuf, ByteBuf, HttpChannel>>() {
+				return new Iterator<Function<? super HttpChannel, ? extends Publisher<Void>>>() {
 
 					HttpHandlerMapping cached;
 
@@ -264,7 +262,7 @@ public abstract class HttpMappings
 					}
 
 					@Override
-					public ChannelHandler<ByteBuf, ByteBuf, HttpChannel> next() {
+					public Function<? super HttpChannel, ? extends Publisher<Void>> next() {
 						HttpHandlerMapping cursor = cached;
 						if (cursor != null) {
 							cached = null;

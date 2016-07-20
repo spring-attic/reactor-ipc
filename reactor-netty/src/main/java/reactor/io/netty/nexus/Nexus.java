@@ -32,8 +32,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
+import reactor.core.Exceptions;
 import reactor.core.Loopback;
-import reactor.util.Loggers;
 import reactor.core.publisher.BlockingSink;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
@@ -44,7 +44,6 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.io.ipc.Channel;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.Peer;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
@@ -52,9 +51,9 @@ import reactor.io.netty.http.HttpInbound;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.io.util.FlowSerializerUtils;
-import reactor.core.Exceptions;
-
 import reactor.util.Logger;
+import reactor.util.Loggers;
+
 import static reactor.io.util.FlowSerializerUtils.property;
 
 /**
@@ -62,7 +61,7 @@ import static reactor.io.util.FlowSerializerUtils.property;
  * @since 2.5
  */
 public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>>
-		implements ChannelHandler<ByteBuf, ByteBuf, HttpChannel>, Loopback {
+		implements Function<HttpChannel, Publisher<Void>>, Loopback {
 
 	/**
 	 * Bind a new Console HTTP server to "loopback" on port {@literal 12012}. The default server
@@ -358,14 +357,14 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	}
 
 	/**
-	 * @see this#start(ChannelHandler)
+	 * @see this#start(Function)
 	 */
 	public final Mono<Void> start() throws InterruptedException {
 		return start(null);
 	}
 
 	/**
-	 * @see this#start(ChannelHandler)
+	 * @see this#start(Function)
 	 */
 	public final void startAndAwait() throws InterruptedException {
 		start().block();
@@ -423,7 +422,7 @@ public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf
 	}
 
 	@Override
-	protected Mono<Void> doStart(ChannelHandler<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>> handler) {
+	protected Mono<Void> doStart(Function<? super Channel<ByteBuf, ByteBuf>, ? extends Publisher<Void>> handler) {
 
 		if (systemStats) {
 			UnicastProcessor<Event> p = UnicastProcessor.create();

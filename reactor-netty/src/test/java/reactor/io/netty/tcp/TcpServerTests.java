@@ -29,8 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
@@ -39,18 +39,16 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Processor;
-import reactor.util.Loggers;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.Logger;
 import reactor.io.buffer.Buffer;
 import reactor.io.codec.FrameCodec;
 import reactor.io.codec.LengthFieldCodec;
 import reactor.io.codec.StandardCodecs;
-import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
@@ -58,6 +56,8 @@ import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpServer;
 import reactor.io.netty.util.SocketUtils;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
@@ -264,7 +264,7 @@ public class TcpServerTests {
 
 		final TcpClient client = TcpClient.create("localhost", port);
 
-		ChannelHandler<ByteBuf, ByteBuf, NettyChannel>
+		Function<? super NettyChannel, ? extends Publisher<Void>>
 				serverHandler = ch -> {
 			ch.receiveString()
 			  .subscribe(data -> {
