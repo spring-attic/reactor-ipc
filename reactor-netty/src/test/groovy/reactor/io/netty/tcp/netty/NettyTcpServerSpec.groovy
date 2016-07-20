@@ -21,7 +21,6 @@ import reactor.io.codec.json.JsonCodec
 import reactor.io.netty.common.NettyCodec
 import reactor.io.netty.tcp.TcpClient
 import reactor.io.netty.tcp.TcpServer
-import reactor.io.netty.util.SocketUtils
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -90,7 +89,6 @@ class NettyTcpServerSpec extends Specification {
 			def latch = new CountDownLatch(10)
 
 			def server = TcpServer.create()
-			def client = TcpClient.create("localhost", server.listenAddress.port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 
 		when: "the client/server are prepared"
@@ -100,6 +98,7 @@ class NettyTcpServerSpec extends Specification {
 				)
 			}.block()
 
+			def client = TcpClient.create("localhost", server.listenAddress.port)
 			client.start { input ->
 			  input.receive(NettyCodec.from(codec))
 						.log('receive')
@@ -130,7 +129,6 @@ class NettyTcpServerSpec extends Specification {
 			def latch = new CountDownLatch(elem)
 
 		TcpServer server = TcpServer.create("localhost")
-			def client = TcpClient.create("localhost", server.listenAddress.port)
 			def codec = new JsonCodec<Pojo, Pojo>(Pojo)
 			def i = 0
 
@@ -148,6 +146,7 @@ class NettyTcpServerSpec extends Specification {
 			  			}, NettyCodec.from(codec))
 			}.block()
 
+			def client = TcpClient.create("localhost", server.listenAddress.port)
 			client.start { input ->
 			  input.receive(NettyCodec.from(codec))
 						.log('receive')
