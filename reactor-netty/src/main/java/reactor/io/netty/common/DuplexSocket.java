@@ -25,13 +25,13 @@ import reactor.io.ipc.Channel;
 
 /**
  * Abstract base class that implements common functionality shared by clients and servers.
- * <p> A Peer is network component with start and shutdown capabilities. On Start it will
+ * <p> A DuplexSocket is network component with start and shutdown capabilities. On Start it will
  * require a {@link Function} to process the incoming {@link Channel},
  * regardless of being a server or a client.
  *
  * @author Stephane Maldini
  */
-public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>  {
+public abstract class DuplexSocket<IN, OUT, CONN extends Channel<IN, OUT>>  {
 
 	public static final int    DEFAULT_PORT         =
 			System.getenv("PORT") != null ? Integer.parseInt(System.getenv("PORT")) : 12012;
@@ -48,10 +48,10 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>  {
 	}
 
 	/**
-	 * Shutdown this {@literal Peer} and complete the returned {@link Mono<Void>}
+	 * Shutdown this {@literal DuplexSocket} and complete the returned {@link Mono<Void>}
 	 * when shut down.
 	 *
-	 * @return a {@link Mono<Void>} that will be complete when the {@link Peer} is shutdown
+	 * @return a {@link Mono<Void>} that will be complete when the {@link DuplexSocket} is shutdown
 	 */
 	public final Mono<Void> shutdown() {
 		if (started.compareAndSet(true, false)) {
@@ -72,17 +72,17 @@ public abstract class Peer<IN, OUT, CONN extends Channel<IN, OUT>>  {
 	}
 
 	/**
-	 * Start this {@literal Peer}.
+	 * Start this {@literal DuplexSocket}.
 	 *
 	 * @param handler
 	 *
-	 * @return a {@link Mono<Void>} that will be complete when the {@link Peer} is started
+	 * @return a {@link Mono<Void>} that will be complete when the {@link DuplexSocket} is started
 	 */
 	public final Mono<Void> start(
 			final Function<? super CONN, ? extends Publisher<Void>> handler) {
 
 		if (!started.compareAndSet(false, true) && shouldFailOnStarted()) {
-			throw new IllegalStateException("Peer already started");
+			throw new IllegalStateException("DuplexSocket already started");
 		}
 
 		return doStart(handler);

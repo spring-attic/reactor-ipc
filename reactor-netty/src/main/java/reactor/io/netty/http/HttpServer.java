@@ -47,7 +47,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
-import reactor.io.netty.common.Peer;
+import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.util.Logger;
@@ -57,7 +57,7 @@ import reactor.util.Loggers;
  * Base functionality needed by all servers that communicate with clients over HTTP.
  * @author Stephane Maldini
  */
-public class HttpServer extends Peer<ByteBuf, ByteBuf, HttpChannel>
+public class HttpServer extends DuplexSocket<ByteBuf, ByteBuf, HttpChannel>
 		implements Loopback, ChannelBridge<NettyHttpChannel> {
 
 	/**

@@ -44,7 +44,7 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.io.ipc.Channel;
-import reactor.io.netty.common.Peer;
+import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.http.HttpChannel;
 import reactor.io.netty.http.HttpClient;
 import reactor.io.netty.http.HttpInbound;
@@ -60,7 +60,7 @@ import static reactor.io.util.FlowSerializerUtils.property;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class Nexus extends Peer<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>>
+public final class Nexus extends DuplexSocket<ByteBuf, ByteBuf, Channel<ByteBuf, ByteBuf>>
 		implements Function<HttpChannel, Publisher<Void>>, Loopback {
 
 	/**

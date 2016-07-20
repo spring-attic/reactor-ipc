@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
-import reactor.io.netty.common.Peer;
+import reactor.io.netty.common.DuplexSocket;
 
 /**
  * @author Stephane Maldini
@@ -56,7 +56,7 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 	 * @return
 	 */
 	public static ClientOptions to(String host){
-		return to(host, Peer.DEFAULT_PORT);
+		return to(host, DuplexSocket.DEFAULT_PORT);
 	}
 
 	/**

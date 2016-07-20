@@ -50,7 +50,7 @@ import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.NettyHandlerNames;
-import reactor.io.netty.common.Peer;
+import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 import reactor.util.Logger;
@@ -61,7 +61,7 @@ import reactor.util.Loggers;
  *
  * @author Stephane Maldini
  */
-public class TcpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
+public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> implements
                                                                     MultiProducer,
                                                                     ChannelBridge<TcpChannel> {
 

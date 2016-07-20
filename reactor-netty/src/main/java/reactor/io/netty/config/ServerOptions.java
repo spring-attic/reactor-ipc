@@ -27,7 +27,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import reactor.core.Exceptions;
-import reactor.io.netty.common.Peer;
+import reactor.io.netty.common.DuplexSocket;
 
 /**
  * Encapsulates configuration options for server sockets.
@@ -49,7 +49,7 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 	 * @return
 	 */
 	public static ServerOptions on(int port) {
-		return on(Peer.DEFAULT_BIND_ADDRESS, port);
+		return on(DuplexSocket.DEFAULT_BIND_ADDRESS, port);
 	}
 	/**
 	 *

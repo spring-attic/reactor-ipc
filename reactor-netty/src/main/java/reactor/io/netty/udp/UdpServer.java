@@ -52,7 +52,7 @@ import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
-import reactor.io.netty.common.Peer;
+import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.util.NettyNativeDetector;
@@ -63,7 +63,8 @@ import reactor.util.Loggers;
  *
  * @author Stephane Maldini
  */
-final public class UdpServer extends Peer<ByteBuf, ByteBuf, NettyChannel> implements
+final public class UdpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel>
+		implements
                                                                           ChannelBridge<TcpChannel> {
 
 	public static final int DEFAULT_UDP_THREAD_COUNT = Integer.parseInt(
