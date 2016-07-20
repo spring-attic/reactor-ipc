@@ -27,7 +27,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
 import reactor.core.Loopback;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.ChannelHandler;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
@@ -245,9 +244,13 @@ public class HttpClient
 		                                                .equals(HTTPS_SCHEME) || url.getScheme()
 		                                                                            .toLowerCase()
 		                                                                            .equals(WSS_SCHEME));
+		int port = url.getPort() != -1 ? url.getPort() : (secure ? 443 : 80);
 		return client.doStart(inoutChannel -> handler.apply(((NettyHttpChannel) inoutChannel)),
-				new InetSocketAddress(url.getHost(),
-						url.getPort() != -1 ? url.getPort() : (secure ? 443 : 80)), bridge,
+				client.getOptions()
+				      .proxyType() != null ?
+						InetSocketAddress.createUnresolved(url.getHost(), port) :
+						new InetSocketAddress(url.getHost(), port),
+				bridge,
 				secure);
 	}
 
