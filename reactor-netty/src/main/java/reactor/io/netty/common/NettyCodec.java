@@ -43,7 +43,7 @@ public final class NettyCodec<IN, OUT> {
 			          .loadClass("reactor.io.codec.Codec");
 		}
 		catch (ClassNotFoundException cfne){
-			throw new IllegalStateException("io.projectreactor:reactor-codec dependency is missing from the classpath" +
+			throw new IllegalStateException("io.projectreactor.ipc:reactor-codec dependency is missing from the classpath" +
 					".");
 		}
 	}

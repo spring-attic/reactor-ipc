@@ -8,7 +8,7 @@ The `Buffer` is a decorator for Java `ByteBuffer` handling, adding a series of o
 byte copy by playing with the ByteBuffer limits and reading or overwritting pre-allocated bytes. Tracking the ByteBuffer positions can
 quickly switch the developer brain into headache mode. At least it did that to us and we just decided to propose this simple tool to our users.
 
-.A simple Buffer manipulation as seen in one of our https://github.com/reactor/reactor/blob/master/reactor-core/src/test/groovy/reactor/io/buffer/BufferSpec.groovy[Groovy Spock test]:
+/BufferSpec.groovy[Groovy Spock test]:
 [source,groovy]
 ----
 import Buffer

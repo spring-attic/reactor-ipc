@@ -82,9 +82,9 @@ def customizePom(def pom, def gradleProject) {
 				}
 			}
 			scm {
-				url = 'https://github.com/reactor/reactor-io'
-				connection = 'scm:git:git://github.com/reactor/reactor-io'
-				developerConnection = 'scm:git:git://github.com/reactor/reactor-io'
+				url = 'https://github.com/reactor/reactor-ipc'
+				connection = 'scm:git:git://github.com/reactor/reactor-ipc'
+				developerConnection = 'scm:git:git://github.com/reactor/reactor-ipc'
 			}
 			developers {
 				developer {

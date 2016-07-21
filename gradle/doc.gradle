@@ -19,7 +19,7 @@ project("docs") {
 	apply plugin: 'org.asciidoctor.convert'
 
 	task api(type: Javadoc) {
-		group = "Reactor IO Javadoc"
+		group = "Reactor IPC Javadoc"
 
 		description = "Generates aggregated Javadoc API documentation."
 		title = "${rootProject.description} ${version} API"

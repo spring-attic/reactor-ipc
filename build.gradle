@@ -73,7 +73,7 @@ apply from: "$gradleScriptDir/setup.gradle"
 apply from: "$gradleScriptDir/doc.gradle"
 
 configure(subprojects) { project ->
-	group = 'io.projectreactor'
+	group = 'io.projectreactor.ipc'
 
 	apply plugin: 'propdeps'
 	apply plugin: 'java'
@@ -184,7 +184,7 @@ configurations.all {
   resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
-project('reactor-ipc') {
+project('reactor-ipc-api') {
   description = 'Reactive IO Buffer and Contracts'
 
   apply plugin: 'osgi'
@@ -209,7 +209,7 @@ project('reactor-netty') {
 	]
 
 	dependencies {
-		compile project(":reactor-ipc")
+		compile project(":reactor-ipc-api")
 
 		//Improved Http routing
 		optional("io.projectreactor:reactor-bus:$reactorBusVersion") {
@@ -241,7 +241,7 @@ project('reactor-codec') {
 	description = 'Codec families'
 
 	dependencies {
-	  	compile project(":reactor-ipc")
+	  	compile project(":reactor-ipc-api")
 
 		// JSON handling
 		optional "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
@@ -257,7 +257,7 @@ project('reactor-aeron') {
 	description = 'Integration of Aeron library with reactor'
 
 	dependencies {
-	  	compile project(":reactor-ipc")
+	  	compile project(":reactor-ipc-api")
 	  	compile project(":reactor-codec") //FIXME remove when Buffer not required
 
 		compile "uk.co.real-logic:aeron-driver:$aeronVersion",

@@ -1,13 +1,13 @@
 [[getting-started]]
-== *Introducing Reactor IO*
+== *Introducing Reactor IPC*
 
 [quote, Preface, TL;DR]
-Reactor IO is a foundational library for building demanding, over the wire *Data-Streaming* applications and micro,
+Reactor IPC is a foundational library for building demanding, over the wire *Data-Streaming* applications and micro,
 nano, or
  pico-services that must exhibit *Low-Latency* and be *Fault-Tolerant*.
 
 [[start]]
-=== What is Reactor IO ?
+=== What is Reactor IPC ?
 
 
 === About the Project
@@ -17,7 +17,7 @@ The project started in 2012, with a long internal incubation time. Reactor 1.x a
 Parallel to that work we also decided to re-align some of our Event-Driven and Task Coordination API to the increasingly popular and documented <<gettingstarted.adoc/#rx,Reactive Extensions>>.
 
 Reactor is sponsored by http://pivotal.io[Pivotal] and is http://www.apache.org/licenses/LICENSE-2.0
-.html[Apache 2.0 licensed]. It is available on https://github.com/reactor/reactor-io[GitHub].
+.html[Apache 2.0 licensed]. It is available on https://github.com/reactor/reactor-ipc[GitHub].
 
 === Requirements
 
@@ -28,4 +28,4 @@ Reactor is sponsored by http://pivotal.io[Pivotal] and is http://www.apache.org/
 
 [[architecture]]
 === Architecture Overview
-.The main modules present in Reactor IO
+.The main modules present in Reactor IPC

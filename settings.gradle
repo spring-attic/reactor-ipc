@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'reactor-io'
+rootProject.name = 'reactor-ipc'
 
-include 'reactor-ipc',
+include 'reactor-ipc-api',
 		'reactor-codec',
 		'reactor-netty',
 		'reactor-aeron',

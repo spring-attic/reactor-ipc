@@ -1,6 +1,6 @@
 = Reactor Guide
 Stephane Maldini;
-:appversion: 2.5.0.BUILD-SNAPSHOT (wiki)
+:appversion: 0.5.0.BUILD-SNAPSHOT (wiki)
 ifndef::host-github[:ext-relative: {outfilesuffix}]
 {appversion}
 :doctype: book
@@ -9,8 +9,8 @@ ifndef::host-github[:ext-relative: {outfilesuffix}]
 include::gettingstarted.adoc[]
 include::20to25.adoc[]
 
-[[reactor-io]]
-= *reactor-io*
+[[reactor-ipc]]
+= *reactor-ipc*
 include::core-bytebuffer.adoc[]
 
 [[reactor-netty]]
