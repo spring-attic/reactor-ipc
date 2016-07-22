@@ -43,7 +43,7 @@ class KryoCodecSpec extends Specification {
 			buffer = codec.apply(obj)
 
 		then: "all objects were serialized"
-			buffer.remaining() == 75
+			buffer.remaining() == 76
 
 		when: "an object is deserialized"
 			RichObject newObj = codec.decoder(null).apply(buffer)

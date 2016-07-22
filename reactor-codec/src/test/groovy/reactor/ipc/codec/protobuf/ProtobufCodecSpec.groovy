@@ -43,7 +43,7 @@ class ProtobufCodecSpec extends Specification {
 			buffer = codec.apply(obj)
 
 		then: "the object ws serialized"
-			buffer.remaining() == 70
+			buffer.remaining() == 71
 
 		when: "an object is deserialized"
 			TestObjects.RichObject newObj = codec.decoder(null).apply(buffer)
