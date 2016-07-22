@@ -26,6 +26,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
 import reactor.core.Loopback;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSource;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.config.ClientOptions;
@@ -207,7 +208,7 @@ public class HttpClient
 			if (method == null && url == null) {
 				throw new IllegalArgumentException("Method && url cannot be both null");
 			}
-			currentURI = new URI(parseURL(client.getConnectAddress(), url, false));
+			currentURI = new URI(parseURL(url, false));
 		}
 		catch (Exception e) {
 			return Mono.error(e);
@@ -222,9 +223,24 @@ public class HttpClient
 	 * response
 	 */
 	public final Mono<HttpClientResponse> ws(String url) {
-		return request(HttpMethod.GET,
-				parseURL(client.getConnectAddress(), url, true),
+		return request(HttpMethod.GET, parseURL(url, true),
 				HttpClientRequest::upgradeToWebsocket);
+	}
+
+	/**
+	 * WebSocket to the passed URL.
+	 *
+	 * @param url the target remote URL
+	 * @param handler the {@link Function} to invoke on opened TCP connection
+	 *
+	 * @return a {@link Mono} of the {@link HttpChannel} ready to consume for response
+	 */
+	public final Mono<HttpClientResponse> ws(String url, final Function<? super
+			HttpClientRequest, ? extends Publisher<Void>> handler) {
+		return request(HttpMethod.GET,
+				parseURL(url, true),
+				ch -> ch.upgradeToTextWebsocket()
+				        .then(() -> MonoSource.wrap(handler.apply(ch))));
 	}
 
 	/**
@@ -248,16 +264,17 @@ public class HttpClient
 				      .proxyType() != null ?
 						InetSocketAddress.createUnresolved(url.getHost(), port) :
 						new InetSocketAddress(url.getHost(), port),
-				bridge,
-				secure);
+				bridge, secure);
 	}
 
-	static String parseURL(InetSocketAddress base, String url, boolean ws) {
+	final String parseURL(String url, boolean ws) {
 		if (!url.startsWith(HTTP_SCHEME) && !url.startsWith(WS_SCHEME)) {
 			final String parsedUrl = (ws ? WS_SCHEME : HTTP_SCHEME) + "://";
 			if (url.startsWith("/")) {
-				return parsedUrl + (base != null ?
-						base.getHostName() + ":" + base.getPort() :
+				return parsedUrl + (client.getOptions()
+				                          .proxyType() == null && client.getConnectAddress() != null ?
+						client.getConnectAddress()
+						      .getHostName() + ":" + client.getConnectAddress().getPort() :
 						"localhost") + url;
 			}
 			else {

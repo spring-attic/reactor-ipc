@@ -83,9 +83,17 @@ final class HttpClientChannel extends NettyHttpChannel
 
 		URI uri;
 		try {
-			uri = new URI(HttpClient.parseURL(null, headers().get(HttpHeaderNames.HOST)
-					+ "/" +uri(),
-					true));
+			String url = uri();
+			if(url.startsWith(HttpClient.HTTP_SCHEME)
+					|| url.startsWith(HttpClient.WS_SCHEME)){
+				uri = new URI(url);
+			}
+			else{
+				String host = headers().get(HttpHeaderNames.HOST);
+				uri = new URI(host + (url.startsWith("/") ? url : "/" + url));
+			}
+			headers().remove(HttpHeaderNames.HOST);
+
 		}
 		catch (URISyntaxException e) {
 			throw Exceptions.bubble(e);
