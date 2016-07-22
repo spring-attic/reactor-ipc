@@ -29,12 +29,12 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
 import reactor.core.publisher.Operators;
-import reactor.core.Exceptions;
 import reactor.io.netty.common.ChannelBridge;
 
 /**
@@ -61,7 +61,11 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 
 	@Override
 	public void subscribe(final Subscriber<? super HttpClientResponse> subscriber) {
-		ReconnectableBridge bridge = new ReconnectableBridge();
+		ReconnectableBridge bridge = new ReconnectableBridge(currentURI.getScheme()
+		                                                               .equalsIgnoreCase(
+				                                                               HttpClient.HTTPS_SCHEME) || currentURI.getScheme()
+		                                                                                                             .equalsIgnoreCase(
+				                                                                                                             HttpClient.WSS_SCHEME));
 
 		bridge.activeURI = currentURI;
 
@@ -122,13 +126,19 @@ final class MonoHttpClientChannel extends Mono<HttpClientResponse> {
 final class ReconnectableBridge
 		implements ChannelBridge<HttpClientChannel>, Predicate<Throwable> {
 
+	final boolean isSecure;
+
 	URI      activeURI;
 	String[] redirectedFrom;
+
+	public ReconnectableBridge(boolean isSecure) {
+		this.isSecure = isSecure;
+	}
 
 	@Override
 	public HttpClientChannel createChannelBridge(Channel ioChannel, Flux<Object>
 			input, Object... parameters) {
-		return new HttpClientChannel(ioChannel, input, redirectedFrom);
+		return new HttpClientChannel(ioChannel, input, isSecure, redirectedFrom);
 	}
 
 	void redirect(String to) {

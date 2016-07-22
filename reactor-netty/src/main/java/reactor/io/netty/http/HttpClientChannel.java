@@ -28,11 +28,10 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.Cookie;
 import org.reactivestreams.Subscriber;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.Exceptions;
 import reactor.io.netty.common.MonoChannelFuture;
-import reactor.io.netty.common.NettyOutbound;
 
 /**
  * @author Stephane Maldini
@@ -41,14 +40,16 @@ final class HttpClientChannel extends NettyHttpChannel
 		implements HttpClientResponse, HttpClientRequest {
 
 	final String[] redirectedFrom;
+	final boolean  isSecure;
 
 	boolean redirectable;
 	Cookies cookies;
 
 	public HttpClientChannel(io.netty.channel.Channel ioChannel,
-			Flux<Object> input,
+			Flux<Object> input, boolean isSecure,
 			String[] redirects) {
 		super(ioChannel, input, null);
+		this.isSecure = isSecure;
 		redirectedFrom = redirects == null ? EMPTY_REDIRECTIONS : redirects;
 	}
 
@@ -62,6 +63,15 @@ final class HttpClientChannel extends NettyHttpChannel
 	public boolean isWebsocket() {
 		return delegate().pipeline()
 		                 .get(NettyWebSocketClientHandler.class) != null;
+	}
+
+	/**
+	 * Return whether SSL is supported
+	 *
+	 * @return whether SSL is supported;
+	 */
+	public boolean isSecure() {
+		return isSecure;
 	}
 
 	@Override
@@ -90,7 +100,8 @@ final class HttpClientChannel extends NettyHttpChannel
 			}
 			else{
 				String host = headers().get(HttpHeaderNames.HOST);
-				uri = new URI("ws://" + host + (url.startsWith("/") ? url : "/" + url));
+				uri = new URI((isSecure ? HttpClient.WSS_SCHEME : HttpClient.WS_SCHEME) +
+						"://" + host + (url.startsWith("/") ? url : "/" + url));
 			}
 			headers().remove(HttpHeaderNames.HOST);
 
