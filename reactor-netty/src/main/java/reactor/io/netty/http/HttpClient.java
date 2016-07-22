@@ -304,7 +304,7 @@ public class HttpClient
 				ChannelBridge<? extends TcpChannel> channelBridge) {
 			ch.pipeline()
 			  .addLast(NettyHandlerNames.HttpCodecHandler, new HttpClientCodec())
-			  .addLast(NettyHandlerNames.NettyBridge, new NettyHttpClientHandler
+			  .addLast(NettyHandlerNames.ReactiveBridge, new NettyHttpClientHandler
 					  (handler,
 					  (ChannelBridge<HttpClientChannel>) channelBridge, ch));
 		}

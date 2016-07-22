@@ -330,7 +330,8 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
-			public void initChannel(final SocketChannel ch) throws Exception {if (log.isDebugEnabled()) {
+			public void initChannel(final SocketChannel ch) throws Exception {
+				if (log.isDebugEnabled()) {
 					log.debug("CONNECT {}", ch);
 				}
 
@@ -395,7 +396,7 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 					new LoggingHandler(TcpServer.class));
 		}
 
-		pipeline.addLast(NettyHandlerNames.NettyBridge,
+		pipeline.addLast(NettyHandlerNames.ReactiveBridge,
 				new NettyChannelHandler<>(handler, this, nativeChannel));
 	}
 

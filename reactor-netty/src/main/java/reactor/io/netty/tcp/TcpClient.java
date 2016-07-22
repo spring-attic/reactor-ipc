@@ -315,7 +315,7 @@ public class TcpClient extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel>
 			SocketChannel ch, ChannelBridge<? extends TcpChannel> channelBridge)
 			throws Exception {
 		ch.pipeline()
-		  .addLast(NettyHandlerNames.NettyBridge,
+		  .addLast(NettyHandlerNames.ReactiveBridge,
 				  new NettyChannelHandler<>(handler, channelBridge, ch));
 	}
 

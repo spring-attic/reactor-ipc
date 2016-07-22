@@ -464,7 +464,7 @@ public class HttpServer extends DuplexSocket<ByteBuf, ByteBuf, HttpChannel>
 			SocketChannel nativeChannel) {
 		nativeChannel.pipeline()
 		             .addLast(NettyHandlerNames.HttpCodecHandler, new HttpServerCodec())
-		             .addLast(NettyHandlerNames.NettyBridge,
+		             .addLast(NettyHandlerNames.ReactiveBridge,
 				new NettyHttpServerHandler(handler, this, nativeChannel));
 
 	}
@@ -497,14 +497,14 @@ public class HttpServer extends DuplexSocket<ByteBuf, ByteBuf, HttpChannel>
 				pipeline.addFirst(NettyHandlerNames.SslHandler, sslHandler);
 			}
 
-			if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
-				getOptions().pipelineConfigurer()
-				            .accept(pipeline);
-			}
-
 			if (log.isDebugEnabled()) {
 				pipeline.addLast(NettyHandlerNames.LoggingHandler,
 						new LoggingHandler(HttpServer.class));
+			}
+
+			if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
+				getOptions().pipelineConfigurer()
+				            .accept(pipeline);
 			}
 
 			bindHttpChannel(handler, nativeChannel);

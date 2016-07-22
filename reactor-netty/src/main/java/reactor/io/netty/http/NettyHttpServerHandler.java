@@ -41,6 +41,7 @@ import reactor.core.publisher.Operators;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
+import reactor.io.netty.common.NettyHandlerNames;
 
 /**
  * Conversion between Netty types  and Reactor types ({@link NettyHttpChannel}.
@@ -81,9 +82,8 @@ class NettyHttpServerHandler extends NettyChannelHandler<NettyHttpChannel> {
 
 			if (request.isWebsocket()) {
 				HttpObjectAggregator agg = new HttpObjectAggregator(65536);
-				ctx.pipeline().addBefore(NettyHttpServerHandler.class.getSimpleName(),
-						HttpObjectAggregator.class.getSimpleName(),
-						agg);
+				ctx.pipeline().addBefore(NettyHandlerNames.ReactiveBridge,
+						NettyHandlerNames.HttpAggregator, agg);
 			}
 
 			final Publisher<Void> closePublisher = handler.apply(request);

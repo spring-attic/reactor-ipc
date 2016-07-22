@@ -32,6 +32,7 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.io.netty.common.MonoChannelFuture;
+import reactor.io.netty.common.NettyHandlerNames;
 
 /**
  * @author Stephane Maldini
@@ -110,12 +111,12 @@ final class HttpClientChannel extends NettyHttpChannel
 			throw Exceptions.bubble(e);
 		}
 
-		pipeline.addLast(new HttpObjectAggregator(8192));
+		pipeline.addLast(NettyHandlerNames.HttpAggregator, new HttpObjectAggregator(8192));
 		handler = pipeline.remove(NettyHttpClientHandler.class)
 		                  .withWebsocketSupport(uri, protocols, textPlain);
 
 		if (handler != null) {
-			pipeline.addLast(handler);
+			pipeline.addLast(NettyHandlerNames.ReactiveBridge, handler);
 			return MonoChannelFuture.from(handler.handshakerResult);
 		}
 		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));

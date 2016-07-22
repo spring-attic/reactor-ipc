@@ -383,7 +383,7 @@ final public class UdpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel
 					new LoggingHandler(UdpServer.class));
 		}
 
-		pipeline.addLast(NettyHandlerNames.NettyBridge,
+		pipeline.addLast(NettyHandlerNames.ReactiveBridge,
 				new NettyChannelHandler<>(handler, this, ioChannel));
 	}
 

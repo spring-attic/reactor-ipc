@@ -26,6 +26,7 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.io.netty.common.MonoChannelFuture;
+import reactor.io.netty.common.NettyHandlerNames;
 
 /**
  * @author Stephane Maldini
@@ -54,7 +55,7 @@ final class HttpServerChannel extends NettyHttpChannel {
 				        .withWebsocketSupport(uri(), protocols, textPlain);
 
 		if (handler != null) {
-			pipeline.addLast(handler);
+			pipeline.addLast(NettyHandlerNames.ReactiveBridge, handler);
 			return MonoChannelFuture.from(handler.handshakerResult);
 		}
 		return Mono.error(new IllegalStateException("Failed to upgrade to websocket"));
