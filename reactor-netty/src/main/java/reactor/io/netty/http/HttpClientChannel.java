@@ -90,7 +90,7 @@ final class HttpClientChannel extends NettyHttpChannel
 			}
 			else{
 				String host = headers().get(HttpHeaderNames.HOST);
-				uri = new URI(host + (url.startsWith("/") ? url : "/" + url));
+				uri = new URI("ws://" + host + (url.startsWith("/") ? url : "/" + url));
 			}
 			headers().remove(HttpHeaderNames.HOST);
 
