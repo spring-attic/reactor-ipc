@@ -62,7 +62,7 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 				WebSocketClientHandshakerFactory.newHandshaker(currentURI,
 						WebSocketVersion.V13,
 						protocols,
-						false,
+						true,
 						httpChannel.headers());
 
 		handshakerResult = httpChannel.delegate().newPromise();
