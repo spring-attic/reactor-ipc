@@ -46,11 +46,11 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.Channel;
 import reactor.io.netty.common.ChannelBridge;
+import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.NettyHandlerNames;
-import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 import reactor.util.Logger;
@@ -362,6 +362,10 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 		};
 	}
 
+	protected SslContext getSslContext() {
+		return sslContext;
+	}
+
 	@Override
 	public TcpChannel createChannelBridge(io.netty.channel.Channel ioChannel,
 			Flux<Object> input,
@@ -387,9 +391,12 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 
 
 		if (log.isDebugEnabled()) {
-			pipeline.addLast(new LoggingHandler(TcpServer.class));
+			pipeline.addLast(NettyHandlerNames.LoggingHandler,
+					new LoggingHandler(TcpServer.class));
 		}
-		pipeline.addLast(new NettyChannelHandler<>(handler, this, nativeChannel));
+
+		pipeline.addLast(NettyHandlerNames.NettyBridge,
+				new NettyChannelHandler<>(handler, this, nativeChannel));
 	}
 
 	final static Logger log = Loggers.getLogger(TcpServer.class);

@@ -40,14 +40,16 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslHandler;
 import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.io.netty.common.ChannelBridge;
-import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.DuplexSocket;
+import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpServer;
 import reactor.util.Logger;
@@ -460,16 +462,9 @@ public class HttpServer extends DuplexSocket<ByteBuf, ByteBuf, HttpChannel>
 
 	final void bindHttpChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 			SocketChannel nativeChannel) {
-
-		ChannelPipeline pipeline = nativeChannel.pipeline();
-
-		if (log.isDebugEnabled()) {
-			pipeline.addLast(new LoggingHandler(HttpServer.class));
-		}
-
-		pipeline.addLast(new HttpServerCodec());
-
-		pipeline.addLast(NettyHttpServerHandler.class.getSimpleName(),
+		nativeChannel.pipeline()
+		             .addLast(NettyHandlerNames.HttpCodecHandler, new HttpServerCodec())
+		             .addLast(NettyHandlerNames.NettyBridge,
 				new NettyHttpServerHandler(handler, this, nativeChannel));
 
 	}
@@ -494,9 +489,22 @@ public class HttpServer extends DuplexSocket<ByteBuf, ByteBuf, HttpChannel>
 		protected void bindChannel(Function<? super NettyChannel, ? extends Publisher<Void>> handler,
 				SocketChannel nativeChannel) {
 
+			ChannelPipeline pipeline = nativeChannel.pipeline();
+
+			if (getSslContext() != null) {
+				SslHandler sslHandler = getSslContext().newHandler(nativeChannel.alloc());
+				sslHandler.setHandshakeTimeoutMillis(getOptions().sslHandshakeTimeoutMillis());
+				pipeline.addFirst(NettyHandlerNames.SslHandler, sslHandler);
+			}
+
 			if (null != getOptions() && null != getOptions().pipelineConfigurer()) {
 				getOptions().pipelineConfigurer()
-				            .accept(nativeChannel.pipeline());
+				            .accept(pipeline);
+			}
+
+			if (log.isDebugEnabled()) {
+				pipeline.addLast(NettyHandlerNames.LoggingHandler,
+						new LoggingHandler(HttpServer.class));
 			}
 
 			bindHttpChannel(handler, nativeChannel);

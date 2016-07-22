@@ -25,5 +25,7 @@ public interface NettyHandlerNames {
 	String SslReader         = "sslReader";
 	String SslLoggingHandler = "sslLoggingHandler";
 	String ProxyHandler      = "proxyHandler";
+	String HttpCodecHandler  = "httpCodecHandler";
+	String NettyBridge       = "nettyBridge";
 	String LoggingHandler    = "loggingHandler";
 }

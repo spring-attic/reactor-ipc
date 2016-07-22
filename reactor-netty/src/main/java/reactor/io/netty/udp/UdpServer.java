@@ -30,7 +30,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -49,10 +48,11 @@ import reactor.core.publisher.Operators;
 import reactor.core.scheduler.Schedulers;
 import reactor.io.ipc.Channel;
 import reactor.io.netty.common.ChannelBridge;
+import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
-import reactor.io.netty.common.DuplexSocket;
+import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.config.ServerOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.util.NettyNativeDetector;
@@ -379,11 +379,12 @@ final public class UdpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel
 		ChannelPipeline pipeline = ioChannel.pipeline();
 
 		if (log.isDebugEnabled()) {
-			pipeline.addLast(new LoggingHandler(UdpServer.class));
+			pipeline.addLast(NettyHandlerNames.LoggingHandler,
+					new LoggingHandler(UdpServer.class));
 		}
 
-		pipeline.addLast(new NettyChannelHandler<>(handler, this, ioChannel),
-				new ChannelOutboundHandlerAdapter());
+		pipeline.addLast(NettyHandlerNames.NettyBridge,
+				new NettyChannelHandler<>(handler, this, ioChannel));
 	}
 
 	InternetProtocolFamily toNettyFamily(ProtocolFamily family) {

@@ -29,6 +29,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.NettyChannel;
+import reactor.io.netty.common.NettyHandlerNames;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.tcp.TcpChannel;
 import reactor.io.netty.tcp.TcpClient;
@@ -302,8 +303,9 @@ public class HttpClient
 				SocketChannel ch,
 				ChannelBridge<? extends TcpChannel> channelBridge) {
 			ch.pipeline()
-			  .addLast(new HttpClientCodec())
-			  .addLast(new NettyHttpClientHandler(handler,
+			  .addLast(NettyHandlerNames.HttpCodecHandler, new HttpClientCodec())
+			  .addLast(NettyHandlerNames.NettyBridge, new NettyHttpClientHandler
+					  (handler,
 					  (ChannelBridge<HttpClientChannel>) channelBridge, ch));
 		}
 

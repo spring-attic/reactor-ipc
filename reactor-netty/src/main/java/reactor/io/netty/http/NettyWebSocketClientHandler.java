@@ -23,6 +23,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -33,8 +34,8 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
-import io.netty.util.ReferenceCountUtil;
 import reactor.core.publisher.Flux;
+import reactor.io.netty.common.NettyHandlerNames;
 
 /**
  * @author Stephane Maldini
@@ -99,6 +100,12 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			if(checkResponseCode(ctx, response)) {
 
 				if (!handshaker.isHandshakeComplete()) {
+					if(!ctx.pipeline()
+					   .context(HttpClientCodec.class)
+					   .name()
+					   .equals(NettyHandlerNames.HttpCodecHandler)){
+						ctx.pipeline().remove(HttpClientCodec.class);
+					}
 					handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
 				}
 				ctx.fireChannelRead(msg);

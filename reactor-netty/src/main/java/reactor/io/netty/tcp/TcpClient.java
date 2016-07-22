@@ -46,11 +46,11 @@ import reactor.core.publisher.Mono;
 import reactor.io.ipc.Channel;
 import reactor.io.netty.common.ChannelBridge;
 import reactor.io.netty.common.ColocatedEventLoopGroup;
+import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.common.MonoChannelFuture;
 import reactor.io.netty.common.NettyChannel;
 import reactor.io.netty.common.NettyChannelHandler;
 import reactor.io.netty.common.NettyHandlerNames;
-import reactor.io.netty.common.DuplexSocket;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.util.NettyNativeDetector;
 import reactor.util.Logger;
@@ -315,7 +315,8 @@ public class TcpClient extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel>
 			SocketChannel ch, ChannelBridge<? extends TcpChannel> channelBridge)
 			throws Exception {
 		ch.pipeline()
-		  .addLast(new NettyChannelHandler<>(handler, channelBridge, ch));
+		  .addLast(NettyHandlerNames.NettyBridge,
+				  new NettyChannelHandler<>(handler, channelBridge, ch));
 	}
 
 	@Override
