@@ -53,17 +53,17 @@ public class Buffer implements Comparable<Buffer>,
 
 
 	/**
-	 * The size, in bytes, of a small buffer. Can be configured using the {@code reactor.io.defaultBufferSize} system
+	 * The size, in bytes, of a small buffer. Can be configured using the {@code reactor.ipc.defaultBufferSize} system
 	 * property. Default to 16384 bytes.
 	 */
 	public static final  int     SMALL_IO_BUFFER_SIZE            =
-			Integer.parseInt(System.getProperty("reactor.io.defaultBufferSize", "" + 1024 * 16));
+			Integer.parseInt(System.getProperty("reactor.ipc.defaultBufferSize", "" + 1024 * 16));
 	/**
-	 * The maximum allowed buffer size in bytes. Can be configured using the {@code reactor.io.maxBufferSize} system
+	 * The maximum allowed buffer size in bytes. Can be configured using the {@code reactor.ipc.maxBufferSize} system
 	 * property. Defaults to 16384000 bytes.
 	 */
 	public static final  int     MAX_IO_BUFFER_SIZE              =
-			Integer.parseInt(System.getProperty("reactor.io.maxBufferSize", "" + 1024 * 1000 * 16));
+			Integer.parseInt(System.getProperty("reactor.ipc.maxBufferSize", "" + 1024 * 1000 * 16));
 	
 
 	private static final Charset UTF8 = Charset.forName("UTF-8");

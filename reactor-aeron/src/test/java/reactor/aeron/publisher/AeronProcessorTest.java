@@ -26,7 +26,7 @@ import reactor.aeron.utils.ThreadSnapshot;
 import reactor.core.publisher.Flux;
 import reactor.test.TestSubscriber;
 import reactor.ipc.buffer.Buffer;
-import reactor.io.netty.util.SocketUtils;
+import reactor.ipc.netty.util.SocketUtils;
 import uk.co.real_logic.aeron.Aeron;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 

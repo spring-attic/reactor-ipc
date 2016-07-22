@@ -85,7 +85,7 @@ There are two forms of `Codec.decoder()` functions, one will simply return the d
 .Using one of the predefined Codecs as verified in this https://github.com/reactor/reactor/blob/master/reactor-core/src/test/groovy/reactor/io/codec/json/JsonCodecSpec.groovy[Groovy Spock test]:
 [source,groovy]
 ----
-import reactor.io.json.JsonCodec
+import reactor.ipc.json.JsonCodec
 
 //...
 

@@ -693,7 +693,7 @@ public final class TestObjects {
       descriptor;
   static {
     String[] descriptorData = {
-      "\n\022test_objects.proto\022\034reactor.io.encodin" +
+      "\n\022test_objects.proto\022\034reactor.ipc.encodin" +
       "g.protobuf\":\n\nRichObject\022\014\n\004name\030\001 \002(\t\022\017" +
       "\n\007percent\030\002 \002(\002\022\r\n\005total\030\003 \002(\003"
     };

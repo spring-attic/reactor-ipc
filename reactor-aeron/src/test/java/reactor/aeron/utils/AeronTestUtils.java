@@ -16,7 +16,7 @@
 package reactor.aeron.utils;
 
 import reactor.test.TestSubscriber;
-import reactor.io.netty.util.SocketUtils;
+import reactor.ipc.netty.util.SocketUtils;
 import uk.co.real_logic.aeron.driver.Configuration;
 import uk.co.real_logic.aeron.driver.MediaDriver;
 import uk.co.real_logic.aeron.driver.ThreadingMode;
