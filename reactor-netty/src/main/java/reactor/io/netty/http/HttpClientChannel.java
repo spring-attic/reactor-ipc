@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.Cookie;
@@ -82,7 +83,9 @@ final class HttpClientChannel extends NettyHttpChannel
 
 		URI uri;
 		try {
-			uri = new URI(HttpClient.parseURL(remoteAddress(), uri(), true));
+			uri = new URI(HttpClient.parseURL(null, headers().get(HttpHeaderNames.HOST)
+					+ "/" +uri(),
+					true));
 		}
 		catch (URISyntaxException e) {
 			throw Exceptions.bubble(e);
