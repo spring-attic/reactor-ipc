@@ -17,7 +17,7 @@
 package reactor.io.netty.tcp.netty
 
 import reactor.core.publisher.Flux
-import reactor.io.codec.json.JsonCodec
+import reactor.ipc.codec.json.JsonCodec
 import reactor.io.netty.common.NettyCodec
 import reactor.io.netty.tcp.TcpClient
 import reactor.io.netty.tcp.TcpServer

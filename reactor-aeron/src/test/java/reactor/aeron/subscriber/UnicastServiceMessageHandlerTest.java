@@ -25,7 +25,7 @@ import reactor.aeron.utils.TestSignalSender;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;

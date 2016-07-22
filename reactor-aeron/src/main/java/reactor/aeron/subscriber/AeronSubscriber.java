@@ -29,7 +29,7 @@ import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.scheduler.TimedScheduler;
 import reactor.core.Trackable;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import reactor.util.Logger;
 
 /**

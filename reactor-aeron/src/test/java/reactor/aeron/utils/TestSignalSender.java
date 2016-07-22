@@ -16,7 +16,7 @@
 package reactor.aeron.utils;
 
 import reactor.aeron.subscriber.SignalSender;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 
 import java.util.Map;

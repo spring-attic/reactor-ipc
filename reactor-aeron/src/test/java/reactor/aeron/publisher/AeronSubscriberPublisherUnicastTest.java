@@ -24,7 +24,7 @@ import reactor.aeron.utils.AeronTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.test.TestSubscriber;
 import reactor.io.util.FlowSerializerUtils;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

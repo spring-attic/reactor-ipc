@@ -24,7 +24,7 @@ import reactor.aeron.subscriber.AeronSubscriber;
 import reactor.util.Loggers;
 import reactor.core.publisher.FluxProcessor;
 import reactor.util.Logger;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 
 /**
  * A processor which publishes into and subscribes to data from Aeron.<br>

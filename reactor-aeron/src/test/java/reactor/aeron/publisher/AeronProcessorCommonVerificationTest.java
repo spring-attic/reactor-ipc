@@ -36,7 +36,7 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.AeronTestUtils;
 import reactor.aeron.utils.EmbeddedMediaDriverManager;
 import reactor.test.TestSubscriber;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 
 /**
  * @author Anatoly Kadyshev

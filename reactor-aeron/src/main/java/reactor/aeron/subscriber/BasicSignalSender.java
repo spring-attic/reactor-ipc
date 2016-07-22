@@ -21,7 +21,7 @@ import reactor.aeron.utils.AeronInfra;
 import reactor.aeron.utils.AeronUtils;
 import reactor.aeron.utils.SignalPublicationFailedException;
 import reactor.aeron.utils.SignalType;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 import uk.co.real_logic.aeron.logbuffer.BufferClaim;
 import uk.co.real_logic.agrona.MutableDirectBuffer;

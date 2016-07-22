@@ -39,7 +39,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import reactor.io.netty.common.NettyCodec;
 import reactor.io.netty.config.ClientOptions;
 import reactor.io.netty.http.HttpClient;

@@ -23,13 +23,13 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.io.buffer.Buffer;
-import reactor.io.codec.Codec;
-import reactor.io.codec.DelimitedCodec;
-import reactor.io.codec.StandardCodecs;
-import reactor.io.codec.StringCodec;
-import reactor.io.codec.compress.GzipCodec;
-import reactor.io.codec.json.JsonCodec;
+import reactor.ipc.buffer.Buffer;
+import reactor.ipc.codec.Codec;
+import reactor.ipc.codec.DelimitedCodec;
+import reactor.ipc.codec.StandardCodecs;
+import reactor.ipc.codec.StringCodec;
+import reactor.ipc.codec.compress.GzipCodec;
+import reactor.ipc.codec.json.JsonCodec;
 
 /**
  * @author Stephane Maldini

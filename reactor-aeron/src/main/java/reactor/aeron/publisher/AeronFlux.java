@@ -35,7 +35,7 @@ import reactor.core.scheduler.TimedScheduler;
 import reactor.core.Exceptions;
 import reactor.util.Logger;
 import reactor.io.util.UUIDUtils;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 
 /**

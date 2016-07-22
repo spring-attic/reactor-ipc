@@ -25,7 +25,7 @@ import reactor.core.Trackable;
 import reactor.core.publisher.Operators;
 import reactor.core.Exceptions;
 import reactor.util.Logger;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import uk.co.real_logic.aeron.ControlledFragmentAssembler;
 import uk.co.real_logic.aeron.logbuffer.ControlledFragmentHandler;
 import uk.co.real_logic.aeron.logbuffer.Header;

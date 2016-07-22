@@ -26,7 +26,7 @@ import reactor.aeron.utils.SignalType;
 import reactor.util.Loggers;
 import reactor.core.publisher.FluxProcessor;
 import reactor.util.Logger;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import uk.co.real_logic.aeron.Publication;
 
 /**

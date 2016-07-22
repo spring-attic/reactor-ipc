@@ -31,7 +31,7 @@ import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Operators;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import reactor.core.Exceptions;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 

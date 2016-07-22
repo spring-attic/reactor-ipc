@@ -30,7 +30,7 @@ import reactor.core.MultiProducer;
 import reactor.util.Loggers;
 import reactor.core.publisher.FluxProcessor;
 import reactor.util.Logger;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 import uk.co.real_logic.agrona.concurrent.BackoffIdleStrategy;
 
 

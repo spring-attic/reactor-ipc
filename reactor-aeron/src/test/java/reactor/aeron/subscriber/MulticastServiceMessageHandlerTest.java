@@ -28,7 +28,7 @@ import reactor.aeron.Context;
 import reactor.aeron.utils.Stepper;
 import reactor.aeron.utils.TestAeronInfra;
 import reactor.core.publisher.TopicProcessor;
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;

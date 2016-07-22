@@ -15,7 +15,7 @@
  */
 package reactor.aeron.utils;
 
-import reactor.io.buffer.Buffer;
+import reactor.ipc.buffer.Buffer;
 
 /**
  * @author Anatoly Kadyshev
