@@ -39,7 +39,7 @@ final class RegistryHttpMappings extends HttpMappings {
 					".registry.Registry");
 		}
 		catch(ClassNotFoundException cfe){
-			throw new IllegalStateException("io.projectreactor:reactor-bus dependency is missing from the classpath.");
+			throw new IllegalStateException("io.projectreactor.addons:reactor-bus dependency is missing from the classpath.");
 		}
 	}
 
