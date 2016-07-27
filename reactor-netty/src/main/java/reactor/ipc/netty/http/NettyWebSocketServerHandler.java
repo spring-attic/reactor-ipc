@@ -77,7 +77,6 @@ final class NettyWebSocketServerHandler extends NettyHttpServerHandler {
 			downstream().complete();
 			return;
 		}
-		new PingWebSocketFrame();
 		if (PingWebSocketFrame.class.isAssignableFrom(frame.getClass())) {
 			ctx.channel().writeAndFlush(new PongWebSocketFrame(((PingWebSocketFrame)frame)
 					.content().retain()));
