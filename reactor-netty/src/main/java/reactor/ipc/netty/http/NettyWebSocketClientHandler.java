@@ -67,6 +67,12 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 						httpChannel.headers());
 
 		handshakerResult = httpChannel.delegate().newPromise();
+		if(!originalHandler.httpChannel.delegate().pipeline()
+		       .context(HttpClientCodec.class)
+		       .name()
+		       .equals(NettyHandlerNames.HttpCodecHandler)){
+			originalHandler.httpChannel.delegate().pipeline().remove(HttpClientCodec.class);
+		}
 		handshaker.handshake(httpChannel.delegate()).addListener(f -> {
 			if(!f.isSuccess()) {
 				handshakerResult.tryFailure(f.cause());
@@ -100,12 +106,6 @@ final class NettyWebSocketClientHandler extends NettyHttpClientHandler {
 			if(checkResponseCode(ctx, response)) {
 
 				if (!handshaker.isHandshakeComplete()) {
-					if(!ctx.pipeline()
-					   .context(HttpClientCodec.class)
-					   .name()
-					   .equals(NettyHandlerNames.HttpCodecHandler)){
-						ctx.pipeline().remove(HttpClientCodec.class);
-					}
 					handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
 				}
 				ctx.fireChannelRead(msg);
