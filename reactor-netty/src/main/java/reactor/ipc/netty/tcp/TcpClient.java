@@ -215,8 +215,12 @@ public class TcpClient extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel>
 		else {
 			int ioThreadCount = TcpServer.DEFAULT_TCP_THREAD_COUNT;
 			this.ioGroup = new ColocatedEventLoopGroup(channelAdapter.newEventLoopGroup(ioThreadCount,
-					(Runnable r) -> new Thread(r, "reactor-tcp-client-io-"+COUNTER
-							.incrementAndGet())));
+					(Runnable r) -> {
+						Thread t = new Thread(r, "reactor-tcp-client-io-"+COUNTER
+								.incrementAndGet());
+						t.setDaemon(true);
+						return t;
+					}));
 		}
 
 	}

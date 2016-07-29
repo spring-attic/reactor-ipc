@@ -207,15 +207,24 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 		}
 
 		this.selectorGroup = channelAdapter.newEventLoopGroup(selectThreadCount,
-				(Runnable r) -> new Thread(r, "reactor-tcp-server-select-"+COUNTER.incrementAndGet()));
+				(Runnable r) -> {
+					Thread t = new Thread(r, "reactor-tcp-server-select-"+COUNTER
+							.incrementAndGet());
+					t.setDaemon(true);
+					return t;
+				});
 
 		if (null != options.eventLoopGroup()) {
 			this.ioGroup = options.eventLoopGroup();
 		}
 		else {
 			this.ioGroup = channelAdapter.newEventLoopGroup(ioThreadCount,
-					(Runnable r) -> new Thread(r,
-							"reactor-tcp-server-io-" + COUNTER.incrementAndGet()));
+					(Runnable r) -> {
+						Thread t = new Thread(r,
+								"reactor-tcp-server-io-" + COUNTER.incrementAndGet());
+						t.setDaemon(true);
+						return t;
+					});
 		}
 
 		ServerBootstrap _serverBootstrap =

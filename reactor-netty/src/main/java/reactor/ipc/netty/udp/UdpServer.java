@@ -168,8 +168,12 @@ final public class UdpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel
 			this.ioGroup = options.eventLoopGroup();
 		} else {
 			int ioThreadCount = DEFAULT_UDP_THREAD_COUNT;
-			ThreadFactory tf = (Runnable r) -> new Thread(r,
-					"reactor-udp-io-" + COUNTER.incrementAndGet());
+			ThreadFactory tf = (Runnable r) -> {
+				Thread t = new Thread(r,
+						"reactor-udp-io-" + COUNTER.incrementAndGet());
+				t.setDaemon(true);
+				return t;
+			};
 
 			this.ioGroup =options.protocolFamily() == null ?
 							NettyNativeDetector.instance().newEventLoopGroup(ioThreadCount,
