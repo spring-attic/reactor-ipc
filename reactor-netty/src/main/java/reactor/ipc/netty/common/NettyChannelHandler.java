@@ -113,7 +113,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 		catch (Throwable err) {
 			Exceptions.throwIfFatal(err);
-			inboundEmitter.fail(err);
+			inboundEmitter.error(err);
 		}
 	}
 
@@ -135,7 +135,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 		catch (Throwable err) {
 			Exceptions.throwIfFatal(err);
-			inboundEmitter.fail(err);
+			inboundEmitter.error(err);
 		}
 	}
 
@@ -172,7 +172,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable err) throws Exception {
 		Exceptions.throwIfFatal(err);
-		inboundEmitter.fail(err);
+		inboundEmitter.error(err);
 	}
 
 	protected ChannelFuture doOnWrite(Object data, ChannelHandlerContext ctx) {
@@ -589,7 +589,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		@Override
 		public void next(Object value) {
 			if (value == null) {
-				fail(new NullPointerException("value is null"));
+				error(new NullPointerException("value is null"));
 				return;
 			}
 			if (done) {
