@@ -63,10 +63,9 @@ public class NexusPlay {
 				// =========================================================
 
 				FluxProcessor<Integer, Integer> p = EmitterProcessor.create();
-				Flux<Integer> dispatched = p.publishOn(Schedulers.newComputation(
+				Flux<Integer> dispatched = p.publishOn(Schedulers.newParallel(
 						"semi-fast",
-						4,
-						8192));
+						4));
 
 				//slow subscribers
 				for(int i = 0; i < 2; i++) {
@@ -87,7 +86,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.publishOn(Schedulers.newComputation("semi-slow", 4, 1024));
+				dispatched = p.publishOn(Schedulers.newParallel("semi-slow", 4));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -109,7 +108,7 @@ public class NexusPlay {
 				// =========================================================
 
 				p = EmitterProcessor.create();
-				dispatched = p.publishOn(Schedulers.newComputation("slow", 3, 1024));
+				dispatched = p.publishOn(Schedulers.newParallel("slow", 3));
 
 				//slow subscribers
 				for(int j = 0; j < 3; j++) {
@@ -145,9 +144,9 @@ public class NexusPlay {
 		new Thread("schedulerGroupSample"){
 			@Override
 			public void run() {
-				Scheduler io = Schedulers.parallel();
+				Scheduler io = Schedulers.elastic();
 				Scheduler single = Schedulers.single();
-				Scheduler async = Schedulers.computation();
+				Scheduler async = Schedulers.parallel();
 				nexus.monitor(io);
 				nexus.monitor(single);
 				nexus.monitor(async);
