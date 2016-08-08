@@ -620,7 +620,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 		}
 
 		@Override
-		public void fail(Throwable error) {
+		public void error(Throwable error) {
 			if (error == null) {
 				error = new NullPointerException("error is null");
 			}
