@@ -41,7 +41,7 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 	 * @return
 	 */
 	public static ServerOptions create() {
-		return new ServerOptions();
+		return new ServerOptions().daemon(false);
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 	 * @return
 	 */
 	public static ServerOptions on(String address, int port) {
-		return new ServerOptions().listen(address, port);
+		return new ServerOptions().listen(address, port).daemon(false);
 	}
 
 	protected InetSocketAddress listenAddress;
@@ -74,7 +74,6 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 	private ProtocolFamily protocolFamily = null;
 
 	ServerOptions(){
-		daemon(false);
 	}
 
 	/**
