@@ -593,7 +593,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 				return;
 			}
 			if (done) {
-				Exceptions.onNextDropped(value);
+				Operators.onNextDropped(value);
 				return;
 			}
 			if (caughtUp && actual != null) {
@@ -625,7 +625,7 @@ public class NettyChannelHandler<C extends NettyChannel> extends ChannelDuplexHa
 				error = new NullPointerException("error is null");
 			}
 			if (isCancelled() || done) {
-				Exceptions.onErrorDropped(error);
+				Operators.onErrorDropped(error);
 				return;
 			}
 			done = true;
