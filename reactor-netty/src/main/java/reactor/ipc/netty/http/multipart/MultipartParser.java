@@ -80,7 +80,7 @@ final class MultipartParser
 	@Override
 	public void onNext(MultipartTokenizer.Token token) {
 		if (done) {
-			Exceptions.onNextDropped(token);
+			Operators.onNextDropped(token);
 			return;
 		}
 
@@ -120,7 +120,7 @@ final class MultipartParser
 	@Override
 	public void onError(Throwable t) {
 		if (done) {
-			Exceptions.onErrorDropped(t);
+			Operators.onErrorDropped(t);
 			return;
 		}
 		UnicastProcessor<ByteBuf> w = window;
