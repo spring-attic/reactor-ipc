@@ -285,8 +285,8 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		}
 
 		@Override
-		public boolean isManaged() {
-			return options.isManaged();
+		public boolean managed() {
+			return options.managed();
 		}
 
 		@Override
@@ -357,6 +357,16 @@ public class ClientOptions extends NettyOptions<ClientOptions> {
 		@Override
 		public Supplier<? extends InetSocketAddress> proxyAddress() {
 			return options.proxyAddress();
+		}
+
+		@Override
+		public ClientOptions daemon(boolean daemon) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public boolean daemon() {
+			return options.daemon();
 		}
 
 		@Override

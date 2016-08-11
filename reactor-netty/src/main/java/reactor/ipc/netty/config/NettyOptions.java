@@ -39,14 +39,36 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	private long                      timeout                   = 30000L;
 	private long                      sslHandshakeTimeoutMillis = 10000L;
 	private boolean                   keepAlive                 = true;
-	private int                       linger                    = 0;
-	private boolean                   tcpNoDelay                = true;
-	private int                       rcvbuf                    = 1024 * 1024;
-	private int                       sndbuf                    = 1024 * 1024;
-	private boolean                   managed                   = DEFAULT_MANAGED_PEER;
-	private Consumer<ChannelPipeline> pipelineConfigurer        = null;
-	private EventLoopGroup            eventLoopGroup            = null;
+	private int                       linger             = 0;
+	private boolean                   tcpNoDelay         = true;
+	private int                       rcvbuf             = 1024 * 1024;
+	private int                       sndbuf             = 1024 * 1024;
+	private boolean                   managed            = DEFAULT_MANAGED_PEER;
+	private Consumer<ChannelPipeline> pipelineConfigurer = null;
+	private EventLoopGroup            eventLoopGroup     = null;
+	private boolean                   daemon             = true;
 	private SslContextBuilder         sslOptions         = null;
+
+
+
+	/**
+	 * Returns a boolean indicating whether or not runtime threads will run daemon.
+	 * @return a boolean indicating whether or not runtime threads will run daemon.
+	 */
+	public boolean daemon() {
+		return daemon;
+	}
+
+	/**
+	 * Will run runtime threads in daemon mode or not. Explicit shutdowns will be
+	 * required if not daemon.
+	 * @param daemon {@code true} to run in daemon threads.
+	 * @return {@code this}
+	 */
+	public SO daemon(boolean daemon) {
+		this.daemon = daemon;
+		return (SO) this;
+	}
 
 	/**
 	 *
@@ -64,13 +86,6 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	public SO eventLoopGroup(EventLoopGroup eventLoopGroup) {
 		this.eventLoopGroup = eventLoopGroup;
 		return (SO) this;
-	}
-
-	/**
-	 * @return false if not managed
-	 */
-	public boolean isManaged() {
-		return managed;
 	}
 
 	/**
@@ -108,6 +123,13 @@ public abstract class NettyOptions<SO extends NettyOptions<? super SO>> {
 	public SO linger(int linger) {
 		this.linger = linger;
 		return (SO) this;
+	}
+
+	/**
+	 * @return false if not managed
+	 */
+	public boolean managed() {
+		return managed;
 	}
 
 	/**

@@ -21,8 +21,9 @@ import java.nio.charset.Charset;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.reactivestreams.Subscriber;
-import reactor.core.publisher.OperatorAdapter;
 import reactor.core.Exceptions;
+import reactor.core.publisher.OperatorAdapter;
+import reactor.core.publisher.Operators;
 
 /**
  * @author Ben Hale
@@ -85,7 +86,7 @@ final class MultipartTokenizer
 	@Override
 	protected void doError(Throwable throwable) {
 		if (this.done) {
-			Exceptions.onErrorDropped(throwable);
+			Operators.onErrorDropped(throwable);
 			return;
 		}
 
@@ -96,7 +97,7 @@ final class MultipartTokenizer
 	@Override
 	protected void doNext(ByteBuf byteBuf) {
 		if (this.done) {
-			Exceptions.onNextDropped(byteBuf);
+			Operators.onNextDropped(byteBuf);
 			return;
 		}
 

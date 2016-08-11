@@ -74,7 +74,7 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 	private ProtocolFamily protocolFamily = null;
 
 	ServerOptions(){
-
+		daemon(false);
 	}
 
 	/**
@@ -263,8 +263,18 @@ public class ServerOptions extends NettyOptions<ServerOptions> {
 		}
 
 		@Override
-		public boolean isManaged() {
-			return options.isManaged();
+		public boolean daemon() {
+			return options.daemon();
+		}
+
+		@Override
+		public ServerOptions daemon(boolean daemon) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public boolean managed() {
+			return options.managed();
 		}
 
 		@Override

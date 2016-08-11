@@ -171,7 +171,7 @@ final public class UdpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel
 			ThreadFactory tf = (Runnable r) -> {
 				Thread t = new Thread(r,
 						"reactor-udp-io-" + COUNTER.incrementAndGet());
-				t.setDaemon(true);
+				t.setDaemon(options.daemon());
 				return t;
 			};
 

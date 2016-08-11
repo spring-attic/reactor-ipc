@@ -227,8 +227,8 @@ public class HttpClientOptions extends ClientOptions {
 		}
 
 		@Override
-		public boolean isManaged() {
-			return options.isManaged();
+		public boolean managed() {
+			return options.managed();
 		}
 
 		@Override
@@ -340,6 +340,16 @@ public class HttpClientOptions extends ClientOptions {
 		@Override
 		public HttpClientOptions rcvbuf(int rcvbuf) {
 			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public HttpClientOptions daemon(boolean daemon) {
+			throw new UnsupportedOperationException("Immutable Options");
+		}
+
+		@Override
+		public boolean daemon() {
+			return options.daemon();
 		}
 
 		@Override

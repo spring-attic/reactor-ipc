@@ -218,7 +218,7 @@ public class TcpClient extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel>
 					(Runnable r) -> {
 						Thread t = new Thread(r, "reactor-tcp-client-io-"+COUNTER
 								.incrementAndGet());
-						t.setDaemon(true);
+						t.setDaemon(options.daemon());
 						return t;
 					}));
 		}

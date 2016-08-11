@@ -210,7 +210,7 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 				(Runnable r) -> {
 					Thread t = new Thread(r, "reactor-tcp-server-select-"+COUNTER
 							.incrementAndGet());
-					t.setDaemon(true);
+					t.setDaemon(options.daemon());
 					return t;
 				});
 
@@ -222,7 +222,7 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 					(Runnable r) -> {
 						Thread t = new Thread(r,
 								"reactor-tcp-server-io-" + COUNTER.incrementAndGet());
-						t.setDaemon(true);
+						t.setDaemon(options.daemon());
 						return t;
 					});
 		}
@@ -253,7 +253,7 @@ public class TcpServer extends DuplexSocket<ByteBuf, ByteBuf, NettyChannel> impl
 		                                   .localAddress((null == listenAddress ?
 				                                   new InetSocketAddress(0) : listenAddress));
 
-		if (options.isManaged()) {
+		if (options.managed()) {
 			log.debug("Server is managed.");
 			this.channelGroup = new DefaultChannelGroup(null);
 		}
