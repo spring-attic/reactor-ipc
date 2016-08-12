@@ -36,7 +36,7 @@ ext {
 	gradleVersion = '2.8'
 	gradleScriptDir = "${rootProject.projectDir}/gradle"
 
-	reactorVersion = '3.0.0.BUILD-SNAPSHOT'
+	reactorVersion = '3.0.0.RC2'
 	reactorBusVersion = '3.0.0.BUILD-SNAPSHOT'
 
 	// Languages
