@@ -24,7 +24,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.Receiver;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.OperatorAdapter;
+import reactor.core.publisher.Operators;
 import reactor.ipc.buffer.Buffer;
 
 /**
@@ -184,7 +184,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private final class DecoderBarrier extends OperatorAdapter<SRC, IN> {
+	private final class DecoderBarrier extends Operators.SubscriberAdapter<SRC, IN> {
 		final Function<SRC, IN> decoder;
 
 		public DecoderBarrier(final Subscriber<? super IN> subscriber) {
@@ -208,7 +208,7 @@ public abstract class Codec<SRC, IN, OUT> implements Function<OUT, SRC> {
 		}
 	}
 
-	private class EncoderBarrier extends OperatorAdapter<OUT, SRC> {
+	private class EncoderBarrier extends Operators.SubscriberAdapter<OUT, SRC> {
 
 		final private Function<OUT, SRC> encoder;
 

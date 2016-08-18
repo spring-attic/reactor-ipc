@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.OperatorAdapter;
 import reactor.core.publisher.Operators;
 import reactor.ipc.buffer.Buffer;
 
@@ -83,7 +82,7 @@ public abstract class BufferCodec<IN, OUT> extends Codec<Buffer, IN, OUT> {
 	}
 
 	private static final class AggregatingDecoderBarrier<IN>
-			extends OperatorAdapter<Buffer, IN>  {
+			extends Operators.SubscriberAdapter<Buffer, IN>  {
 
 		private final static AtomicReferenceFieldUpdater<AggregatingDecoderBarrier, Buffer>
 				AGGREGATE =
