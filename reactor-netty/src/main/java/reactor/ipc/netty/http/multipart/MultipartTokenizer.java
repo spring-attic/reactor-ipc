@@ -21,81 +21,137 @@ import java.nio.charset.Charset;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.reactivestreams.Subscriber;
-import reactor.core.Exceptions;
-import reactor.core.publisher.OperatorAdapter;
+import org.reactivestreams.Subscription;
+import reactor.core.Producer;
+import reactor.core.Receiver;
+import reactor.core.Trackable;
 import reactor.core.publisher.Operators;
 
 /**
  * @author Ben Hale
  */
 final class MultipartTokenizer
-		extends OperatorAdapter<ByteBuf, MultipartTokenizer.Token> {
+		implements Subscriber<ByteBuf>, Subscription, Trackable, Receiver, Producer{
 
-	private static final char[] CRLF = new char[]{'\r', '\n'};
+	static final char[] CRLF = new char[]{'\r', '\n'};
 
-	private static final char[] DOUBLE_DASH = new char[]{'-', '-'};
+	static final char[] DOUBLE_DASH = new char[]{'-', '-'};
 
-	private final char[] boundary;
+	final char[] boundary;
 
-	private int bodyPosition;
+	final Subscriber<? super Token> actual;
 
-	private int boundaryPosition;
+	int bodyPosition;
 
-	private ByteBuf byteBuf;
+	Subscription subscription;
 
-	private volatile boolean canceled = false;
+	int boundaryPosition;
 
-	private int crlfPosition;
+	ByteBuf byteBuf;
 
-	private int delimiterPosition;
+	volatile boolean cancelled = false;
 
-	private boolean done = false;
+	int crlfPosition;
 
-	private int doubleDashPosition;
+	int delimiterPosition;
 
-	private int position;
+	boolean done = false;
 
-	private Stage stage;
+	int doubleDashPosition;
+
+	int position;
+
+	Stage stage;
 
 	MultipartTokenizer(String boundary, Subscriber<? super Token> subscriber) {
-		super(subscriber);
+		this.actual = subscriber;
 		this.boundary = boundary.toCharArray();
 		reset();
 	}
 
 	@Override
-	protected void doCancel() {
-		if (this.canceled) {
-			return;
-		}
-
-		this.canceled = true;
-		this.subscription.cancel();
+	public Subscription upstream() {
+		return subscription;
 	}
 
 	@Override
-	protected void doComplete() {
+	public boolean isStarted() {
+		return subscription != null;
+	}
+
+	@Override
+	public Subscriber<? super Token> downstream() {
+		return actual;
+	}
+
+	@Override
+	public final void onSubscribe(Subscription s) {
+		if (Operators.validate(subscription, s)) {
+				subscription = s;
+				actual.onSubscribe(s);
+		}
+	}
+
+	@Override
+	public final void cancel() {
+		if (this.cancelled) {
+			return;
+		}
+
+		this.cancelled = true;
+		Subscription s = this.subscription;
+		if (s != null) {
+			this.subscription = null;
+			s.cancel();
+		}
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return null != subscription && subscription instanceof Trackable && (
+				(Trackable) subscription).isTerminated();
+	}
+
+	@Override
+	public long getCapacity() {
+		return Trackable.class.isAssignableFrom(actual
+				.getClass()) ?
+				((Trackable) actual).getCapacity() :
+				Long.MAX_VALUE;
+	}
+
+	@Override
+	public long getPending() {
+		return Trackable.class.isAssignableFrom(actual
+				.getClass()) ?
+				((Trackable) actual).getPending() :
+				-1L;
+	}
+
+
+	@Override
+	public void onComplete() {
 		if (this.done) {
 			return;
 		}
 
 		this.done = true;
-		this.subscriber.onComplete();
+		this.actual.onComplete();
 	}
 
 	@Override
-	protected void doError(Throwable throwable) {
+	public void onError(Throwable throwable) {
 		if (this.done) {
 			Operators.onErrorDropped(throwable);
 			return;
 		}
 
 		this.done = true;
-		this.subscriber.onError(throwable);
+		this.actual.onError(throwable);
 	}
 
 	@Override
-	protected void doNext(ByteBuf byteBuf) {
+	public void onNext(ByteBuf byteBuf) {
 		if (this.done) {
 			Operators.onNextDropped(byteBuf);
 			return;
@@ -106,7 +162,7 @@ final class MultipartTokenizer
 						byteBuf;
 
 		while (this.position < this.byteBuf.readableBytes()) {
-			if (this.canceled) {
+			if (this.cancelled) {
 				break;
 			}
 
@@ -137,24 +193,32 @@ final class MultipartTokenizer
 			}
 		}
 
-		if (!this.canceled && Stage.BODY == this.stage) {
+		if (!this.cancelled && Stage.BODY == this.stage) {
 			pushTrailingBodyToken();
 			reset();
 		}
 	}
 
 	@Override
-	protected void doRequest(long n) {
-		if (Integer.MAX_VALUE > n) {  // TODO: Support smaller request sizes
-			onError(new IllegalArgumentException(
-					"This operation only supports unbounded requests, was " + n));
-		}
-		else {
-			super.doRequest(n);
+	public void request(long n) {
+		try {
+			Operators.checkRequest(n);
+			if (Integer.MAX_VALUE > n) {  // TODO: Support smaller request sizes
+				actual.onError(Operators.onOperatorError(this, new
+						IllegalArgumentException(
+						"This operation only supports unbounded requests, was " + n), n));
+				return;
+			}
+			Subscription s = this.subscription;
+			if (s != null) {
+				s.request(n);
+			}
+		} catch (Throwable throwable) {
+			actual.onError(Operators.onOperatorError(this, throwable, n));
 		}
 	}
 
-	private void body(char c) {
+	void body(char c) {
 		if (CRLF[0] == c) {
 			this.delimiterPosition = this.position;
 			this.stage = Stage.START_CRLF;
@@ -172,7 +236,7 @@ final class MultipartTokenizer
 		}
 	}
 
-	private void boundary(char c) {
+	void boundary(char c) {
 		if (this.boundaryPosition < this.boundary.length) {
 			if (this.boundary[this.boundaryPosition] == c) {
 				this.boundaryPosition++;
@@ -199,7 +263,7 @@ final class MultipartTokenizer
 		}
 	}
 
-	private void endCrLf(char c) {
+	void endCrLf(char c) {
 		if (this.crlfPosition < CRLF.length) {
 			if (CRLF[this.crlfPosition] == c) {
 				this.crlfPosition++;
@@ -222,7 +286,7 @@ final class MultipartTokenizer
 		}
 	}
 
-	private void endDoubleDash(char c) {
+	void endDoubleDash(char c) {
 		if (this.doubleDashPosition < DOUBLE_DASH.length) {
 			if (DOUBLE_DASH[this.doubleDashPosition] == c) {
 				this.doubleDashPosition++;
@@ -238,43 +302,43 @@ final class MultipartTokenizer
 		}
 	}
 
-	private char getChar() {
+	char getChar() {
 		return (char) (this.byteBuf.getByte(this.position) & 0xFF);
 	}
 
-	private void pushBodyToken() {
+	void pushBodyToken() {
 		pushToken(TokenKind.BODY, this.bodyPosition, this.delimiterPosition);
 		this.bodyPosition = this.position;
 	}
 
-	private void pushCloseDelimiterToken() {
+	void pushCloseDelimiterToken() {
 		pushToken(TokenKind.CLOSE_DELIMITER, this.delimiterPosition, this.position);
 		this.stage = Stage.BODY;
 	}
 
-	private void pushDelimiterToken() {
+	void pushDelimiterToken() {
 		pushToken(TokenKind.DELIMITER, this.delimiterPosition, this.position);
 		this.stage = Stage.BODY;
 	}
 
-	private void pushToken(TokenKind kind, int start, int end) {
-		if (!this.canceled && (end - start > 0)) {
-			this.subscriber.onNext(new Token(kind, this.byteBuf, start, end - start));
+	void pushToken(TokenKind kind, int start, int end) {
+		if (!this.cancelled && (end - start > 0)) {
+			this.actual.onNext(new Token(kind, this.byteBuf, start, end - start));
 		}
 	}
 
-	private void pushTrailingBodyToken() {
+	void pushTrailingBodyToken() {
 		pushToken(TokenKind.BODY, this.bodyPosition, this.position);
 	}
 
-	private void reset() {
+	void reset() {
 		this.bodyPosition = 0;
 		this.byteBuf = null;
 		this.position = 0;
 		this.stage = Stage.BODY;
 	}
 
-	private void startCrLf(char c) {
+	void startCrLf(char c) {
 		if (this.crlfPosition < CRLF.length) {
 			if (CRLF[this.crlfPosition] == c) {
 				this.crlfPosition++;
@@ -296,7 +360,7 @@ final class MultipartTokenizer
 		}
 	}
 
-	private void startDoubleDash(char c) {
+	void startDoubleDash(char c) {
 		if (this.doubleDashPosition < DOUBLE_DASH.length) {
 			if (DOUBLE_DASH[this.doubleDashPosition] == c) {
 				this.doubleDashPosition++;
@@ -318,7 +382,7 @@ final class MultipartTokenizer
 		}
 	}
 
-	private void trailingCrLf(char c) {
+	void trailingCrLf(char c) {
 		if (this.crlfPosition < CRLF.length) {
 			if (CRLF[this.crlfPosition] == c) {
 				this.crlfPosition++;
@@ -334,7 +398,7 @@ final class MultipartTokenizer
 		}
 	}
 
-	private enum Stage {
+	enum Stage {
 
 		BODY,
 
@@ -354,13 +418,13 @@ final class MultipartTokenizer
 
 	static final class Token {
 
-		private final ByteBuf byteBuf;
+		final ByteBuf byteBuf;
 
-		private final TokenKind kind;
+		final TokenKind kind;
 
-		private final int length;
+		final int length;
 
-		private final int offset;
+		final int offset;
 
 		Token(TokenKind kind, ByteBuf byteBuf, int offset, int length) {
 			this.byteBuf = byteBuf;
@@ -388,12 +452,11 @@ final class MultipartTokenizer
 			return this.kind;
 		}
 
-		private static String expandWhitespace(String s) {
+		static String expandWhitespace(String s) {
 			return s.replaceAll("\r", "\\\\r")
 			        .replaceAll("\n", "\\\\n")
 			        .replaceAll("\t", "\\\\t");
 		}
-
 	}
 
 	enum TokenKind {
