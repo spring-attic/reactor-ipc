@@ -30,14 +30,13 @@ plugins {
 	id 'org.asciidoctor.convert' version '1.5.2'
 }
 
-description = 'Reactive IO facilities for encoding/decoding, client/server and unicast/multicast'
+description = 'IPC contracts for Reactive transport and protocol'
 
 ext {
 	gradleVersion = '2.8'
 	gradleScriptDir = "${rootProject.projectDir}/gradle"
 
-	reactorVersion = '3.0.0.BUILD-SNAPSHOT'
-	reactorBusVersion = '3.0.0.BUILD-SNAPSHOT'
+	reactorVersion = '3.0.0.RELEASE'
 
 	// Languages
 	groovyVersion = '2.4.1'
@@ -46,17 +45,7 @@ ext {
 	slf4jVersion = '1.7.12'
 	logbackVersion = '1.1.2'
 
-	// Libraries
-	nettyVersion = '4.1.3.Final'
-	jacksonDatabindVersion = '2.5.1'
-	protobufVersion = '2.6.1'
-	kryoVersion = '3.0.3'
-	snappyVersion = '1.1.1.6'
-	aeronVersion = '0.9.4'
-  	rxJavaVersion = '1.0.14'
-
 	// Testing
-	mockitoVersion = '1.10.19'
 	spockVersion = '1.0-groovy-2.4'
 
 	javadocLinks = [
@@ -72,7 +61,7 @@ ext {
 apply from: "$gradleScriptDir/setup.gradle"
 apply from: "$gradleScriptDir/doc.gradle"
 
-configure(subprojects) { project ->
+configure(rootProject) { project ->
 	group = 'io.projectreactor.ipc'
 
 	apply plugin: 'propdeps'
@@ -138,7 +127,7 @@ configure(subprojects) { project ->
 
 	repositories {
 		mavenLocal()
-		maven { url 'http://repo.spring.io/libs-milestone' }
+		maven { url 'http://repo.spring.io/libs-release' }
 		maven { url 'http://repo.spring.io/libs-snapshot' }
 		maven { url "https://oss.sonatype.org/content/repositories/releases/" }
 		jcenter()
@@ -152,6 +141,8 @@ configure(subprojects) { project ->
 
 		// Logging
 		optional "org.slf4j:slf4j-api:$slf4jVersion"
+
+		compile "io.projectreactor:reactor-core:$reactorVersion"
 
 		testRuntime "ch.qos.logback:logback-classic:$logbackVersion"
 		// Testing
@@ -182,89 +173,4 @@ configure(subprojects) { project ->
 configurations.all {
   // check for updates every build
   resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
-
-project('reactor-ipc-api') {
-  description = 'Reactive IO Buffer and Contracts'
-
-  apply plugin: 'osgi'
-  apply plugin: 'groovy'
-
-  dependencies {
-	compile "io.projectreactor:reactor-core:$reactorVersion"
-  }
-}
-
-project('reactor-netty') {
-	description = 'Reactor TCP components'
-
-	apply plugin: 'osgi'
-	apply plugin: 'groovy'
-
-	ext.bundleImportPackages = [
-			'com.fasterxml.jackson.core;resolution:=optional',
-			'com.fasterxml.jackson.databind;resolution:=optional',
-			'com.fasterxml.jackson.module;resolution:=optional',
-			'*'
-	]
-
-	dependencies {
-		compile project(":reactor-ipc-api")
-
-		//Improved Http routing
-		optional("io.projectreactor.addons:reactor-bus:$reactorBusVersion") {
-			transitive = false
-		}
-
-		//Codec Preprocessor
-		optional project(':reactor-codec')
-
-		//Default reactor-netty impl
-		compile "io.netty:netty-all:$nettyVersion"
-
-		// Testing
-		testCompile "org.apache.httpcomponents:fluent-hc:4.3.6"
-		testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
-	  	testCompile "io.reactivex:rxjava:$rxJavaVersion"
-
-		testRuntime "org.slf4j:jcl-over-slf4j:$slf4jVersion"
-	}
-
-	jar {
-		manifest {
-			instruction 'Import-Package', bundleImportPackages.join(',')
-		}
-	}
-}
-
-project('reactor-codec') {
-	description = 'Codec families'
-
-	dependencies {
-	  	compile project(":reactor-ipc-api")
-
-		// JSON handling
-		optional "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
-
-		// Serialization
-		optional "com.esotericsoftware:kryo:$kryoVersion",
-				"com.google.protobuf:protobuf-java:$protobufVersion",
-				"org.xerial.snappy:snappy-java:$snappyVersion"
-	}
-}
-
-project('reactor-aeron') {
-	description = 'Integration of Aeron library with reactor'
-
-	dependencies {
-	  	compile project(":reactor-ipc-api")
-	  	compile project(":reactor-codec") //FIXME remove when Buffer not required
-
-		compile "uk.co.real-logic:aeron-driver:$aeronVersion",
-				"uk.co.real-logic:aeron-client:$aeronVersion"
-
-		testCompile project(':reactor-netty')
-		testCompile "org.reactivestreams:reactive-streams-tck:1.0.0"
-		testCompile "org.mockito:mockito-core:1.10.19"
-    }
 }

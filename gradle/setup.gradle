@@ -19,7 +19,7 @@ task wrapper(type: Wrapper, description: "Create a Gradle self-download wrapper"
 	gradleVersion = "$gradleVersion"
 }
 
-configure(subprojects) { subproject ->
+configure(rootProject) { subproject ->
 	if(subproject.name == 'docs') return
 
 	apply plugin: 'propdeps-maven'

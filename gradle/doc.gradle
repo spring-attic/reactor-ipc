@@ -14,69 +14,61 @@
  * limitations under the License.
  */
 
-project("docs") {
-	apply plugin: "java"
-	apply plugin: 'org.asciidoctor.convert'
+configure(rootProject) {
+  apply plugin: "java"
+  apply plugin: 'org.asciidoctor.convert'
 
-	task api(type: Javadoc) {
-		group = "Reactor IPC Javadoc"
+  task api(type: Javadoc) {
+	group = "Reactor IPC Javadoc"
 
-		description = "Generates aggregated Javadoc API documentation."
-		title = "${rootProject.description} ${version} API"
+	description = "Generates aggregated Javadoc API documentation."
+	title = "${rootProject.description} ${version} API"
 
-		if (JavaVersion.current().isJava8Compatible()) {
-			compileTestJava.options.compilerArgs += "-parameters"
-			tasks.withType(Javadoc) {
-				options.addStringOption('Xdoclint:none', '-quiet')
-			}
-		}
-
-		dependsOn {
-			rootProject.subprojects.collect {
-				it.tasks.getByName("jar")
-			}
-		}
-		options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
-		options.author = true
-		options.header = rootProject.description
-		options.overview = "src/api/overview.html"
-		options.stylesheetFile = file("src/api/stylesheet.css")
-		options.links(rootProject.ext.javadocLinks)
-
-		source rootProject.subprojects.collect { project ->
-			project.sourceSets.main.allJava
-		}
-
-		maxMemory = "1024m"
-		destinationDir = new File(buildDir, "api")
-
-		doFirst {
-			classpath = files(rootProject.subprojects.collect { it.sourceSets.main.compileClasspath })
-		}
+	if (JavaVersion.current().isJava8Compatible()) {
+	  compileTestJava.options.compilerArgs += "-parameters"
+	  tasks.withType(Javadoc) {
+		options.addStringOption('Xdoclint:none', '-quiet')
+	  }
 	}
+	options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
+	options.author = true
+	options.header = rootProject.description
+	options.overview = "src/api/overview.html"
+	options.stylesheetFile = file("src/api/stylesheet.css")
+	options.links(rootProject.ext.javadocLinks)
 
-	asciidoctor {
-		sources {
-			include "index.asciidoc"
-		}
-		outputDir file("$buildDir/asciidoc")
-		backends = ['html5', 'pdf']
-		logDocuments = true
-		options = [
-				doctype: 'book'
-		]
-		attributes docinfo: '',
-				toc2: '',
-				'compat-mode': '',
-				stylesdir: "stylesheets/",
-				stylesheet: 'golo.css',
-				appversion: "$version",
-				'source-highlighter': 'coderay'
+	source rootProject.sourceSets.main.allJava
 
-		doLast {
-			file("$outputDir/pdf/index.pdf").renameTo("$outputDir/pdf/io-reference-guide-${version}.pdf")
-		}
+	maxMemory = "1024m"
+	destinationDir = new File(buildDir, "api")
+
+	doFirst {
+	  classpath = files(
+			  rootProject.subprojects.collect { it.sourceSets.main.compileClasspath })
 	}
+  }
+
+  asciidoctor {
+	sources {
+	  include "index.asciidoc"
+	}
+	outputDir file("$buildDir/asciidoc")
+	backends = ['html5', 'pdf']
+	logDocuments = true
+	options = [doctype: 'book']
+	attributes docinfo: '',
+			toc2: '',
+			'compat-mode': '',
+			stylesdir: "stylesheets/",
+			stylesheet: 'golo.css',
+			appversion: "$version",
+			'source-highlighter': 'coderay'
+
+	doLast {
+	  file("$outputDir/pdf/index.pdf").
+			  renameTo("$outputDir/pdf/ipc-reference-guide-${version}.pdf")
+	}
+  }
 
 }
 

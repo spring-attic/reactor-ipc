@@ -14,9 +14,3 @@
  * limitations under the License.
  */
 rootProject.name = 'reactor-ipc'
-
-include 'reactor-ipc-api',
-		'reactor-codec',
-		'reactor-netty',
-		'reactor-aeron',
-		'docs'
