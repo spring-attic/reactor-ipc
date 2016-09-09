@@ -6,8 +6,8 @@
 
 Backpressure-ready components to encode, decode, send (unicast, multicast or request/response) and serve connections :
 - [reactor-netty](https://github.com/reactor/reactor-netty)  : Client/Server interactions for UDP/TCP/HTTP
-- [reactor-kafka](https://github.com/reactor/reactor-aeron) : Reactive Kafka client
-- [reactor-aeron](https://github.com/reactor/reactor-kafka) : Efficient Unicast/Multicast reactive-streams transport for Aeron
+- [reactor-kafka](https://github.com/reactor/reactor-kafka) : Reactive Kafka client
+- [reactor-aeron](https://github.com/reactor/reactor-aeron) : Efficient Unicast/Multicast reactive-streams transport for Aeron
 
 ## Reference
 http://projectreactor.io/ipc/docs/reference/
