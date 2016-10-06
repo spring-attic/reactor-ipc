@@ -32,7 +32,7 @@ import reactor.util.Loggers;
 
 public class BasicPingPongTests {
 	
-	static final Logger log = Loggers.getLogger(BasicPingPongTest.class);
+	static final Logger log = Loggers.getLogger(BasicPingPongTests.class);
 
 	public interface PingPongClientAPI extends Cancellation {
 
