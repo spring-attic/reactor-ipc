@@ -30,7 +30,7 @@ import reactor.ipc.socket.SimpleServer;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
-public class BasicPingPongTest {
+public class BasicPingPongTests {
 	
 	static final Logger log = Loggers.getLogger(BasicPingPongTest.class);
 
