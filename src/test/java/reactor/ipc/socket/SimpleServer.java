@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import reactor.core.Cancellation;
@@ -34,10 +33,6 @@ import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.ipc.Channel;
-import reactor.ipc.Inbound;
-import reactor.ipc.Outbound;
-import reactor.ipc.binder.StreamEndpoint;
-import reactor.ipc.binder.StreamRemote;
 
 /**
  * @author Stephane Maldini

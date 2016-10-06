@@ -26,7 +26,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
-import reactor.ipc.binder.StreamEndpoint;
+import reactor.ipc.connector.StreamEndpoint;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 

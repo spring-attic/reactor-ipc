@@ -35,7 +35,7 @@ import reactor.core.publisher.Operators;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.ipc.Channel;
-import reactor.ipc.binder.StreamRemote;
+import reactor.ipc.connector.StreamRemote;
 
 /**
  * @author Stephane Maldini

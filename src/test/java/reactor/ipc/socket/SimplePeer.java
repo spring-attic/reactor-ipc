@@ -23,9 +23,9 @@ import java.util.function.Supplier;
 import reactor.core.publisher.Mono;
 import reactor.ipc.Inbound;
 import reactor.ipc.Outbound;
-import reactor.ipc.binder.Connector;
-import reactor.ipc.binder.StreamEndpoint;
-import reactor.ipc.binder.StreamRemote;
+import reactor.ipc.connector.Connector;
+import reactor.ipc.connector.StreamEndpoint;
+import reactor.ipc.connector.StreamRemote;
 
 /**
  * @author Stephane Maldini

@@ -16,7 +16,12 @@
 
 package reactor.ipc;
 
+import java.util.function.Function;
+
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * A {@link Channel} is a virtual connection that often matches with a Socket or a Channel (e.g. Netty).
@@ -30,6 +35,24 @@ import org.reactivestreams.Publisher;
  * @since 0.5
  */
 public interface Channel<IN, OUT> extends Inbound<IN>, Outbound<OUT>  {
+
+	/**
+	 * Get the inbound publisher (incoming tcp traffic for instance)
+	 *
+	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
+	 */
+	Flux<IN> receive();
+
+	/**
+	 * Get the inbound publisher (incoming tcp traffic for instance) and decode its traffic
+	 *
+	 * @param decoder a decoding function providing a target type {@link Publisher}
+	 *
+	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
+	 */
+	default <NEW_IN> Flux<NEW_IN> receive(Function<? super Flux<IN>, ? extends Publisher<NEW_IN>> decoder) {
+		return Flux.from(receive().as(decoder));
+	}
 
 	/**
 	 * @return The underlying IO runtime connection reference (Netty Channel for instance)

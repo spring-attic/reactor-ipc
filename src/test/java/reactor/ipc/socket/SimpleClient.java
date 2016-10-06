@@ -22,7 +22,6 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -31,7 +30,6 @@ import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.ipc.Channel;
-import reactor.ipc.binder.Connector;
 
 /**
  * @author Stephane Maldini

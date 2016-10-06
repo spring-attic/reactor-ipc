@@ -20,6 +20,8 @@ import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * A {@link Inbound} is a reactive gateway for incoming data flows.
@@ -55,5 +57,18 @@ public interface Inbound<IN>  {
 	 */
 	default Object delegate(){
 		return null;
+	}
+
+
+
+	/**
+	 * Get the Inbound-scoped {@link Scheduler}. Default to {@link
+	 * Schedulers#immediate()}
+	 *
+	 * @return the Connector-scoped {@link Scheduler}
+	 */
+
+	default Scheduler inboundScheduler() {
+		return Schedulers.immediate();
 	}
 }
