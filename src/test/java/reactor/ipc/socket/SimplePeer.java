@@ -31,7 +31,8 @@ import reactor.ipc.connector.StreamRemote;
  * @author Stephane Maldini
  */
 abstract class SimplePeer
-		implements Connector<byte[], byte[]>, BiConsumer<Inbound<byte[]>, StreamEndpoint>,
+		implements Connector<byte[], byte[], Inbound<byte[]>, Outbound<byte[]>>,
+		           BiConsumer<Inbound<byte[]>, StreamEndpoint>,
 		           Function<Outbound<byte[]>, StreamRemote> {
 
 	@Override

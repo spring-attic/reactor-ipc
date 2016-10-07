@@ -37,11 +37,12 @@ abstract class ConnectorHelper {
 	private ConnectorHelper() {
 	}
 
-	static <I, O, API> Mono<API> connect(Connector<I, O> connector,
+	static <I, O, II extends Inbound<I>, OO extends Outbound<O>, API> Mono<API> connect(
+			Connector<I, O, II, OO> connector,
 			Supplier<?> receiverSupplier,
 			Class<? extends API> api,
-			BiConsumer<? super Inbound<I>, StreamEndpoint> decoder,
-			Function<? super Outbound<O>, ? extends StreamRemote> encoder) {
+			BiConsumer<? super II, StreamEndpoint> decoder,
+			Function<? super OO, ? extends StreamRemote> encoder) {
 
 		return Mono.create(new OnConnectorSubscribe<>(connector,
 				receiverSupplier,
@@ -50,21 +51,21 @@ abstract class ConnectorHelper {
 				encoder));
 	}
 
-	static final class OnConnectorSubscribe<I, O, API>
+	static final class OnConnectorSubscribe<I, O, II extends Inbound<I>, OO extends Outbound<O>, API>
 			implements Consumer<MonoSink<API>> {
 
-		final Connector<I, O>                                       connector;
+		final Connector<I, O, II, OO>                               connector;
 		final Supplier<?>                                           localSupplier;
 		final Class<? extends API>                                  remoteApi;
 		final String                                                endpointName;
-		final BiConsumer<? super Inbound<I>, StreamEndpoint>        ipcReader;
-		final Function<? super Outbound<O>, ? extends StreamRemote> ipcWriter;
+		final BiConsumer<? super II, StreamEndpoint>        ipcReader;
+		final Function<? super OO, ? extends StreamRemote> ipcWriter;
 
-		OnConnectorSubscribe(Connector<I, O> connector,
+		OnConnectorSubscribe(Connector<I, O, II, OO> connector,
 				Supplier<?> localSupplier,
 				Class<? extends API> remoteApi,
-				BiConsumer<? super Inbound<I>, StreamEndpoint> ipcReader,
-				Function<? super Outbound<O>, ? extends StreamRemote> ipcWriter) {
+				BiConsumer<? super II, StreamEndpoint> ipcReader,
+				Function<? super OO, ? extends StreamRemote> ipcWriter) {
 			this.connector = Objects.requireNonNull(connector, "connector");
 			this.endpointName = connector.getClass()
 			                             .getSimpleName()

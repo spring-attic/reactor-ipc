@@ -47,9 +47,14 @@ import reactor.ipc.Outbound;
  * <p>Servers or Producers will onSubscribe when their socket is bound locally. They will
  * never complete as many {@link Publisher} close selectors will be expected. Disposing
  * the returned {@link Mono} will safely call shutdown.
+ *
+ * @param <IN> the input connection data type (bytes, object...)
+ * @param <OUT> the output connection data type (bytes, object...)
+ * @param <INBOUND> incoming traffic API such as server request or client response
+ * @param <OUTBOUND> outgoing traffic API such as server response or client request
  */
 @FunctionalInterface
-public interface Connector<IN, OUT> {
+public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extends Outbound<OUT>> {
 
 	/**
 	 * @param receiverSupplier
@@ -99,7 +104,7 @@ public interface Connector<IN, OUT> {
 	 * @return a {@link Mono} completing when the underlying resource has been closed or
 	 * failed
 	 */
-	Mono<Void> newHandler(BiFunction<? super Inbound<IN>, ? super Outbound<OUT>, ? extends Publisher<Void>> channelHandler);
+	Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> channelHandler);
 
 	/**
 	 * @param receiverSupplier
@@ -112,8 +117,8 @@ public interface Connector<IN, OUT> {
 	 */
 	default <API> Mono<API> newStreamSupport(Supplier<?> receiverSupplier,
 			Class<? extends API> api,
-			BiConsumer<? super Inbound<IN>, StreamEndpoint> decoder,
-			Function<? super Outbound<OUT>, ? extends StreamRemote> encoder) {
+			BiConsumer<? super INBOUND, StreamEndpoint> decoder,
+			Function<? super OUTBOUND, ? extends StreamRemote> encoder) {
 		return ConnectorHelper.connect(this, receiverSupplier, api, decoder, encoder);
 	}
 

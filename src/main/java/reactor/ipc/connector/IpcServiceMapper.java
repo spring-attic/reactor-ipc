@@ -38,6 +38,7 @@ import reactor.ipc.StreamContext;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
+@SuppressWarnings("unchecked")
 abstract class IpcServiceMapper {
 
 	final static Logger log = Loggers.getLogger(IpcServiceMapper.class);
@@ -341,7 +342,7 @@ abstract class IpcServiceMapper {
 				throw new NullPointerException("The umapper function is null");
 			}
 			IpcClientUmap rpcUmap = (IpcClientUmap) action;
-			@SuppressWarnings("unchecked") Function<Publisher<?>, Publisher<?>> f =
+			Function<Publisher<?>, Publisher<?>> f =
 					(Function<Publisher<?>, Publisher<?>>) args[0];
 			rpcUmap.umap(name, f, io);
 			return null;

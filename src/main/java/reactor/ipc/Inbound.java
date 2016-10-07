@@ -35,6 +35,13 @@ import reactor.core.scheduler.Schedulers;
 public interface Inbound<IN>  {
 
 	/**
+	 * @return The underlying IO runtime connection reference (Netty Channel for instance)
+	 */
+	default Object delegate() {
+		return null;
+	}
+
+	/**
 	 * Get the inbound publisher (incoming tcp traffic for instance)
 	 *
 	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
