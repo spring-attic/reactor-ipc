@@ -53,15 +53,6 @@ public interface Inbound<IN>  {
 	}
 
 	/**
-	 * @return The underlying IO runtime connection reference (Netty Channel for instance)
-	 */
-	default Object delegate(){
-		return null;
-	}
-
-
-
-	/**
 	 * Get the Inbound-scoped {@link Scheduler}. Default to {@link
 	 * Schedulers#immediate()}
 	 *

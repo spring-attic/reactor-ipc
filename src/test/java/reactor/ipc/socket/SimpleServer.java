@@ -23,7 +23,7 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
 import reactor.core.Cancellation;
@@ -32,7 +32,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.Channel;
+import reactor.ipc.Inbound;
+import reactor.ipc.Outbound;
 
 /**
  * @author Stephane Maldini
@@ -57,7 +58,7 @@ public final class SimpleServer extends SimplePeer  {
 	}
 
 	@Override
-	public Mono<Void> newHandler(Function<? super Channel<byte[], byte[]>, ? extends Publisher<Void>> channelHandler) {
+	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> channelHandler) {
 
 		return Mono.create(sink -> {
 			ServerSocket ssocket;
@@ -106,7 +107,7 @@ public final class SimpleServer extends SimplePeer  {
 
 	void socketAccept(ServerSocket ssocket,
 			MonoSink<Void> sink,
-			Function<? super Channel<byte[], byte[]>, ? extends Publisher<Void>> channelHandler,
+			BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> channelHandler,
 			AtomicBoolean done) {
 		while (!Thread.currentThread()
 		              .isInterrupted()) {
@@ -124,8 +125,8 @@ public final class SimpleServer extends SimplePeer  {
 			}
 
 			try {
-				Publisher<Void> closing =
-						channelHandler.apply(new SimpleChannel(socket, true));
+				SimpleConnection connection = new SimpleConnection(socket, true);
+				Publisher<Void> closing = channelHandler.apply(connection, connection);
 				Flux.from(closing)
 				    .subscribe(null, t -> tryClose(socket), () -> tryClose(socket));
 			}

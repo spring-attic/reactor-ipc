@@ -34,13 +34,14 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.Channel;
+import reactor.ipc.Inbound;
+import reactor.ipc.Outbound;
 import reactor.ipc.connector.StreamRemote;
 
 /**
  * @author Stephane Maldini
  */
-final class SimpleChannel implements Channel<byte[], byte[]>, StreamRemote {
+final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>, StreamRemote {
 
 	final Socket socket;
 
@@ -60,11 +61,11 @@ final class SimpleChannel implements Channel<byte[], byte[]>, StreamRemote {
 
 	final OutputStream out;
 
-	SimpleChannel(Socket socket) {
+	SimpleConnection(Socket socket) {
 		this(socket, false);
 	}
 
-	SimpleChannel(Socket socket, boolean server) {
+	SimpleConnection(Socket socket, boolean server) {
 		this.socket = socket;
 		this.terminateOnce = new AtomicBoolean();
 		this.readBuffer = new byte[16];

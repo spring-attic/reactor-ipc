@@ -18,6 +18,7 @@ package reactor.ipc.connector;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -26,7 +27,6 @@ import reactor.core.Cancellation;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.Channel;
 import reactor.ipc.Inbound;
 import reactor.ipc.Outbound;
 
@@ -85,11 +85,13 @@ public interface Connector<IN, OUT> {
 	}
 
 	/**
-	 * Prepare a {@link Function} {@link Channel} handler that will newHandler each time
+	 * Prepare a {@link BiFunction} IO handler that will react on a new connected state
+	 * each
+	 * time
 	 * the returned  {@link Mono} is subscribed. This {@link Connector} shouldn't assume
 	 * any state related to the individual created/cleaned resources.
 	 * <p>
-	 * The channel handler will return {@link Publisher} to signal when to terminate the
+	 * The IO handler will return {@link Publisher} to signal when to terminate the
 	 * underlying resource channel.
 	 *
 	 * @param channelHandler
@@ -97,7 +99,7 @@ public interface Connector<IN, OUT> {
 	 * @return a {@link Mono} completing when the underlying resource has been closed or
 	 * failed
 	 */
-	Mono<Void> newHandler(Function<? super Channel<IN, OUT>, ? extends Publisher<Void>> channelHandler);
+	Mono<Void> newHandler(BiFunction<? super Inbound<IN>, ? super Outbound<OUT>, ? extends Publisher<Void>> channelHandler);
 
 	/**
 	 * @param receiverSupplier

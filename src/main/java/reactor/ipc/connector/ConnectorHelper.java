@@ -86,7 +86,7 @@ abstract class ConnectorHelper {
 				localAPI = Objects.requireNonNull(localSupplier.get(), "localSupplier");
 			}
 
-			Cancellation c = connector.newHandler(socket -> {
+			Cancellation c = connector.newHandler((in, out) -> {
 				Map<String, Object> clientMap;
 				Map<String, Object> serverMap;
 
@@ -140,7 +140,7 @@ abstract class ConnectorHelper {
 
 				StreamContextImpl<API> ctx = new StreamContextImpl<>(api);
 				StreamRemote streamRemote =
-						Objects.requireNonNull(ipcWriter.apply(socket), "remote");
+						Objects.requireNonNull(ipcWriter.apply(out), "remote");
 
 				if (localAPI != null) {
 					serverMap = IpcServiceMapper.serverServiceMap(localAPI);
@@ -156,24 +156,23 @@ abstract class ConnectorHelper {
 										iom,
 										ctx);
 							},
-							streamRemote,
-							socket,
+							streamRemote, in,
 							() -> IpcServiceMapper.invokeDone(localAPI, ctx));
 
-					socket.inboundScheduler()
-					      .schedule(() -> IpcServiceMapper.invokeInit(localAPI, ctx));
+					in.inboundScheduler()
+					  .schedule(() -> IpcServiceMapper.invokeInit(localAPI, ctx));
 				}
 				else {
 					am[0] = new StreamEndpointImpl<>(endpointName,
 							(streamId, function, iom) -> false,
 							streamRemote,
-							socket,
+							in,
 							() -> {
 							});
 				}
 
 				if (ipcReader != null) {
-					ipcReader.accept(socket, am[0]);
+					ipcReader.accept(in, am[0]);
 				}
 
 				if (api != null) {

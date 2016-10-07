@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Operators;
-import reactor.ipc.Channel;
+import reactor.ipc.Inbound;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
@@ -53,12 +53,12 @@ final class StreamEndpointImpl<IN, OUT> extends AtomicLong
 
 	final AtomicBoolean terminateOnce;
 
-	final Channel<IN, OUT> channel;
+	final Inbound<? extends IN> channel;
 
 	StreamEndpointImpl(String name,
 			OnNewStream onNew,
 			StreamRemote remote,
-			Channel<IN, OUT> channel,
+			Inbound<? extends IN> channel,
 			Runnable onTerminate) {
 		super(1);
 		this.name = name;

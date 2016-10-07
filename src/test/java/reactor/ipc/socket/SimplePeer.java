@@ -38,7 +38,7 @@ abstract class SimplePeer
 	@SuppressWarnings("unchecked")
 	public void accept(Inbound<byte[]> inbound, StreamEndpoint endpoint) {
 		inbound.receive()
-		       .subscribe(d -> ByteArrayStreamProtocol.receive(((SimpleChannel) inbound).in,
+		       .subscribe(d -> ByteArrayStreamProtocol.receive(((SimpleConnection) inbound).in,
 				       d,
 				       endpoint));
 	}

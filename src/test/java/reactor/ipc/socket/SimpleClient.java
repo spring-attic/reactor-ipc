@@ -21,7 +21,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -29,7 +29,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.Channel;
+import reactor.ipc.Inbound;
+import reactor.ipc.Outbound;
 
 /**
  * @author Stephane Maldini
@@ -57,7 +58,7 @@ public final class SimpleClient extends SimplePeer {
 	}
 
 	@Override
-	public Mono<Void> newHandler(Function<? super Channel<byte[], byte[]>, ? extends Publisher<Void>> channelHandler) {
+	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> channelHandler) {
 		return Mono.create(sink -> {
 			Socket socket;
 
@@ -72,7 +73,8 @@ public final class SimpleClient extends SimplePeer {
 					}
 				});
 
-				Publisher<Void> closing = channelHandler.apply(new SimpleChannel(socket));
+				SimpleConnection connection = new SimpleConnection(socket);
+				Publisher<Void> closing = channelHandler.apply(connection, connection);
 				Flux.from(closing)
 				    .subscribe(null,
 						    t -> tryClose(socket, sink),
