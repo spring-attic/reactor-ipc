@@ -21,6 +21,8 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import static reactor.core.publisher.Flux.just;
 
@@ -45,40 +47,14 @@ public interface Outbound<OUT>  {
 	}
 
 	/**
-	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
+	 * Get the Outbound-scoped {@link Scheduler}. Default to {@link
+	 * Schedulers#immediate()}
 	 *
-	 * @param dataStream the dataStream publishing OLD_OUT items to write on this
-	 * channel after encoding
-	 * @param encoder an encoding function providing a send-ready {@link Publisher}
-	 *
-	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
+	 * @return the Connector-scoped {@link Scheduler}
 	 */
-	default <OLD_OUT> Mono<Void> map(Publisher<? extends OLD_OUT> dataStream,
-			Function<? super Flux<? extends OLD_OUT>, ? extends Publisher<OUT>> encoder) {
 
-		return send(Flux.from(dataStream)
-		                .as(encoder));
-	}
-
-	/**
-	 * Transform and Send data to the peer, listen for any error on write and close on
-	 * terminal
-	 * signal (complete|error). Each individual {@link Publisher} completion will flush
-	 * the underlying IO runtime.
-	 *
-	 * @param dataStreams a sequence of data streams publishing OLD_OUT items to write
-	 * on this channel after encoding
-	 * @param encoder an encoding function providing a send-ready {@link Publisher}
-	 *
-	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default <OLD_OUT> Mono<Void> mapAndFlush(Publisher<? extends Publisher<? extends
-			OLD_OUT>> dataStreams,
-			Function<? super Flux<? extends OLD_OUT>, ? extends Publisher<OUT>> encoder) {
-
-		return sendAndFlush(Flux.from(dataStreams)
-		                        .map(p -> encoder.apply(Flux
-				                        .<OLD_OUT>from(p))));
+	default Scheduler outboundScheduler() {
+		return Schedulers.immediate();
 	}
 
 	/**
@@ -89,16 +65,6 @@ public interface Outbound<OUT>  {
 	 */
 	Mono<Void> send(Publisher<? extends OUT> dataStream);
 
-
-	/**
-	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
-	 *
-	 * @param dataStream the dataStream publishing OUT items to write on this channel
-	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
-	 */
-	default Mono<Void> sendOne(OUT dataStream){
-		return send(just(dataStream));
-	}
 
 	/**
 	 * Send data to the peer, listen for any error on write and close on terminal signal
