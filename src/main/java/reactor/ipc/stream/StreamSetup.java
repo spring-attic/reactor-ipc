@@ -32,9 +32,9 @@ import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
 import reactor.ipc.connector.Connector;
 
-abstract class ConnectorHelper {
+abstract class StreamSetup {
 
-	private ConnectorHelper() {
+	private StreamSetup() {
 	}
 
 	static <I, O, II extends Inbound<I>, OO extends Outbound<O>, API> Mono<API> connect(

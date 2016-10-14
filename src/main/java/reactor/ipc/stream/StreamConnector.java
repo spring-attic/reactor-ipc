@@ -22,9 +22,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
+import reactor.ipc.connector.Connector;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
-import reactor.ipc.connector.Connector;
 
 /**
  * A stream connector is {@link Connector} supporting reactive streams semantics.
@@ -37,6 +37,23 @@ import reactor.ipc.connector.Connector;
 public interface StreamConnector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extends Outbound<OUT>>
 		extends Connector<IN, OUT, INBOUND, OUTBOUND> {
 
+	/**
+	 *
+	 * @param connector
+	 * @param decoder
+	 * @param encoder
+	 * @param <IN>
+	 * @param <OUT>
+	 * @param <INBOUND>
+	 * @param <OUTBOUND>
+	 * @return a {@link StreamConnector}
+	 */
+	static <IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extends Outbound<OUT>> StreamConnector<IN, OUT, INBOUND, OUTBOUND> from(
+			Connector<IN, OUT, INBOUND, OUTBOUND> connector,
+			BiConsumer<? super INBOUND, StreamOperations> decoder,
+			Function<? super OUTBOUND, ? extends StreamOutbound> encoder) {
+		return new SimpleStreamConnector<>(connector, decoder, encoder);
+	}
 
 	/**
 	 * @param receiverSupplier
@@ -66,10 +83,8 @@ public interface StreamConnector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND 
 	 *
 	 * @return
 	 */
-	default <API> Mono<API> newBidirectional(Supplier<?> receiverSupplier,
-			Class<? extends API> api) {
-		throw new UnsupportedOperationException("This Connector " + getClass().getSimpleName() + " does not support reactive stream protocol.");
-	}
+	<API> Mono<API> newBidirectional(Supplier<?> receiverSupplier,
+			Class<? extends API> api);
 	/**
 	 * @param receiverSupplier
 	 * @param api
@@ -83,7 +98,7 @@ public interface StreamConnector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND 
 			Class<? extends API> api,
 			BiConsumer<? super INBOUND, StreamOperations> decoder,
 			Function<? super OUTBOUND, ? extends StreamOutbound> encoder) {
-		return ConnectorHelper.connect(this, receiverSupplier, api, decoder, encoder);
+		return StreamSetup.connect(this, receiverSupplier, api, decoder, encoder);
 	}
 
 }

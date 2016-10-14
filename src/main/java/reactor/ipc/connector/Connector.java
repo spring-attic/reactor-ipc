@@ -61,12 +61,12 @@ public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extend
 	 * The IO handler will return {@link Publisher} to signal when to terminate the
 	 * underlying resource channel.
 	 *
-	 * @param channelHandler
+	 * @param ioHandler
 	 *
 	 * @return a {@link Mono} completing when the underlying resource has been closed or
 	 * failed
 	 */
-	Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> channelHandler);
+	Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> ioHandler);
 
 	/**
 	 * Get the Connector-scoped {@link Scheduler}. Default to {@link
