@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.ipc.connector;
+package reactor.ipc.stream;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Operators;
-import reactor.ipc.Inbound;
+import reactor.ipc.connector.Inbound;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
@@ -34,16 +34,16 @@ import reactor.util.Loggers;
  * and allows sending messages.
  */
 
-final class StreamEndpointImpl<IN, OUT> extends AtomicLong
-		implements StreamEndpoint {
+final class StreamOperationsImpl<IN, OUT> extends AtomicLong
+		implements StreamOperations {
 
-	static Logger log = Loggers.getLogger(StreamEndpointImpl.class);
+	static Logger log = Loggers.getLogger(StreamOperationsImpl.class);
 
 	final ConcurrentMap<Long, Subscriber<OUT>> subscribers;
 
 	final ConcurrentMap<Long, Subscription> subscriptions;
 
-	final StreamRemote remote;
+	final StreamOutbound remote;
 
 	final String name;
 
@@ -55,9 +55,9 @@ final class StreamEndpointImpl<IN, OUT> extends AtomicLong
 
 	final Inbound<? extends IN> channel;
 
-	StreamEndpointImpl(String name,
+	StreamOperationsImpl(String name,
 			OnNewStream onNew,
-			StreamRemote remote,
+			StreamOutbound remote,
 			Inbound<? extends IN> channel,
 			Runnable onTerminate) {
 		super(1);

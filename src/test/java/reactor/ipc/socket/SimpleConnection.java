@@ -34,14 +34,15 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.Inbound;
-import reactor.ipc.Outbound;
-import reactor.ipc.connector.StreamRemote;
+import reactor.ipc.connector.Inbound;
+import reactor.ipc.connector.Outbound;
+import reactor.ipc.stream.StreamOutbound;
 
 /**
  * @author Stephane Maldini
  */
-final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>, StreamRemote {
+final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
+                                        StreamOutbound {
 
 	final Socket socket;
 

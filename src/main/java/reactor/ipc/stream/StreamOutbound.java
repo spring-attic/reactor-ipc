@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package reactor.ipc.connector;
+package reactor.ipc.stream;
 
-public interface StreamEndpoint extends StreamRemote {
+import java.io.IOException;
 
-	void onNew(long streamId, String function);
+public interface StreamOutbound {
 
-	void onNext(long streamId, Object o);
+	void sendNew(long streamId, String function);
 
-	void onError(long streamId, String reason);
+	void sendCancel(long streamId, String reason);
 
-	void onError(long streamId, Throwable e);
+	void sendNext(long streamId, Object o) throws IOException;
 
-	void onComplete(long streamId);
+	void sendError(long streamId, Throwable e);
 
-	void onCancel(long streamId, String reason);
+	void sendComplete(long streamId);
 
-	void onRequested(long streamId, long n);
+	void sendRequested(long streamId, long n);
 
+	boolean isClosed();
 }

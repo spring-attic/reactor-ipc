@@ -26,7 +26,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
-import reactor.ipc.connector.StreamEndpoint;
+import reactor.ipc.stream.StreamOperations;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
@@ -322,7 +322,7 @@ abstract class ByteArrayStreamProtocol {
 		return sb.toString();
 	}
 
-	public static boolean receive(InputStream in, byte[] rb, StreamEndpoint onReceive) {
+	public static boolean receive(InputStream in, byte[] rb, StreamOperations onReceive) {
 		try {
 
 			int len =
@@ -465,7 +465,7 @@ abstract class ByteArrayStreamProtocol {
 			byte[] payload,
 			int count,
 			int read,
-			StreamEndpoint endpoint,
+			StreamOperations endpoint,
 			byte[] readBuffer) {
 		if (count != read) {
 			endpoint.onError(streamId,

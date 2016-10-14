@@ -21,23 +21,23 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
-import reactor.ipc.Inbound;
-import reactor.ipc.Outbound;
-import reactor.ipc.connector.Connector;
-import reactor.ipc.connector.StreamEndpoint;
-import reactor.ipc.connector.StreamRemote;
+import reactor.ipc.connector.Inbound;
+import reactor.ipc.connector.Outbound;
+import reactor.ipc.stream.StreamConnector;
+import reactor.ipc.stream.StreamOperations;
+import reactor.ipc.stream.StreamOutbound;
 
 /**
  * @author Stephane Maldini
  */
 abstract class SimplePeer
-		implements Connector<byte[], byte[], Inbound<byte[]>, Outbound<byte[]>>,
-		           BiConsumer<Inbound<byte[]>, StreamEndpoint>,
-		           Function<Outbound<byte[]>, StreamRemote> {
+		implements StreamConnector<byte[], byte[], Inbound<byte[]>, Outbound<byte[]>>,
+		           BiConsumer<Inbound<byte[]>, StreamOperations>,
+		           Function<Outbound<byte[]>, StreamOutbound> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void accept(Inbound<byte[]> inbound, StreamEndpoint endpoint) {
+	public void accept(Inbound<byte[]> inbound, StreamOperations endpoint) {
 		inbound.receive()
 		       .subscribe(d -> ByteArrayStreamProtocol.receive(((SimpleConnection) inbound).in,
 				       d,
@@ -46,8 +46,8 @@ abstract class SimplePeer
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public StreamRemote apply(Outbound<byte[]> outbound) {
-		return (StreamRemote) outbound;
+	public StreamOutbound apply(Outbound<byte[]> outbound) {
+		return (StreamOutbound) outbound;
 	}
 
 	@Override

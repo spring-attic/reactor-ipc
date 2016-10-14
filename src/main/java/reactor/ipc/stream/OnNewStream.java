@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.ipc;
+package reactor.ipc.stream;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+@FunctionalInterface
+interface OnNewStream {
 
-/**
- * Indicates the method, which has only an RpcStreamContext parameter and void return
- * should be called just after the connection has been established.
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface IpcInit {
-    String name() default "";
+	boolean onNew(long streamId, String function, StreamOperationsImpl manager);
 }

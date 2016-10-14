@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package reactor.ipc.connector;
+package reactor.ipc.stream;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import reactor.ipc.StreamContext;
 
 final class StreamContextImpl<T> implements StreamContext<T> {
 

@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.ipc;
-
-import java.util.function.Function;
+package reactor.ipc.connector;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;

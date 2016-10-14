@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.ipc.connector;
+package reactor.ipc.stream;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -31,10 +31,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
-import reactor.ipc.Ipc;
-import reactor.ipc.IpcDone;
-import reactor.ipc.IpcInit;
-import reactor.ipc.StreamContext;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
@@ -293,7 +289,7 @@ abstract class IpcServiceMapper {
 
 	public static boolean dispatchServer(long streamId,
 			Object action,
-			StreamEndpointImpl io,
+			StreamOperationsImpl io,
 			StreamContext<?> ctx) {
 		if (action instanceof IpcServerSend) {
 			IpcServerSend rpcServerSend = (IpcServerSend) action;
@@ -317,7 +313,7 @@ abstract class IpcServiceMapper {
 	public static Publisher<?> dispatchClient(String name,
 			Object action,
 			Object[] args,
-			StreamEndpointImpl io) {
+			StreamOperationsImpl io) {
 		if (action instanceof IpcClientSend) {
 			if (args[0] == null) {
 				throw new NullPointerException("The source Publisher is null");
@@ -354,7 +350,7 @@ abstract class IpcServiceMapper {
 
 		public static void sendStatic(String function,
 				Publisher<?> values,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 			long streamId = io.newStreamId();
 
 			SendSubscriber s = new SendSubscriber(io, streamId);
@@ -364,20 +360,20 @@ abstract class IpcServiceMapper {
 			values.subscribe(s);
 		}
 
-		public void send(String function, Publisher<?> values, StreamEndpointImpl io) {
+		public void send(String function, Publisher<?> values, StreamOperationsImpl io) {
 			sendStatic(function, values, io);
 		}
 
 		static final class SendSubscriber extends Operators.DeferredSubscription
 				implements Subscriber<Object> {
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			final long streamId;
 
 			boolean done;
 
-			public SendSubscriber(StreamEndpointImpl io, long streamId) {
+			public SendSubscriber(StreamOperationsImpl io, long streamId) {
 				this.io = io;
 				this.streamId = streamId;
 			}
@@ -430,9 +426,9 @@ abstract class IpcServiceMapper {
 
 			final long streamId;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
-			public IpcReceiveSubscription(long streamId, StreamEndpointImpl io) {
+			public IpcReceiveSubscription(long streamId, StreamOperationsImpl io) {
 				this.streamId = streamId;
 				this.io = io;
 			}
@@ -452,7 +448,7 @@ abstract class IpcServiceMapper {
 			}
 		}
 
-		public Publisher<?> receive(String function, StreamEndpointImpl io) {
+		public Publisher<?> receive(String function, StreamOperationsImpl io) {
 			return s -> {
 				long streamId = io.newStreamId();
 				io.registerSubscriber(streamId, s);
@@ -467,7 +463,7 @@ abstract class IpcServiceMapper {
 	static final class IpcClientReceiveMono extends IpcClientReceive {
 
 		@Override
-		public Publisher<?> receive(String function, StreamEndpointImpl io) {
+		public Publisher<?> receive(String function, StreamOperationsImpl io) {
 			return Mono.from(super.receive(function, io));
 		}
 	}
@@ -475,7 +471,7 @@ abstract class IpcServiceMapper {
 	static final class IpcClientReceiveFlux extends IpcClientReceive {
 
 		@Override
-		public Publisher<?> receive(String function, StreamEndpointImpl io) {
+		public Publisher<?> receive(String function, StreamOperationsImpl io) {
 			return Flux.from(super.receive(function, io));
 		}
 	}
@@ -484,7 +480,7 @@ abstract class IpcServiceMapper {
 
 		public Publisher<?> map(String function,
 				Publisher<?> values,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 			return s -> {
 				long streamId = io.newStreamId();
 
@@ -513,13 +509,13 @@ abstract class IpcServiceMapper {
 
 			final AtomicInteger open;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			boolean done;
 
 			public IpcMapSubscriber(long streamId,
 					AtomicInteger open,
-					StreamEndpointImpl io) {
+					StreamOperationsImpl io) {
 				this.streamId = streamId;
 				this.open = open;
 				this.io = io;
@@ -579,7 +575,7 @@ abstract class IpcServiceMapper {
 
 			final AtomicInteger open;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			Subscription s;
 
@@ -588,7 +584,7 @@ abstract class IpcServiceMapper {
 			public IpcMapReceiverSubscriber(Subscriber<Object> actual,
 					long streamId,
 					AtomicInteger open,
-					StreamEndpointImpl io) {
+					StreamOperationsImpl io) {
 				this.actual = actual;
 				this.streamId = streamId;
 				this.open = open;
@@ -662,7 +658,7 @@ abstract class IpcServiceMapper {
 		@Override
 		public Publisher<?> map(String function,
 				Publisher<?> values,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 			return Mono.from(super.map(function, values, io));
 		}
 	}
@@ -672,7 +668,7 @@ abstract class IpcServiceMapper {
 		@Override
 		public Publisher<?> map(String function,
 				Publisher<?> values,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 			return Flux.from(super.map(function, values, io));
 		}
 	}
@@ -695,7 +691,7 @@ abstract class IpcServiceMapper {
 
 		final void umap(String function,
 				Function<Publisher<?>, Publisher<?>> mapper,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 
 			long streamId = io.newStreamId();
 
@@ -738,7 +734,7 @@ abstract class IpcServiceMapper {
 
 			final long streamId;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			final AtomicBoolean once;
 
@@ -749,7 +745,7 @@ abstract class IpcServiceMapper {
 			Subscription s;
 
 			public IpcUmapReceiver(long streamId,
-					StreamEndpointImpl io,
+					StreamOperationsImpl io,
 					AtomicBoolean once) {
 				this.streamId = streamId;
 				this.io = io;
@@ -809,14 +805,14 @@ abstract class IpcServiceMapper {
 
 			final long streamId;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			final AtomicBoolean once;
 
 			boolean done;
 
 			public IpcUmapProvider(long streamId,
-					StreamEndpointImpl io,
+					StreamOperationsImpl io,
 					AtomicBoolean once) {
 				this.streamId = streamId;
 				this.io = io;
@@ -897,7 +893,7 @@ abstract class IpcServiceMapper {
 			this.instance = instance;
 		}
 
-		public boolean send(long streamId, StreamContext<?> ctx, StreamEndpointImpl io) {
+		public boolean send(long streamId, StreamContext<?> ctx, StreamOperationsImpl io) {
 			Publisher<?> output;
 			try {
 				output = (Publisher<?>) m.invoke(instance, ctx);
@@ -930,11 +926,11 @@ abstract class IpcServiceMapper {
 
 			final long streamId;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			boolean done;
 
-			public ServerSendSubscriber(long streamId, StreamEndpointImpl io) {
+			public ServerSendSubscriber(long streamId, StreamOperationsImpl io) {
 				this.streamId = streamId;
 				this.io = io;
 			}
@@ -992,7 +988,7 @@ abstract class IpcServiceMapper {
 			this.instance = instance;
 		}
 
-		Publisher<?> producer(long streamId, StreamEndpointImpl io) {
+		Publisher<?> producer(long streamId, StreamOperationsImpl io) {
 			ServerReceiveSubscriber parent = new ServerReceiveSubscriber(streamId, io);
 
 			AtomicBoolean once = new AtomicBoolean();
@@ -1012,7 +1008,7 @@ abstract class IpcServiceMapper {
 
 		final boolean receive(long streamId,
 				StreamContext<?> ctx,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 
 			Publisher<?> p = producer(streamId, io);
 
@@ -1034,11 +1030,11 @@ abstract class IpcServiceMapper {
 
 			final long streamId;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			Subscriber<Object> actual;
 
-			public ServerReceiveSubscriber(long streamId, StreamEndpointImpl io) {
+			public ServerReceiveSubscriber(long streamId, StreamOperationsImpl io) {
 				this.streamId = streamId;
 				this.io = io;
 			}
@@ -1088,7 +1084,7 @@ abstract class IpcServiceMapper {
 		}
 
 		@Override
-		Publisher<?> producer(long streamId, StreamEndpointImpl io) {
+		Publisher<?> producer(long streamId, StreamOperationsImpl io) {
 			return Flux.from(super.producer(streamId, io));
 		}
 	}
@@ -1100,7 +1096,7 @@ abstract class IpcServiceMapper {
 		}
 
 		@Override
-		Publisher<?> producer(long streamId, StreamEndpointImpl io) {
+		Publisher<?> producer(long streamId, StreamOperationsImpl io) {
 			return Mono.from(super.producer(streamId, io));
 		}
 	}
@@ -1119,7 +1115,7 @@ abstract class IpcServiceMapper {
 		Publisher<?> producer(long streamId,
 				AtomicInteger innerOnce,
 				ServerSendSubscriber sender,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 			ServerMapSubscriber parent = new ServerMapSubscriber(streamId, io, innerOnce);
 			parent.sender = sender;
 
@@ -1141,7 +1137,7 @@ abstract class IpcServiceMapper {
 			};
 		}
 
-		final boolean map(long streamId, StreamContext<?> ctx, StreamEndpointImpl io) {
+		final boolean map(long streamId, StreamContext<?> ctx, StreamOperationsImpl io) {
 			AtomicInteger innerOnce = new AtomicInteger(2);
 			ServerSendSubscriber sender =
 					new ServerSendSubscriber(streamId, io, innerOnce);
@@ -1175,7 +1171,7 @@ abstract class IpcServiceMapper {
 
 			final long streamId;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			final AtomicInteger once;
 
@@ -1186,7 +1182,7 @@ abstract class IpcServiceMapper {
 			ServerSendSubscriber sender;
 
 			public ServerMapSubscriber(long streamId,
-					StreamEndpointImpl io,
+					StreamOperationsImpl io,
 					AtomicInteger once) {
 				this.streamId = streamId;
 				this.io = io;
@@ -1262,14 +1258,14 @@ abstract class IpcServiceMapper {
 
 			final long streamId;
 
-			final StreamEndpointImpl io;
+			final StreamOperationsImpl io;
 
 			final AtomicInteger once;
 
 			boolean done;
 
 			public ServerSendSubscriber(long streamId,
-					StreamEndpointImpl io,
+					StreamOperationsImpl io,
 					AtomicInteger once) {
 				this.streamId = streamId;
 				this.io = io;
@@ -1332,7 +1328,7 @@ abstract class IpcServiceMapper {
 		Publisher<?> producer(long streamId,
 				AtomicInteger innerOnce,
 				ServerSendSubscriber sender,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 			return Mono.from(super.producer(streamId, innerOnce, sender, io));
 		}
 	}
@@ -1347,7 +1343,7 @@ abstract class IpcServiceMapper {
 		Publisher<?> producer(long streamId,
 				AtomicInteger innerOnce,
 				ServerSendSubscriber sender,
-				StreamEndpointImpl io) {
+				StreamOperationsImpl io) {
 			return Flux.from(super.producer(streamId, innerOnce, sender, io));
 		}
 	}

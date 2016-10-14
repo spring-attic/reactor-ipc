@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.ipc.connector;
+package reactor.ipc.stream;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;
@@ -28,9 +28,9 @@ import reactor.core.Cancellation;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
-import reactor.ipc.Inbound;
-import reactor.ipc.Ipc;
-import reactor.ipc.Outbound;
+import reactor.ipc.connector.Inbound;
+import reactor.ipc.connector.Outbound;
+import reactor.ipc.connector.Connector;
 
 abstract class ConnectorHelper {
 
@@ -41,8 +41,8 @@ abstract class ConnectorHelper {
 			Connector<I, O, II, OO> connector,
 			Supplier<?> receiverSupplier,
 			Class<? extends API> api,
-			BiConsumer<? super II, StreamEndpoint> decoder,
-			Function<? super OO, ? extends StreamRemote> encoder) {
+			BiConsumer<? super II, StreamOperations> decoder,
+			Function<? super OO, ? extends StreamOutbound> encoder) {
 
 		return Mono.create(new OnConnectorSubscribe<>(connector,
 				receiverSupplier,
@@ -54,18 +54,18 @@ abstract class ConnectorHelper {
 	static final class OnConnectorSubscribe<I, O, II extends Inbound<I>, OO extends Outbound<O>, API>
 			implements Consumer<MonoSink<API>> {
 
-		final Connector<I, O, II, OO>                               connector;
-		final Supplier<?>                                           localSupplier;
-		final Class<? extends API>                                  remoteApi;
-		final String                                                endpointName;
-		final BiConsumer<? super II, StreamEndpoint>        ipcReader;
-		final Function<? super OO, ? extends StreamRemote> ipcWriter;
+		final Connector<I, O, II, OO>                        connector;
+		final Supplier<?>                                    localSupplier;
+		final Class<? extends API>                           remoteApi;
+		final String                                         endpointName;
+		final BiConsumer<? super II, StreamOperations>       ipcReader;
+		final Function<? super OO, ? extends StreamOutbound> ipcWriter;
 
 		OnConnectorSubscribe(Connector<I, O, II, OO> connector,
 				Supplier<?> localSupplier,
 				Class<? extends API> remoteApi,
-				BiConsumer<? super II, StreamEndpoint> ipcReader,
-				Function<? super OO, ? extends StreamRemote> ipcWriter) {
+				BiConsumer<? super II, StreamOperations> ipcReader,
+				Function<? super OO, ? extends StreamOutbound> ipcWriter) {
 			this.connector = Objects.requireNonNull(connector, "connector");
 			this.endpointName = connector.getClass()
 			                             .getSimpleName()
@@ -91,7 +91,7 @@ abstract class ConnectorHelper {
 				Map<String, Object> clientMap;
 				Map<String, Object> serverMap;
 
-				StreamEndpointImpl[] am = {null};
+				StreamOperationsImpl[] am = {null};
 				API api;
 				final DirectProcessor<Void> closing;
 
@@ -140,13 +140,13 @@ abstract class ConnectorHelper {
 				}
 
 				StreamContextImpl<API> ctx = new StreamContextImpl<>(api);
-				StreamRemote streamRemote =
+				StreamOutbound streamOutbound =
 						Objects.requireNonNull(ipcWriter.apply(out), "remote");
 
 				if (localAPI != null) {
 					serverMap = IpcServiceMapper.serverServiceMap(localAPI);
 
-					am[0] = new StreamEndpointImpl<>(endpointName,
+					am[0] = new StreamOperationsImpl<>(endpointName,
 							(streamId, function, iom) -> {
 								Object action = serverMap.get(function);
 								if (action == null) {
@@ -156,17 +156,15 @@ abstract class ConnectorHelper {
 										action,
 										iom,
 										ctx);
-							},
-							streamRemote, in,
+							}, streamOutbound, in,
 							() -> IpcServiceMapper.invokeDone(localAPI, ctx));
 
 					in.inboundScheduler()
 					  .schedule(() -> IpcServiceMapper.invokeInit(localAPI, ctx));
 				}
 				else {
-					am[0] = new StreamEndpointImpl<>(endpointName,
-							(streamId, function, iom) -> false,
-							streamRemote,
+					am[0] = new StreamOperationsImpl<>(endpointName,
+							(streamId, function, iom) -> false, streamOutbound,
 							in,
 							() -> {
 							});

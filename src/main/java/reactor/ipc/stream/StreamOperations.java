@@ -13,10 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.ipc.connector;
 
-@FunctionalInterface
-interface OnNewStream {
+package reactor.ipc.stream;
 
-	boolean onNew(long streamId, String function, StreamEndpointImpl manager);
+public interface StreamOperations extends StreamOutbound {
+
+	void onNew(long streamId, String function);
+
+	void onNext(long streamId, Object o);
+
+	void onError(long streamId, String reason);
+
+	void onError(long streamId, Throwable e);
+
+	void onComplete(long streamId);
+
+	void onCancel(long streamId, String reason);
+
+	void onRequested(long streamId, long n);
+
 }

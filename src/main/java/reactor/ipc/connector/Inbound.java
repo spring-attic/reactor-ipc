@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.ipc;
+package reactor.ipc.connector;
 
 import java.util.function.Function;
 

@@ -16,22 +16,17 @@
 
 package reactor.ipc.connector;
 
-import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import reactor.core.Cancellation;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.Inbound;
-import reactor.ipc.Outbound;
 
 /**
- * An IPC binder is a channel factory sharing configuration but usually no runtime
+ * An IPC connector is a inbound/outbound factory sharing configuration but usually no
+ * runtime
  * (connection...) state at the exception of shared connection pool setups. Subscribing
  * to the returned {@link Mono} will effectively
  * create a new stateful "client" or "server" socket depending on the implementation.
@@ -57,39 +52,6 @@ import reactor.ipc.Outbound;
 public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extends Outbound<OUT>> {
 
 	/**
-	 * @param receiverSupplier
-	 *
-	 * @return
-	 */
-	default Mono<Void> newReceiver(Supplier<?> receiverSupplier) {
-		Objects.requireNonNull(receiverSupplier, "receiver");
-		return newBidirectional(receiverSupplier, null);
-	}
-
-	/**
-	 * @param api
-	 * @param <API>
-	 *
-	 * @return
-	 */
-	default <API> Mono<API> newProducer(Class<? extends API> api) {
-		Objects.requireNonNull(api, "api");
-		return newBidirectional(null, api);
-	}
-
-	/**
-	 * @param receiverSupplier
-	 * @param api
-	 * @param <API>
-	 *
-	 * @return
-	 */
-	default <API> Mono<API> newBidirectional(Supplier<?> receiverSupplier,
-			Class<? extends API> api) {
-		throw new UnsupportedOperationException("This Connector " + getClass().getSimpleName() + " does not support reactive stream protocol.");
-	}
-
-	/**
 	 * Prepare a {@link BiFunction} IO handler that will react on a new connected state
 	 * each
 	 * time
@@ -105,22 +67,6 @@ public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extend
 	 * failed
 	 */
 	Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> channelHandler);
-
-	/**
-	 * @param receiverSupplier
-	 * @param api
-	 * @param decoder
-	 * @param encoder
-	 * @param <API>
-	 *
-	 * @return
-	 */
-	default <API> Mono<API> newStreamSupport(Supplier<?> receiverSupplier,
-			Class<? extends API> api,
-			BiConsumer<? super INBOUND, StreamEndpoint> decoder,
-			Function<? super OUTBOUND, ? extends StreamRemote> encoder) {
-		return ConnectorHelper.connect(this, receiverSupplier, api, decoder, encoder);
-	}
 
 	/**
 	 * Get the Connector-scoped {@link Scheduler}. Default to {@link

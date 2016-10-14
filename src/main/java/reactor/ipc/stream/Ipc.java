@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.ipc;
+
+package reactor.ipc.stream;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -21,11 +22,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates the method, which has only an RpcStreamContext parameter and void return
- * should be called just after disconnection from the client.
+ * Indicates a public method is a service with possible function name.
+ * <p>Can be applied to incoming and outgoing service interfaces.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface IpcDone {
-    String name() default "";
+public @interface Ipc {
+	String name() default "";
 }

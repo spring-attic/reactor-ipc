@@ -29,8 +29,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.Inbound;
-import reactor.ipc.Outbound;
+import reactor.ipc.connector.Inbound;
+import reactor.ipc.connector.Outbound;
 
 /**
  * @author Stephane Maldini

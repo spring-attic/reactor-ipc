@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package reactor.ipc.stream;
 
-package reactor.ipc;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface StreamContext<T> {
-
-	void set(CharSequence attribute, Object o);
-
-	<U> U get(CharSequence attribute);
-
-	<U> U get(CharSequence attribute, U defaultValue);
-
-	void remove(CharSequence attribute);
-
-	boolean has(CharSequence attribute);
-
-	T remoteAPI();
+/**
+ * Indicates the method, which has only an RpcStreamContext parameter and void return
+ * should be called just after the connection has been established.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface IpcInit {
+    String name() default "";
 }

@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package reactor.ipc.connector;
+package reactor.ipc.stream;
 
-import java.io.IOException;
+public interface StreamContext<T> {
 
-public interface StreamRemote {
+	void set(CharSequence attribute, Object o);
 
-	void sendNew(long streamId, String function);
+	<U> U get(CharSequence attribute);
 
-	void sendCancel(long streamId, String reason);
+	<U> U get(CharSequence attribute, U defaultValue);
 
-	void sendNext(long streamId, Object o) throws IOException;
+	void remove(CharSequence attribute);
 
-	void sendError(long streamId, Throwable e);
+	boolean has(CharSequence attribute);
 
-	void sendComplete(long streamId);
-
-	void sendRequested(long streamId, long n);
-
-	boolean isClosed();
+	T remoteAPI();
 }
