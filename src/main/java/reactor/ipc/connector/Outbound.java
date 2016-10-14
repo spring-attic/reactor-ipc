@@ -74,7 +74,7 @@ public interface Outbound<OUT>  {
 	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or
 	 * any error during write
 	 */
-	default Mono<Void> sendAndFlush(Publisher<? extends Publisher<? extends OUT>> dataStreams) {
+	default Mono<Void> sendGroups(Publisher<? extends Publisher<? extends OUT>> dataStreams) {
 		return Flux.from(dataStreams)
 		           .concatMapDelayError(this::send, false, 32)
 		           .then();
