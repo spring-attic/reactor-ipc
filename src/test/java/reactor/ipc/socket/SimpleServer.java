@@ -58,7 +58,7 @@ public final class SimpleServer extends SimplePeer  {
 	}
 
 	@Override
-	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> channelHandler) {
+	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
 
 		return Mono.create(sink -> {
 			ServerSocket ssocket;
@@ -82,7 +82,7 @@ public final class SimpleServer extends SimplePeer  {
 
 			Cancellation c = acceptor.schedule(() -> socketAccept(ssocket,
 					sink,
-					channelHandler,
+					ioHandler,
 					done));
 
 			sink.setCancellation(() -> {
@@ -107,7 +107,7 @@ public final class SimpleServer extends SimplePeer  {
 
 	void socketAccept(ServerSocket ssocket,
 			MonoSink<Void> sink,
-			BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> channelHandler,
+			BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler,
 			AtomicBoolean done) {
 		while (!Thread.currentThread()
 		              .isInterrupted()) {
@@ -126,7 +126,7 @@ public final class SimpleServer extends SimplePeer  {
 
 			try {
 				SimpleConnection connection = new SimpleConnection(socket, true);
-				Publisher<Void> closing = channelHandler.apply(connection, connection);
+				Publisher<Void> closing = ioHandler.apply(connection, connection);
 				Flux.from(closing)
 				    .subscribe(null, t -> tryClose(socket), () -> tryClose(socket));
 			}

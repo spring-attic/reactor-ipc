@@ -58,7 +58,7 @@ public final class SimpleClient extends SimplePeer {
 	}
 
 	@Override
-	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> channelHandler) {
+	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
 		return Mono.create(sink -> {
 			Socket socket;
 
@@ -74,7 +74,7 @@ public final class SimpleClient extends SimplePeer {
 				});
 
 				SimpleConnection connection = new SimpleConnection(socket);
-				Publisher<Void> closing = channelHandler.apply(connection, connection);
+				Publisher<Void> closing = ioHandler.apply(connection, connection);
 				Flux.from(closing)
 				    .subscribe(null,
 						    t -> tryClose(socket, sink),

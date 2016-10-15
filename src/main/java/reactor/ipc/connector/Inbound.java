@@ -49,17 +49,6 @@ public interface Inbound<IN>  {
 	Flux<IN> receive();
 
 	/**
-	 * Get the inbound publisher (incoming tcp traffic for instance) and decode its traffic
-	 *
-	 * @param decoder a decoding function providing a target type {@link Publisher}
-	 *
-	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
-	 */
-	default <NEW_IN> Flux<NEW_IN> receive(Function<? super Flux<IN>, ? extends Publisher<NEW_IN>> decoder) {
-		return Flux.from(receive().as(decoder));
-	}
-
-	/**
 	 * Get the Inbound-scoped {@link Scheduler}. Default to {@link
 	 * Schedulers#immediate()}
 	 *

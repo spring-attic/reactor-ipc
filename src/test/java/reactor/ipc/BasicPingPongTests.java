@@ -217,10 +217,7 @@ public class BasicPingPongTests {
 		public Publisher<Integer> range(StreamContext<?> ctx, Publisher<Integer> count) {
 //            log.info("Server: range");
 			return Flux.from(count)
-			           .concatMap(v -> {
-//                log.info("Server: " + v);
-				           return Flux.range(1, v);
-			           });
+			           .concatMap(v -> Flux.range(1, v));
 		}
 	}
 
