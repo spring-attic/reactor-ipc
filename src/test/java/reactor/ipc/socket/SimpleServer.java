@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
 import reactor.core.Cancellation;
@@ -58,7 +59,8 @@ public final class SimpleServer extends SimplePeer  {
 	}
 
 	@Override
-	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
+	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler,
+			Consumer<Object> onConnect) {
 
 		return Mono.create(sink -> {
 			ServerSocket ssocket;
@@ -80,10 +82,12 @@ public final class SimpleServer extends SimplePeer  {
 
 			AtomicBoolean done = new AtomicBoolean();
 
-			Cancellation c = acceptor.schedule(() -> socketAccept(ssocket,
+			Cancellation c = acceptor.schedule(() -> {
+				onConnect.accept(ssocket);
+				socketAccept(ssocket,
 					sink,
-					ioHandler,
-					done));
+					ioHandler, done);
+			});
 
 			sink.setCancellation(() -> {
 				if (done.compareAndSet(false, true)) {

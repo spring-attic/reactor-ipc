@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -58,8 +59,10 @@ public final class SimpleClient extends SimplePeer {
 	}
 
 	@Override
-	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
-		return Mono.create(sink -> {
+	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler,
+			Consumer<Object> onConnect) {
+		Objects.requireNonNull(onConnect, "onConnect");
+		return Mono.<Void>create(sink -> {
 			Socket socket;
 
 			try {
@@ -74,6 +77,9 @@ public final class SimpleClient extends SimplePeer {
 				});
 
 				SimpleConnection connection = new SimpleConnection(socket);
+
+				onConnect.accept(connection.delegate());
+
 				Publisher<Void> closing = ioHandler.apply(connection, connection);
 				Flux.from(closing)
 				    .subscribe(null,
@@ -83,7 +89,7 @@ public final class SimpleClient extends SimplePeer {
 			catch (Throwable e) {
 				sink.error(e);
 			}
-		});
+		}).subscribeOn(scheduler);
 	}
 
 	@Override
