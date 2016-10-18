@@ -22,14 +22,13 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
 
@@ -59,10 +58,8 @@ public final class SimpleClient extends SimplePeer {
 	}
 
 	@Override
-	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler,
-			Consumer<Object> onConnect) {
-		Objects.requireNonNull(onConnect, "onConnect");
-		return Mono.<Void>create(sink -> {
+	public Mono<? extends ConnectedState> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
+		return Mono.<ConnectedState>create(sink -> {
 			Socket socket;
 
 			try {
@@ -78,13 +75,11 @@ public final class SimpleClient extends SimplePeer {
 
 				SimpleConnection connection = new SimpleConnection(socket);
 
-				onConnect.accept(connection.delegate());
+				sink.success(connection);
 
 				Publisher<Void> closing = ioHandler.apply(connection, connection);
 				Flux.from(closing)
-				    .subscribe(null,
-						    t -> tryClose(socket, sink),
-						    () -> tryClose(socket, sink));
+				    .subscribe(null, connection::closeError, connection::close);
 			}
 			catch (Throwable e) {
 				sink.error(e);
@@ -95,15 +90,5 @@ public final class SimpleClient extends SimplePeer {
 	@Override
 	public Scheduler scheduler() {
 		return scheduler;
-	}
-
-	void tryClose(Socket socket, MonoSink<Void> sink) {
-		try {
-			socket.close();
-			sink.success();
-		}
-		catch (IOException e) {
-			//IGNORE
-		}
 	}
 }

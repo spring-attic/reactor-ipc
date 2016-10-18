@@ -24,15 +24,16 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
 import reactor.core.Cancellation;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
 
@@ -59,8 +60,7 @@ public final class SimpleServer extends SimplePeer  {
 	}
 
 	@Override
-	public Mono<Void> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler,
-			Consumer<Object> onConnect) {
+	public Mono<? extends ConnectedState> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
 
 		return Mono.create(sink -> {
 			ServerSocket ssocket;
@@ -81,26 +81,12 @@ public final class SimpleServer extends SimplePeer  {
 			}
 
 			AtomicBoolean done = new AtomicBoolean();
+			ServerListening connectedState =
+					new ServerListening(ssocket, done, sink, acceptor);
+			Cancellation c =
+					acceptor.schedule(() -> socketAccept(ioHandler, connectedState));
 
-			Cancellation c = acceptor.schedule(() -> {
-				onConnect.accept(ssocket);
-				socketAccept(ssocket,
-					sink,
-					ioHandler, done);
-			});
-
-			sink.setCancellation(() -> {
-				if (done.compareAndSet(false, true)) {
-					acceptor.shutdown();
-					c.dispose();
-					try {
-						ssocket.close();
-					}
-					catch (IOException ex) {
-						sink.error(ex);
-					}
-				}
-			});
+			sink.setCancellation(() -> connectedState.close(c));
 		});
 	}
 
@@ -109,38 +95,51 @@ public final class SimpleServer extends SimplePeer  {
 		return scheduler;
 	}
 
-	void socketAccept(ServerSocket ssocket,
-			MonoSink<Void> sink,
+	static void socketAccept(
 			BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler,
-			AtomicBoolean done) {
-		while (!Thread.currentThread()
-		              .isInterrupted()) {
-			Socket socket;
+			ServerListening connectedState) {
 
-			try {
-				socket = ssocket.accept();
+		connectedState.sink.success(connectedState);
 
-			}
-			catch (IOException e) {
-				if (!done.get()) {
-					sink.error(e);
+		try {
+			while (!Thread.currentThread()
+			              .isInterrupted()) {
+				Socket socket;
+
+				try {
+					socket = connectedState.ssocket.accept();
+
 				}
-				return;
-			}
+				catch (IOException e) {
+					if (!connectedState.done.get()) {
+						connectedState.sink.error(e);
+					}
+					return;
+				}
 
-			try {
-				SimpleConnection connection = new SimpleConnection(socket, true);
-				Publisher<Void> closing = ioHandler.apply(connection, connection);
-				Flux.from(closing)
-				    .subscribe(null, t -> tryClose(socket), () -> tryClose(socket));
+				try {
+					SimpleConnection connection = new SimpleConnection(socket, true);
+					Publisher<Void> closing = ioHandler.apply(connection, connection);
+					Flux.from(closing)
+					    .subscribe(null, connection::closeError, connection::close);
+				}
+				catch (Throwable ex) {
+					tryClose(socket);
+				}
 			}
-			catch (Throwable ex) {
-				tryClose(socket);
+		}
+		catch (Throwable t) {
+			if(connectedState.done.compareAndSet(false, true)) {
+				connectedState.processor.onError(t);
 			}
+			return;
+		}
+		if(connectedState.done.compareAndSet(false, true)) {
+			connectedState.processor.onComplete();
 		}
 	}
 
-	void tryClose(Socket socket) {
+	static void tryClose(Socket socket) {
 		try {
 			socket.close();
 		}
@@ -155,4 +154,58 @@ public final class SimpleServer extends SimplePeer  {
 				t.setDaemon(true);
 				return t;
 			}));
+
+	static final class ServerListening implements ConnectedState {
+
+		final ServerSocket             ssocket;
+		final AtomicBoolean            done;
+		final MonoSink<ConnectedState> sink;
+		final Scheduler                acceptor;
+		final DirectProcessor<Void>    processor;
+		final Mono<Void>               completeMono;
+
+		public ServerListening(ServerSocket ssocket,
+				AtomicBoolean done,
+				MonoSink<ConnectedState> sink,
+				Scheduler acceptor) {
+			this.ssocket = ssocket;
+			this.done = done;
+			this.sink = sink;
+			this.acceptor = acceptor;
+			this.processor = DirectProcessor.create();
+			this.completeMono = Mono.from(processor);
+		}
+
+		@Override
+		public Object delegate() {
+			return ssocket;
+		}
+
+		@Override
+		public Mono<Void> onClose() {
+			return completeMono;
+		}
+
+		@Override
+		public void dispose() {
+			close(null);
+		}
+
+		void close(Cancellation c) {
+			if (done.compareAndSet(false, true)) {
+				acceptor.shutdown();
+				if (c != null) {
+					c.dispose();
+				}
+				try {
+					ssocket.close();
+				}
+				catch (IOException ex) {
+					processor.onError(ex);
+					return;
+				}
+				processor.onComplete();
+			}
+		}
+	}
 }

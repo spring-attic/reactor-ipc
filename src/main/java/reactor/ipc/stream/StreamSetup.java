@@ -28,9 +28,10 @@ import reactor.core.Cancellation;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
+import reactor.ipc.connector.ConnectedState;
+import reactor.ipc.connector.Connector;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
-import reactor.ipc.connector.Connector;
 
 abstract class StreamSetup {
 
@@ -77,6 +78,7 @@ abstract class StreamSetup {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public void accept(MonoSink<API> sink) {
 			Object localAPI;
 
@@ -87,7 +89,7 @@ abstract class StreamSetup {
 				localAPI = Objects.requireNonNull(localSupplier.get(), "localSupplier");
 			}
 
-			Cancellation c = connector.newHandler((in, out) -> {
+			Mono<? extends ConnectedState> connect = connector.newHandler((in, out) -> {
 				Map<String, Object> clientMap;
 				Map<String, Object> serverMap;
 
@@ -164,7 +166,8 @@ abstract class StreamSetup {
 				}
 				else {
 					am[0] = new StreamOperationsImpl<>(endpointName,
-							(streamId, function, iom) -> false, streamOutbound,
+							(streamId, function, iom) -> false,
+							streamOutbound,
 							in,
 							() -> {
 							});
@@ -179,8 +182,17 @@ abstract class StreamSetup {
 				}
 
 				return closing != null ? closing : Mono.never();
-			})
-			                          .subscribe(null, sink::error, sink::success);
+			});
+
+			Cancellation c;
+			if (remoteApi != null) {
+				c = connect.subscribe(null, sink::error);
+			}
+			else {
+				c =
+						connect.subscribe(connectedState -> sink.success((API) connectedState),
+								sink::error);
+			}
 			sink.setCancellation(c);
 		}
 	}

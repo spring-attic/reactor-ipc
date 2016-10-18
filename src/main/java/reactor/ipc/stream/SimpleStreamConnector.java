@@ -19,12 +19,12 @@ package reactor.ipc.stream;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
+import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Connector;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
@@ -54,8 +54,7 @@ final class SimpleStreamConnector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND
 	}
 
 	@Override
-	public Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ?
-			extends Publisher<Void>> ioHandler, Consumer<Object> onConnect) {
-		return connector.newHandler(ioHandler, onConnect);
+	public Mono<? extends ConnectedState> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> ioHandler) {
+		return connector.newHandler(ioHandler);
 	}
 }

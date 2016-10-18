@@ -29,11 +29,13 @@ import java.util.function.IntConsumer;
 
 import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
 import reactor.ipc.stream.StreamOutbound;
@@ -42,7 +44,11 @@ import reactor.ipc.stream.StreamOutbound;
  * @author Stephane Maldini
  */
 final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
-                                        StreamOutbound {
+                                        StreamOutbound, ConnectedState {
+
+	final DirectProcessor<Void> processor;
+
+	final Mono<Void> onClose;
 
 	final Socket socket;
 
@@ -71,7 +77,8 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 		this.terminateOnce = new AtomicBoolean();
 		this.readBuffer = new byte[16];
 		this.writeBuffer = new byte[32];
-
+		this.processor = DirectProcessor.create();
+		this.onClose = Mono.from(processor);
 		this.dispatcher =
 				Schedulers.newParallel("simple-" + (server ? "server" : "client") + "-io",
 						2,
@@ -107,17 +114,24 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 
 	}
 
-	void tryClose() {
+
+	static void tryClose(Socket socket) {
 		try {
-			readScheduler.shutdown();
-			writeScheduler.shutdown();
-			dispatcher.shutdown();
-			in.close();
-			out.close();
+			socket.close();
 		}
-		catch (IOException io) {
+		catch (IOException e) {
 			//IGNORE
 		}
+	}
+
+	void close() {
+		tryClose(socket);
+		processor.onComplete();
+	}
+
+	void closeError(Throwable throwable) {
+		tryClose(socket);
+		processor.onError(throwable);
 	}
 
 	@Override
@@ -326,5 +340,29 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 	@Override
 	public Scheduler inboundScheduler() {
 		return readScheduler;
+	}
+
+	@Override
+	public Scheduler outboundScheduler() {
+		return writeScheduler;
+	}
+
+	@Override
+	public Mono<Void> onClose() {
+		return onClose;
+	}
+
+	@Override
+	public void dispose() {
+		try {
+			readScheduler.shutdown();
+			writeScheduler.shutdown();
+			dispatcher.shutdown();
+			in.close();
+			out.close();
+		}
+		catch (IOException io) {
+			//IGNORE
+		}
 	}
 }
