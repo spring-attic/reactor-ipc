@@ -17,6 +17,7 @@
 package reactor.ipc.connector;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
 import reactor.core.Cancellation;
@@ -61,12 +62,35 @@ public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extend
 	 * The IO handler will return {@link Publisher} to signal when to terminate the
 	 * underlying resource channel.
 	 *
-	 * @param ioHandler
+	 * @param ioHandler the in/out callback returning a closing publisher
 	 *
 	 * @return a {@link Mono} completing when the underlying resource has been closed or
 	 * failed
 	 */
-	Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> ioHandler);
+	default Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends
+			Publisher<Void>> ioHandler){
+		return newHandler(ioHandler, NOOP_ONCONNECT);
+	}
+
+	/**
+	 * Prepare a {@link BiFunction} IO handler that will react on a new connected state
+	 * each
+	 * time
+	 * the returned  {@link Mono} is subscribed. This {@link Connector} shouldn't assume
+	 * any state related to the individual created/cleaned resources.
+	 * <p>
+	 * The IO handler will return {@link Publisher} to signal when to terminate the
+	 * underlying resource channel.
+	 *
+	 * @param ioHandler the in/out callback returning a closing publisher
+	 * @param onConnect the initalization callback given the underlying
+	 * runtime reference as a generic object (e.g. Socket, ServerSocket...)
+	 *
+	 * @return a {@link Mono} completing when the underlying resource has been closed or
+	 * failed
+	 */
+	Mono<Void> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends
+			Publisher<Void>> ioHandler, Consumer<Object> onConnect);
 
 	/**
 	 * Get the Connector-scoped {@link Scheduler}. Default to {@link
@@ -78,4 +102,6 @@ public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extend
 	default Scheduler scheduler() {
 		return Schedulers.immediate();
 	}
+
+	Consumer<Object> NOOP_ONCONNECT = x -> {};
 }
