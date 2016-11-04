@@ -32,28 +32,10 @@ import static reactor.core.publisher.Flux.just;
  * When a drained Publisher completes or error, the channel will automatically "flush" its pending writes.
  *
  * @author Stephane Maldini
- * @since 0.5
+ * @since 0.6
  */
 @FunctionalInterface
 public interface Outbound<OUT>  {
-
-	/**
-	 * @return The underlying IO runtime connection reference (Netty Channel for instance)
-	 */
-	default Object delegate() {
-		return null;
-	}
-
-	/**
-	 * Get the Outbound-scoped {@link Scheduler}. Default to {@link
-	 * Schedulers#immediate()}
-	 *
-	 * @return the Connector-scoped {@link Scheduler}
-	 */
-
-	default Scheduler outboundScheduler() {
-		return Schedulers.immediate();
-	}
 
 	/**
 	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
@@ -63,20 +45,4 @@ public interface Outbound<OUT>  {
 	 */
 	Mono<Void> send(Publisher<? extends OUT> dataStream);
 
-
-	/**
-	 * Send data to the peer, listen for any error on write and close on terminal signal
-	 * (complete|error).Each individual {@link Publisher} completion will flush
-	 * the underlying IO runtime.
-	 *
-	 * @param dataStreams the dataStream publishing OUT items to write on this channel
-	 *
-	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or
-	 * any error during write
-	 */
-	default Mono<Void> sendGroups(Publisher<? extends Publisher<? extends OUT>> dataStreams) {
-		return Flux.from(dataStreams)
-		           .concatMapDelayError(this::send, false, 32)
-		           .then();
-	}
 }

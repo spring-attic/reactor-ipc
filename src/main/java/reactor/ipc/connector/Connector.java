@@ -63,19 +63,10 @@ public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extend
 	 *
 	 * @param ioHandler the in/out callback returning a closing publisher
 	 *
-	 * @return a {@link Mono} completing with a {@link ConnectedState} when the underlying
-	 * resource has been connected or failing with the connection error.
+	 * @return a {@link Mono} completing with a {@link Cancellation} token to dispose
+	 * the active handler (server, client connection...) or failing with the connection
+	 * error.
 	 */
-	Mono<? extends ConnectedState> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> ioHandler);
+	Mono<? extends Cancellation> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> ioHandler);
 
-	/**
-	 * Get the Connector-scoped {@link Scheduler}. Default to {@link
-	 * Schedulers#immediate()}
-	 *
-	 * @return the Connector-scoped {@link Scheduler}
-	 */
-
-	default Scheduler scheduler() {
-		return Schedulers.immediate();
-	}
 }

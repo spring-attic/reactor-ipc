@@ -28,7 +28,6 @@ import reactor.core.Cancellation;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
-import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Connector;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
@@ -89,7 +88,7 @@ abstract class StreamSetup {
 				localAPI = Objects.requireNonNull(localSupplier.get(), "localSupplier");
 			}
 
-			Mono<? extends ConnectedState> connect = connector.newHandler((in, out) -> {
+			Mono<? extends Cancellation> connect = connector.newHandler((in, out) -> {
 				Map<String, Object> clientMap;
 				Map<String, Object> serverMap;
 
@@ -161,8 +160,7 @@ abstract class StreamSetup {
 							}, streamOutbound, in,
 							() -> IpcServiceMapper.invokeDone(localAPI, ctx));
 
-					in.inboundScheduler()
-					  .schedule(() -> IpcServiceMapper.invokeInit(localAPI, ctx));
+					IpcServiceMapper.invokeInit(localAPI, ctx);
 				}
 				else {
 					am[0] = new StreamOperationsImpl<>(endpointName,

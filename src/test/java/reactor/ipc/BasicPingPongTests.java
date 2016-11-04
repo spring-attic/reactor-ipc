@@ -25,7 +25,6 @@ import reactor.core.Cancellation;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.socket.SimpleClient;
 import reactor.ipc.socket.SimpleServer;
 import reactor.ipc.stream.Ipc;
@@ -149,7 +148,7 @@ public class BasicPingPongTests {
 	@Test
 	public void pingPong() throws Exception {
 
-		ConnectedState c = SimpleServer.create(12345)
+		Cancellation c = SimpleServer.create(12345)
 		                             .newReceiver(PingPongServerAPI::new)
 		                             .block();
 
@@ -225,7 +224,7 @@ public class BasicPingPongTests {
 	@Test
 	public void streamPerf() throws Exception {
 
-		ConnectedState c = SimpleServer.create(12345)
+		Cancellation c = SimpleServer.create(12345)
 		                               .newReceiver(StreamPerfServerAPI::new)
 		                               .block();
 

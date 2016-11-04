@@ -24,11 +24,11 @@ import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
+import reactor.core.Cancellation;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
 
@@ -58,8 +58,8 @@ public final class SimpleClient extends SimplePeer {
 	}
 
 	@Override
-	public Mono<? extends ConnectedState> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
-		return Mono.<ConnectedState>create(sink -> {
+	public Mono<? extends Cancellation> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
+		return Mono.<Cancellation>create(sink -> {
 			Socket socket;
 
 			try {
@@ -87,8 +87,4 @@ public final class SimpleClient extends SimplePeer {
 		}).subscribeOn(scheduler);
 	}
 
-	@Override
-	public Scheduler scheduler() {
-		return scheduler;
-	}
 }

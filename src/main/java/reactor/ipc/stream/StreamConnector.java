@@ -21,8 +21,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import reactor.core.Cancellation;
 import reactor.core.publisher.Mono;
-import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Connector;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
@@ -61,7 +61,7 @@ public interface StreamConnector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND 
 	 *
 	 * @return
 	 */
-	default Mono<? extends ConnectedState> newReceiver(Supplier<?> receiverSupplier) {
+	default Mono<? extends Cancellation> newReceiver(Supplier<?> receiverSupplier) {
 		Objects.requireNonNull(receiverSupplier, "receiver");
 		return newBidirectional(receiverSupplier, null);
 	}

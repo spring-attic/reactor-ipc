@@ -16,12 +16,7 @@
 
 package reactor.ipc.connector;
 
-import java.util.function.Function;
-
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * A {@link Inbound} is a reactive gateway for incoming data flows.
@@ -29,17 +24,10 @@ import reactor.core.scheduler.Schedulers;
  * <p>
  *
  * @author Stephane Maldini
- * @since 0.5
+ * @since 0.6
  */
 @FunctionalInterface
 public interface Inbound<IN>  {
-
-	/**
-	 * @return The underlying IO runtime connection reference (Netty Channel for instance)
-	 */
-	default Object delegate() {
-		return null;
-	}
 
 	/**
 	 * Get the inbound publisher (incoming tcp traffic for instance)
@@ -47,15 +35,4 @@ public interface Inbound<IN>  {
 	 * @return A {@link Flux} to signal reads and stop reading when un-requested.
 	 */
 	Flux<IN> receive();
-
-	/**
-	 * Get the Inbound-scoped {@link Scheduler}. Default to {@link
-	 * Schedulers#immediate()}
-	 *
-	 * @return the Connector-scoped {@link Scheduler}
-	 */
-
-	default Scheduler inboundScheduler() {
-		return Schedulers.immediate();
-	}
 }

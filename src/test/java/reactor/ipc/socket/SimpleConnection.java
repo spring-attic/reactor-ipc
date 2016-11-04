@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntConsumer;
 
 import org.reactivestreams.Publisher;
+import reactor.core.Cancellation;
 import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
@@ -35,7 +36,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.ipc.connector.ConnectedState;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
 import reactor.ipc.stream.StreamOutbound;
@@ -44,7 +44,7 @@ import reactor.ipc.stream.StreamOutbound;
  * @author Stephane Maldini
  */
 final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
-                                        StreamOutbound, ConnectedState {
+                                        StreamOutbound, Cancellation {
 
 	final DirectProcessor<Void> processor;
 
@@ -137,11 +137,6 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 	@Override
 	public Flux<byte[]> receive() {
 		return receiver;
-	}
-
-	@Override
-	public Socket delegate() {
-		return socket;
 	}
 
 	@Override
@@ -335,21 +330,6 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 		ByteArrayInputStream bin = new ByteArrayInputStream(payload);
 		ObjectInputStream oin = new ObjectInputStream(bin);
 		return oin.readObject();
-	}
-
-	@Override
-	public Scheduler inboundScheduler() {
-		return readScheduler;
-	}
-
-	@Override
-	public Scheduler outboundScheduler() {
-		return writeScheduler;
-	}
-
-	@Override
-	public Mono<Void> onClose() {
-		return onClose;
 	}
 
 	@Override
