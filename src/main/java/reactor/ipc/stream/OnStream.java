@@ -16,7 +16,7 @@
 package reactor.ipc.stream;
 
 @FunctionalInterface
-interface OnNewStream {
+interface OnStream {
 
-	boolean onNew(long streamId, String function, StreamOperationsImpl manager);
+	boolean onStream(long streamId, String function, StreamOperationsImpl manager);
 }

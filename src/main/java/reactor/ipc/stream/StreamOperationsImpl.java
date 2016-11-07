@@ -47,7 +47,7 @@ final class StreamOperationsImpl<IN, OUT> extends AtomicLong
 
 	final String name;
 
-	final OnNewStream onNew;
+	final OnStream onNew;
 
 	final Runnable onTerminate;
 
@@ -56,7 +56,7 @@ final class StreamOperationsImpl<IN, OUT> extends AtomicLong
 	final Inbound<? extends IN> channel;
 
 	StreamOperationsImpl(String name,
-			OnNewStream onNew,
+			OnStream onNew,
 			StreamOutbound remote,
 			Inbound<? extends IN> channel,
 			Runnable onTerminate) {
@@ -95,11 +95,11 @@ final class StreamOperationsImpl<IN, OUT> extends AtomicLong
 	@Override
 	public void onNew(long streamId, String function) {
 		if (log.isDebugEnabled()) {
-			log.debug("{}/onNew/{}/{}", name, streamId, function);
+			log.debug("{}/onStream/{}/{}", name, streamId, function);
 		}
-		if (!onNew.onNew(streamId, function, this)) {
+		if (!onNew.onStream(streamId, function, this)) {
 			if (log.isDebugEnabled()) {
-				log.debug("{}/onNew/{} {}",
+				log.debug("{}/onStream/{} {}",
 						name,
 						streamId,
 						"New stream(" + function + ") rejected");
