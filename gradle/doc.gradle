@@ -41,11 +41,6 @@ configure(rootProject) {
 
 	maxMemory = "1024m"
 	destinationDir = new File(buildDir, "docs/javadoc")
-
-	doFirst {
-	  classpath = files(
-			  rootProject.subprojects.collect { it.sourceSets.main.compileClasspath })
-	}
   }
 
   asciidoctor {
