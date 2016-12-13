@@ -17,32 +17,78 @@
 package reactor.ipc.connector;
 
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
+import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
-
-import static reactor.core.publisher.Flux.just;
 
 /**
- * A {@link Outbound} is a reactive gateway for outgoing data flows.
+ * A {@link Outbound} is a reactive gateway for outgoing data flows. Like a Flux or a Mono
+ * it can be chained via {@link #send} and a subscribe to the tailing outbound will
+ * schedule all the parent send in the declaration order.
  * <p>
- * Writing and "flushing" is controlled by sinking 1 or more {@link #send(Publisher)}
- * that will forward data to outbound.
- * When a drained Publisher completes or error, the channel will automatically "flush" its pending writes.
+ * Writing and "flushing" is controlled by sinking 1 or more {@link #send(Publisher)} that
+ * will forward data to outbound. When a drained Publisher completes or error, the channel
+ * will automatically "flush" its pending writes.
  *
  * @author Stephane Maldini
  * @since 0.6
  */
 @FunctionalInterface
-public interface Outbound<OUT>  {
+public interface Outbound<OUT> extends Publisher<Void> {
 
 	/**
-	 * Send data to the peer, listen for any error on write and close on terminal signal (complete|error).
+	 * Return a never completing {@link Mono} after this {@link Outbound#then()} has
+	 * completed.
+	 *
+	 * @return a never completing {@link Mono} after this {@link Outbound#then()} has
+	 * completed.
+	 */
+	default Mono<Void> neverComplete() {
+		return then(Mono.never()).then();
+	}
+
+	/**
+	 * Send data to the peer, listen for any error on write and close on terminal signal
+	 * (complete|error). <p>A new {@link Outbound} type (or the same) for typed send
+	 * sequences. An implementor can therefore specialize the Outbound after a first after
+	 * a prepending data publisher.
 	 *
 	 * @param dataStream the dataStream publishing OUT items to write on this channel
-	 * @return A {@link Mono} to signal successful sequence write (e.g. after "flush") or any error during write
+	 *
+	 * @return A new {@link Outbound} to append further send. It will emit a complete
+	 * signal successful sequence write (e.g. after "flush") or  any error during write.
 	 */
-	Mono<Void> send(Publisher<? extends OUT> dataStream);
+	Outbound<OUT> send(Publisher<? extends OUT> dataStream);
 
+	/**
+	 * Subscribe a {@code Void} subscriber to this outbound and trigger all eventual
+	 * parent outbound send.
+	 *
+	 * @param s the {@link Subscriber} to listen for send sequence completion/failure
+	 */
+	@Override
+	default void subscribe(Subscriber<? super Void> s) {
+		then().subscribe(s);
+	}
+
+	/**
+	 * Obtain a {@link Mono} of pending outbound(s) write completion.
+	 *
+	 * @return a {@link Mono} of pending outbound(s) write completion
+	 */
+	default Mono<Void> then() {
+		return Mono.empty();
+	}
+
+	/**
+	 * Append a {@link Publisher} task such as a Mono and return a new
+	 * {@link Outbound} to sequence further send.
+	 *
+	 * @param other the {@link Publisher} to subscribe to when this pending outbound
+	 * {@link #then} is complete;
+	 *
+	 * @return a new {@link Outbound}
+	 */
+	default Outbound<OUT> then(Publisher<Void> other) {
+		return new OutboundThen<>(this, other);
+	}
 }

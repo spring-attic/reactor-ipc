@@ -139,8 +139,10 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 		return receiver;
 	}
 
+
+
 	@Override
-	public Mono<Void> send(Publisher<? extends byte[]> dataStream) {
+	public Outbound<byte[]> send(Publisher<? extends byte[]> dataStream) {
 		throw new UnsupportedOperationException();
 	}
 
