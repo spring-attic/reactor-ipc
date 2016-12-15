@@ -13,7 +13,7 @@ Backpressure-ready components to encode, decode, send (unicast, multicast or req
 http://projectreactor.io/ipc/docs/reference/
 
 ## Javadoc
-http://projectreactor.io/ipc/docs/api/
+http://projectreactor.io/docs/ipc/release/api/
 
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
 
