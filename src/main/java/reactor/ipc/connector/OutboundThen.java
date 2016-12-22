@@ -37,7 +37,7 @@ final class OutboundThen<OUT> implements Outbound<OUT> {
 			this.thenMono = Mono.from(thenPublisher);
 		}
 		else {
-			this.thenMono = parentMono.then(Mono.from(thenPublisher));
+			this.thenMono = parentMono.thenEmpty(thenPublisher);
 		}
 	}
 

@@ -21,7 +21,7 @@ import java.util.function.Function;
 
 import org.junit.Test;
 import org.reactivestreams.Publisher;
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -36,7 +36,7 @@ public class BasicPingPongTests {
 	
 	static final Logger log = Loggers.getLogger(BasicPingPongTests.class);
 
-	public interface PingPongClientAPI extends Cancellation {
+	public interface PingPongClientAPI extends Disposable {
 
 		@Ipc
 		Mono<Integer> pong2(Mono<Integer> ping);
@@ -148,7 +148,7 @@ public class BasicPingPongTests {
 	@Test
 	public void pingPong() throws Exception {
 
-		Cancellation c = SimpleServer.create(12345)
+		Disposable c = SimpleServer.create(12345)
 		                             .newReceiver(PingPongServerAPI::new)
 		                             .block();
 
@@ -205,7 +205,7 @@ public class BasicPingPongTests {
 		c.dispose();
 	}
 
-	public interface StreamPerfClientAPI extends Cancellation {
+	public interface StreamPerfClientAPI extends Disposable {
 
 		@Ipc
 		Publisher<Integer> range(Publisher<Integer> count);
@@ -224,7 +224,7 @@ public class BasicPingPongTests {
 	@Test
 	public void streamPerf() throws Exception {
 
-		Cancellation c = SimpleServer.create(12345)
+		Disposable c = SimpleServer.create(12345)
 		                               .newReceiver(StreamPerfServerAPI::new)
 		                               .block();
 

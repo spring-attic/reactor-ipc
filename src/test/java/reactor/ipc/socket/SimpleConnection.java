@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntConsumer;
 
 import org.reactivestreams.Publisher;
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.Exceptions;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
@@ -44,7 +44,7 @@ import reactor.ipc.stream.StreamOutbound;
  * @author Stephane Maldini
  */
 final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
-                                        StreamOutbound, Cancellation {
+                                        StreamOutbound, Disposable {
 
 	final DirectProcessor<Void> processor;
 

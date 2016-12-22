@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -58,8 +58,8 @@ public final class SimpleClient extends SimplePeer {
 	}
 
 	@Override
-	public Mono<? extends Cancellation> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
-		return Mono.<Cancellation>create(sink -> {
+	public Mono<? extends Disposable> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
+		return Mono.<Disposable>create(sink -> {
 			Socket socket;
 
 			try {

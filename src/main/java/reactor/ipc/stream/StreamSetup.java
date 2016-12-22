@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -88,7 +88,7 @@ abstract class StreamSetup {
 				localAPI = Objects.requireNonNull(localSupplier.get(), "localSupplier");
 			}
 
-			Mono<? extends Cancellation> connect = connector.newHandler((in, out) -> {
+			Mono<? extends Disposable> connect = connector.newHandler((in, out) -> {
 				Map<String, Object> clientMap;
 				Map<String, Object> serverMap;
 
@@ -98,7 +98,7 @@ abstract class StreamSetup {
 
 				if (remoteApi != null) {
 					clientMap = IpcServiceMapper.clientServiceMap(remoteApi);
-					if (Cancellation.class.isAssignableFrom(remoteApi)) {
+					if (Disposable.class.isAssignableFrom(remoteApi)) {
 						closing = DirectProcessor.create();
 					}
 					else {
@@ -112,7 +112,7 @@ abstract class StreamSetup {
 										Ipc a = m.getAnnotation(Ipc.class);
 										if (a == null) {
 											if (closing != null && m.getDeclaringClass()
-											                        .equals(Cancellation.class)) {
+											                        .equals(Disposable.class)) {
 												closing.onComplete();
 												return null;
 											}
@@ -182,7 +182,7 @@ abstract class StreamSetup {
 				return closing != null ? closing : Mono.never();
 			});
 
-			Cancellation c;
+			Disposable c;
 			if (remoteApi != null) {
 				c = connect.subscribe(null, sink::error);
 			}

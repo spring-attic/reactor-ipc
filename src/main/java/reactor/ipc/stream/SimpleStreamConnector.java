@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.ipc.connector.Connector;
 import reactor.ipc.connector.Inbound;
@@ -54,7 +54,7 @@ final class SimpleStreamConnector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND
 	}
 
 	@Override
-	public Mono<? extends Cancellation> newHandler(BiFunction<? super INBOUND, ? super
+	public Mono<? extends Disposable> newHandler(BiFunction<? super INBOUND, ? super
 			OUTBOUND, ?	extends Publisher<Void>> ioHandler) {
 		return connector.newHandler(ioHandler);
 	}

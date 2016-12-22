@@ -19,10 +19,8 @@ package reactor.ipc.connector;
 import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * An IPC connector is a inbound/outbound factory sharing configuration but usually no
@@ -36,7 +34,7 @@ import reactor.core.scheduler.Schedulers;
  * <p>Clients or Receivers will onSubscribe when their connection is established. They
  * will complete when the unique returned closing {@link Publisher} completes itself or if
  * the connection is remotely terminated. Calling the returned {@link
- * Cancellation#dispose()} from {@link Mono#subscribe()} will terminate the subscription
+ * Disposable#dispose()} from {@link Mono#subscribe()} will terminate the subscription
  * and underlying connection from the local peer.
  * <p>
  * <p>Servers or Producers will onSubscribe when their socket is bound locally. They will
@@ -63,10 +61,10 @@ public interface Connector<IN, OUT, INBOUND extends Inbound<IN>, OUTBOUND extend
 	 *
 	 * @param ioHandler the in/out callback returning a closing publisher
 	 *
-	 * @return a {@link Mono} completing with a {@link Cancellation} token to dispose
+	 * @return a {@link Mono} completing with a {@link Disposable} token to dispose
 	 * the active handler (server, client connection...) or failing with the connection
 	 * error.
 	 */
-	Mono<? extends Cancellation> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> ioHandler);
+	Mono<? extends Disposable> newHandler(BiFunction<? super INBOUND, ? super OUTBOUND, ? extends Publisher<Void>> ioHandler);
 
 }

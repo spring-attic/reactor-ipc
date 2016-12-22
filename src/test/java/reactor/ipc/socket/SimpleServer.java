@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -58,7 +58,7 @@ public final class SimpleServer extends SimplePeer  {
 	}
 
 	@Override
-	public Mono<? extends Cancellation> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
+	public Mono<? extends Disposable> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
 
 		return Mono.create(sink -> {
 			ServerSocket ssocket;
@@ -81,7 +81,7 @@ public final class SimpleServer extends SimplePeer  {
 			AtomicBoolean done = new AtomicBoolean();
 			ServerListening connectedState =
 					new ServerListening(ssocket, done, sink, acceptor);
-			Cancellation c =
+			Disposable c =
 					acceptor.schedule(() -> socketAccept(ioHandler, connectedState));
 
 			sink.setCancellation(() -> connectedState.close(c));
@@ -138,16 +138,16 @@ public final class SimpleServer extends SimplePeer  {
 				return t;
 			}));
 
-	static final class ServerListening implements Cancellation {
+	static final class ServerListening implements Disposable {
 
 		final ServerSocket           ssocket;
 		final AtomicBoolean          done;
-		final MonoSink<Cancellation> sink;
+		final MonoSink<Disposable> sink;
 		final Scheduler              acceptor;
 
 		public ServerListening(ServerSocket ssocket,
 				AtomicBoolean done,
-				MonoSink<Cancellation> sink,
+				MonoSink<Disposable> sink,
 				Scheduler acceptor) {
 			this.ssocket = ssocket;
 			this.done = done;
@@ -160,7 +160,7 @@ public final class SimpleServer extends SimplePeer  {
 			close(null);
 		}
 
-		void close(Cancellation c) {
+		void close(Disposable c) {
 			if (done.compareAndSet(false, true)) {
 				acceptor.shutdown();
 				if (c != null) {
