@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
+import reactor.core.Cancellation;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -81,8 +82,9 @@ public final class SimpleServer extends SimplePeer  {
 			AtomicBoolean done = new AtomicBoolean();
 			ServerListening connectedState =
 					new ServerListening(ssocket, done, sink, acceptor);
-			Disposable c =
-					acceptor.schedule(() -> socketAccept(ioHandler, connectedState));
+			Cancellation c =
+					acceptor.schedule(() -> socketAccept(ioHandler, connectedState,
+							acceptor));
 
 			sink.setCancellation(() -> connectedState.close(c));
 		});
@@ -90,12 +92,12 @@ public final class SimpleServer extends SimplePeer  {
 
 	static void socketAccept(
 			BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler,
-			ServerListening connectedState) {
+			ServerListening connectedState, Scheduler acceptor) {
 
 		connectedState.sink.success(connectedState);
 
 			while (!Thread.currentThread()
-			              .isInterrupted()) {
+			              .isInterrupted() && !acceptor.isDisposed()) {
 				Socket socket;
 
 				try {
@@ -131,13 +133,6 @@ public final class SimpleServer extends SimplePeer  {
 		}
 	}
 
-	static final Scheduler scheduler =
-			Schedulers.fromExecutorService(Executors.newCachedThreadPool(r -> {
-				Thread t = new Thread(r, "test-server-pool");
-				t.setDaemon(true);
-				return t;
-			}));
-
 	static final class ServerListening implements Disposable {
 
 		final ServerSocket           ssocket;
@@ -160,9 +155,9 @@ public final class SimpleServer extends SimplePeer  {
 			close(null);
 		}
 
-		void close(Disposable c) {
+		void close(Cancellation c) {
 			if (done.compareAndSet(false, true)) {
-				acceptor.shutdown();
+				acceptor.dispose();
 				if (c != null) {
 					c.dispose();
 				}
