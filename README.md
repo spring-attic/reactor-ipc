@@ -9,9 +9,6 @@ Backpressure-ready components to encode, decode, send (unicast, multicast or req
 - [reactor-kafka](https://github.com/reactor/reactor-kafka) : Reactive Kafka client
 - [reactor-aeron](https://github.com/reactor/reactor-aeron) : Efficient Unicast/Multicast reactive-streams transport for Aeron
 
-## Reference
-http://projectreactor.io/ipc/docs/reference/
-
 ## Javadoc
 http://projectreactor.io/docs/ipc/release/api/
 
