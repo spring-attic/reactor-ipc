@@ -16,7 +16,6 @@
 
 package reactor.ipc;
 
-import java.net.InetAddress;
 import java.util.function.Function;
 
 import org.junit.Test;
@@ -26,6 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.ipc.socket.SimpleClient;
+import reactor.ipc.socket.SimpleContext;
 import reactor.ipc.socket.SimpleServer;
 import reactor.ipc.stream.Ipc;
 import reactor.ipc.stream.StreamContext;
@@ -148,11 +148,15 @@ public class BasicPingPongTests {
 	@Test
 	public void pingPong() throws Exception {
 
-		Disposable c = SimpleServer.create(12345)
-		                             .newReceiver(PingPongServerAPI::new)
-		                             .block();
+		SimpleContext c = SimpleServer.create(0)
+		                              .newReceiver(PingPongServerAPI::new)
+		                              .cast(SimpleContext.class)
+		                              .block();
 
-		PingPongClientAPI api = SimpleClient.create(InetAddress.getLocalHost(), 12345)
+		PingPongClientAPI api = SimpleClient.create(c.address()
+		                                             .getAddress(),
+				c.address()
+				 .getPort())
 		                                    .newProducer(PingPongClientAPI.class)
 		                                    .block();
 
@@ -224,11 +228,15 @@ public class BasicPingPongTests {
 	@Test
 	public void streamPerf() throws Exception {
 
-		Disposable c = SimpleServer.create(12345)
-		                               .newReceiver(StreamPerfServerAPI::new)
-		                               .block();
+		SimpleContext c = SimpleServer.create(0)
+		                              .newReceiver(StreamPerfServerAPI::new)
+		                              .cast(SimpleContext.class)
+		                              .block();
 
-		StreamPerfClientAPI api = SimpleClient.create(InetAddress.getLocalHost(), 12345)
+		StreamPerfClientAPI api = SimpleClient.create(c.address()
+		                                               .getAddress(),
+				c.address()
+				 .getPort())
 		                                      .newProducer(StreamPerfClientAPI.class)
 		                                      .block();
 

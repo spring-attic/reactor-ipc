@@ -58,8 +58,9 @@ public final class SimpleClient extends SimplePeer {
 	}
 
 	@Override
-	public Mono<? extends Disposable> newHandler(BiFunction<? super Inbound<byte[]>, ? super Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
-		return Mono.<Disposable>create(sink -> {
+	public Mono<SimpleContext> newHandler(BiFunction<? super Inbound<byte[]>, ? super
+			Outbound<byte[]>, ? extends Publisher<Void>> ioHandler) {
+		return Mono.<SimpleContext>create(sink -> {
 			Socket socket;
 
 			try {

@@ -17,9 +17,12 @@
 package reactor.ipc.socket;
 
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.reactivestreams.Publisher;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;

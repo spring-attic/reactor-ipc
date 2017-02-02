@@ -18,8 +18,10 @@ package reactor.ipc.socket;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -133,14 +135,14 @@ public final class SimpleServer extends SimplePeer  {
 		}
 	}
 
-	static final class ServerListening implements Disposable {
+	static final class ServerListening implements SimpleContext {
 
 		final ServerSocket           ssocket;
 		final AtomicBoolean          done;
 		final MonoSink<Disposable> sink;
 		final Scheduler              acceptor;
 
-		public ServerListening(ServerSocket ssocket,
+		ServerListening(ServerSocket ssocket,
 				AtomicBoolean done,
 				MonoSink<Disposable> sink,
 				Scheduler acceptor) {
@@ -148,6 +150,11 @@ public final class SimpleServer extends SimplePeer  {
 			this.done = done;
 			this.sink = sink;
 			this.acceptor = acceptor;
+		}
+
+		@Override
+		public InetSocketAddress address() {
+			return new InetSocketAddress(ssocket.getInetAddress(), ssocket.getLocalPort());
 		}
 
 		@Override
