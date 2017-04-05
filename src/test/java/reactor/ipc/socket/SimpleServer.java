@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2011-2017 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public final class SimpleServer extends SimplePeer  {
 					acceptor.schedule(() -> socketAccept(ioHandler, connectedState,
 							acceptor));
 
-			sink.setCancellation(() -> connectedState.close(c));
+			sink.onCancel(() -> connectedState.close(c));
 		});
 	}
 
