@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2011-2017 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -609,7 +609,7 @@ abstract class IpcServiceMapper {
 			}
 
 			void innerCancel() {
-				if (open.decrementAndGet() != 0) {
+				if (open.decrementAndGet() == 0) {
 					io.deregister(streamId);
 				}
 				io.sendCancel(streamId, "");
@@ -627,7 +627,7 @@ abstract class IpcServiceMapper {
 
 			@Override
 			public void onError(Throwable t) {
-				if (open.decrementAndGet() != 0) {
+				if (open.decrementAndGet() == 0) {
 					io.deregister(streamId);
 				}
 				actual.onError(t);
@@ -635,7 +635,7 @@ abstract class IpcServiceMapper {
 
 			@Override
 			public void onComplete() {
-				if (open.decrementAndGet() != 0) {
+				if (open.decrementAndGet() == 0) {
 					io.deregister(streamId);
 				}
 				actual.onComplete();
