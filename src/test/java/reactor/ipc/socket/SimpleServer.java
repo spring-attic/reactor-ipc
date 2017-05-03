@@ -21,14 +21,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.util.Objects;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
-import reactor.core.Cancellation;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -84,7 +81,7 @@ public final class SimpleServer extends SimplePeer  {
 			AtomicBoolean done = new AtomicBoolean();
 			ServerListening connectedState =
 					new ServerListening(ssocket, done, sink, acceptor);
-			Cancellation c =
+			Disposable c =
 					acceptor.schedule(() -> socketAccept(ioHandler, connectedState,
 							acceptor));
 
@@ -162,11 +159,11 @@ public final class SimpleServer extends SimplePeer  {
 			close(null);
 		}
 
-		void close(Cancellation c) {
+		void close(Disposable disposable) {
 			if (done.compareAndSet(false, true)) {
 				acceptor.dispose();
-				if (c != null) {
-					c.dispose();
+				if (disposable != null) {
+					disposable.dispose();
 				}
 				try {
 					ssocket.close();

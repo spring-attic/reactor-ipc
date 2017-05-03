@@ -342,9 +342,9 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 	@Override
 	public void dispose() {
 		try {
-			readScheduler.shutdown();
-			writeScheduler.shutdown();
-			dispatcher.shutdown();
+			readScheduler.dispose();
+			writeScheduler.dispose();
+			dispatcher.dispose();
 			in.close();
 			out.close();
 		}
