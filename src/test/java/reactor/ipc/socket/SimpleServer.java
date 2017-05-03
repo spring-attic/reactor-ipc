@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
+import reactor.core.Cancellation;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -81,7 +82,7 @@ public final class SimpleServer extends SimplePeer  {
 			AtomicBoolean done = new AtomicBoolean();
 			ServerListening connectedState =
 					new ServerListening(ssocket, done, sink, acceptor);
-			Disposable c =
+			Cancellation c =
 					acceptor.schedule(() -> socketAccept(ioHandler, connectedState,
 							acceptor));
 
@@ -159,7 +160,7 @@ public final class SimpleServer extends SimplePeer  {
 			close(null);
 		}
 
-		void close(Disposable disposable) {
+		void close(Cancellation disposable) {
 			if (done.compareAndSet(false, true)) {
 				acceptor.dispose();
 				if (disposable != null) {
