@@ -28,6 +28,7 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
@@ -365,7 +366,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class SendSubscriber extends Operators.DeferredSubscription
-				implements Subscriber<Object> {
+				implements CoreSubscriber<Object> {
 
 			final StreamOperationsImpl io;
 
@@ -503,7 +504,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class IpcMapSubscriber extends Operators.DeferredSubscription
-				implements Subscriber<Object> {
+				implements CoreSubscriber<Object> {
 
 			final long streamId;
 
@@ -567,7 +568,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class IpcMapReceiverSubscriber
-				implements Subscriber<Object>, Subscription {
+				implements CoreSubscriber<Object>, Subscription {
 
 			final Subscriber<Object> actual;
 
@@ -730,7 +731,7 @@ abstract class IpcServiceMapper {
 			u.subscribe(receiver.provider);
 		}
 
-		static final class IpcUmapReceiver implements Subscriber<Object>, Subscription {
+		static final class IpcUmapReceiver implements CoreSubscriber<Object>, Subscription {
 
 			final long streamId;
 
@@ -801,7 +802,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class IpcUmapProvider extends Operators.DeferredSubscription
-				implements Subscriber<Object> {
+				implements CoreSubscriber<Object> {
 
 			final long streamId;
 
@@ -922,7 +923,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class ServerSendSubscriber extends Operators.DeferredSubscription
-				implements Subscriber<Object> {
+				implements CoreSubscriber<Object> {
 
 			final long streamId;
 
@@ -1026,7 +1027,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class ServerReceiveSubscriber
-				implements Subscriber<Object>, Subscription {
+				implements CoreSubscriber<Object>, Subscription {
 
 			final long streamId;
 
@@ -1167,7 +1168,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class ServerMapSubscriber
-				implements Subscriber<Object>, Subscription {
+				implements CoreSubscriber<Object>, Subscription {
 
 			final long streamId;
 
@@ -1254,7 +1255,7 @@ abstract class IpcServiceMapper {
 		}
 
 		static final class ServerSendSubscriber extends Operators.DeferredSubscription
-				implements Subscriber<Object> {
+				implements CoreSubscriber<Object> {
 
 			final long streamId;
 
