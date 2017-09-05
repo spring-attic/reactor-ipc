@@ -34,6 +34,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.util.Logger;
 import reactor.util.Loggers;
+import reactor.util.context.Context;
 
 @SuppressWarnings("unchecked")
 abstract class IpcServiceMapper {
@@ -401,7 +402,7 @@ abstract class IpcServiceMapper {
 			@Override
 			public void onError(Throwable t) {
 				if (done) {
-					Operators.onErrorDropped(t);
+					Operators.onErrorDropped(t, Context.empty());
 					return;
 				}
 				done = true;
@@ -544,7 +545,7 @@ abstract class IpcServiceMapper {
 			@Override
 			public void onError(Throwable t) {
 				if (done) {
-					Operators.onErrorDropped(t);
+					Operators.onErrorDropped(t, Context.empty());
 					return;
 				}
 				done = true;
@@ -841,7 +842,7 @@ abstract class IpcServiceMapper {
 			@Override
 			public void onError(Throwable t) {
 				if (done) {
-					Operators.onErrorDropped(t);
+					Operators.onErrorDropped(t, Context.empty());
 					return;
 				}
 				done = true;
@@ -958,7 +959,7 @@ abstract class IpcServiceMapper {
 			@Override
 			public void onError(Throwable t) {
 				if (done) {
-					Operators.onErrorDropped(t);
+					Operators.onErrorDropped(t, Context.empty());
 					return;
 				}
 				done = true;
@@ -1295,7 +1296,7 @@ abstract class IpcServiceMapper {
 			@Override
 			public void onError(Throwable t) {
 				if (done) {
-					Operators.onErrorDropped(t);
+					Operators.onErrorDropped(t, Context.empty());
 					return;
 				}
 				done = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2011-2017 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import reactor.core.publisher.Operators;
 import reactor.ipc.connector.Inbound;
 import reactor.util.Logger;
 import reactor.util.Loggers;
+import reactor.util.context.Context;
 
 /**
  * Allows registering Subscribers and Subscriptions for incoming messages
@@ -155,7 +156,7 @@ final class StreamOperationsImpl<IN, OUT> extends AtomicLong
 				return;
 			}
 		}
-		Operators.onErrorDropped(e);
+		Operators.onErrorDropped(e, Context.empty());
 	}
 
 	@Override

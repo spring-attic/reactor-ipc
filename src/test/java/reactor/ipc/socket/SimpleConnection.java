@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2011-2017 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.ipc.connector.Inbound;
 import reactor.ipc.connector.Outbound;
 import reactor.ipc.stream.StreamOutbound;
+import reactor.util.context.Context;
 
 /**
  * @author Stephane Maldini
@@ -202,7 +203,7 @@ final class SimpleConnection implements Inbound<byte[]>, Outbound<byte[]>,
 			out.flush();
 		}
 		catch (IOException ex) {
-			Operators.onErrorDropped(ex);
+			Operators.onErrorDropped(ex, Context.empty());
 		}
 	}
 
