@@ -1,5 +1,5 @@
 > :warning: **Note**: This project is has been phased out
-in Reactor 3.x and is used in non supported reactor-netty versions (0.5, 0.6).
+in Reactor 3.x and is only used in the non supported reactor-netty versions 0.5 and 0.6.
 
 If you have questions about Reactor 3, join the
 community (see the [reactor README](https://github.com/reactor/reactor/blob/master/README.md)).
