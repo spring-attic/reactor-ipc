@@ -9,7 +9,7 @@ community (see the [reactor README](https://github.com/reactor/reactor/blob/mast
 
 # reactor-ipc
 
-Backpressure-ready components to encode, decode, send (unicast, multicast or request/response) and serve connections :
+You will find backpressure-ready components to encode, decode, send (unicast, multicast or request/response) and serve connections in dedicated repositories :
 - [reactor-netty](https://github.com/reactor/reactor-netty)  : Client/Server interactions for UDP/TCP/HTTP
 - [reactor-kafka](https://github.com/reactor/reactor-kafka) : Reactive Kafka client
 
