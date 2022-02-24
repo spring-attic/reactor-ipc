@@ -1,3 +1,5 @@
+# reactor-ipc is no longer actively maintained by VMware, Inc.
+
 > :warning: **Note**: This project is has been phased out
 in Reactor 3.x and is only used in the non supported reactor-netty versions 0.5 and 0.6.
 
